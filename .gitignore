@@ -1,0 +1,14 @@
+node_modules/
+dist/
+
+# Snímky z prohlížečového testu — generují se skriptem tools/smoke.mjs
+shots/
+
+# Zdrojová a mezikroková slovníková data. Obnovitelná přes tools/0_download.sh
+# a skripty 1–5; do repozitáře patří jen hotový výstup v public/data.
+tools/raw/
+tools/out/
+tools/*.log
+
+.DS_Store
+*.local
