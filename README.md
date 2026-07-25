@@ -36,10 +36,10 @@ nemůže zablokovat cestu nahoru. Řetěz podpisů je ověřený už při genero
 | | zdroj | výsledek |
 |---|---|---|
 | Slovník | frekvenční seznam češtiny profiltrovaný přes hunspell `cs_CZ` | 248 811 ověřených slov |
-| Základní tvary | lemmatizace přes LemmaGen3 | 60 444 slov |
+| Základní tvary | lemmatizace přes LemmaGen3 + záchyt propadlých tvarů | 59 480 slov |
 | Řetěz | grafy pro délky 4, 5 a 6 | 8 738 hádanek |
 | Voština | plástve odvozené od pangramů | 2 400 hádanek |
-| Věž | ověřené řetězy přesmyček 3→6/7/8 | 2 419 hádanek |
+| Věž | ověřené řetězy přesmyček 3→6/7/8 | 2 403 hádanek |
 
 ### Jen základní tvary
 
@@ -54,10 +54,18 @@ ta má pro češtinu špatnou kvalitu — lemmatizuje „dobrý" na „dokonavý
 „dělat" na „udělat". Nestačí ani hesla z hunspellového `.dic`: obsahují
 i ohýbané tvary („boha", „bohu", „bohů").
 
-Navíc se odfiltrují 5. pády ženských jmen („babo", „osobo"), které lemmatizér
-propouští. Pozná se to tak, že po záměně koncového -o za -a vznikne 1. pád,
-který je mezi základními tvary — podmínka je dost přísná na to, aby nepadla
-běžná slova jako „jitro" nebo „kilo".
+**Druhý stupeň filtru.** LemmaGen vrací slova, která nezná, beze změny — a
+taková ohýbaná forma pak projde jako základní tvar. Přesně tak se do hry
+dostalo „agente" (5. pád) nebo „agentek" (2. pád množného čísla). Pozná se to
+i bez lemmatizéru: ohýbaný tvar má svůj základní tvar v lexikonu a ten je
+**častější**. Porovnání frekvence je podstatné — chrání slova jako „země",
+kde tvar po odebrání koncovky („zem") sice existuje, ale je mnohem vzácnější.
+
+Pravidla pokrývají 5. pád mužský i ženský, 3. a 6. pád, 1. pád množného čísla
+mužských životných a 2. pád množného čísla na -ek; dohromady odeberou 2 599
+slov. **Vyčerpávající to není** — čeština má tvarů víc, než se dá pokrýt
+ručními pravidly, takže ojedinělé formy dál projdou. Úplné řešení potřebuje
+morfologii se značkami, viz níž.
 
 **Co chybí:** 1. pád množného čísla („hrady"). Odlišit ho od ostatních pádů
 („hradu", „hradem") vyžaduje morfologii se značkami pádu — MorfFlex, modely
