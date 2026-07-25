@@ -1,0 +1,57 @@
+name: Nasazení na GitHub Pages
+
+# Nasazuje se z hlavní větve; workflow_dispatch dovolí spustit nasazení ručně
+# i z jiné větve, dokud práce není sloučená.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Výstup buildu se publikuje do větve gh-pages. Oproti nasazení přes prostředí
+# github-pages to nevyžaduje, aby běh pocházel z výchozí větve.
+permissions:
+  contents: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalace závislostí
+        run: npm ci
+
+      - name: Testy herní logiky a validace dat
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Publikace do větve gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          # Jekyll by jinak zahodil soubory a složky začínající podtržítkem.
+          touch dist/.nojekyll
+
+          cd dist
+          git init -q
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -q -b gh-pages
+          git add -A
+          git commit -q -m "Nasazení z ${GITHUB_SHA}"
+          git push -q --force \
+            "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            gh-pages
+          echo "Nasazeno. Adresa bude https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}/"
