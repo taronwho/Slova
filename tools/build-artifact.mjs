@@ -106,8 +106,34 @@ const dataLiteral = toAscii(escapeForInlineScript(JSON.stringify(embedded)))
 
 const title = (html.match(/<title>([^<]*)<\/title>/) ?? [, 'Slova'])[1]
 
+/**
+ * Bez `viewport` vykreslí mobilní prohlížeč stránku v 980px a jen ji zmenší —
+ * hráč pak na telefonu vidí zmenšené desktopové rozvržení.
+ *
+ * Značka se přidává staticky i skriptem: hostitel může stránku zabalit do
+ * vlastní hlavičky, kde už nějaký `viewport` je (a přebil by ten náš), nebo
+ * naopak žádný nemá. Skript sjednotí obě situace.
+ */
+const VIEWPORT = 'width=device-width, initial-scale=1, viewport-fit=cover'
+
+const viewportBootstrap = `<script>
+(function () {
+  var want = ${JSON.stringify(VIEWPORT)}
+  var head = document.head || document.documentElement
+  var meta = document.querySelector('meta[name="viewport"]')
+  if (!meta) {
+    meta = document.createElement('meta')
+    meta.setAttribute('name', 'viewport')
+    head.appendChild(meta)
+  }
+  if (meta.getAttribute('content') !== want) meta.setAttribute('content', want)
+})()
+</script>`
+
 const page = `<meta charset="utf-8">
+<meta name="viewport" content="${VIEWPORT}">
 <title>${title}</title>
+${viewportBootstrap}
 <style>
 ${css}
 </style>
