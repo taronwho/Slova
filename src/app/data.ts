@@ -9,14 +9,30 @@ const BASE = import.meta.env.BASE_URL
 
 const cache = new Map<string, Promise<unknown>>()
 
+/**
+ * Jednosouborový build (a stránky s přísnou CSP) nesmí nic dotahovat ze sítě,
+ * proto se do něj data vloží rovnou. Když jsou k dispozici, čtou se odsud.
+ */
+declare global {
+  interface Window {
+    __SLOVA_DATA__?: Record<string, unknown>
+  }
+}
+
 function fetchJson<T>(path: string): Promise<T> {
   const key = path
   const hit = cache.get(key)
   if (hit) return hit as Promise<T>
-  const request = fetch(`${BASE}data/${path}`).then((response) => {
-    if (!response.ok) throw new Error(`Nepodařilo se načíst ${path}`)
-    return response.json() as Promise<T>
-  })
+
+  const embedded = typeof window !== 'undefined' ? window.__SLOVA_DATA__?.[path] : undefined
+  const request =
+    embedded !== undefined
+      ? Promise.resolve(embedded as T)
+      : fetch(`${BASE}data/${path}`).then((response) => {
+          if (!response.ok) throw new Error(`Nepodařilo se načíst ${path}`)
+          return response.json() as Promise<T>
+        })
+
   cache.set(key, request)
   return request
 }

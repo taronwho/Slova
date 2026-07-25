@@ -78,6 +78,24 @@ npm run preview   # náhled produkčního buildu
 Aplikace nepotřebuje žádný backend — `dist/` se dá nasadit na jakýkoli statický
 hosting. Postup hráče se ukládá do `localStorage`.
 
+### Jednosouborová verze
+
+```bash
+npm run build:standalone   # -> dist/slova-standalone.html
+npm run smoke:standalone   # ověří, že běží bez jediného síťového požadavku
+```
+
+Pro hostování, kde stránka nesmí nic dotahovat ze sítě. Vloží dovnitř CSS, JS,
+fonty jako data URI i herní data. Dvě věci, na které si tam dát pozor:
+
+- výstup skriptů se převádí na čisté ASCII (`\uXXXX`), protože bez správně
+  deklarovaného kódování by se české řetězce rozsypaly a shodily celý skript,
+- escapují se sekvence `</`, `<script` a `<!--`, které přepínají stav HTML
+  parseru uvnitř `<script>` (React DOM má `"<script><\/script>"` v literálu).
+
+Datové sady se pro tuhle verzi ořezávají, ať stránka zůstane rozumně velká —
+Řetěz jde celý, u Voštiny a Věže je to výřez.
+
 ## Přegenerování dat
 
 Hotová data jsou v repozitáři (`public/data/`), takže build funguje rovnou.
