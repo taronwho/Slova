@@ -1,6 +1,9 @@
-/** Domovská obrazovka — výběr režimu, obtížnosti a denní výzvy. */
+/** Domovská obrazovka — výběr hry nahoře, pod ním profil a pravidla. */
+
+import { useState } from 'react'
 
 import { levelFor } from '../game/scoring'
+import { MODE_SUMMARY, TUTORIALS } from '../game/tutorials'
 import {
   DIFFICULTY_LABEL,
   MODE_LABEL,
@@ -16,95 +19,83 @@ interface Props {
   onPlay: (mode: ModeId, daily: boolean) => void
   onDifficulty: (mode: ModeId, difficulty: Difficulty) => void
   onStats: () => void
+  onRules: (mode: ModeId) => void
 }
 
-const MODES: { id: ModeId; glyph: string; color: string; how: string }[] = [
-  {
-    id: 'chain',
-    glyph: '→',
-    color: 'var(--accent)',
-    how: 'Měň vždy jedno písmeno tak, aby vzniklo nové české slovo, a dojdi od startu k cíli. Hra ti pořád ukazuje, kolik tahů nejméně zbývá — do neřešitelné pozice tě nepustí.',
-  },
-  {
-    id: 'hive',
-    glyph: '⬡',
-    color: 'var(--gold)',
-    how: 'Sedm písmen, prostřední povinné. Skládej co nejvíc slov od čtyř písmen výš a najdi pangram, který použije všech sedm.',
-  },
-  {
-    id: 'tower',
-    glyph: '↑',
-    color: 'var(--warn)',
-    how: 'Od tří písmen nahoru. V každém patře přibude jedno písmeno a ty z nich všech složíš nové slovo — v jakémkoli pořadí.',
-  },
+const MODES: { id: ModeId; glyph: string; color: string }[] = [
+  { id: 'chain', glyph: '→', color: 'var(--accent)' },
+  { id: 'hive', glyph: '⬡', color: 'var(--gold)' },
+  { id: 'tower', glyph: '↑', color: 'var(--warn)' },
 ]
 
 const DIFFICULTIES: Difficulty[] = ['easy', 'normal', 'hard']
 
-export function Home({ profile, dayKey, onPlay, onDifficulty, onStats }: Props) {
+const DIFFICULTY_NOTE: Record<ModeId, Record<Difficulty, string>> = {
+  chain: {
+    easy: '4 písmena, kratší cesty',
+    normal: '5 písmen',
+    hard: '6 písmen, delší cesty',
+  },
+  hive: {
+    easy: 'menší plástev, do 35 slov',
+    normal: 'do 60 slov',
+    hard: 'bohatá plástev, až 90 slov',
+  },
+  tower: {
+    easy: 'věž do 6 pater',
+    normal: 'věž do 7 pater',
+    hard: 'věž až na 8 písmen',
+  },
+}
+
+export function Home({
+  profile,
+  dayKey,
+  onPlay,
+  onDifficulty,
+  onStats,
+  onRules,
+}: Props) {
   const level = levelFor(profile.xp)
+  const [openRules, setOpenRules] = useState<ModeId | null>(null)
+  const played =
+    profile.stats.chain.played + profile.stats.hive.played + profile.stats.tower.played
 
   return (
     <>
-      <header className="hero">
-        <h1>Slova</h1>
-        <p>Tři české slovní hry. Každá hádanka je ověřeně dohratelná.</p>
-      </header>
-
-      <div className="panel" style={{ marginBottom: 'var(--sp-6)' }}>
-        <div className="rank-line">
-          <span className="rank">
-            {level.title} · úroveň {level.level}
-          </span>
-          <span className="num muted">
-            {profile.xp.toLocaleString('cs-CZ')} XP
-          </span>
-        </div>
-        <div className="xp-bar">
-          <span style={{ width: `${(level.into / level.span) * 100}%` }} />
-        </div>
-        <div
-          style={{
-            display: 'flex',
-            gap: 'var(--sp-2)',
-            marginTop: 'var(--sp-4)',
-            flexWrap: 'wrap',
-          }}
-        >
-          <span className="chip chip-accent">Série {profile.streak}</span>
-          <span className="chip">Nejlepší série {profile.bestStreak}</span>
-          <span className="chip">
-            Odehráno{' '}
-            {profile.stats.chain.played +
-              profile.stats.hive.played +
-              profile.stats.tower.played}
-          </span>
-          <button type="button" className="btn btn-sm btn-ghost" onClick={onStats}>
-            Statistiky
-          </button>
-        </div>
+      {/* Výběr hry je první věc na stránce — nikam se kvůli němu neroluje. */}
+      <div className="home-head">
+        <h1>Vyber si hru</h1>
+        <p className="muted">Tři české slovní hry. Každá hádanka jde vždycky dohrát.</p>
       </div>
 
       <div className="mode-grid">
         {MODES.map((mode) => {
-          const dailyKey = `${dayKey}:${mode.id}`
-          const dailyDone = profile.dailyDone[dailyKey] !== undefined
+          const dailyDone = profile.dailyDone[`${dayKey}:${mode.id}`] !== undefined
+          const isNew = !profile.tutorialSeen[mode.id]
           return (
             <article
               className="mode-card"
               key={mode.id}
               style={{ ['--mode-color' as string]: mode.color }}
             >
-              <span className="mode-glyph">{mode.glyph}</span>
+              <div className="mode-card-top">
+                <span className="mode-glyph">{mode.glyph}</span>
+                {isNew && <span className="chip chip-accent">Nové</span>}
+              </div>
+
               <div>
                 <h2>{MODE_LABEL[mode.id]}</h2>
-                <p className="muted" style={{ fontSize: '0.92rem' }}>
+                <p className="muted" style={{ fontSize: '0.94rem' }}>
                   {MODE_TAGLINE[mode.id]}
                 </p>
               </div>
-              <p className="faint" style={{ fontSize: '0.84rem', lineHeight: 1.55 }}>
-                {mode.how}
-              </p>
+
+              <ul className="mode-rules">
+                {MODE_SUMMARY[mode.id].map((rule) => (
+                  <li key={rule}>{rule}</li>
+                ))}
+              </ul>
 
               <div>
                 <div className="label" style={{ marginBottom: 'var(--sp-2)' }}>
@@ -122,6 +113,9 @@ export function Home({ profile, dayKey, onPlay, onDifficulty, onStats }: Props) 
                     </button>
                   ))}
                 </div>
+                <p className="faint" style={{ fontSize: '0.8rem', marginTop: 'var(--sp-2)' }}>
+                  {DIFFICULTY_NOTE[mode.id][profile.difficulty[mode.id]]}
+                </p>
               </div>
 
               <div className="mode-meta">
@@ -132,12 +126,15 @@ export function Home({ profile, dayKey, onPlay, onDifficulty, onStats }: Props) 
                 >
                   Hrát
                 </button>
+                <button type="button" className="btn" onClick={() => onPlay(mode.id, true)}>
+                  {dailyDone ? 'Denní ✓' : 'Denní výzva'}
+                </button>
                 <button
                   type="button"
-                  className="btn"
-                  onClick={() => onPlay(mode.id, true)}
+                  className="btn btn-ghost"
+                  onClick={() => onRules(mode.id)}
                 >
-                  {dailyDone ? 'Denní ✓' : 'Denní výzva'}
+                  Návod
                 </button>
               </div>
             </article>
@@ -145,40 +142,79 @@ export function Home({ profile, dayKey, onPlay, onDifficulty, onStats }: Props) 
         })}
       </div>
 
+      {/* Profil až pod výběrem hry — je to doplněk, ne to hlavní. */}
+      <div className="panel home-profile">
+        <div className="rank-line">
+          <span className="rank">
+            {level.title} · úroveň {level.level}
+          </span>
+          <span className="num muted">{profile.xp.toLocaleString('cs-CZ')} XP</span>
+        </div>
+        <div className="xp-bar">
+          <span style={{ width: `${(level.into / level.span) * 100}%` }} />
+        </div>
+        <div className="home-profile-chips">
+          <span className="chip chip-accent">Série {profile.streak}</span>
+          <span className="chip">Nejlepší série {profile.bestStreak}</span>
+          <span className="chip">Odehráno {played}</span>
+          <button type="button" className="btn btn-sm btn-ghost" onClick={onStats}>
+            Statistiky
+          </button>
+        </div>
+      </div>
+
       <div className="section-head">
-        <h2>Jak to funguje</h2>
+        <h2>Pravidla podrobně</h2>
         <span className="rule" />
       </div>
-      <div className="mode-grid">
-        <div className="card" style={{ padding: 'var(--sp-5)' }}>
-          <h3 style={{ fontSize: '1rem', marginBottom: 'var(--sp-2)' }}>
-            Ověřená řešitelnost
-          </h3>
-          <p className="muted" style={{ fontSize: '0.9rem', lineHeight: 1.6 }}>
-            Každá hádanka prošla při sestavení důkazem: u Řetězu se nejkratší
-            cesta hledá průchodem grafu, u Voštiny se ukládá kompletní seznam
-            řešení, u Věže je ověřený celý řetěz přesmyček.
-          </p>
-        </div>
-        <div className="card" style={{ padding: 'var(--sp-5)' }}>
-          <h3 style={{ fontSize: '1rem', marginBottom: 'var(--sp-2)' }}>
-            Skoro 249 tisíc slov
-          </h3>
-          <p className="muted" style={{ fontSize: '0.9rem', lineHeight: 1.6 }}>
-            Slovník vznikl z frekvenčního seznamu češtiny profiltrovaného přes
-            hunspell, takže neobsahuje vlastní jména ani překlepy. Hádanek je
-            přes čtrnáct tisíc.
-          </p>
-        </div>
-        <div className="card" style={{ padding: 'var(--sp-5)' }}>
-          <h3 style={{ fontSize: '1rem', marginBottom: 'var(--sp-2)' }}>
-            Hraje se i offline
-          </h3>
-          <p className="muted" style={{ fontSize: '0.9rem', lineHeight: 1.6 }}>
-            Žádný server. Data se stahují po malých balíčcích a postup se ukládá
-            přímo v prohlížeči.
-          </p>
-        </div>
+      <p className="muted" style={{ marginBottom: 'var(--sp-4)', fontSize: '0.94rem' }}>
+        Rozklikni hru a projdi si všechno, co v ní platí. Totéž ti hra ukáže
+        i sama, když ji spustíš poprvé.
+      </p>
+
+      <div className="rules-list">
+        {MODES.map((mode) => {
+          const open = openRules === mode.id
+          return (
+            <div className="rules-item" key={mode.id}>
+              <button
+                type="button"
+                className="rules-toggle"
+                aria-expanded={open}
+                onClick={() => setOpenRules(open ? null : mode.id)}
+              >
+                <span className="mode-glyph" style={{ color: mode.color, fontSize: '1.2rem' }}>
+                  {mode.glyph}
+                </span>
+                <span className="rules-title">Jak se hraje {MODE_LABEL[mode.id]}</span>
+                <span className={`rules-caret ${open ? 'open' : ''}`} aria-hidden="true">
+                  ⌄
+                </span>
+              </button>
+
+              {open && (
+                <div className="rules-body">
+                  {TUTORIALS[mode.id].map((step) => (
+                    <section key={step.title}>
+                      <h3>{step.title}</h3>
+                      {step.body.map((paragraph, i) => (
+                        <p key={i}>{paragraph.replace(/\*\*/g, '')}</p>
+                      ))}
+                      {step.key && <p className="rules-key">{step.key.replace(/\*\*/g, '')}</p>}
+                    </section>
+                  ))}
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    onClick={() => onRules(mode.id)}
+                  >
+                    Projít návod s ukázkami
+                  </button>
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
     </>
   )

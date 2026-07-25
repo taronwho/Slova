@@ -79,20 +79,265 @@
 
 /* ---------- Domovská obrazovka ---------- */
 
-.hero {
-  text-align: center;
-  padding: var(--sp-6) 0 var(--sp-7);
+/* Kompaktní hlavička — velký hero by výběr hry odsunul pod okraj displeje. */
+.home-head {
+  padding: 0 0 var(--sp-4);
 }
 
-.hero h1 {
-  font-size: clamp(2.4rem, 9vw, 4rem);
-  letter-spacing: -0.03em;
+.home-head h1 {
+  font-size: clamp(1.6rem, 5.5vw, 2.1rem);
+  letter-spacing: -0.02em;
 }
 
-.hero p {
-  margin-top: var(--sp-3);
+.home-head p {
+  margin-top: var(--sp-2);
+  font-size: 0.95rem;
+}
+
+.mode-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.mode-rules {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.86rem;
   color: var(--text-muted);
-  font-size: 1.02rem;
+}
+
+.mode-rules li {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: flex-start;
+  line-height: 1.45;
+}
+
+.mode-rules li::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 5px;
+  height: 5px;
+  margin-top: 0.5em;
+  border-radius: 50%;
+  background: var(--mode-color, var(--accent));
+}
+
+.home-profile {
+  margin-top: var(--sp-6);
+}
+
+.home-profile-chips {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ---------- Rozbalovací pravidla ---------- */
+
+.rules-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.rules-item {
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.rules-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-4) var(--sp-5);
+  text-align: left;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1rem;
+  transition: background var(--t-fast) var(--ease);
+}
+
+.rules-toggle:hover {
+  background: var(--surface-2);
+}
+
+.rules-title {
+  flex: 1;
+}
+
+.rules-caret {
+  color: var(--text-faint);
+  transition: transform var(--t-base) var(--ease);
+}
+
+.rules-caret.open {
+  transform: rotate(180deg);
+}
+
+.rules-body {
+  padding: 0 var(--sp-5) var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  animation: rise var(--t-base) var(--ease) both;
+}
+
+.rules-body h3 {
+  font-size: 0.95rem;
+  margin-bottom: var(--sp-2);
+}
+
+.rules-body p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: var(--sp-2);
+}
+
+.rules-key {
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--accent-soft);
+  color: var(--accent-text) !important;
+  font-weight: 500;
+}
+
+/* ---------- Návod ---------- */
+
+.tut-card {
+  width: min(520px, 100%);
+  max-height: 90dvh;
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-5);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-3);
+  animation: pop var(--t-slow) var(--ease-back) both;
+}
+
+.tut-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.tut-progress {
+  display: flex;
+  gap: 4px;
+  margin-bottom: var(--sp-4);
+}
+
+.tut-progress span {
+  flex: 1;
+  height: 3px;
+  border-radius: var(--r-full);
+  background: var(--border);
+  transition: background var(--t-base) var(--ease);
+}
+
+.tut-progress span.on {
+  background: var(--accent);
+}
+
+.tut-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  animation: rise var(--t-base) var(--ease) both;
+}
+
+.tut-body h2 {
+  font-size: 1.35rem;
+  margin-bottom: var(--sp-3);
+}
+
+.tut-body p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.65;
+  margin-bottom: var(--sp-3);
+}
+
+.tut-body strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.tut-key {
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--accent-soft);
+  color: var(--accent-text) !important;
+  font-size: 0.9rem !important;
+}
+
+.tut-key strong {
+  color: var(--accent-text);
+}
+
+.tut-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  margin-bottom: var(--sp-4);
+  border-radius: var(--r-lg);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.tut-visual .tile {
+  width: clamp(34px, 9vw, 44px);
+  height: clamp(38px, 10vw, 48px);
+  font-size: clamp(0.95rem, 4vw, 1.3rem);
+}
+
+.tut-caption {
+  font-size: 0.82rem !important;
+  color: var(--text-faint) !important;
+  text-align: center;
+  margin: 0 !important;
+}
+
+.tut-ladder {
+  gap: 4px;
+}
+
+.tut-hive {
+  width: min(190px, 52vw);
+}
+
+.tut-hive .hex {
+  font-size: 1.1rem;
+}
+
+.tut-tower {
+  gap: 4px;
+}
+
+.tut-actions {
+  display: flex;
+  gap: var(--sp-2);
+  justify-content: flex-end;
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--border);
 }
 
 .mode-grid {

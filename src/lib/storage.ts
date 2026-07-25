@@ -25,6 +25,8 @@ export interface Profile {
   difficulty: Record<ModeId, Difficulty>
   theme: 'light' | 'dark' | 'system'
   dailyDone: Record<string, number>
+  /** Režimy, u kterých hráč viděl návod — při prvním spuštění se otevře sám. */
+  tutorialSeen: Record<ModeId, boolean>
 }
 
 function emptyStats(): ModeStats {
@@ -43,6 +45,7 @@ export function emptyProfile(): Profile {
     difficulty: { chain: 'normal', hive: 'normal', tower: 'normal' },
     theme: 'system',
     dailyDone: {},
+    tutorialSeen: { chain: false, hive: false, tower: false },
   }
 }
 
@@ -58,6 +61,7 @@ function migrate(raw: unknown): Profile {
     stats: { ...base.stats, ...(saved.stats ?? {}) },
     difficulty: { ...base.difficulty, ...(saved.difficulty ?? {}) },
     dailyDone: { ...base.dailyDone, ...(saved.dailyDone ?? {}) },
+    tutorialSeen: { ...base.tutorialSeen, ...(saved.tutorialSeen ?? {}) },
     history: saved.history ?? [],
   }
 }

@@ -43,6 +43,16 @@ async function newPage(size) {
   return page
 }
 
+
+/** Po prvním spuštění režimu se otevře návod — testy ho odbaví. */
+async function dismissTutorial(page) {
+  const card = page.locator('.tut-card')
+  if (await card.isVisible().catch(() => false)) {
+    await page.locator('.tut-head').getByText('Přeskočit').click()
+    await page.waitForTimeout(250)
+  }
+}
+
 const desktop = { width: 1280, height: 900 }
 const mobile = { width: 390, height: 844 }
 
@@ -50,7 +60,10 @@ const mobile = { width: 390, height: 844 }
 log('\nDOMŮ')
 {
   const page = await newPage(desktop)
-  check(await page.locator('h1', { hasText: 'Slova' }).isVisible(), 'hero se vykreslil')
+  check(
+    await page.locator('h1', { hasText: 'Vyber si hru' }).isVisible(),
+    'výběr hry je hned na úvodu',
+  )
   check((await page.locator('.mode-card').count()) === 3, 'tři karty režimů')
   await page.screenshot({ path: `${SHOTS}01-home-light.png`, fullPage: true })
 
@@ -72,6 +85,7 @@ log('\nŘETĚZ')
   const page = await newPage(desktop)
   await page.locator('.mode-card', { hasText: 'Řetěz' }).getByText('Hrát').click()
   await page.waitForSelector('.ladder', { timeout: 20000 })
+  await dismissTutorial(page)
 
   const par = await page.locator('.stat', { hasText: 'Par' }).locator('.value').innerText()
   check(Number(par) > 0, `par je načtený (${par})`)
@@ -131,6 +145,7 @@ log('\nVOŠTINA')
   const page = await newPage(desktop)
   await page.locator('.mode-card', { hasText: 'Voština' }).getByText('Hrát').click()
   await page.waitForSelector('.hive', { timeout: 20000 })
+  await dismissTutorial(page)
   check((await page.locator('.hex').count()) === 7, 'plástev má sedm buněk')
   await page.screenshot({ path: `${SHOTS}06-hive.png`, fullPage: true })
 
@@ -177,6 +192,7 @@ log('\nVĚŽ')
   const page = await newPage(desktop)
   await page.locator('.mode-card', { hasText: 'Věž' }).getByText('Hrát').click()
   await page.waitForSelector('.tower', { timeout: 20000 })
+  await dismissTutorial(page)
   check((await page.locator('.tray-tile').count()) >= 4, 'zásobník dlaždic je připravený')
   await page.screenshot({ path: `${SHOTS}08-tower.png`, fullPage: true })
 
@@ -207,6 +223,7 @@ log('\nMOBIL')
 
   await page.locator('.mode-card', { hasText: 'Řetěz' }).getByText('Hrát').click()
   await page.waitForSelector('.ladder', { timeout: 20000 })
+  await dismissTutorial(page)
   const overflowGame = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
   )
@@ -216,11 +233,13 @@ log('\nMOBIL')
 
   await page.goto(APP_URL, { waitUntil: 'networkidle' })
   await page.locator('.mode-card', { hasText: 'Voština' }).getByText('Hrát').click()
+  await dismissTutorial(page)
   await page.waitForSelector('.hive', { timeout: 20000 })
   await page.screenshot({ path: `${SHOTS}12-mobil-hive.png`, fullPage: true })
 
   await page.goto(APP_URL, { waitUntil: 'networkidle' })
   await page.locator('.mode-card', { hasText: 'Věž' }).getByText('Hrát').click()
+  await dismissTutorial(page)
   await page.waitForSelector('.tower', { timeout: 20000 })
   await page.screenshot({ path: `${SHOTS}13-mobil-tower.png`, fullPage: true })
   await page.close()

@@ -68,6 +68,11 @@ for (const size of SIZES) {
     await page.goto(APP_URL, { waitUntil: 'networkidle' })
     await page.locator('.mode-card', { hasText: mode }).getByText('Hrát').click()
     await page.waitForSelector(selector, { timeout: 20000 })
+    // Návod při prvním spuštění by ležel přes hru a měření by bylo nesmyslné.
+    const tut = page.locator('.tut-card')
+    if (await tut.isVisible().catch(() => false)) {
+      await page.locator('.tut-head').getByText('Přeskočit').click()
+    }
     await page.waitForTimeout(400)
 
     const metrics = await page.evaluate(() => {

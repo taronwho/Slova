@@ -15,6 +15,7 @@ import { ChainGame } from './components/ChainGame'
 import { HiveGame } from './components/HiveGame'
 import { Home } from './components/Home'
 import { Stats } from './components/Stats'
+import { Tutorial } from './components/Tutorial'
 import { TowerGame } from './components/TowerGame'
 import type { ChainPuzzle } from './game/chain'
 import type { HivePuzzle } from './game/hive'
@@ -47,6 +48,10 @@ export default function App() {
   const [loaded, setLoaded] = useState<Loaded>({})
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  /** Otevřený návod. `pending` = otevřel se sám před první hrou režimu. */
+  const [tutorial, setTutorial] = useState<{ mode: ModeId; pending: boolean } | null>(
+    null,
+  )
 
   const dayKey = todayKey()
   const dayLabel = `#${dayNumber()}`
@@ -106,13 +111,15 @@ export default function App() {
           daily,
           nonce: previous.kind === 'game' ? previous.nonce + 1 : 1,
         }))
+        // Při prvním spuštění režimu se návod otevře sám nad rozehranou hrou.
+        if (!profile.tutorialSeen[mode]) setTutorial({ mode, pending: true })
       } catch (cause) {
         setError(cause instanceof Error ? cause.message : 'Data se nepodařilo načíst')
       } finally {
         setLoading(false)
       }
     },
-    [dayKey, profile.difficulty, profile.seen],
+    [dayKey, profile.difficulty, profile.seen, profile.tutorialSeen],
   )
 
   const finishRound = useCallback(
@@ -136,6 +143,18 @@ export default function App() {
   }, [updateProfile])
 
   const goHome = useCallback(() => setView({ kind: 'home' }), [])
+
+  const closeTutorial = useCallback(() => {
+    setTutorial((open) => {
+      if (open) {
+        updateProfile((previous) => ({
+          ...previous,
+          tutorialSeen: { ...previous.tutorialSeen, [open.mode]: true },
+        }))
+      }
+      return null
+    })
+  }, [updateProfile])
 
   const themeButton = useMemo(() => {
     const order: Profile['theme'][] = ['system', 'light', 'dark']
@@ -179,6 +198,13 @@ export default function App() {
           <>
             <span className="chip">{MODE_LABEL[view.mode]}</span>
             {view.daily && <span className="chip chip-gold">Denní {dayLabel}</span>}
+            <button
+              type="button"
+              className="btn btn-sm btn-ghost"
+              onClick={() => setTutorial({ mode: view.mode, pending: false })}
+            >
+              Pravidla
+            </button>
           </>
         )}
         <span className="topbar-spacer" />
@@ -220,6 +246,7 @@ export default function App() {
               }))
             }
             onStats={() => setView({ kind: 'stats' })}
+            onRules={(mode) => setTutorial({ mode, pending: false })}
           />
         )}
 
@@ -267,6 +294,14 @@ export default function App() {
             onNext={() => startRound('tower', false)}
             onHome={goHome}
             onGiveUp={giveUp}
+          />
+        )}
+
+        {tutorial && (
+          <Tutorial
+            mode={tutorial.mode}
+            onClose={closeTutorial}
+            finishLabel={tutorial.pending ? 'Začít hrát' : 'Zavřít'}
           />
         )}
       </main>

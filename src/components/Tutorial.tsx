@@ -1,0 +1,308 @@
+/**
+ * Návod, který se otevře při prvním spuštění režimu — a kdykoli později
+ * tlačítkem Pravidla. Kroky mají malé ukázky ze skutečných herních prvků,
+ * aby hráč poznal, na co se v samotné hře dívá.
+ */
+
+import { useState, type ReactNode } from 'react'
+
+import { TUTORIALS, type TutorialVisual } from '../game/tutorials'
+import { MODE_LABEL, type ModeId } from '../game/types'
+
+interface Props {
+  mode: ModeId
+  onClose: () => void
+  /** Popisek posledního tlačítka — liší se podle toho, odkud se návod otevřel. */
+  finishLabel?: string
+}
+
+/** Zvýrazní **tučné** úseky, aby text nesl důraz bez HTML v datech. */
+function withEmphasis(text: string): ReactNode[] {
+  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+    part.startsWith('**') && part.endsWith('**') ? (
+      <strong key={i}>{part.slice(2, -2)}</strong>
+    ) : (
+      <span key={i}>{part}</span>
+    ),
+  )
+}
+
+function Tiles({ word, variant }: { word: string; variant?: string }) {
+  return (
+    <div className={`rung ${variant ?? ''}`}>
+      {[...word].map((letter, i) => (
+        <div className="tile" key={i}>
+          {letter}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function Visual({ visual }: { visual: TutorialVisual }) {
+  switch (visual.kind) {
+    case 'chain-goal':
+      return (
+        <div className="tut-visual tut-ladder">
+          <Tiles word="kosa" variant="is-start" />
+          <div className="ladder-gap">
+            <div className="dots">
+              <i />
+              <i />
+              <i />
+            </div>
+            <span>tvůj řetěz</span>
+          </div>
+          <Tiles word="míra" variant="is-goal" />
+        </div>
+      )
+
+    case 'chain-move':
+      return (
+        <div className="tut-visual tut-ladder">
+          <Tiles word="kosa" />
+          <div className="connector lit" />
+          <div className="rung">
+            {[...'koza'].map((letter, i) => (
+              <div className={`tile ${i === 2 ? 'changed' : ''}`} key={i}>
+                {letter}
+              </div>
+            ))}
+          </div>
+          <p className="tut-caption">Změnilo se jediné písmeno — a vzniklo nové slovo.</p>
+        </div>
+      )
+
+    case 'chain-guard':
+      return (
+        <div className="tut-visual">
+          <div className="stat" style={{ maxWidth: 200, margin: '0 auto' }}>
+            <div className="label">Zbývá nejméně</div>
+            <div className="value num accent">3</div>
+          </div>
+          <div className="banner banner-warn" style={{ marginTop: 'var(--sp-3)' }}>
+            <span>Slepá ulička — odtud už se k cíli nedostaneš.</span>
+            <span className="banner-actions">
+              <span className="btn btn-sm">Vrátit tah</span>
+            </span>
+          </div>
+        </div>
+      )
+
+    case 'chain-score':
+      return (
+        <div className="tut-visual">
+          <div className="breakdown" style={{ margin: 0 }}>
+            <div className="breakdown-line">
+              <span className="muted">Základ</span>
+              <span className="num pos">+1 000</span>
+            </div>
+            <div className="breakdown-line">
+              <span className="muted">Tahů nad par (1)</span>
+              <span className="num neg">−100</span>
+            </div>
+            <div className="breakdown-line">
+              <span className="muted">Rychlost</span>
+              <span className="num pos">+300</span>
+            </div>
+          </div>
+        </div>
+      )
+
+    case 'hive':
+      return (
+        <div className="tut-visual">
+          <div className="hive tut-hive">
+            <button type="button" className="hex center" style={{ left: '33.5%', top: '33.8%' }}>
+              r
+            </button>
+            {[
+              { l: 'a', left: '33.5%', top: '0%' },
+              { l: 'k', left: '67%', top: '16.9%' },
+              { l: 't', left: '67%', top: '50.7%' },
+              { l: 'o', left: '33.5%', top: '67.6%' },
+              { l: 's', left: '0%', top: '50.7%' },
+              { l: 'v', left: '0%', top: '16.9%' },
+            ].map((hex) => (
+              <button type="button" className="hex" key={hex.l} style={{ left: hex.left, top: hex.top }}>
+                {hex.l}
+              </button>
+            ))}
+          </div>
+        </div>
+      )
+
+    case 'hive-word':
+      return (
+        <div className="tut-visual">
+          <div className="hive-input" style={{ justifyContent: 'center' }}>
+            {[...'kára'].map((ch, i) => (
+              <span className={`ch ${ch === 'r' ? 'center' : ''}`} key={i}>
+                {ch}
+              </span>
+            ))}
+          </div>
+          <p className="tut-caption">
+            Zlaté písmeno uprostřed musí být v každém slově.
+          </p>
+        </div>
+      )
+
+    case 'hive-pangram':
+      return (
+        <div className="tut-visual">
+          <div style={{ display: 'flex', gap: 'var(--sp-2)', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <span className="found-word">kára</span>
+            <span className="found-word">tvar</span>
+            <span className="found-word pangram">trakař</span>
+          </div>
+          <p className="tut-caption">Pangram použije všech sedm písmen — a nese 7 bodů navíc.</p>
+        </div>
+      )
+
+    case 'hive-ranks':
+      return (
+        <div className="tut-visual">
+          <div className="rank-line">
+            <span className="rank">Skvělý</span>
+            <span className="num muted">62 / 180</span>
+          </div>
+          <div className="progress-track">
+            <div className="progress-fill" style={{ width: '34%' }} />
+          </div>
+        </div>
+      )
+
+    case 'tower':
+      return (
+        <div className="tut-visual">
+          <div className="tower tut-tower">
+            <div className="floor base">
+              {[...'les'].map((l, i) => (
+                <div className="tile" key={i}>
+                  {l}
+                </div>
+              ))}
+            </div>
+            <div className="floor done">
+              {[...'sele'].map((l, i) => (
+                <div className="tile" key={i}>
+                  {l}
+                </div>
+              ))}
+            </div>
+            <div className="floor active">
+              {Array.from({ length: 5 }, (_, i) => (
+                <div className="tile empty" key={i} />
+              ))}
+            </div>
+          </div>
+        </div>
+      )
+
+    case 'tower-letter':
+      return (
+        <div className="tut-visual">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-3)', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <div className="floor done">
+              {[...'sele'].map((l, i) => (
+                <div className="tile" key={i}>
+                  {l}
+                </div>
+              ))}
+            </div>
+            <span className="muted" style={{ fontSize: '1.4rem' }}>+</span>
+            <span className="new-letter">n</span>
+            <span className="muted" style={{ fontSize: '1.4rem' }}>=</span>
+            <div className="floor done">
+              {[...'selen'].map((l, i) => (
+                <div className="tile" key={i}>
+                  {l}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )
+
+    case 'tower-safe':
+      return (
+        <div className="tut-visual">
+          <div style={{ display: 'flex', gap: 'var(--sp-3)', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <div className="floor done">
+              {[...'pila'].map((l, i) => (
+                <div className="tile" key={i}>
+                  {l}
+                </div>
+              ))}
+            </div>
+            <div className="floor done">
+              {[...'lipa'].map((l, i) => (
+                <div className="tile" key={i}>
+                  {l}
+                </div>
+              ))}
+            </div>
+          </div>
+          <p className="tut-caption">
+            Obě řešení mají stejná písmena, takže obě vedou dál. Nemůžeš vybrat špatně.
+          </p>
+        </div>
+      )
+  }
+}
+
+export function Tutorial({ mode, onClose, finishLabel = 'Začít hrát' }: Props) {
+  const steps = TUTORIALS[mode]
+  const [index, setIndex] = useState(0)
+  const step = steps[index]!
+  const last = index === steps.length - 1
+
+  return (
+    <div className="result" role="dialog" aria-modal="true" aria-label={`Návod — ${MODE_LABEL[mode]}`}>
+      <div className="tut-card">
+        <div className="tut-head">
+          <span className="label">
+            {MODE_LABEL[mode]} · návod {index + 1}/{steps.length}
+          </span>
+          <button type="button" className="btn btn-sm btn-ghost" onClick={onClose}>
+            Přeskočit
+          </button>
+        </div>
+
+        <div className="tut-progress" aria-hidden="true">
+          {steps.map((_, i) => (
+            <span key={i} className={i <= index ? 'on' : ''} />
+          ))}
+        </div>
+
+        <div className="tut-body" key={index}>
+          <h2>{step.title}</h2>
+          {step.visual && <Visual visual={step.visual} />}
+          {step.body.map((paragraph, i) => (
+            <p key={i}>{withEmphasis(paragraph)}</p>
+          ))}
+          {step.key && <p className="tut-key">{withEmphasis(step.key)}</p>}
+        </div>
+
+        <div className="tut-actions">
+          <button
+            type="button"
+            className="btn"
+            onClick={() => setIndex((n) => n - 1)}
+            disabled={index === 0}
+          >
+            Zpět
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => (last ? onClose() : setIndex((n) => n + 1))}
+          >
+            {last ? finishLabel : 'Další'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}

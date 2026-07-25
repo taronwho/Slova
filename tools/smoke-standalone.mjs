@@ -20,13 +20,26 @@ page.on('pageerror', e => { problems.push('chyba: ' + e.message); console.log(' 
 page.on('console', m => { if (m.type() === 'error' && !/favicon/.test(m.location()?.url ?? '')) { problems.push('console: ' + m.text()); console.log('  ✗ console: ' + m.text()) } })
 
 await page.goto(FILE, { waitUntil: 'networkidle' })
-check(await page.locator('h1', { hasText: 'Slova' }).isVisible(), 'stránka se vykreslila')
+check(
+  await page.locator('h1', { hasText: 'Vyber si hru' }).isVisible(),
+  'stránka se vykreslila',
+)
+
+/** Po prvním spuštění režimu leží přes hru návod — test ho odbaví. */
+async function dismissTutorial(target) {
+  const card = target.locator('.tut-card')
+  if (await card.isVisible().catch(() => false)) {
+    await target.locator('.tut-head').getByText('Přeskočit').click()
+    await target.waitForTimeout(250)
+  }
+}
 check(await page.evaluate(() => getComputedStyle(document.querySelector('h1')).fontFamily.includes('Outfit')), 'zabudovaný font se použil')
 
 for (const [mode, sel] of [['Řetěz', '.ladder'], ['Voština', '.hive'], ['Věž', '.tower']]) {
   await page.goto(FILE, { waitUntil: 'networkidle' })
   await page.locator('.mode-card', { hasText: mode }).getByText('Hrát').click()
   await page.waitForSelector(sel, { timeout: 15000 })
+  await dismissTutorial(page)
   check(true, `${mode} se rozehrál ze zabudovaných dat`)
 }
 
@@ -34,6 +47,7 @@ for (const [mode, sel] of [['Řetěz', '.ladder'], ['Voština', '.hive'], ['Vě�
 await page.goto(FILE, { waitUntil: 'networkidle' })
 await page.locator('.mode-card', { hasText: 'Řetěz' }).getByText('Hrát').click()
 await page.waitForSelector('.ladder')
+await dismissTutorial(page)
 for (let i = 0; i < 14 && !(await page.locator('.result-card').isVisible()); i++) {
   await page.locator('button', { hasText: 'Celé slovo' }).click()
   await page.waitForTimeout(120)
@@ -62,6 +76,7 @@ check(vp.width === 390, `stránka se vykreslí v šířce displeje (${vp.width}p
 check(vp.mobileLayout, 'uplatní se mobilní rozvržení')
 await mobile.locator('.mode-card', { hasText: 'Řetěz' }).getByText('Hrát').click()
 await mobile.waitForSelector('.ladder', { timeout: 15000 })
+await dismissTutorial(mobile)
 const kb = await mobile.evaluate(() => {
   const footer = document.querySelector('.board-footer')
   const r = footer?.getBoundingClientRect()

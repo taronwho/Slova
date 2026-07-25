@@ -84,6 +84,10 @@ for (const mode of ['Řetěz', 'Voština', 'Věž']) {
   await page.goto(APP_URL, { waitUntil: 'networkidle' })
   await page.locator('.mode-card', { hasText: mode }).getByText('Hrát').click()
   await page.waitForSelector('.board', { timeout: 20000 })
+  const tut = page.locator('.tut-card')
+  if (await tut.isVisible().catch(() => false)) {
+    await page.locator('.tut-head').getByText('Přeskočit').click()
+  }
   await page.waitForTimeout(500)
 }
 
@@ -92,7 +96,7 @@ await page.goto(APP_URL, { waitUntil: 'domcontentloaded' })
 await page.waitForTimeout(800)
 
 const offlineOk = await page
-  .locator('h1', { hasText: 'Slova' })
+  .locator('h1', { hasText: 'Vyber si hru' })
   .isVisible()
   .catch(() => false)
 check(offlineOk, 'aplikace se načte i offline')
