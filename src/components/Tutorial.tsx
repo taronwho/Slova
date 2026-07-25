@@ -98,7 +98,7 @@ function Visual({ visual }: { visual: TutorialVisual }) {
               <span className="num pos">+1 000</span>
             </div>
             <div className="breakdown-line">
-              <span className="muted">Tahů nad par (1)</span>
+              <span className="muted">Tahů navíc (1)</span>
               <span className="num neg">−100</span>
             </div>
             <div className="breakdown-line">
@@ -143,7 +143,7 @@ function Visual({ visual }: { visual: TutorialVisual }) {
             ))}
           </div>
           <p className="tut-caption">
-            Zlaté písmeno uprostřed musí být v každém slově.
+            Zvýrazněné písmeno uprostřed musí být v každém slově.
           </p>
         </div>
       )

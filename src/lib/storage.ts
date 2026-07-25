@@ -8,7 +8,7 @@ export interface ModeStats {
   played: number
   bestScore: number
   totalScore: number
-  /** Řetěz: součet tahů nad par. Věž: součet postavených pater. */
+  /** Řetěz: součet tahů navíc. Věž: součet postavených pater. */
   extra: number
   perfect: number
 }

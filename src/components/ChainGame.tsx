@@ -263,7 +263,7 @@ export function ChainGame({
     ).join('')
     return [
       `SLOVA — Řetěz ${dayLabel}`,
-      `${puzzle.start.toUpperCase()} ▸ ${puzzle.target.toUpperCase()}   par ${puzzle.par}, dohráno na ${moves}`,
+      `${puzzle.start.toUpperCase()} ▸ ${puzzle.target.toUpperCase()}   nejkratší cesta ${puzzle.par}, dohráno na ${moves}`,
       `${marks}  ★ ${breakdown?.total ?? 0}`,
     ].join('\n')
   }, [breakdown, dayLabel, moves, puzzle])
@@ -277,7 +277,7 @@ export function ChainGame({
             <div className={`value num ${moves > budget ? 'warn' : ''}`}>{moves}</div>
           </div>
           <div className="stat">
-            <div className="label">Par</div>
+            <div className="label">Nejkratší cesta</div>
             <div className="value num gold">{puzzle.par}</div>
           </div>
         </div>
@@ -466,7 +466,7 @@ export function ChainGame({
       {done && breakdown && (
         <ResultOverlay
           title={breakdown.perfect ? 'Perfektní!' : 'Dohráno'}
-          subtitle={`${puzzle.start.toUpperCase()} ▸ ${puzzle.target.toUpperCase()} · par ${puzzle.par}, tvých tahů ${moves}`}
+          subtitle={`${puzzle.start.toUpperCase()} ▸ ${puzzle.target.toUpperCase()} · nejkratší cesta ${puzzle.par}, tvých tahů ${moves}`}
           breakdown={breakdown}
           shareText={shareText}
           onNext={onNext}

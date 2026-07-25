@@ -53,9 +53,9 @@ se žádná předpočítaná struktura přenášet nemusí.
 Testy v `tests/data.test.ts` projdou **každou** hádanku, která by se dostala ke
 hráči, a ověří:
 
-- **Řetěz** — start i cíl jsou ve slovníku, uložený par se rovná skutečné
-  nejkratší vzdálenosti spočítané BFS, a rekonstruovaná cesta se v každém kroku
-  liší přesně o jedno písmeno bez opakování slov.
+- **Řetěz** — start i cíl jsou ve slovníku, uložená délka nejkratší cesty
+  (v kódu `par`) se rovná skutečné vzdálenosti spočítané BFS, a rekonstruovaná
+  cesta se v každém kroku liší přesně o jedno písmeno bez opakování slov.
 - **Voština** — každé řešení jde z plástve složit, obsahuje povinný střed, každá
   plástev má aspoň jeden pangram a dost slov na rozehrání.
 - **Věž** — každé patro má aspoň jedno slovo, všechna sedí na podpis a každé

@@ -12,8 +12,19 @@ interface Props {
 
 const MODES: ModeId[] = ['chain', 'hive', 'tower']
 
+/** Popisky detailů kola — v historii je čte hráč, ne vývojář. */
+const DETAIL_LABEL: Record<string, string> = {
+  moves: 'tahů',
+  par: 'nejkratší cesta',
+  found: 'nalezeno slov',
+  total: 'z celku',
+  rank: 'hodnost',
+  floors: 'pater',
+  top: 'nejvyšší patro',
+}
+
 const EXTRA_LABEL: Record<ModeId, string> = {
-  chain: 'Průměr tahů nad par',
+  chain: 'Průměr tahů navíc',
   hive: 'Průměr nalezených slov',
   tower: 'Průměr postavených pater',
 }
@@ -98,7 +109,7 @@ export function Stats({ profile, onBack, onReset }: Props) {
             <span className="muted" style={{ flex: 1, fontSize: '0.85rem' }}>
               {Object.entries(round.detail)
                 .filter(([key]) => key !== 'extra')
-                .map(([key, value]) => `${key}: ${value}`)
+                .map(([key, value]) => `${DETAIL_LABEL[key] ?? key} ${value}`)
                 .join(' · ')}
             </span>
             {round.perfect && <span className="chip chip-gold">perfektní</span>}

@@ -87,14 +87,20 @@ log('\nŘETĚZ')
   await page.waitForSelector('.ladder', { timeout: 20000 })
   await dismissTutorial(page)
 
-  const par = await page.locator('.stat', { hasText: 'Par' }).locator('.value').innerText()
-  check(Number(par) > 0, `par je načtený (${par})`)
+  const par = await page
+    .locator('.stat', { hasText: 'Nejkratší cesta' })
+    .locator('.value')
+    .innerText()
+  check(Number(par) > 0, `nejkratší cesta je načtená (${par})`)
 
   const remaining = await page
     .locator('.stat', { hasText: 'Zbývá nejméně' })
     .locator('.value')
     .innerText()
-  check(remaining === par, `strážce hlásí stejnou vzdálenost jako par (${remaining})`)
+  check(
+    remaining === par,
+    `strážce hlásí stejnou vzdálenost jako nejkratší cesta (${remaining})`,
+  )
 
   await page.screenshot({ path: `${SHOTS}03-chain.png`, fullPage: true })
 

@@ -49,7 +49,7 @@ export function scoreChain(
   const budget = budgetFor(state.puzzle)
 
   const lines = [{ label: 'Základ', value: CHAIN_BASE }]
-  if (over > 0) lines.push({ label: `Tahů nad par (${over})`, value: -100 * over })
+  if (over > 0) lines.push({ label: `Tahů navíc (${over})`, value: -100 * over })
   if (moves > budget) {
     lines.push({ label: 'Překročený rozpočet', value: -200 })
   }

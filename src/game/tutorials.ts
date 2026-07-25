@@ -52,7 +52,7 @@ export const TUTORIALS: Record<ModeId, TutorialStep[]> = {
     {
       title: 'Jak tah zadáš',
       body: [
-        '**Na telefonu:** klepni na písmeno, které chceš změnit — orámuje se zeleně. Pak ťukni na nové písmeno na klávesnici a dej **Zahrát**.',
+        '**Na telefonu:** klepni na písmeno, které chceš změnit — barevně se orámuje. Pak ťukni na nové písmeno na klávesnici a dej **Zahrát**.',
         '**Na počítači:** rovnou piš. Šipkami se posuneš mezi písmeny, Enter tah potvrdí.',
         'Písmena s háčky a čárkami vytáhneš **podržením** základního písmene — v rohu klávesy vidíš náhled.',
       ],
@@ -66,10 +66,10 @@ export const TUTORIALS: Record<ModeId, TutorialStep[]> = {
       ],
     },
     {
-      title: 'Par a strážce řešitelnosti',
+      title: 'Nejkratší cesta a strážce',
       visual: { kind: 'chain-guard' },
       body: [
-        '**Par** je nejkratší možná cesta k cíli. Není to limit — je to meta.',
+        'Hra ti od začátku ukazuje **nejkratší cestu** — na kolik tahů se dá hádanka zvládnout nejlíp. Není to limit, je to meta, kterou se snažíš trefit.',
         'Ukazatel **„zbývá nejméně X tahů"** ti pořád počítá, jak daleko od cíle doopravdy jsi, i s ohledem na slova, která už jsi použil.',
         'Když by ses nějakým tahem odřízl od cíle, hra tě na to okamžitě upozorní a nabídne vrácení.',
       ],
@@ -79,9 +79,9 @@ export const TUTORIALS: Record<ModeId, TutorialStep[]> = {
       title: 'Body',
       visual: { kind: 'chain-score' },
       body: [
-        'Začínáš na 1000 bodech. Za každý tah nad par ztratíš 100.',
+        'Začínáš na 1000 bodech. Za každý tah navíc oproti nejkratší cestě ztratíš 100.',
         'Přidá se bonus za rychlost a za nápovědy, které jsi nepoužil.',
-        'Trefit se přesně do paru bez nápovědy je **perfektní kolo** — skóre se násobí jedna a půl krát.',
+        'Dojít nejkratší cestou a bez nápovědy je **perfektní kolo** — skóre se násobí jedna a půl krát.',
       ],
       key: 'Nápovědy jsou k dispozici vždy, jen stojí body. Dohrát se vyplatí za všech okolností.',
     },
@@ -100,7 +100,7 @@ export const TUTORIALS: Record<ModeId, TutorialStep[]> = {
       title: 'Prostřední písmeno je povinné',
       visual: { kind: 'hive-word' },
       body: [
-        'Zlaté písmeno uprostřed musí být **v každém** slově, které zadáš. To je hlavní chyták celé hry.',
+        'Zvýrazněné písmeno uprostřed musí být **v každém** slově, které zadáš. To je hlavní chyták celé hry.',
         'Ostatních šest písmen použiješ, jak se ti hodí — nebo vůbec.',
       ],
       key: 'Písmena se smí opakovat, klidně třikrát ve stejném slově.',
@@ -155,7 +155,7 @@ export const TUTORIALS: Record<ModeId, TutorialStep[]> = {
       title: 'Každé patro přidá jedno písmeno',
       visual: { kind: 'tower-letter' },
       body: [
-        'Do každého patra dostaneš **jedno nové písmeno**, zlatě zvýrazněné.',
+        'Do každého patra dostaneš **jedno nové písmeno**, barevně zvýrazněné.',
         'Z něj a ze všech písmen patra pod ním složíš nové slovo.',
       ],
       key: 'Pořadí písmen je úplně na tobě. Nové slovo se od toho předchozího může lišit k nepoznání.',
