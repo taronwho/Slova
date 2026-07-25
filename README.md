@@ -131,8 +131,33 @@ tests/           testy logiky a validace dat
 
 ## Vzhled
 
-Světlé i tmavé téma (podle systému nebo ručně), typografie Outfit + Inter,
-animace respektují `prefers-reduced-motion`.
+Identita stojí na elektrické fialové a triádě barev pro tři režimy: fialová
+Řetěz, medová Voština, rumělková Věž. Ty tři se potkávají ve značce a na
+domovské obrazovce; uvnitř hry pak barva režimu přebere roli akcentu a obarví
+celé prostředí, takže hráč pozná, kde je, ještě než přečte nadpis. Neutrály
+nejsou šedé — mají fialový nádech, aby se značkou ladily.
+
+Typografie: Bricolage Grotesque pro nadpisy, dlaždice a čísla, Manrope pro
+běžný text. Obě písma pokrývají českou diakritiku kompletně (ověřeno proti
+seznamu znaků, latin + latin-ext dohromady).
+
+Světlé i tmavé téma podle systému nebo ručně; animace respektují
+`prefers-reduced-motion`.
+
+Kontrast řeší dva tokeny. `--band-ink` je barva textu na barevném pruhu karty
+a `--on-accent` barva textu na plné ploše akcentu — v tmavém tématu jsou barvy
+režimů světlé, takže se text musí obrátit na tmavý. Medová je světlá v obou
+tématech a má tmavý text vždy.
+
+## Návody
+
+Při prvním spuštění každého režimu se otevře návod: šest kroků s ukázkami
+poskládanými ze skutečných herních prvků, zvýrazněnou hlavní zásadou a
+možností přeskočit. Znovu ho lze vyvolat tlačítkem Pravidla v horní liště
+nebo z domovské obrazovky, kde jsou pravidla i v rozbalovací textové podobě.
+
+Texty žijí v `src/game/tutorials.ts` odděleně od komponent, aby je šlo použít
+na obou místech.
 
 ## Mobil
 

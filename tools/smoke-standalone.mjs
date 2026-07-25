@@ -33,7 +33,12 @@ async function dismissTutorial(target) {
     await target.waitForTimeout(250)
   }
 }
-check(await page.evaluate(() => getComputedStyle(document.querySelector('h1')).fontFamily.includes('Outfit')), 'zabudovaný font se použil')
+check(
+  await page.evaluate(() =>
+    getComputedStyle(document.querySelector('h1')).fontFamily.includes('Bricolage'),
+  ),
+  'zabudovaný font se použil',
+)
 
 for (const [mode, sel] of [['Řetěz', '.ladder'], ['Voština', '.hive'], ['Věž', '.tower']]) {
   await page.goto(FILE, { waitUntil: 'networkidle' })

@@ -131,21 +131,7 @@ h3 {
 .btn-primary {
   background: var(--accent);
   border-color: transparent;
-  color: #fff;
-}
-
-@media (prefers-color-scheme: dark) {
-  .btn-primary {
-    color: #06231a;
-  }
-}
-
-:root[data-theme='dark'] .btn-primary {
-  color: #06231a;
-}
-
-:root[data-theme='light'] .btn-primary {
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .btn-primary:hover {

@@ -48,21 +48,42 @@
 
 .brand {
   display: flex;
-  align-items: baseline;
-  gap: var(--sp-2);
+  align-items: center;
+  gap: 1px;
   font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 1.15rem;
-  letter-spacing: 0.16em;
+  font-weight: 800;
+  font-size: 1.3rem;
+  letter-spacing: -0.01em;
   text-transform: uppercase;
+  font-variation-settings: 'wdth' 100, 'opsz' 24;
 }
 
-.brand .dot {
-  width: 7px;
-  height: 7px;
-  border-radius: var(--r-full);
-  background: var(--accent);
-  transform: translateY(-2px);
+/* Prostřední „O" je terč — značka tím drží pohromadě i jako samotný symbol. */
+.brand .mark {
+  display: inline-grid;
+  place-items: center;
+  width: 1.05em;
+  height: 1.05em;
+  margin-inline: 0.04em;
+  border-radius: 50%;
+  background: var(--brand);
+  color: var(--surface);
+  font-size: 0.82em;
+  transform: translateY(-0.02em);
+}
+
+/* Tři tečky triády — na první pohled řeknou, že hry jsou tři. */
+.brand-triad {
+  display: inline-flex;
+  gap: 3px;
+  margin-left: var(--sp-2);
+}
+
+.brand-triad i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: block;
 }
 
 .topbar-spacer {
@@ -85,8 +106,9 @@
 }
 
 .home-head h1 {
-  font-size: clamp(1.6rem, 5.5vw, 2.1rem);
-  letter-spacing: -0.02em;
+  font-size: clamp(1.7rem, 6vw, 2.3rem);
+  letter-spacing: -0.03em;
+  font-variation-settings: 'wght' 800;
 }
 
 .home-head p {
@@ -324,6 +346,7 @@
 }
 
 .tut-hive .hex {
+  font-variation-settings: 'wght' 800;
   font-size: 1.1rem;
 }
 
@@ -351,7 +374,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
-  padding: var(--sp-5);
+  padding: 0 var(--sp-5) var(--sp-5);
   text-align: left;
   border-radius: var(--r-xl);
   border: 1px solid var(--border);
@@ -364,15 +387,38 @@
     border-color var(--t-base) var(--ease);
 }
 
-.mode-card::after {
-  content: '';
-  position: absolute;
-  inset: auto -30% -60% auto;
-  width: 220px;
-  height: 220px;
-  border-radius: 50%;
-  background: color-mix(in oklab, var(--mode-color, var(--accent)) 14%, transparent);
-  transition: transform var(--t-slow) var(--ease);
+/* Barevný pruh přes celou šířku karty — poznávací znamení režimu. */
+.mode-band {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin: 0 calc(var(--sp-5) * -1) var(--sp-1);
+  padding: var(--sp-4) var(--sp-5);
+  background: var(--mode-color, var(--accent));
+  color: var(--band-ink);
+}
+
+.mode-band h2 {
+  flex: 1;
+  font-size: 1.5rem;
+  font-variation-settings: 'wght' 800;
+}
+
+.mode-band .mode-glyph {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.mode-new {
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--r-full);
+  /* Odvozeno z barvy textu, takže funguje na světlém i tmavém pruhu. */
+  background: color-mix(in oklab, currentColor 18%, transparent);
+  color: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .mode-card:hover {
@@ -381,20 +427,28 @@
   border-color: color-mix(in oklab, var(--mode-color, var(--accent)) 40%, var(--border));
 }
 
-.mode-card:hover::after {
-  transform: scale(1.25);
-}
-
-.mode-card h2 {
-  font-size: 1.6rem;
-}
-
 .mode-card .mode-glyph {
   font-family: var(--font-display);
-  font-size: 1.9rem;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--mode-color, var(--accent));
-  letter-spacing: 0.05em;
+}
+
+/* Uvnitř barevného pruhu se glyf řídí barvou pruhu, ne barvou režimu —
+   jinak by splynul s pozadím. */
+.mode-card .mode-band .mode-glyph,
+.mode-card .mode-band h2 {
+  color: inherit;
+}
+
+/* Medová je světlá barva; bílý text na ní má slabý kontrast, tak na ní
+   sedí tmavý. */
+.mode-card[data-mode='hive'] .mode-band {
+  color: #2b1b00;
+}
+
+.mode-card[data-mode='hive'] .mode-new {
+  background: rgb(0 0 0 / 16%);
+  color: inherit;
 }
 
 .mode-card .mode-meta {
@@ -493,6 +547,7 @@
   border-color: color-mix(in oklab, var(--gold) 55%, var(--border));
   background: var(--gold-soft);
   color: var(--gold);
+  box-shadow: 0 3px 0 color-mix(in oklab, var(--gold) 40%, var(--border-strong));
 }
 
 .rung.is-start .tile {
@@ -508,14 +563,16 @@
   border: 1.5px solid var(--border);
   background: var(--surface);
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 800;
   font-size: clamp(1.2rem, 5.2vw, 1.85rem);
   text-transform: uppercase;
   line-height: 1;
-  box-shadow: var(--shadow-1);
+  /* Police místo plochého stínu — dlaždice pak působí jako herní kostka. */
+  box-shadow: var(--shelf);
   transition:
     border-color var(--t-fast) var(--ease),
     background var(--t-fast) var(--ease),
+    box-shadow var(--t-fast) var(--ease),
     transform var(--t-fast) var(--ease);
 }
 
@@ -524,11 +581,12 @@
   border-color: var(--accent);
   color: var(--accent-text);
   background: var(--accent-soft);
+  box-shadow: 0 3px 0 color-mix(in oklab, var(--accent) 45%, var(--border-strong));
 }
 
 .tile.empty {
   border-style: dashed;
-  border-color: var(--border);
+  border-color: var(--border-strong);
   background: transparent;
   box-shadow: none;
 }
@@ -613,7 +671,8 @@
   display: grid;
   place-items: center;
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-  background: var(--surface-2);
+  /* Nádech barvy režimu — na jednolitém pozadí by plástev jinak splývala. */
+  background: color-mix(in oklab, var(--accent) 14%, var(--surface));
   border: none;
   font-family: var(--font-display);
   font-weight: 700;
@@ -634,8 +693,8 @@
 }
 
 .hex.center {
-  background: var(--gold);
-  color: #1b1405;
+  background: var(--accent);
+  color: var(--on-accent);
 }
 
 .hive-input {
@@ -804,7 +863,7 @@
   height: 1.9rem;
   border-radius: var(--r-sm);
   background: var(--gold);
-  color: #1b1405;
+  color: var(--band-ink);
   font-family: var(--font-display);
   font-weight: 700;
   text-transform: uppercase;
@@ -821,6 +880,7 @@
 .tray-tile {
   display: grid;
   place-items: center;
+  font-weight: 800;
   /* Bez zákazu smršťování by se dlaždice na úzkém displeji zmáčkly pod
      rozumnou velikost místo toho, aby se zalomily na další řádek. */
   flex: 0 0 auto;
@@ -829,14 +889,18 @@
   border-radius: var(--r-md);
   border: 1.5px solid var(--border);
   background: var(--surface);
-  box-shadow: var(--shadow-1);
+  box-shadow: var(--shelf);
   font-family: var(--font-display);
-  font-weight: 700;
   font-size: clamp(1.1rem, 4.6vw, 1.5rem);
   text-transform: uppercase;
   transition:
     transform var(--t-fast) var(--ease),
+    box-shadow var(--t-fast) var(--ease),
     opacity var(--t-fast) var(--ease);
+}
+
+.tray-tile:active {
+  box-shadow: none;
 }
 
 .tray-tile:active {
@@ -957,7 +1021,7 @@
 
 .key.accent {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   border-color: transparent;
 }
 
@@ -994,7 +1058,7 @@
 
 .score-big {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 800;
   font-size: 3.4rem;
   line-height: 1;
   letter-spacing: -0.03em;
@@ -1428,7 +1492,7 @@
 .stat .value {
   font-family: var(--font-display);
   font-size: 1.45rem;
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1.1;
 }
 

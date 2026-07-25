@@ -5,8 +5,8 @@ Kromě běžných ikon vzniknou i „maskable" varianty, u kterých si systém m
 oříznout rohy do libovolného tvaru — obsah proto musí zůstat v bezpečné zóně
 uprostřed, jinak Android ustřihne půl písmene.
 
-Písmo se bere z Outfitu, který používá i samotná hra, aby ikona seděla
-se značkou.
+Písmo se bere z Bricolage Grotesque, které používá i samotná hra, aby
+ikona seděla se značkou.
 """
 
 import os
@@ -17,13 +17,14 @@ from PIL import Image, ImageDraw, ImageFont
 ROOT = os.path.join(os.path.dirname(__file__), "..")
 OUT = os.path.join(ROOT, "public", "icons")
 WOFF2 = os.path.join(
-    ROOT, "node_modules", "@fontsource-variable", "outfit", "files",
-    "outfit-latin-wght-normal.woff2",
+    ROOT, "node_modules", "@fontsource-variable", "bricolage-grotesque", "files",
+    "bricolage-grotesque-latin-wght-normal.woff2",
 )
-TTF = os.path.join(OUT, ".outfit.ttf")
+TTF = os.path.join(OUT, ".display.ttf")
 
-GREEN = (15, 169, 104)
-PAPER = (250, 250, 247)
+# Barva značky — stejná elektrická fialová jako v aplikaci.
+BRAND = (91, 61, 245)
+PAPER = (255, 255, 255)
 
 # Maskable ikona musí počítat s oříznutím: bezpečná zóna je vnitřních 80 %.
 MASKABLE_SAFE = 0.62
@@ -57,19 +58,19 @@ def draw_icon(size: int, maskable: bool) -> Image.Image:
 
     if maskable:
         # Plná plocha — ořez si systém udělá sám.
-        draw.rectangle((0, 0, size, size), fill=GREEN)
+        draw.rectangle((0, 0, size, size), fill=BRAND)
         glyph_ratio = MASKABLE_SAFE
     else:
-        plate = Image.new("RGBA", (size, size), GREEN + (255,))
+        plate = Image.new("RGBA", (size, size), BRAND + (255,))
         image.paste(plate, (0, 0), rounded_mask(size, 0.22))
         draw = ImageDraw.Draw(image)
         glyph_ratio = PLAIN_SAFE
 
     font = ImageFont.truetype(path, int(size * glyph_ratio))
-    # Outfit je variabilní font a bez nastavení osy by se vykreslil v základní
-    # váze — na ikonu příliš tenké. Značka používá 700.
+    # Bricolage je variabilní font a bez nastavení osy by se vykreslil
+    # v základní váze — na ikonu příliš tenké. Značka používá 800.
     try:
-        font.set_variation_by_axes([700])
+        font.set_variation_by_axes([800])
     except (OSError, AttributeError):
         pass
 
@@ -90,7 +91,7 @@ def main():
             made.append(name)
 
     # Apple touch icon nesmí být průhledná ani zaoblená — iOS si ji zaoblí sám.
-    apple = Image.new("RGB", (180, 180), GREEN)
+    apple = Image.new("RGB", (180, 180), BRAND)
     apple.paste(draw_icon(180, True).convert("RGB"), (0, 0))
     apple.save(os.path.join(OUT, "apple-touch-icon.png"))
     made.append("apple-touch-icon.png")

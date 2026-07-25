@@ -183,7 +183,10 @@ export default function App() {
   }, [profile.theme, updateProfile])
 
   return (
-    <div className={`shell ${view.kind === 'game' ? 'playing' : ''}`}>
+    <div
+      className={`shell ${view.kind === 'game' ? 'playing' : ''}`}
+      data-mode={view.kind === 'game' ? view.mode : undefined}
+    >
       <header className="topbar">
         <button
           type="button"
@@ -191,8 +194,12 @@ export default function App() {
           onClick={goHome}
           style={{ color: 'inherit' }}
         >
-          <span className="dot" />
-          Slova
+          Sl<span className="mark">o</span>va
+          <span className="brand-triad" aria-hidden="true">
+            <i style={{ background: 'var(--mode-chain)' }} />
+            <i style={{ background: 'var(--mode-hive)' }} />
+            <i style={{ background: 'var(--mode-tower)' }} />
+          </span>
         </button>
         {view.kind === 'game' && (
           <>

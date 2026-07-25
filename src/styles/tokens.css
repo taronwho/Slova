@@ -1,4 +1,13 @@
-/* Designové tokeny — barvy, typografie, prostor, stíny, křivky animací. */
+/* Designové tokeny — barvy, typografie, prostor, stíny, křivky animací.
+ *
+ * Identita stojí na elektrické fialové a triádě barev pro tři režimy:
+ * fialová Řetěz, medová Voština, rumělková Věž. Ty tři se potkávají ve značce
+ * a na domovské obrazovce, uvnitř hry pak každý režim obarví celé prostředí
+ * svou barvou — hráč podle ní pozná, kde je, ještě než přečte nadpis.
+ *
+ * Neutrály nejsou šedé: mají fialový nádech, aby se značkou ladily místo aby
+ * proti ní stály.
+ */
 
 :root {
   color-scheme: light dark;
@@ -13,15 +22,16 @@
   --sp-7: 3rem;
   --sp-8: 4rem;
 
-  --r-sm: 8px;
-  --r-md: 12px;
-  --r-lg: 16px;
-  --r-xl: 24px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 18px;
+  --r-xl: 26px;
   --r-full: 999px;
 
-  --font-ui: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI',
+  --font-ui: 'Manrope Variable', 'Manrope', system-ui, -apple-system, 'Segoe UI',
     sans-serif;
-  --font-display: 'Outfit Variable', 'Outfit', var(--font-ui);
+  --font-display: 'Bricolage Grotesque Variable', 'Bricolage Grotesque',
+    var(--font-ui);
 
   /* Křivka „decelerate" — rychlý start, měkké dosednutí */
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
@@ -30,111 +40,184 @@
   --t-base: 240ms;
   --t-slow: 360ms;
 
-  /* Světlé téma — papír a inkoust */
-  --bg: #fafaf7;
-  --bg-tint: #f2f2ec;
+  /* ---------- Světlé téma ---------- */
+  --bg: #f2f1fa;
+  --bg-tint: #e8e6f6;
   --surface: #ffffff;
-  --surface-2: #f6f6f2;
-  --border: #e4e4dc;
-  --border-strong: #cfcfc4;
-  --text: #14171c;
-  --text-muted: #6b7280;
-  --text-faint: #9ca3af;
+  --surface-2: #f0eefa;
+  --border: #e2dff3;
+  --border-strong: #c7c2e5;
+  --text: #17142b;
+  --text-muted: #5b567a;
+  --text-faint: #8d89a8;
 
-  --accent: #0fa968;
-  --accent-soft: #d8f3e6;
-  --accent-text: #07734a;
-  --gold: #c48a1c;
-  --gold-soft: #fbeecb;
-  --warn: #d9722c;
-  --warn-soft: #fceadb;
-  --error: #d64545;
-  --error-soft: #fbe0e0;
+  /* Značka a barvy režimů */
+  --brand: #5b3df5;
+  --brand-soft: #e7e2ff;
+  --brand-text: #4022d1;
 
-  --shadow-1: 0 1px 2px rgb(20 23 28 / 6%);
-  --shadow-2: 0 2px 6px rgb(20 23 28 / 6%), 0 10px 24px -12px rgb(20 23 28 / 18%);
-  --shadow-3: 0 4px 12px rgb(20 23 28 / 8%), 0 24px 48px -20px rgb(20 23 28 / 26%);
+  --mode-chain: #5b3df5;
+  --mode-hive: #d98704;
+  --mode-tower: #e23a2e;
+
+  /* Výchozí akcent = barva značky; uvnitř hry ho přepíše barva režimu. */
+  --accent: #5b3df5;
+  --accent-soft: #e7e2ff;
+  --accent-text: #4022d1;
+
+  --gold: #b57503;
+  --gold-soft: #fbeed2;
+  --warn: #c9631d;
+  --warn-soft: #fbe6d7;
+  --error: #d1284a;
+  --error-soft: #fbdde4;
+
+  /* Text na barevném pruhu karty. V tmavém tématu jsou barvy režimů světlé,
+     takže se na nich musí obrátit na tmavý, jinak by kontrast neprošel. */
+  --band-ink: #ffffff;
+
+  /* Stíny s fialovým nádechem, aby neutrály nešedly. */
+  --shadow-1: 0 1px 2px rgb(35 25 80 / 7%);
+  --shadow-2: 0 2px 6px rgb(35 25 80 / 7%), 0 10px 24px -12px rgb(35 25 80 / 22%);
+  --shadow-3: 0 4px 12px rgb(35 25 80 / 10%), 0 24px 48px -20px rgb(35 25 80 / 30%);
   --shadow-key: 0 2px 0 var(--border-strong);
+  /* „Police" pod dlaždicí — díky ní působí jako fyzická herní kostka. */
+  --shelf: 0 3px 0 var(--border-strong);
 
   --maxw: 1120px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0e1013;
-    --bg-tint: #14171c;
-    --surface: #181b21;
-    --surface-2: #1f232a;
-    --border: #2a2f38;
-    --border-strong: #3a4049;
-    --text: #edeff2;
-    --text-muted: #9aa3af;
-    --text-faint: #6b7480;
+    --bg: #121028;
+    --bg-tint: #191634;
+    --surface: #1b1838;
+    --surface-2: #241f47;
+    --border: #2f2a57;
+    --border-strong: #453d75;
+    --text: #efedfb;
+    --text-muted: #a49fc8;
+    --text-faint: #736d9c;
 
-    --accent: #34d399;
-    --accent-soft: #10382a;
-    --accent-text: #6ee7b7;
-    --gold: #f0b429;
-    --gold-soft: #3a2e0f;
+    --brand: #8f7bff;
+    --brand-soft: #2a2260;
+    --brand-text: #bcb0ff;
+
+    --mode-chain: #8f7bff;
+    --mode-hive: #f5b027;
+    --mode-tower: #ff6a5e;
+
+    --accent: #8f7bff;
+    --accent-soft: #2a2260;
+    --accent-text: #bcb0ff;
+
+    --gold: #f5b027;
+    --gold-soft: #3a2a0b;
     --warn: #fb923c;
-    --warn-soft: #3a2413;
-    --error: #f87171;
-    --error-soft: #3a1c1c;
+    --warn-soft: #3e2612;
+    --error: #ff6b85;
+    --error-soft: #401824;
+    --band-ink: #14112a;
 
-    --shadow-1: 0 1px 2px rgb(0 0 0 / 40%);
-    --shadow-2: 0 2px 6px rgb(0 0 0 / 40%), 0 10px 24px -12px rgb(0 0 0 / 60%);
-    --shadow-3: 0 4px 12px rgb(0 0 0 / 45%), 0 24px 48px -20px rgb(0 0 0 / 70%);
-    --shadow-key: 0 2px 0 #0a0c0f;
+    --shadow-1: 0 1px 2px rgb(0 0 0 / 45%);
+    --shadow-2: 0 2px 6px rgb(0 0 0 / 45%), 0 10px 24px -12px rgb(0 0 0 / 65%);
+    --shadow-3: 0 4px 12px rgb(0 0 0 / 50%), 0 24px 48px -20px rgb(0 0 0 / 75%);
+    --shadow-key: 0 2px 0 #0c0a1c;
+    --shelf: 0 3px 0 #0c0a1c;
   }
 }
 
 /* Ruční přepnutí tématu musí přebít systémovou preferenci v obou směrech. */
 :root[data-theme='light'] {
-  --bg: #fafaf7;
-  --bg-tint: #f2f2ec;
+  --bg: #f2f1fa;
+  --bg-tint: #e8e6f6;
   --surface: #ffffff;
-  --surface-2: #f6f6f2;
-  --border: #e4e4dc;
-  --border-strong: #cfcfc4;
-  --text: #14171c;
-  --text-muted: #6b7280;
-  --text-faint: #9ca3af;
-  --accent: #0fa968;
-  --accent-soft: #d8f3e6;
-  --accent-text: #07734a;
-  --gold: #c48a1c;
-  --gold-soft: #fbeecb;
-  --warn: #d9722c;
-  --warn-soft: #fceadb;
-  --error: #d64545;
-  --error-soft: #fbe0e0;
-  --shadow-1: 0 1px 2px rgb(20 23 28 / 6%);
-  --shadow-2: 0 2px 6px rgb(20 23 28 / 6%), 0 10px 24px -12px rgb(20 23 28 / 18%);
-  --shadow-3: 0 4px 12px rgb(20 23 28 / 8%), 0 24px 48px -20px rgb(20 23 28 / 26%);
+  --surface-2: #f0eefa;
+  --border: #e2dff3;
+  --border-strong: #c7c2e5;
+  --text: #17142b;
+  --text-muted: #5b567a;
+  --text-faint: #8d89a8;
+  --brand: #5b3df5;
+  --brand-soft: #e7e2ff;
+  --brand-text: #4022d1;
+  --mode-chain: #5b3df5;
+  --mode-hive: #d98704;
+  --mode-tower: #e23a2e;
+  --accent: #5b3df5;
+  --accent-soft: #e7e2ff;
+  --accent-text: #4022d1;
+  --gold: #b57503;
+  --gold-soft: #fbeed2;
+  --warn: #c9631d;
+  --warn-soft: #fbe6d7;
+  --error: #d1284a;
+  --error-soft: #fbdde4;
+  --band-ink: #ffffff;
+  --shadow-1: 0 1px 2px rgb(35 25 80 / 7%);
+  --shadow-2: 0 2px 6px rgb(35 25 80 / 7%), 0 10px 24px -12px rgb(35 25 80 / 22%);
+  --shadow-3: 0 4px 12px rgb(35 25 80 / 10%), 0 24px 48px -20px rgb(35 25 80 / 30%);
   --shadow-key: 0 2px 0 var(--border-strong);
+  --shelf: 0 3px 0 var(--border-strong);
 }
 
 :root[data-theme='dark'] {
-  --bg: #0e1013;
-  --bg-tint: #14171c;
-  --surface: #181b21;
-  --surface-2: #1f232a;
-  --border: #2a2f38;
-  --border-strong: #3a4049;
-  --text: #edeff2;
-  --text-muted: #9aa3af;
-  --text-faint: #6b7480;
-  --accent: #34d399;
-  --accent-soft: #10382a;
-  --accent-text: #6ee7b7;
-  --gold: #f0b429;
-  --gold-soft: #3a2e0f;
+  --bg: #121028;
+  --bg-tint: #191634;
+  --surface: #1b1838;
+  --surface-2: #241f47;
+  --border: #2f2a57;
+  --border-strong: #453d75;
+  --text: #efedfb;
+  --text-muted: #a49fc8;
+  --text-faint: #736d9c;
+  --brand: #8f7bff;
+  --brand-soft: #2a2260;
+  --brand-text: #bcb0ff;
+  --mode-chain: #8f7bff;
+  --mode-hive: #f5b027;
+  --mode-tower: #ff6a5e;
+  --accent: #8f7bff;
+  --accent-soft: #2a2260;
+  --accent-text: #bcb0ff;
+  --gold: #f5b027;
+  --gold-soft: #3a2a0b;
   --warn: #fb923c;
-  --warn-soft: #3a2413;
-  --error: #f87171;
-  --error-soft: #3a1c1c;
-  --shadow-1: 0 1px 2px rgb(0 0 0 / 40%);
-  --shadow-2: 0 2px 6px rgb(0 0 0 / 40%), 0 10px 24px -12px rgb(0 0 0 / 60%);
-  --shadow-3: 0 4px 12px rgb(0 0 0 / 45%), 0 24px 48px -20px rgb(0 0 0 / 70%);
-  --shadow-key: 0 2px 0 #0a0c0f;
+  --warn-soft: #3e2612;
+  --error: #ff6b85;
+  --error-soft: #401824;
+  --band-ink: #14112a;
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 45%);
+  --shadow-2: 0 2px 6px rgb(0 0 0 / 45%), 0 10px 24px -12px rgb(0 0 0 / 65%);
+  --shadow-3: 0 4px 12px rgb(0 0 0 / 50%), 0 24px 48px -20px rgb(0 0 0 / 75%);
+  --shadow-key: 0 2px 0 #0c0a1c;
+  --shelf: 0 3px 0 #0c0a1c;
+}
+
+/* Text, který leží na plné ploše akcentu (tlačítka, střed plástve).
+   Sleduje stejnou logiku jako pruh na kartě: na světlé barvě tmavý text. */
+:root {
+  --on-accent: var(--band-ink);
+}
+
+/* Uvnitř hry přebírá roli akcentu barva režimu — obarví tím dlaždice,
+   tlačítka, ukazatele i hlášky, aniž by se cokoli řešilo v komponentách. */
+.shell[data-mode='chain'] {
+  --accent: var(--mode-chain);
+  --accent-soft: color-mix(in oklab, var(--mode-chain) 16%, var(--surface));
+  --accent-text: color-mix(in oklab, var(--mode-chain) 78%, var(--text));
+}
+
+.shell[data-mode='hive'] {
+  /* Medová je světlá v obou tématech, proto na ní tmavý text vždycky. */
+  --on-accent: #2b1b00;
+  --accent: var(--mode-hive);
+  --accent-soft: color-mix(in oklab, var(--mode-hive) 18%, var(--surface));
+  --accent-text: color-mix(in oklab, var(--mode-hive) 72%, var(--text));
+}
+
+.shell[data-mode='tower'] {
+  --accent: var(--mode-tower);
+  --accent-soft: color-mix(in oklab, var(--mode-tower) 16%, var(--surface));
+  --accent-text: color-mix(in oklab, var(--mode-tower) 76%, var(--text));
 }

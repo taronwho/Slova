@@ -23,9 +23,9 @@ interface Props {
 }
 
 const MODES: { id: ModeId; glyph: string; color: string }[] = [
-  { id: 'chain', glyph: '→', color: 'var(--accent)' },
-  { id: 'hive', glyph: '⬡', color: 'var(--gold)' },
-  { id: 'tower', glyph: '↑', color: 'var(--warn)' },
+  { id: 'chain', glyph: '→', color: 'var(--mode-chain)' },
+  { id: 'hive', glyph: '⬡', color: 'var(--mode-hive)' },
+  { id: 'tower', glyph: '↑', color: 'var(--mode-tower)' },
 ]
 
 const DIFFICULTIES: Difficulty[] = ['easy', 'normal', 'hard']
@@ -77,19 +77,20 @@ export function Home({
             <article
               className="mode-card"
               key={mode.id}
+              data-mode={mode.id}
               style={{ ['--mode-color' as string]: mode.color }}
             >
-              <div className="mode-card-top">
+              {/* Plný barevný pruh — karta je poznat na první pohled
+                  a barva se pak drží i uvnitř hry. */}
+              <div className="mode-band">
                 <span className="mode-glyph">{mode.glyph}</span>
-                {isNew && <span className="chip chip-accent">Nové</span>}
+                <h2>{MODE_LABEL[mode.id]}</h2>
+                {isNew && <span className="mode-new">Nové</span>}
               </div>
 
-              <div>
-                <h2>{MODE_LABEL[mode.id]}</h2>
-                <p className="muted" style={{ fontSize: '0.94rem' }}>
-                  {MODE_TAGLINE[mode.id]}
-                </p>
-              </div>
+              <p className="muted" style={{ fontSize: '0.94rem' }}>
+                {MODE_TAGLINE[mode.id]}
+              </p>
 
               <ul className="mode-rules">
                 {MODE_SUMMARY[mode.id].map((rule) => (
