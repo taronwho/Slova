@@ -36,10 +36,10 @@ nemůže zablokovat cestu nahoru. Řetěz podpisů je ověřený už při genero
 | | zdroj | výsledek |
 |---|---|---|
 | Slovník | frekvenční seznam češtiny profiltrovaný přes hunspell `cs_CZ` | 248 811 ověřených slov |
-| Základní tvary | lemmatizace přes LemmaGen3 + záchyt propadlých tvarů | 59 480 slov |
+| Základní tvary | lemmatizace přes LemmaGen3 + záchyt propadlých tvarů | 58 840 slov |
 | Řetěz | grafy pro délky 4, 5 a 6 | 8 738 hádanek |
 | Voština | plástve odvozené od pangramů | 2 400 hádanek |
-| Věž | ověřené řetězy přesmyček 3→6/7/8 | 2 403 hádanek |
+| Věž | ověřené řetězy přesmyček 3→6/7/8 | 2 360 hádanek |
 
 ### Jen základní tvary
 
@@ -61,11 +61,21 @@ i bez lemmatizéru: ohýbaný tvar má svůj základní tvar v lexikonu a ten je
 **častější**. Porovnání frekvence je podstatné — chrání slova jako „země",
 kde tvar po odebrání koncovky („zem") sice existuje, ale je mnohem vzácnější.
 
+Druhý, nezávislý znak jsou **hesla hunspellového slovníku**: 2. pád množného
+čísla je holý kmen, který si hunspell odvozuje příponovými pravidly, takže
+heslem není. To je zásadní pojistka — chrání skutečné 1. pády, které by
+pravidla jinak smetla: „losos" kvůli častějšímu „lososa", „lít" kvůli „líto",
+„brigadýr" kvůli oslovení „brigadýre". Samotné porovnání frekvence na to
+nestačí, v titulkovém korpusu bývá 5. pád běžnější než 1. Naopak hesla nestačí
+sama o sobě: hunspell nemá jako hesla příslovce („dobře", „rychle"), takže se
+používají jen jako ochrana, ne jako podmínka pro zařazení.
+
 Pravidla pokrývají 5. pád mužský i ženský, 3. a 6. pád, 1. pád množného čísla
-mužských životných a 2. pád množného čísla na -ek; dohromady odeberou 2 599
-slov. **Vyčerpávající to není** — čeština má tvarů víc, než se dá pokrýt
-ručními pravidly, takže ojedinělé formy dál projdou. Úplné řešení potřebuje
-morfologii se značkami, viz níž.
+mužských životných a 2. pád množného čísla (na -ek i holý kmen u ženských,
+středních a měkkých vzorů); dohromady odeberou 3 239 slov. **Vyčerpávající to
+není** — čeština má tvarů víc, než se dá pokrýt ručními pravidly, takže
+ojedinělé formy dál projdou. Úplné řešení potřebuje morfologii se značkami,
+viz níž.
 
 **Co chybí:** 1. pád množného čísla („hrady"). Odlišit ho od ostatních pádů
 („hradu", „hradem") vyžaduje morfologii se značkami pádu — MorfFlex, modely
