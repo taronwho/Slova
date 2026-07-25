@@ -20,6 +20,30 @@
   background: color-mix(in oklab, var(--bg) 82%, transparent);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+/* Chipy v hlavičce se nesmí lámat do dvou řádků. */
+.topbar .chip {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+@media (max-width: 420px) {
+  .topbar {
+    gap: var(--sp-2);
+    padding-inline: var(--sp-3);
+  }
+
+  .brand {
+    font-size: 1rem;
+    letter-spacing: 0.12em;
+  }
+
+  /* Na úzkém displeji se z „Série 0" stane jen číslo se symbolem. */
+  .topbar .chip-streak .chip-label {
+    display: none;
+  }
 }
 
 .brand {
@@ -197,94 +221,6 @@
   max-width: 100%;
 }
 
-/* Na mobilu patří hrací plocha nahoru — panely s nápovědami a historií
-   by ji jinak odsunuly pod okraj obrazovky. */
-@media (max-width: 899px) {
-  .game.with-rail .board {
-    order: 1;
-  }
-  .game.with-rail .rail-left {
-    order: 2;
-  }
-  .game.with-rail .rail-right {
-    order: 3;
-  }
-}
-
-.stat-row {
-  display: flex;
-  gap: var(--sp-2);
-  flex-wrap: wrap;
-}
-
-.stat {
-  flex: 1 1 auto;
-  min-width: 74px;
-  padding: var(--sp-3);
-  border-radius: var(--r-md);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  text-align: center;
-}
-
-.stat .value {
-  font-family: var(--font-display);
-  font-size: 1.45rem;
-  font-weight: 700;
-  line-height: 1.1;
-}
-
-.stat .value.accent {
-  color: var(--accent);
-}
-
-.stat .value.warn {
-  color: var(--warn);
-}
-
-.stat .value.gold {
-  color: var(--gold);
-}
-
-.board {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-4);
-  align-items: center;
-}
-
-.banner {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  padding: var(--sp-3) var(--sp-4);
-  border-radius: var(--r-md);
-  font-size: 0.9rem;
-  font-weight: 500;
-  animation: rise var(--t-base) var(--ease) both;
-}
-
-.banner-error {
-  background: var(--error-soft);
-  color: var(--error);
-}
-
-.banner-warn {
-  background: var(--warn-soft);
-  color: var(--warn);
-}
-
-.banner-accent {
-  background: var(--accent-soft);
-  color: var(--accent-text);
-}
-
-.banner .banner-actions {
-  margin-left: auto;
-  display: flex;
-  gap: var(--sp-2);
-}
 
 /* ---------- Řetěz ---------- */
 
@@ -640,8 +576,11 @@
 .tray-tile {
   display: grid;
   place-items: center;
-  width: clamp(38px, 11vw, 52px);
-  height: clamp(44px, 12vw, 58px);
+  /* Bez zákazu smršťování by se dlaždice na úzkém displeji zmáčkly pod
+     rozumnou velikost místo toho, aby se zalomily na další řádek. */
+  flex: 0 0 auto;
+  width: clamp(44px, 11vw, 52px);
+  height: clamp(48px, 12vw, 58px);
   border-radius: var(--r-md);
   border: 1.5px solid var(--border);
   background: var(--surface);
@@ -677,7 +616,6 @@
   gap: 6px;
   width: 100%;
   max-width: 560px;
-  padding-bottom: max(0px, env(safe-area-inset-bottom));
 }
 
 .kb-row {
@@ -686,25 +624,79 @@
   justify-content: center;
 }
 
+.key-slot {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+}
+
 .key {
+  position: relative;
   flex: 1 1 auto;
   min-width: 0;
-  height: 46px;
+  height: 48px;
   border-radius: var(--r-sm);
   background: var(--surface);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-key);
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 1.05rem;
   text-transform: uppercase;
   transition: transform 90ms var(--ease), background 90ms var(--ease);
+  /* Aby dlouhý stisk nevyvolal výběr textu ani lupu na iOS. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
 }
 
 .key:active {
   transform: translateY(2px);
   box-shadow: none;
   background: var(--surface-2);
+}
+
+/* Náhled písmene dostupného podržením — stejná nápověda jako na nativní
+   klávesnici, jinak by o té možnosti nikdo nevěděl. */
+.key-hint {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: 0.6rem;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.key-variants {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+  padding: 5px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-3);
+  z-index: 40;
+  animation: pop 140ms var(--ease-back) both;
+}
+
+.key-variants .key {
+  width: 46px;
+  flex: 0 0 46px;
+  box-shadow: none;
+  background: var(--surface-2);
+}
+
+.kb-actions {
+  margin-top: 2px;
 }
 
 .key.wide {
@@ -928,4 +920,321 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* ============================================================
+   ADAPTACE PRO MOBIL
+   Záměrně až na konci souboru: tahle pravidla musí přebít základní
+   definice výše (výšku kláves, velikost dlaždic). Když stály nad nimi,
+   základní `.key { height: 48px }` je přebilo a na šířku pak klávesnice
+   zakryla celou hrací plochu.
+   ============================================================ */
+
+/* ---------- Mobilní režim ----------
+   Na telefonu se hra chová jako aplikace, ne jako dokument: hlavička drží
+   nahoře, hrací plocha roluje uvnitř a ovládání je přišpendlené dole, aby
+   klávesnice nikdy neskončila pod okrajem obrazovky. */
+@media (max-width: 899px) {
+  .game.with-rail .board {
+    order: 1;
+  }
+  .game.with-rail .rail-left {
+    order: 2;
+  }
+  .game.with-rail .rail-right {
+    order: 3;
+  }
+
+  .shell.playing {
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  .shell.playing .main {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-bottom: var(--sp-4);
+    scrollbar-width: none;
+  }
+
+  .shell.playing .main::-webkit-scrollbar {
+    display: none;
+  }
+
+  .shell.playing .game {
+    gap: var(--sp-4);
+  }
+
+  .board-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sp-2);
+    width: 100%;
+    padding: var(--sp-3) 0 max(var(--sp-2), env(safe-area-inset-bottom));
+    /* Plná plocha, ne dlouhý přechod — jinak to vypadá, že je obsah pod ní
+       rozmazaně useknutý. Oddělení dělá vlasová linka a jemný stín. */
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -8px 20px -12px rgb(0 0 0 / 22%);
+  }
+
+  /* Aby cílové slovo šlo dorolovat nad patičku a neschovalo se pod ní. */
+  .shell.playing .ladder,
+  .shell.playing .tower,
+  .shell.playing .hive-wrap {
+    scroll-margin-bottom: var(--sp-5);
+  }
+
+  /* Budoucí patra věže se na telefonu srazí do tenkých pruhů. V plné
+     velikosti by zabrala celou horní půlku displeje, přitom nesou jedinou
+     informaci: kolik pater ještě zbývá a jak věž poroste. */
+  .shell.playing .floor.future {
+    gap: 3px;
+  }
+
+  .shell.playing .floor.future .tile {
+    width: clamp(14px, 4.5vw, 22px);
+    height: 7px;
+    border-radius: 3px;
+    border-width: 1px;
+    background: var(--surface-2);
+    opacity: 0.85;
+  }
+
+  .shell.playing .floor.future .tile::after {
+    display: none;
+  }
+}
+
+/* Na úzkém displeji si klávesnice a zásobník dlaždic vezmou i okraje stránky
+   — každý získaný pixel jde do šířky kláves. */
+@media (max-width: 480px) {
+  .board-footer {
+    margin-inline: calc(var(--sp-4) * -1);
+    width: calc(100% + var(--sp-4) * 2);
+    padding-inline: var(--sp-1);
+  }
+
+  .kb-row {
+    gap: 3px;
+  }
+
+  .keyboard {
+    gap: 5px;
+  }
+
+  .tray-tile {
+    width: clamp(44px, 12.5vw, 52px);
+    height: clamp(48px, 13.5vw, 58px);
+  }
+}
+
+/* Nejužší displeje — klávesnice si bere úplně všechno místo. */
+@media (max-width: 360px) {
+  .board-footer {
+    padding-inline: 0;
+  }
+
+  .kb-row {
+    gap: 2px;
+  }
+
+  .key {
+    font-size: 0.95rem;
+  }
+
+  .key-hint {
+    right: 2px;
+    font-size: 0.55rem;
+  }
+}
+
+@media (min-width: 900px) {
+  .board-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sp-3);
+    width: 100%;
+  }
+}
+
+/* Nízké displeje (iPhone SE a spol.) — všechno o něco těsněji, ať se hrací
+   plocha i ovládání vejdou naráz. */
+@media (max-height: 700px) and (max-width: 899px) {
+  .topbar {
+    padding-top: max(var(--sp-2), env(safe-area-inset-top));
+    padding-bottom: var(--sp-2);
+  }
+
+  .shell.playing .main {
+    padding-top: var(--sp-3);
+  }
+
+  /* Dlaždice žebříku se klikají (nastavují pozici písmene), takže se ani
+     na nízkém displeji nesmí zmenšit pod pohodlný dotykový cíl. */
+  .tile {
+    width: clamp(42px, 10.5vw, 52px);
+    height: clamp(46px, 11.5vw, 58px);
+    font-size: clamp(1rem, 4.6vw, 1.6rem);
+  }
+
+  .ladder {
+    gap: 3px;
+  }
+
+  .connector {
+    height: 9px;
+  }
+
+  /* I na nízkém displeji na výšku zůstává klávesa pohodlně velká —
+     ušetří se jinde (rozestupy, hlavička). */
+  .key {
+    height: 44px;
+  }
+
+  .keyboard {
+    gap: 4px;
+  }
+}
+
+/* Na šířku je svislého místa málo, a kdyby klávesnice zůstala pod hrací
+   plochou, zakryla by ji celou. Rozdělí se proto vedle sebe: vlevo plocha,
+   vpravo ovládání. (V nainstalované aplikaci je hra podle manifestu zamčená
+   na výšku, tohle řeší jen prohlížeč na otočeném telefonu.) */
+@media (max-width: 1024px) and (orientation: landscape) and (max-height: 560px) {
+  .shell.playing .game.with-rail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .shell.playing .board {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(290px, 400px);
+    gap: var(--sp-4);
+    align-items: start;
+  }
+
+  .shell.playing .board > * {
+    grid-column: 1;
+  }
+
+  .shell.playing .board > .board-footer {
+    grid-column: 2;
+    grid-row: 1 / span 99;
+    position: sticky;
+    top: 0;
+    padding-block: 0;
+    background: none;
+    border-top: none;
+    box-shadow: none;
+  }
+
+  /* Panely pod hrou se srovnají do řádku, ať se na ně dá dorolovat. */
+  .shell.playing .rail-left {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .shell.playing .rail-right {
+    display: none;
+  }
+
+  .tile {
+    width: clamp(40px, 5vw, 46px);
+    height: clamp(44px, 5.6vw, 50px);
+    font-size: clamp(0.9rem, 2.4vw, 1.4rem);
+  }
+
+  /* Na šířku je svislého místa opravdu málo; nižší klávesy jsou tu
+     standardní kompromis, který dělají i nativní klávesnice. */
+  .key {
+    height: 38px;
+    font-size: 0.92rem;
+  }
+
+  .hive {
+    width: min(210px, 26vw);
+  }
+}
+
+.stat-row {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.stat {
+  flex: 1 1 auto;
+  min-width: 74px;
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  text-align: center;
+}
+
+.stat .value {
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.stat .value.accent {
+  color: var(--accent);
+}
+
+.stat .value.warn {
+  color: var(--warn);
+}
+
+.stat .value.gold {
+  color: var(--gold);
+}
+
+.board {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  align-items: center;
+}
+
+.banner {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  font-size: 0.9rem;
+  font-weight: 500;
+  animation: rise var(--t-base) var(--ease) both;
+}
+
+.banner-error {
+  background: var(--error-soft);
+  color: var(--error);
+}
+
+.banner-warn {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.banner-accent {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.banner .banner-actions {
+  margin-left: auto;
+  display: flex;
+  gap: var(--sp-2);
 }

@@ -61,6 +61,7 @@ export function ChainGame({
   const [done, setDone] = useState(false)
   const reported = useRef(false)
 
+  const draftRef = useRef<HTMLDivElement | null>(null)
   const current = state.path[state.path.length - 1]!
   const solved = state.finishedAt !== null
   const moves = state.path.length - 1
@@ -88,6 +89,18 @@ export function ChainGame({
     reported.current = true
     setDone(true)
   }, [solved])
+
+  // Po každém tahu doroluj k rozepsanému slovu — na telefonu žebřík povyroste
+  // a hráč by jinak koukal na starou část řetězu.
+  useEffect(() => {
+    if (solved) return
+    draftRef.current?.scrollIntoView({
+      behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+        ? 'auto'
+        : 'smooth',
+      block: 'center',
+    })
+  }, [state.path.length, solved])
 
   const breakdown = useMemo(
     () => (solved ? scoreChain(state, streak) : null),
@@ -348,7 +361,11 @@ export function ChainGame({
           {!solved && (
             <>
               <div className="connector" />
-              <div className={`rung ${shakeKey ? 'animate-shake' : ''}`} key={shakeKey}>
+              <div
+                className={`rung ${shakeKey ? 'animate-shake' : ''}`}
+                key={shakeKey}
+                ref={draftRef}
+              >
                 {draft.map((letter, i) => (
                   <button
                     type="button"
@@ -389,7 +406,7 @@ export function ChainGame({
         </div>
 
         {!solved && (
-          <>
+          <div className="board-footer">
             <div style={{ display: 'flex', gap: 'var(--sp-2)', flexWrap: 'wrap', justifyContent: 'center' }}>
               <button
                 type="button"
@@ -419,7 +436,7 @@ export function ChainGame({
               enterDisabled={draftDiff !== 1}
               enterLabel="Zahrát"
             />
-          </>
+          </div>
         )}
       </div>
 

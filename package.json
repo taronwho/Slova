@@ -4,7 +4,7 @@
   "description": "Tři české slovní hry: Řetěz, Voština a Věž",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && node tools/7_build_sw.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -12,7 +12,10 @@
     "smoke": "node tools/smoke.mjs",
     "data:build": "bash tools/0_download.sh && python3 tools/1_validate_words.py && python3 tools/2_curate.py && python3 tools/3_build_chain.py && python3 tools/4_build_hive.py && python3 tools/5_build_tower.py",
     "build:standalone": "node tools/build-artifact.mjs",
-    "smoke:standalone": "node tools/smoke-standalone.mjs"
+    "smoke:standalone": "node tools/smoke-standalone.mjs",
+    "build:icons": "python3 tools/6_build_icons.py",
+    "audit:mobile": "node tools/audit-mobile.mjs",
+    "audit:pwa": "node tools/audit-pwa.mjs"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",

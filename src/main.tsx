@@ -14,3 +14,20 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 )
+
+/**
+ * Service worker se registruje jen u běžného buildu. Jednosouborová verze
+ * má data uvnitř stránky a žádný sw.js vedle sebe nemá, takže by registrace
+ * skončila chybou 404.
+ */
+if (import.meta.env.PROD && 'serviceWorker' in navigator && !window.__SLOVA_DATA__) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register(`${import.meta.env.BASE_URL}sw.js`, {
+        scope: import.meta.env.BASE_URL,
+      })
+      .catch(() => {
+        // Hra funguje i bez offline režimu — není důvod obtěžovat hráče.
+      })
+  })
+}

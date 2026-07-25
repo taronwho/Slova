@@ -276,33 +276,35 @@ export function HiveGame({ puzzle, streak, dayLabel, onFinish, onNext, onHome }:
             ))}
           </div>
 
-          <div style={{ display: 'flex', gap: 'var(--sp-2)', flexWrap: 'wrap', justifyContent: 'center' }}>
-            <button
-              type="button"
-              className="btn"
-              onClick={() => setDraft((prev) => prev.slice(0, -1))}
-            >
-              Smazat
-            </button>
-            <button
-              type="button"
-              className="btn"
-              onClick={() => setState((prev) => ({ ...prev, ring: shuffle(prev.ring) }))}
-            >
-              Zamíchat
-            </button>
-            <button type="button" className="btn btn-primary" onClick={submit}>
-              Potvrdit
-            </button>
-          </div>
+          <div className="board-footer">
+            <div style={{ display: 'flex', gap: 'var(--sp-2)', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setDraft((prev) => prev.slice(0, -1))}
+              >
+                Smazat
+              </button>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setState((prev) => ({ ...prev, ring: shuffle(prev.ring) }))}
+              >
+                Zamíchat
+              </button>
+              <button type="button" className="btn btn-primary" onClick={submit}>
+                Potvrdit
+              </button>
+            </div>
 
-          <div style={{ display: 'flex', gap: 'var(--sp-2)', flexWrap: 'wrap', justifyContent: 'center' }}>
-            <button type="button" className="btn btn-sm" onClick={hint}>
-              Nápověda −80
-            </button>
-            <button type="button" className="btn btn-sm btn-ghost" onClick={finishRound}>
-              Ukončit plástev
-            </button>
+            <div style={{ display: 'flex', gap: 'var(--sp-2)', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <button type="button" className="btn btn-sm" onClick={hint}>
+                Nápověda −80
+              </button>
+              <button type="button" className="btn btn-sm btn-ghost" onClick={finishRound}>
+                Ukončit plástev
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -132,8 +132,52 @@ tests/           testy logiky a validace dat
 ## Vzhled
 
 Světlé i tmavé téma (podle systému nebo ručně), typografie Outfit + Inter,
-responzivní od 320 px výš, animace respektují `prefers-reduced-motion`.
-Na mobilu je k dispozici česká virtuální klávesnice QWERTZ s řádkem diakritiky.
+animace respektují `prefers-reduced-motion`.
+
+## Mobil
+
+Na telefonu se hra chová jako aplikace, ne jako dokument: hlavička drží nahoře,
+hrací plocha roluje uvnitř a ovládání s klávesnicí je přišpendlené dole, takže
+nikdy neskončí pod okrajem displeje. Po každém tahu se plocha sama doroluje
+k rozepsanému slovu.
+
+Česká klávesnice řeší to, že čeština má 42 písmen: základní rozložení má
+nejvýš 10 kláves na řádek a písmena s diakritikou se vytáhnou **podržením**
+základního písmene, stejně jako na nativní klávesnici. V rohu klávesy je náhled
+varianty, aby o té možnosti hráč věděl. Ve čtyřech řadách po 11 klávesách by
+na 320px displeji vyšly klávesy široké 25 px.
+
+Rozvržení je ověřené na 320, 360, 390 a 412 px na výšku i na otočeném telefonu
+(na šířku se klávesnice přesune vedle hrací plochy, ne pod ni):
+
+```bash
+npm run audit:mobile   # přetékání, dosažitelnost ovládání, velikost dotykových cílů
+```
+
+Audit hlídá dotykové cíle 44 px u běžných ovládacích prvků. Klávesy klávesnice
+mají vlastní, nižší práh na šířku — nativní české klávesnice mají na 360dp
+displeji klávesy kolem 34 dp a víc se jich do řady nevejde; kompenzuje se to
+výškou a rozestupy.
+
+## PWA a cesta do Google Play
+
+Hra je plnohodnotná PWA, což je předpoklad pro zabalení do Google Play přes
+**Trusted Web Activity** (např. nástrojem Bubblewrap):
+
+- `public/manifest.webmanifest` — standalone režim, zámek na výšku, kategorie,
+  zkratky na jednotlivé režimy,
+- ikony 192 a 512 px včetně **maskable** variant (bez nich Android ořízne
+  obsah ikony do svého tvaru) — generuje `npm run build:icons`,
+- service worker s předuloženou skořápkou; datové balíčky se ukládají až při
+  prvním použití, protože jich jsou megabajty a hráč potřebuje jen část.
+
+```bash
+npm run audit:pwa   # manifest, ikony, registrace workeru a skutečný běh offline
+```
+
+Pro TWA ještě bude potřeba nasadit hru na vlastní doménu přes HTTPS a přidat
+`.well-known/assetlinks.json` s otiskem podpisového klíče — teprve to Androidu
+řekne, že aplikace a doména patří k sobě, a schová adresní řádek.
 
 ## Původ dat
 

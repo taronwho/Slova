@@ -164,7 +164,7 @@ export default function App() {
   }, [profile.theme, updateProfile])
 
   return (
-    <div className="shell">
+    <div className={`shell ${view.kind === 'game' ? 'playing' : ''}`}>
       <header className="topbar">
         <button
           type="button"
@@ -182,7 +182,10 @@ export default function App() {
           </>
         )}
         <span className="topbar-spacer" />
-        <span className="chip chip-accent">Série {profile.streak}</span>
+        <span className="chip chip-accent chip-streak">
+          <span className="chip-label">Série</span>
+          <span className="num">{profile.streak}</span>
+        </span>
         {themeButton}
       </header>
 

@@ -1,0 +1,61 @@
+{
+  "name": "Slova — české slovní hry",
+  "short_name": "Slova",
+  "description": "Tři české slovní hry: Řetěz, Voština a Věž. Každá hádanka je ověřeně dohratelná.",
+  "lang": "cs",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "fullscreen"],
+  "orientation": "portrait-primary",
+  "background_color": "#fafaf7",
+  "theme_color": "#0fa968",
+  "categories": ["games", "education", "word"],
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Řetěz",
+      "short_name": "Řetěz",
+      "url": "./?mode=chain",
+      "description": "Slovní žebřík — měň jedno písmeno"
+    },
+    {
+      "name": "Voština",
+      "short_name": "Voština",
+      "url": "./?mode=hive",
+      "description": "Skládej slova ze sedmi písmen"
+    },
+    {
+      "name": "Věž",
+      "short_name": "Věž",
+      "url": "./?mode=tower",
+      "description": "Stav věž z přesmyček"
+    }
+  ]
+}

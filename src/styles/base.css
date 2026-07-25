@@ -171,6 +171,40 @@ h3 {
   font-size: 0.85rem;
 }
 
+/* Na dotykových zařízeních musí být každý ovládací prvek pohodlně
+   trefitelný — drobná tlačítka z desktopu tu nestačí.
+   Kritérium je záměrně dvojí: `pointer: coarse` nehlásí spolehlivě každé
+   zařízení (hybridy, prohlížeč v režimu pro počítač), takže se stejné
+   pravidlo uplatní i podle šířky displeje. */
+@media (pointer: coarse), (max-width: 899px) {
+  .btn,
+  .seg button {
+    min-height: 44px;
+  }
+
+  .btn-sm {
+    min-height: 44px;
+    padding-inline: 1rem;
+  }
+}
+
+/* Bez modrého probliknutí a bez výběru textu při ťukání do dlaždic. */
+button,
+.tile,
+.hex,
+.tray-tile {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tile,
+.hex,
+.tray-tile,
+.key,
+.brand {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 /* ---------- Karty a plochy ---------- */
 
 .card {

@@ -289,7 +289,7 @@ export function TowerGame({
         </div>
 
         {level && (
-          <>
+          <div className="board-footer">
             <div className="tiles-tray">
               {tileStates.map((tile, i) => (
                 <button
@@ -333,7 +333,7 @@ export function TowerGame({
                 Vzdát věž
               </button>
             </div>
-          </>
+          </div>
         )}
       </div>
 
