@@ -1,114 +1,105 @@
 """Krok 2b — omezení lexikonu na základní tvary.
 
-Bez tohohle kroku hra uznává i pádové a časované tvary („šerifa", „ozdobu",
-„vodkou"), což hlavně u Voštiny znamená, že hráč lopotně sbírá varianty
-jednoho slova místo aby hledal nová.
+Hra smí pracovat jen se základními tvary: podstatná jména v 1. pádu jednotného
+čísla, slovesa v infinitivu, přídavná jména, číslovky, zájmena, příslovce
+a spojky. Jinak hráč ve Voštině sbírá varianty jednoho slova místo aby hledal
+nová a ve Věži se objeví „nemíříš" nebo „agente".
 
-Filtr má dva stupně.
+Slovo projde, jen když splní **obě** podmínky:
 
-1. **Lemmatizace.** Slovo je základní tvar, když se jeho lemma rovná jemu
-   samému. Pokrývá to podstatná jména v 1. pádu jednotného čísla, slovesa
-   v infinitivu, přídavná jména, číslovky, zájmena, příslovce i spojky.
+1. **Hunspell ho umí přečíst bez jediné přípony a předpony.** Tím pádem je to
+   přímo heslo slovníku, ne tvar odvozený příponovým pravidlem. Analýza je
+   přesná, ne odhadovaná — hunspell u každého slova řekne, z jakého hesla
+   a jakým příznakem ho odvodil:
 
-   Lemmatizér je LemmaGen3. Zvažoval jsem simplemma, ale ta má pro češtinu
-   špatnou kvalitu — lemmatizuje „dobrý" na „dokonavý" a „dělat" na „udělat".
+       dobře   ← dobrý  příponou R
+       nemíříš ← mířit  příponou A a předponou N
+       agente  ← agent  příponou P
+       tang    ← tango  příponou Q
+       míše    ← mícha  příponou Z
+       pes     ← bez přípony  (heslo)
 
-2. **Záchyt propadlých tvarů.** LemmaGen vrací slova, která nezná, beze
-   změny — a taková ohýbaná forma pak projde jako základní tvar. Přesně tak
-   se do hry dostalo „agente" (5. pád), „agentek" a „tang" (2. pád množného
-   čísla od „agentka" a „tanga").
+   Dřívější pokusy stály na ručních pravidlech nad koncovkami a porovnání
+   frekvencí. Vždycky něco proklouzlo, protože čeština má tvarů víc, než se
+   dá pokrýt seznamem pravidel.
 
-   Záchyt stojí na dvou nezávislých znacích:
+   Příznak R by šlo považovat za příslovce („dobře ← dobrý"), jenže stejným
+   příznakem vzniká i 6. pád („roce ← rok", „autě ← auto"). Rozlišit je nejde,
+   takže se nepouští ani jedno — hra tím přichází o odvozená příslovce jako
+   „dobře" nebo „rychle", ale nepustí do sebe pádový tvar.
 
-   a) Ohýbaný tvar má svůj základní tvar v lexikonu a ten je **častější**.
+2. **Lemma se rovná slovu.** Samotné heslo nestačí: český hunspell má jako
+   hesla i ohýbané tvary („boha", „bohu", „bohů"). Lemmatizér LemmaGen3 je
+   odchytí.
 
-   b) Ohýbaný tvar **není heslem** v hunspellovém slovníku — hunspell si ho
-      odvozuje z hesla příponovými pravidly. To je klíčová pojistka: chrání
-      skutečné 1. pády, které by jinak pravidla omylem smetla („losos" kvůli
-      častějšímu „lososa", „lít" kvůli „líto", „brigadýr" kvůli oslovení
-      „brigadýre"). Samotné porovnání frekvence na tohle nestačí, protože
-      v titulkovém korpusu bývá 5. pád běžnější než 1.
-
-   Naopak hesla nestačí sama o sobě: hunspell nemá jako hesla například
-   příslovce („dobře", „rychle"), takže se používají jen jako ochrana, ne
-   jako podmínka pro zařazení.
+Výstup: tools/out/lexicon_base.json
 """
 
 import json
+import multiprocessing as mp
 import os
-
-from lemmagen3 import Lemmatizer
+import time
 
 HERE = os.path.dirname(__file__)
 OUT = os.path.join(HERE, "out")
-DIC = os.path.join(HERE, "raw", "cs_CZ.dic")
+RAW = os.path.join(HERE, "raw")
 
-# Pravidla na tvary, které projdou lemmatizérem. Funkce vrací tvar, ze kterého
-# by slovo mohlo být odvozené; slovo se zahodí jen tehdy, když takový tvar
-# v lexikonu opravdu je a je častější.
-LEAK_RULES: list[tuple[str, object]] = [
-    # odebrání koncovky
-    ("5. pád mužský (agente → agent)", lambda w: w[:-1] if w.endswith("e") else None),
-    ("5./3. pád, 1. p. mn. č. (sloni → slon)", lambda w: w[:-1] if w.endswith("i") else None),
-    ("3./6. pád a slovesné tvary (hradu → hrad)", lambda w: w[:-1] if w.endswith("u") else None),
-    ("5. pád ženský (babo → baba)", lambda w: w[:-1] + "a" if w.endswith("o") else None),
-    ("2. p. mn. č. na -ek (agentek → agentka)", lambda w: w[:-2] + "ka" if w.endswith("ek") else None),
-    # 2. pád množného čísla je holý kmen, základní tvar má koncovku navíc
-    ("2. p. mn. č. ženský (klobás → klobása)", lambda w: w + "a"),
-    ("2. p. mn. č. střední (tang → tango)", lambda w: w + "o"),
-    ("2. p. mn. č. měkký (opic → opice)", lambda w: w + "e"),
-]
+_lookuper = None
+_captype = None
 
 
-def hunspell_headwords() -> set[str]:
-    words = set()
-    with open(DIC, encoding="utf-8") as fh:
-        next(fh, None)  # první řádek je počet hesel
-        for line in fh:
-            word = line.split("/")[0].strip()
-            if word:
-                words.add(word)
-    return words
+def _init():
+    global _lookuper, _captype
+    from spylls.hunspell import Dictionary
+    from spylls.hunspell.algo.capitalization import Type as CapType
+
+    _lookuper = Dictionary.from_files(os.path.join(RAW, "cs_CZ")).lookuper
+    _captype = CapType.NO
+
+
+def _headwords(chunk):
+    """Vrátí slova, která hunspell přečte bez přípony i předpony."""
+    out = []
+    for word in chunk:
+        for form in _lookuper.affix_forms(word, _captype):
+            if form.suffix is None and form.prefix is None:
+                out.append(word)
+                break
+    return out
+
+
+def chunked(items, size):
+    for i in range(0, len(items), size):
+        yield items[i : i + size]
 
 
 def main():
-    lemmatizer = Lemmatizer("cs")
+    from lemmagen3 import Lemmatizer
+
     lexicon = json.load(open(os.path.join(OUT, "lexicon.json"), encoding="utf-8"))
-    headwords = hunspell_headwords()
+    words = [w for length in lexicon for w, _ in lexicon[length]]
+    print(f"kandidátů: {len(words)}")
 
-    # 1. stupeň — lemma se rovná slovu
-    first: dict[str, list] = {}
-    for length, entries in sorted(lexicon.items(), key=lambda kv: int(kv[0])):
-        first[length] = [[w, f] for w, f in entries if lemmatizer.lemmatize(w) == w]
+    started = time.time()
+    headwords = set()
+    with mp.Pool(processes=mp.cpu_count(), initializer=_init) as pool:
+        for result in pool.imap_unordered(_headwords, chunked(words, 2000)):
+            headwords.update(result)
+    print(
+        f"hesel bez přípony: {len(headwords)}  ({time.time() - started:.0f}s)"
+    )
 
-    print(f"po lemmatizaci: {sum(len(v) for v in first.values())} slov")
-
-    # 2. stupeň — záchyt tvarů, které lemmatizér propustil
-    freq = {w: f for entries in first.values() for w, f in entries}
-
-    def leaked(word: str) -> bool:
-        # Heslo hunspellu je skutečný slovníkový tvar — ten se nezahazuje.
-        if word in headwords:
-            return False
-        for _, stem_of in LEAK_RULES:
-            stem = stem_of(word)
-            if stem and stem in freq and freq[stem] > freq[word]:
-                return True
-        return False
-
+    lemmatizer = Lemmatizer("cs")
     base: dict[str, list] = {}
-    removed = 0
-    for length, entries in first.items():
-        kept = []
-        for w, f in entries:
-            if leaked(w):
-                removed += 1
-                continue
-            kept.append([w, f])
+    for length, entries in sorted(lexicon.items(), key=lambda kv: int(kv[0])):
+        kept = [
+            [w, f]
+            for w, f in entries
+            if w in headwords and lemmatizer.lemmatize(w) == w
+        ]
         base[length] = kept
 
-    print(f"záchyt propadlých tvarů: −{removed} slov\n")
-
+    print()
     for length in sorted(base, key=int):
         kept = base[length]
         total = len(lexicon[length])

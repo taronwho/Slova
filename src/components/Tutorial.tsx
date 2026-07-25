@@ -225,6 +225,28 @@ function Visual({ visual }: { visual: TutorialVisual }) {
         </div>
       )
 
+    case 'word-forms':
+      return (
+        <div className="tut-visual">
+          <div className="forms-table">
+            <div className="forms-col ok">
+              <span className="label">Platí</span>
+              <span>pes</span>
+              <span>psi</span>
+              <span>psát</span>
+              <span>velký</span>
+            </div>
+            <div className="forms-col no">
+              <span className="label">Neplatí</span>
+              <span>psa</span>
+              <span>psy</span>
+              <span>píšeš</span>
+              <span>většímu</span>
+            </div>
+          </div>
+        </div>
+      )
+
     case 'tower-safe':
       return (
         <div className="tut-visual">

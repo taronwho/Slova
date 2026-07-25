@@ -35,53 +35,67 @@ nemůže zablokovat cestu nahoru. Řetěz podpisů je ověřený už při genero
 
 | | zdroj | výsledek |
 |---|---|---|
-| Slovník | frekvenční seznam češtiny profiltrovaný přes hunspell `cs_CZ` | 248 811 ověřených slov |
-| Základní tvary | lemmatizace přes LemmaGen3 + záchyt propadlých tvarů | 58 840 slov |
-| Řetěz | grafy pro délky 4, 5 a 6 | 8 738 hádanek |
+| Slovník | frekvenční seznam češtiny profiltrovaný přes hunspell `cs_CZ` | 248 181 ověřených slov |
+| Základní tvary | hesla hunspellu + lemmatizace (LemmaGen3) | 40 519 slov |
+| 1. pád množného čísla | buňky deklinačních vzorů z `cs_CZ.aff` | + 7 693 slov |
+| Řetěz | grafy pro délky 4, 5 a 6 | 7 841 hádanek |
 | Voština | plástve odvozené od pangramů | 2 400 hádanek |
-| Věž | ověřené řetězy přesmyček 3→6/7/8 | 2 360 hádanek |
+| Věž | ověřené řetězy přesmyček 3→6/7/8 | 2 245 hádanek |
 
-### Jen základní tvary
+### Jen 1. pád a infinitiv
 
-Hra pracuje výhradně se základními tvary: podstatná jména v 1. pádu jednotného
-čísla, slovesa v infinitivu, přídavná jména, číslovky, zájmena, příslovce
-a spojky. Bez toho hráč ve Voštině sbíral varianty jednoho slova („hravá,
-hravé, hravě, hrává") místo aby hledal nová.
+Hra pracuje výhradně se základními tvary: podstatná jména v 1. pádu (jednotné
+i množné číslo), slovesa v infinitivu, přídavná jména, číslovky, zájmena,
+příslovce a spojky. Bez toho hráč ve Voštině sbíral varianty jednoho slova
+(„hravá, hravé, hravě, hrává") místo aby hledal nová.
 
-Základní tvar se pozná tak, že se slovo lemmatizuje a výsledek se rovná
-původnímu slovu. Lemmatizér je **LemmaGen3**. Zvažoval jsem `simplemma`, ale
-ta má pro češtinu špatnou kvalitu — lemmatizuje „dobrý" na „dokonavý" a
-„dělat" na „udělat". Nestačí ani hesla z hunspellového `.dic`: obsahují
-i ohýbané tvary („boha", „bohu", „bohů").
+Slovník vzniká ve dvou krocích.
 
-**Druhý stupeň filtru.** LemmaGen vrací slova, která nezná, beze změny — a
-taková ohýbaná forma pak projde jako základní tvar. Přesně tak se do hry
-dostalo „agente" (5. pád) nebo „agentek" (2. pád množného čísla). Pozná se to
-i bez lemmatizéru: ohýbaný tvar má svůj základní tvar v lexikonu a ten je
-**častější**. Porovnání frekvence je podstatné — chrání slova jako „země",
-kde tvar po odebrání koncovky („zem") sice existuje, ale je mnohem vzácnější.
+**1. Základní tvar** (`tools/2b_base_forms.py`). Slovo projde, jen když splní
+obě podmínky:
 
-Druhý, nezávislý znak jsou **hesla hunspellového slovníku**: 2. pád množného
-čísla je holý kmen, který si hunspell odvozuje příponovými pravidly, takže
-heslem není. To je zásadní pojistka — chrání skutečné 1. pády, které by
-pravidla jinak smetla: „losos" kvůli častějšímu „lososa", „lít" kvůli „líto",
-„brigadýr" kvůli oslovení „brigadýre". Samotné porovnání frekvence na to
-nestačí, v titulkovém korpusu bývá 5. pád běžnější než 1. Naopak hesla nestačí
-sama o sobě: hunspell nemá jako hesla příslovce („dobře", „rychle"), takže se
-používají jen jako ochrana, ne jako podmínka pro zařazení.
+1. **Hunspell ho přečte bez jediné přípony a předpony** — je to tedy přímo
+   heslo slovníku, ne odvozený tvar. Analýza není odhad: hunspell u každého
+   slova řekne, z jakého hesla a jakým příznakem ho odvodil (`agente ← agent`
+   příponou P, `nemíříš ← mířit` příponou A a předponou N, `tang ← tango`
+   příponou Q).
+2. **Lemma se rovná slovu.** Heslo samo nestačí, český hunspell má jako hesla
+   i ohýbané tvary („boha", „bohu", „bohů"). Odchytí je **LemmaGen3**.
+   `simplemma` jsem zkoušel taky, ale pro češtinu je nepoužitelná —
+   lemmatizuje „dobrý" na „dokonavý" a „dělat" na „udělat".
 
-Pravidla pokrývají 5. pád mužský i ženský, 3. a 6. pád, 1. pád množného čísla
-mužských životných a 2. pád množného čísla (na -ek i holý kmen u ženských,
-středních a měkkých vzorů); dohromady odeberou 3 239 slov. **Vyčerpávající to
-není** — čeština má tvarů víc, než se dá pokrýt ručními pravidly, takže
-ojedinělé formy dál projdou. Úplné řešení potřebuje morfologii se značkami,
-viz níž.
+Dřívější verze stála na ručních pravidlech nad koncovkami a porovnávání
+frekvencí. Vždycky něco proklouzlo: „tang" je jen 2× vzácnější než „tango",
+zatímco zcela legitimní „lít" je 498× vzácnější než „líto". Pozitivní kritérium
+(je to heslo?) je proti tomu ostré.
 
-**Co chybí:** 1. pád množného čísla („hrady"). Odlišit ho od ostatních pádů
-(„hradu", „hradem") vyžaduje morfologii se značkami pádu — MorfFlex, modely
-pro Stanzu či spaCy, výtahy z Wikislovníku. Všechny tyhle zdroje jsou
-v prostředí, kde se hra staví, blokované, a heuristika by místo 1. pádu
-množného čísla propouštěla 4. pád.
+Cenou je příznak `R`, kterým hunspell tvoří odvozená příslovce („dobře ←
+dobrý") *i* 6. pád („roce ← rok", „autě ← auto"). Rozlišit je nejde, takže se
+nepouští ani jedno — hra tím přichází o „dobře" a „rychle", ale nepustí do sebe
+pádový tvar.
+
+**2. Množné číslo** (`tools/2c_plural.py`). Příznaky v `cs_CZ.aff` fungují jako
+deklinační vzory: jeden příznak = jedno paradigma a v něm sada přípon
+s podmínkami. Buňka „1. pád množného čísla" se tedy dá určit přesně, ne
+odhadem — je to konkrétní příponové pravidlo:
+
+```
+SFX H   0   y   [^ey]      hrad  -> hrady
+SFX Z   a   y   [^…]a      žena  -> ženy
+SFX M   o   a   [^c]o      město -> města
+SFX I   ch  ši  ch         hoch  -> hoši
+```
+
+Vybrané buňky jsou vypsané v `tools/_plural_rules.py` (vzory H, L, S, U, D, I,
+V, Z, K, M) a skript `2c_plural.py --vzorek` u každé z nich ukáže vzorek
+vygenerovaných dvojic ke kontrole. Nepoužívá se `Q` (2. pád mn. č. — „služba →
+služeb", „tango → tang"), `P` (mužský vzor bez vlastního 1. pádu mn. č.), `R`,
+`Y` ani slovesné příznaky.
+
+Dvě pojistky navíc: příznaky `I`, `V` a `D` hunspell věší i na číslovky
+(„deset → deseti") a slovesa, takže se berou jen ve společnosti některého
+jmenného vzoru; a každý vygenerovaný tvar musí být v ověřeném lexikonu
+a lemmatizér ho musí vrátit zpátky na výchozí heslo.
 
 Omezení na základní tvary má cenu: propojenost grafu pro Řetěz klesla natolik,
 že se musely snížit prahy frekvence. Základní tvary jsou ale samy o sobě
@@ -161,6 +175,8 @@ Skripty v `tools/` běží po krocích:
 | `0_download.sh` | stáhne frekvenční seznam a hunspellový slovník |
 | `1_validate_words.py` | ověří slova proti hunspellu (~4 min na 4 jádrech) |
 | `2_curate.py` | rozdělí lexikon podle délky, uplatní blocklist |
+| `2b_base_forms.py` | nechá jen hesla hunspellu, u kterých lemma sedí |
+| `2c_plural.py` | dogeneruje 1. pád množného čísla z deklinačních vzorů |
 | `3_build_chain.py` | postaví grafy, najde dvojice a ověří nejkratší cesty |
 | `4_build_hive.py` | odvodí plástve od pangramů a spočítá kompletní řešení |
 | `5_build_tower.py` | najde ověřené řetězy přesmyček |

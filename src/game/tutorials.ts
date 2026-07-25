@@ -20,6 +20,7 @@ export type TutorialVisual =
   | { kind: 'tower' }
   | { kind: 'tower-letter' }
   | { kind: 'tower-safe' }
+  | { kind: 'word-forms' }
 
 export interface TutorialStep {
   title: string
@@ -41,13 +42,23 @@ export const TUTORIALS: Record<ModeId, TutorialStep[]> = {
       key: 'Obě slova jsou vždy stejně dlouhá.',
     },
     {
+      title: 'Jaké tvary slov platí',
+      visual: { kind: 'word-forms' },
+      body: [
+        'Hra pracuje **jen se základními tvary** — tak, jak slovo najdeš ve slovníku. Díky tomu nesbíráš pořád dokola pády jednoho slova.',
+        '**Platí:** podstatná jména v 1. pádu — jednotné i množné číslo (pes, psi, kočka, kočky), slovesa v infinitivu (psát, běhat), přídavná jména (velký, rychlý), číslovky (pět), zájmena (ten, každý), příslovce (dnes, brzy) a spojky (nebo, ale).',
+        '**Neplatí:** ostatní pády (psa, psovi, psem, psy), časované tvary (píšu, píšeš, psal), rozkazy (piš) ani stupňování (rychlejší).',
+      ],
+      key: 'Když ti hra slovo neuzná, bývá to tímhle — zkus jeho základní tvar.',
+    },
+    {
       title: 'Jeden tah = jedno písmeno',
       visual: { kind: 'chain-move' },
       body: [
         'V každém tahu smíš změnit **právě jedno** písmeno. Písmena se nepřesouvají ani nepřidávají — jen se jedno vymění za jiné.',
-        'Výsledek musí být platné české slovo. Tvary jako „hrady" nebo „psala" jsou v pořádku.',
+        'Výsledek musí být platné české slovo **v základním tvaru** — jak ho najdeš ve slovníku.',
       ],
-      key: 'KOSA → KOZA je platný tah. KOSA → KOSY taky. KOSA → KOZY už ne, to jsou změny dvě.',
+      key: 'KOSA → KOZA je platný tah — změnilo se jediné písmeno. KOSA → KOZY ne, to jsou změny dvě.',
     },
     {
       title: 'Jak tah zadáš',
@@ -97,6 +108,16 @@ export const TUTORIALS: Record<ModeId, TutorialStep[]> = {
       ],
     },
     {
+      title: 'Jaké tvary slov platí',
+      visual: { kind: 'word-forms' },
+      body: [
+        'Hra pracuje **jen se základními tvary** — tak, jak slovo najdeš ve slovníku. Díky tomu nesbíráš pořád dokola pády jednoho slova.',
+        '**Platí:** podstatná jména v 1. pádu — jednotné i množné číslo (pes, psi, kočka, kočky), slovesa v infinitivu (psát, běhat), přídavná jména (velký, rychlý), číslovky (pět), zájmena (ten, každý), příslovce (dnes, brzy) a spojky (nebo, ale).',
+        '**Neplatí:** ostatní pády (psa, psovi, psem, psy), časované tvary (píšu, píšeš, psal), rozkazy (piš) ani stupňování (rychlejší).',
+      ],
+      key: 'Když ti hra slovo neuzná, bývá to tímhle — zkus jeho základní tvar.',
+    },
+    {
       title: 'Prostřední písmeno je povinné',
       visual: { kind: 'hive-word' },
       body: [
@@ -109,7 +130,7 @@ export const TUTORIALS: Record<ModeId, TutorialStep[]> = {
       title: 'Jaká slova platí',
       body: [
         'Slovo musí mít **aspoň 4 písmena**.',
-        'Skloňované a časované tvary platí — „kolo", „kola", „kolem" jsou tři různá slova.',
+        'Platí jen **1. pád a infinitiv**. „Kolo" i „kola" ano, „kolem" ani „kolu" ne.',
         'Vlastní jména neplatí.',
       ],
       key: 'Háčky a čárky psát nemusíš. Napíšeš „cili" a hra uzná „cíli" — plástev diakritiku doplní sama.',
@@ -150,6 +171,16 @@ export const TUTORIALS: Record<ModeId, TutorialStep[]> = {
         'Dole začínáš třípísmenným slovem. Nad ním postavíš čtyřpísmenné, pak pětipísmenné a tak dál až na vrchol.',
         'Každé patro je nové slovo — a věž roste vzhůru pod tvýma rukama.',
       ],
+    },
+    {
+      title: 'Jaké tvary slov platí',
+      visual: { kind: 'word-forms' },
+      body: [
+        'Hra pracuje **jen se základními tvary** — tak, jak slovo najdeš ve slovníku. Díky tomu nesbíráš pořád dokola pády jednoho slova.',
+        '**Platí:** podstatná jména v 1. pádu — jednotné i množné číslo (pes, psi, kočka, kočky), slovesa v infinitivu (psát, běhat), přídavná jména (velký, rychlý), číslovky (pět), zájmena (ten, každý), příslovce (dnes, brzy) a spojky (nebo, ale).',
+        '**Neplatí:** ostatní pády (psa, psovi, psem, psy), časované tvary (píšu, píšeš, psal), rozkazy (piš) ani stupňování (rychlejší).',
+      ],
+      key: 'Když ti hra slovo neuzná, bývá to tímhle — zkus jeho základní tvar.',
     },
     {
       title: 'Každé patro přidá jedno písmeno',
@@ -199,17 +230,17 @@ export const TUTORIALS: Record<ModeId, TutorialStep[]> = {
 export const MODE_SUMMARY: Record<ModeId, string[]> = {
   chain: [
     'Změň vždy právě jedno písmeno.',
-    'Každý mezikrok musí být české slovo.',
+    'Jen 1. pád a infinitiv.',
     'Žádné slovo se nesmí opakovat.',
   ],
   hive: [
     'Slova aspoň ze 4 písmen.',
     'Prostřední písmeno musí být v každém slově.',
-    'Písmena se smí opakovat.',
+    'Jen 1. pád a infinitiv.',
   ],
   tower: [
     'Každé patro přidá jedno písmeno.',
     'Použij všechna písmena, v libovolném pořadí.',
-    'Od tří písmen až na vrchol.',
+    'Jen 1. pád a infinitiv.',
   ],
 }

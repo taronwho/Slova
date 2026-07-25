@@ -264,3 +264,52 @@ describe('věž — data', () => {
     }
   })
 })
+
+describe('slovník — jen základní tvary', () => {
+  // Seznam povolených slov vzniká v tools/2b_base_forms.py: hunspell musí
+  // slovo přečíst bez jediné přípony a předpony (je to tedy přímo heslo
+  // slovníku) a lemma se musí rovnat slovu. Test hlídá, že se do hry
+  // nedostane nic mimo něj — právě takhle se tam dřív dostalo „nemíříš",
+  // „agente" nebo „tang".
+  const allowed = new Set(readJson<string[]>('..', '..', 'tests', 'fixtures', 'base-forms.json'))
+
+  it('fixtura povolených tvarů je načtená', () => {
+    expect(allowed.size).toBeGreaterThan(20_000)
+  })
+
+  it('řetěz používá jen povolené tvary', () => {
+    const problems: string[] = []
+    for (const length of [4, 5, 6]) {
+      for (const word of readJson<string[]>('chain', `words-${length}.json`)) {
+        if (!allowed.has(word)) problems.push(word)
+      }
+    }
+    expect(problems.slice(0, 10)).toEqual([])
+  })
+
+  it('voština nabízí jen povolené tvary', () => {
+    const problems: string[] = []
+    for (const file of readdirSync(join(DATA, 'hive')).filter((f) => f.startsWith('pack-'))) {
+      for (const hive of readJson<{ solutions: string[] }[]>('hive', file)) {
+        for (const word of hive.solutions) {
+          if (!allowed.has(word)) problems.push(word)
+        }
+      }
+    }
+    expect(problems.slice(0, 10)).toEqual([])
+  })
+
+  it('věž staví jen z povolených tvarů', () => {
+    const problems: string[] = []
+    for (const file of readdirSync(join(DATA, 'tower')).filter((f) => f.startsWith('pack-'))) {
+      for (const tower of readJson<{ levels: { words: string[] }[] }[]>('tower', file)) {
+        for (const level of tower.levels) {
+          for (const word of level.words) {
+            if (!allowed.has(word)) problems.push(word)
+          }
+        }
+      }
+    }
+    expect(problems.slice(0, 10)).toEqual([])
+  })
+})
