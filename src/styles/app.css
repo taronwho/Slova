@@ -554,6 +554,27 @@
   min-width: 0;
 }
 
+.hud {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+
+.hints {
+  padding: var(--sp-4);
+}
+
+.hints .label {
+  margin-bottom: var(--sp-3);
+}
+
+.hint-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
 .board,
 .rail > * {
   min-width: 0;
@@ -1299,26 +1320,141 @@
     overflow: hidden;
   }
 
+  /* Hra se vejde na jednu obrazovku: ukazatele nahoře, hrací plocha
+     uprostřed, nápovědy a ovládání dole. Roluje jedině hrací plocha, a to
+     jen když se do své výšky nevejde — pro nápovědu ani pro klávesnici se
+     nikam jezdit nemusí. */
   .shell.playing .main {
     flex: 1;
     min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    padding-bottom: var(--sp-4);
-    scrollbar-width: none;
+    overflow: hidden;
+    padding-bottom: 0;
   }
 
-  .shell.playing .main::-webkit-scrollbar {
+  .shell.playing .game.with-rail {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    gap: var(--sp-3);
+  }
+
+  /* Levý sloupec na mobilu neexistuje — jeho dva díly se rovnou zařadí
+     nad hrací plochu a pod ni. */
+  .shell.playing .game.with-rail .rail-left {
+    display: contents;
+  }
+
+  .shell.playing .hud {
+    order: 1;
+    flex: 0 0 auto;
+    gap: var(--sp-2);
+  }
+
+  /* Ukazatele jsou na telefonu jeden proužek — vysoké karty by ukrojily
+     půlku hrací plochy a přitom nesou tři čísla. */
+  .shell.playing .stat {
+    padding: var(--sp-2) var(--sp-2);
+    text-align: center;
+  }
+
+  .shell.playing .stat .label {
+    font-size: 0.6rem;
+  }
+
+  .shell.playing .stat .value {
+    font-size: 1.15rem;
+  }
+
+  .shell.playing .stat-note {
     display: none;
   }
 
-  .shell.playing .game {
-    gap: var(--sp-4);
+  /* Nové písmeno je v proužku ukazatelů jen číslo mezi čísly — plný
+     zlatý čtverec by tam trčel. */
+  .shell.playing .new-letter {
+    width: auto;
+    height: auto;
+    background: none;
+    color: var(--gold);
+    font-size: 1.15rem;
+  }
+
+  /* Plástev: postup stačí jako proužek, slovní komentář jde pryč. */
+  .shell.playing .panel {
+    padding: var(--sp-2) var(--sp-3);
+  }
+
+  .shell.playing .panel p {
+    display: none;
+  }
+
+  .shell.playing .board {
+    order: 2;
+    display: flex;
+    flex-direction: column;
+    /* „safe" kvůli přetečení: kdyby byl obsah vyšší než plocha, zarovná se
+       normálně na začátek a nic se neschová nad horní hranou. */
+    justify-content: safe center;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  .shell.playing .board::-webkit-scrollbar {
+    display: none;
+  }
+
+  .shell.playing .hints {
+    order: 3;
+    flex: 0 0 auto;
+    padding: var(--sp-2) var(--sp-3) var(--sp-3);
+  }
+
+  .shell.playing .hints .label {
+    margin-bottom: var(--sp-1);
+    font-size: 0.6rem;
+  }
+
+  /* Nápovědy vedle sebe — na výšku už místo není. */
+  .shell.playing .hint-buttons {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+  }
+
+  .shell.playing .hint-buttons .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-inline: var(--sp-2);
+    font-size: 0.78rem;
+    white-space: nowrap;
+  }
+
+  .shell.playing .board-footer {
+    order: 4;
+    flex: 0 0 auto;
+  }
+
+  /* Pravý sloupec je jen opis toho, co je vidět na hrací ploše. */
+  .shell.playing .rail-right {
+    display: none;
+  }
+
+  /* Ukazatele se na řádku srazí do proužku. */
+  /* Ukazatele drží jeden řádek — kdyby se zalomily, ukrojí to z hrací plochy. */
+  .shell.playing .stat-row {
+    gap: var(--sp-2);
+    flex-wrap: nowrap;
+  }
+
+  .shell.playing .stat-row > .stat {
+    flex: 1 1 0;
+    min-width: 0;
   }
 
   .board-footer {
-    position: sticky;
-    bottom: 0;
     z-index: 20;
     display: flex;
     flex-direction: column;
@@ -1451,6 +1587,32 @@
   .keyboard {
     gap: 4px;
   }
+
+  /* Ukazatele a nápovědy se na nízkém displeji smrsknou na jeden řádek —
+     hrací plocha i klávesnice mají přednost. */
+  .shell.playing .game.with-rail {
+    gap: var(--sp-2);
+  }
+
+  .shell.playing .stat {
+    padding: 4px var(--sp-2);
+  }
+
+  .shell.playing .stat .value {
+    font-size: 1rem;
+  }
+
+  .shell.playing .hints {
+    padding: var(--sp-2);
+  }
+
+  .shell.playing .hints .label {
+    display: none;
+  }
+
+  .shell.playing .board-footer {
+    padding-top: var(--sp-2);
+  }
 }
 
 /* Na šířku je svislého místa málo, a kdyby klávesnice zůstala pod hrací
@@ -1458,37 +1620,43 @@
    vpravo ovládání. (V nainstalované aplikaci je hra podle manifestu zamčená
    na výšku, tohle řeší jen prohlížeč na otočeném telefonu.) */
 @media (max-width: 1024px) and (orientation: landscape) and (max-height: 560px) {
+  /* Na šířku je svislého místa málo, zato vodorovného dost: hrací plocha
+     vlevo, ovládání a nápovědy vpravo. Rolovat se nemusí ani v jednom
+     sloupci. */
   .shell.playing .game.with-rail {
-    grid-template-columns: minmax(0, 1fr);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(290px, 420px);
+    grid-template-rows: auto minmax(0, 1fr);
+    height: 100%;
+    gap: var(--sp-3);
+  }
+
+  .shell.playing .hud {
+    grid-column: 1;
+    grid-row: 1;
   }
 
   .shell.playing .board {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(290px, 400px);
-    gap: var(--sp-4);
-    align-items: start;
-  }
-
-  .shell.playing .board > * {
     grid-column: 1;
+    grid-row: 2;
+    min-height: 0;
+    overflow-y: auto;
   }
 
-  .shell.playing .board > .board-footer {
+  .shell.playing .hints {
     grid-column: 2;
-    grid-row: 1 / span 99;
-    position: sticky;
-    top: 0;
+    grid-row: 1;
+  }
+
+  .shell.playing .board-footer {
+    grid-column: 2;
+    grid-row: 2;
+    min-height: 0;
+    overflow-y: auto;
     padding-block: 0;
     background: none;
     border-top: none;
     box-shadow: none;
-  }
-
-  /* Panely pod hrou se srovnají do řádku, ať se na ně dá dorolovat. */
-  .shell.playing .rail-left {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: flex-start;
   }
 
   .shell.playing .rail-right {
@@ -1586,4 +1754,71 @@
   margin-left: auto;
   display: flex;
   gap: var(--sp-2);
+}
+
+/* ---------- Karta „Pokračovat ve hře" ---------- */
+
+/* Nabídne se na úvodní obrazovce, když je něco rozehrané. Je nad výběrem
+   her, protože rozehrané kolo má přednost před založením nového. */
+.resume-card {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  margin-bottom: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  text-align: left;
+  color: inherit;
+  background: var(--surface);
+  border: 1px solid var(--mode-color, var(--accent));
+  border-left-width: 4px;
+  border-radius: var(--radius-3);
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.resume-card[data-mode='chain'] {
+  --mode-color: var(--mode-chain);
+}
+
+.resume-card[data-mode='hive'] {
+  --mode-color: var(--mode-hive);
+}
+
+.resume-card[data-mode='tower'] {
+  --mode-color: var(--mode-tower);
+}
+
+.resume-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-2);
+}
+
+.resume-mark {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  font-size: 1.25rem;
+  color: var(--on-accent);
+  background: var(--mode-color);
+  border-radius: var(--radius-2);
+}
+
+.resume-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.resume-text .muted {
+  font-size: 0.85rem;
+}
+
+.resume-go {
+  margin-left: auto;
+  font-size: 1.2rem;
+  color: var(--mode-color);
 }

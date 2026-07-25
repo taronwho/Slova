@@ -36,11 +36,11 @@ nemůže zablokovat cestu nahoru. Řetěz podpisů je ověřený už při genero
 | | zdroj | výsledek |
 |---|---|---|
 | Slovník | frekvenční seznam češtiny profiltrovaný přes hunspell `cs_CZ` | 248 181 ověřených slov |
-| Základní tvary | hesla hunspellu + lemmatizace (LemmaGen3) | 40 519 slov |
-| 1. pád množného čísla | buňky deklinačních vzorů z `cs_CZ.aff` | + 7 693 slov |
-| Řetěz | grafy pro délky 4, 5 a 6 | 7 841 hádanek |
+| Základní tvary | slova se skloňovacím/časovacím vzorem + lemmatizace | 39 237 slov |
+| 1. pád množného čísla | buňky deklinačních vzorů z `cs_CZ.aff` | + 7 685 slov |
+| Řetěz | grafy pro délky 4  5 a 6 | 7 791 hádanek |
 | Voština | plástve odvozené od pangramů | 2 400 hádanek |
-| Věž | ověřené řetězy přesmyček 3→6/7/8 | 2 245 hádanek |
+| Věž | ověřené řetězy přesmyček 3→6/7/8 | 2 182 hádanek |
 
 ### Jen 1. pád a infinitiv
 
@@ -51,33 +51,47 @@ příslovce a spojky. Bez toho hráč ve Voštině sbíral varianty jednoho slov
 
 Slovník vzniká ve dvou krocích.
 
-**1. Základní tvar** (`tools/2b_base_forms.py`). Slovo projde, jen když splní
-obě podmínky:
+**1. Základní tvar** (`tools/2b_base_forms.py`). Příznaky v `cs_CZ.aff` jsou
+skloňovací a časovací **vzory** a vzor jde pověsit jedině na základní tvar —
+hunspell z něj celé paradigma teprve odvozuje. To je důkaz, ne odhad:
 
-1. **Hunspell ho přečte bez jediné přípony a předpony** — je to tedy přímo
-   heslo slovníku, ne odvozený tvar. Analýza není odhad: hunspell u každého
-   slova řekne, z jakého hesla a jakým příznakem ho odvodil (`agente ← agent`
-   příponou P, `nemíříš ← mířit` příponou A a předponou N, `tang ← tango`
-   příponou Q).
-2. **Lemma se rovná slovu.** Heslo samo nestačí, český hunspell má jako hesla
-   i ohýbané tvary („boha", „bohu", „bohů"). Odchytí je **LemmaGen3**.
-   `simplemma` jsem zkoušel taky, ale pro češtinu je nepoužitelná —
-   lemmatizuje „dobrý" na „dokonavý" a „dělat" na „udělat".
+```
+hrad/HR      vzor „hrad"          -> 1. pád j. č.,  projde
+mířit/AN     časování             -> infinitiv,     projde
+velký/Y      skloňování adjektiv  -> 1. pád m. r.,  projde
+agente       bez vzoru            -> neprojde
+ovsa         bez vzoru            -> neprojde
+stůj/N       jen předpona ne-     -> neprojde
+sťat/ON      jmenný tvar          -> neprojde
+moha/XN      přechodník           -> neprojde
+níže/E       jen předpona nej-    -> neprojde
+```
 
-Dřívější verze stála na ručních pravidlech nad koncovkami a porovnávání
-frekvencí. Vždycky něco proklouzlo: „tang" je jen 2× vzácnější než „tango",
-zatímco zcela legitimní „lít" je 498× vzácnější než „líto". Pozitivní kritérium
-(je to heslo?) je proti tomu ostré.
+Holá hesla bez vzoru jsou v `cs_CZ.dic` promíchaná. Jsou mezi nimi příslovce
+(„dnes"), spojky („ale") i nesklonná jména („alibi") — jenže úplně stejně
+vypadá 2. pád („ovsa"), 5. pád („bože"), rozkaz („stůj") i zkratka („geol"),
+protože nepravidelná slova má slovník rozepsaná po tvarech. Rozlišit je
+automaticky nejde, takže se **zahazují všechna** a ručně ověřený výběr se vrací
+ze souboru `tools/base_extra.txt` (nepravidelná jména jako „pes", „stůl",
+„člověk", základní příslovce, spojky, předložky, zájmena a číslovky).
+
+Druhá podmínka je **lemma se rovná slovu**: hunspell má jako hesla i ohýbané
+tvary („boha", „bohu", „bohů"), ty odchytí **LemmaGen3**. `simplemma` jsem
+zkoušel taky, ale pro češtinu je nepoužitelná — lemmatizuje „dobrý" na
+„dokonavý" a „dělat" na „udělat".
+
+Předchozí verze filtru zkoušely ruční pravidla nad koncovkami, porovnávání
+frekvencí a nakonec „je to heslo slovníku?". Všechny propouštěly: „tang" je
+jen 2× vzácnější než „tango", zatímco legitimní „lít" je 498× vzácnější než
+„líto"; a jako hesla jsou vedená i „bože", „ovsa" nebo „stůj". Teprve
+požadavek na skloňovací vzor je ostrý.
 
 Cenou je příznak `R`, kterým hunspell tvoří odvozená příslovce („dobře ←
 dobrý") *i* 6. pád („roce ← rok", „autě ← auto"). Rozlišit je nejde, takže se
-nepouští ani jedno — hra tím přichází o „dobře" a „rychle", ale nepustí do sebe
-pádový tvar.
+nepouští ani jedno.
 
-**2. Množné číslo** (`tools/2c_plural.py`). Příznaky v `cs_CZ.aff` fungují jako
-deklinační vzory: jeden příznak = jedno paradigma a v něm sada přípon
-s podmínkami. Buňka „1. pád množného čísla" se tedy dá určit přesně, ne
-odhadem — je to konkrétní příponové pravidlo:
+**2. Množné číslo** (`tools/2c_plural.py`). Ve vzoru se dá buňka „1. pád
+množného čísla" ukázat prstem — je to konkrétní příponové pravidlo:
 
 ```
 SFX H   0   y   [^ey]      hrad  -> hrady
@@ -86,16 +100,16 @@ SFX M   o   a   [^c]o      město -> města
 SFX I   ch  ši  ch         hoch  -> hoši
 ```
 
-Vybrané buňky jsou vypsané v `tools/_plural_rules.py` (vzory H, L, S, U, D, I,
-V, Z, K, M) a skript `2c_plural.py --vzorek` u každé z nich ukáže vzorek
-vygenerovaných dvojic ke kontrole. Nepoužívá se `Q` (2. pád mn. č. — „služba →
-služeb", „tango → tang"), `P` (mužský vzor bez vlastního 1. pádu mn. č.), `R`,
-`Y` ani slovesné příznaky.
+Vybrané buňky jsou v `tools/_plural_rules.py` (vzory H, L, S, U, D, I, V, Z,
+K, M) a `2c_plural.py --vzorek` u každé vypíše dvojice ke kontrole. Nepoužívá
+se `Q` (2. pád mn. č. — „služba → služeb", „tango → tang"), `P` (mužský vzor
+bez vlastního 1. pádu mn. č.), `R`, `Y` ani slovesné příznaky.
 
-Dvě pojistky navíc: příznaky `I`, `V` a `D` hunspell věší i na číslovky
-(„deset → deseti") a slovesa, takže se berou jen ve společnosti některého
-jmenného vzoru; a každý vygenerovaný tvar musí být v ověřeném lexikonu
-a lemmatizér ho musí vrátit zpátky na výchozí heslo.
+Pojistky: příznaky `I`, `V` a `D` visí i na číslovkách („deset → deseti")
+a slovesech, takže platí jen se jmenným vzorem; každý vygenerovaný tvar musí
+být v ověřeném lexikonu a lemmatizér ho musí vrátit na výchozí heslo; a když
+v jednom vzoru zaberou na jedno slovo dvě pravidla, generování se zastaví —
+právě takhle se chytlo „kmen → kmene" vedle správného „kmen → kmeny".
 
 Omezení na základní tvary má cenu: propojenost grafu pro Řetěz klesla natolik,
 že se musely snížit prahy frekvence. Základní tvary jsou ale samy o sobě
@@ -123,9 +137,18 @@ hráči, a ověří:
 - **Věž** — každé patro má aspoň jedno slovo, všechna sedí na podpis a každé
   patro vzniklo přidáním právě jednoho písmene k tomu pod ním.
 
+A protože testy čtou vygenerované soubory, jde `npm run play:verify` opačnou
+cestou: v Chromiu **odehraje deset kol od každého režimu** a každé slovo, které
+se objevilo na obrazovce nebo ho hra přijala, porovná se seznamem povolených
+tvarů. Zároveň ověří, že se rozehrané kolo dá dohrát po návratu do menu
+i po zavření hry a že se na telefonu všechno vejde na jednu obrazovku.
+
 ```
-npm test          # 57 testů: herní logika + validace všech dat
-npm run smoke     # průchod všemi třemi režimy v Chromiu, včetně mobilu
+npm test             # 61 testů: herní logika + validace všech dat
+npm run smoke        # průchod všemi třemi režimy v Chromiu, včetně mobilu
+npm run play:verify  # 30 odehraných kol + kontrola tvarů slov
+npm run audit:mobile # kontrola rozvržení na pěti rozlišeních
+npm run audit:pwa    # manifest, ikony, offline režim
 ```
 
 ## Spuštění
@@ -138,7 +161,11 @@ npm run preview   # náhled produkčního buildu
 ```
 
 Aplikace nepotřebuje žádný backend — `dist/` se dá nasadit na jakýkoli statický
-hosting. Postup hráče se ukládá do `localStorage`.
+hosting. Postup hráče se ukládá do `localStorage`, a to ve dvou klíčích:
+profil se statistikami a zvlášť **rozehrané kolo**. To se zapisuje po každém
+tahu, takže se hra dá dohrát i po odchodu do menu nebo zavření prohlížeče —
+na úvodní obrazovce se nabídne „Pokračovat ve hře". Stranou od profilu je
+schválně: zapisuje se často a jeho poškození nesmí vzít s sebou statistiky.
 
 ### Jednosouborová verze
 
@@ -180,6 +207,7 @@ Skripty v `tools/` běží po krocích:
 | `3_build_chain.py` | postaví grafy, najde dvojice a ověří nejkratší cesty |
 | `4_build_hive.py` | odvodí plástve od pangramů a spočítá kompletní řešení |
 | `5_build_tower.py` | najde ověřené řetězy přesmyček |
+| `playthrough.mjs` | odehraje 10 kol od každého režimu a zkontroluje tvary slov |
 
 ## Struktura
 
@@ -225,10 +253,17 @@ na obou místech.
 
 ## Mobil
 
-Na telefonu se hra chová jako aplikace, ne jako dokument: hlavička drží nahoře,
-hrací plocha roluje uvnitř a ovládání s klávesnicí je přišpendlené dole, takže
-nikdy neskončí pod okrajem displeje. Po každém tahu se plocha sama doroluje
-k rozepsanému slovu.
+Na telefonu se hra chová jako aplikace, ne jako dokument, a **vejde se na jednu
+obrazovku**: nahoře proužek s ukazateli, uprostřed hrací plocha, pod ní
+nápovědy a úplně dole ovládání s klávesnicí. Stránka jako celek se neroluje
+vůbec; roluje se jedině hrací plocha, a to jen když se do své výšky nevejde.
+Pro nápovědu ani pro klávesnici se tedy nikam jezdit nemusí.
+
+Postranní sloupce, které jsou na monitoru vlevo a vpravo od hrací plochy, se
+na telefonu rozpadnou (`display: contents`) a jejich dvě části se zařadí nad
+plochu a pod ni. Pravý sloupec je jen opis toho, co je na ploše vidět, takže
+se skryje. Že to platí, hlídá `npm run play:verify` — měří, jestli spodní
+hrana ovládání i nápověd zůstává nad okrajem displeje.
 
 Česká klávesnice řeší to, že čeština má 42 písmen: základní rozložení má
 nejvýš 10 kláves na řádek a písmena s diakritikou se vytáhnou **podržením**

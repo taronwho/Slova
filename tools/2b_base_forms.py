@@ -1,102 +1,106 @@
 """Krok 2b — omezení lexikonu na základní tvary.
 
-Hra smí pracovat jen se základními tvary: podstatná jména v 1. pádu jednotného
-čísla, slovesa v infinitivu, přídavná jména, číslovky, zájmena, příslovce
-a spojky. Jinak hráč ve Voštině sbírá varianty jednoho slova místo aby hledal
-nová a ve Věži se objeví „nemíříš" nebo „agente".
+Hra smí pracovat jen se základními tvary: podstatná jména v 1. pádu, slovesa
+v infinitivu, přídavná jména, číslovky, zájmena, příslovce a spojky. Jinak
+hráč ve Voštině sbírá varianty jednoho slova místo aby hledal nová a ve Věži
+se objeví „nemíříš", „agente" nebo „ovsa".
 
-Slovo projde, jen když splní **obě** podmínky:
+Filtr stojí na tom, že příznaky v cs_CZ.dic jsou **skloňovací a časovací
+vzory**. Vzor se dá pověsit jedině na základní tvar — hunspell z něj celé
+paradigma teprve odvozuje. Takže:
 
-1. **Hunspell ho umí přečíst bez jediné přípony a předpony.** Tím pádem je to
-   přímo heslo slovníku, ne tvar odvozený příponovým pravidlem. Analýza je
-   přesná, ne odhadovaná — hunspell u každého slova řekne, z jakého hesla
-   a jakým příznakem ho odvodil:
+    hrad/HR      vzor „hrad"          -> 1. pád j. č., projde
+    mířit/AN     časování             -> infinitiv, projde
+    velký/Y      skloňování adjektiv  -> 1. pád m. r., projde
+    agente       bez vzoru            -> neprojde
+    ovsa         bez vzoru            -> neprojde
+    stůj/N       jen předpona ne-     -> neprojde
+    sťat/ON      jmenný tvar          -> neprojde
+    moha/XN      přechodník           -> neprojde
+    níže/E       jen předpona nej-    -> neprojde
 
-       dobře   ← dobrý  příponou R
-       nemíříš ← mířit  příponou A a předponou N
-       agente  ← agent  příponou P
-       tang    ← tango  příponou Q
-       míše    ← mícha  příponou Z
-       pes     ← bez přípony  (heslo)
+Holá hesla bez vzoru jsou v cs_CZ.dic promíchaná: jsou mezi nimi příslovce
+(„dnes"), spojky („ale") i nesklonná jména („alibi"), ale úplně stejně vypadá
+2. pád („ovsa"), 5. pád („bože"), rozkaz („stůj") i zkratka („geol"). Rozlišit
+je automaticky nejde, takže se zahazují všechna a ručně ověřený výběr se vrací
+zpátky ze souboru base_extra.txt.
 
-   Dřívější pokusy stály na ručních pravidlech nad koncovkami a porovnání
-   frekvencí. Vždycky něco proklouzlo, protože čeština má tvarů víc, než se
-   dá pokrýt seznamem pravidel.
-
-   Příznak R by šlo považovat za příslovce („dobře ← dobrý"), jenže stejným
-   příznakem vzniká i 6. pád („roce ← rok", „autě ← auto"). Rozlišit je nejde,
-   takže se nepouští ani jedno — hra tím přichází o odvozená příslovce jako
-   „dobře" nebo „rychle", ale nepustí do sebe pádový tvar.
-
-2. **Lemma se rovná slovu.** Samotné heslo nestačí: český hunspell má jako
-   hesla i ohýbané tvary („boha", „bohu", „bohů"). Lemmatizér LemmaGen3 je
-   odchytí.
+Druhá podmínka je **lemma se rovná slovu**: český hunspell má jako hesla
+i ohýbané tvary („boha", „bohu", „bohů"). Lemmatizér LemmaGen3 je odchytí.
 
 Výstup: tools/out/lexicon_base.json
 """
 
 import json
-import multiprocessing as mp
 import os
-import time
 
-HERE = os.path.dirname(__file__)
+HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "out")
 RAW = os.path.join(HERE, "raw")
 
-_lookuper = None
-_captype = None
+# Příznaky, které jsou celým skloňovacím nebo časovacím vzorem. Pověsit se
+# dají jedině na základní tvar.
+#   P U H L S Z K M D I V  jmenné vzory
+#   Q C                    krácení kmene a odvozování, také jen od 1. pádu
+#   Y                      skloňování přídavných jmen
+#   A B J T                časování sloves
+BASE_FLAGS = set("PUHLSZKMDIVQCYABJT")
+
+# Naopak tyhle příznaky základní tvar nedokládají:
+#   N E W F  jen předpony (ne-, nej-)
+#   R        6. pád j. č. i odvozená příslovce — nerozlišitelné
+#   O        jmenné tvary („sláb", „sťat")
+#   X        přechodníky („moha", „nesa")
+#   y í é    stupňování a cizí jména
 
 
-def _init():
-    global _lookuper, _captype
-    from spylls.hunspell import Dictionary
-    from spylls.hunspell.algo.capitalization import Type as CapType
-
-    _lookuper = Dictionary.from_files(os.path.join(RAW, "cs_CZ")).lookuper
-    _captype = CapType.NO
-
-
-def _headwords(chunk):
-    """Vrátí slova, která hunspell přečte bez přípony i předpony."""
-    out = []
-    for word in chunk:
-        for form in _lookuper.affix_forms(word, _captype):
-            if form.suffix is None and form.prefix is None:
-                out.append(word)
-                break
-    return out
+def load_dic_flags(path):
+    """slovo -> množina příznaků (jen malá písmena, vlastní jména do hry nepatří)"""
+    flags = {}
+    with open(path, encoding="utf-8") as fh:
+        next(fh)
+        for line in fh:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            word, _, fl = line.partition("/")
+            if not word or not word.islower():
+                continue
+            flags.setdefault(word, set()).update(fl)
+    return flags
 
 
-def chunked(items, size):
-    for i in range(0, len(items), size):
-        yield items[i : i + size]
+def load_extra(path):
+    words = set()
+    with open(path, encoding="utf-8") as fh:
+        for line in fh:
+            line = line.split("#")[0].strip()
+            if line:
+                words.add(line)
+    return words
 
 
 def main():
     from lemmagen3 import Lemmatizer
 
+    dic = load_dic_flags(os.path.join(RAW, "cs_CZ.dic"))
+    extra = load_extra(os.path.join(HERE, "base_extra.txt"))
+    print(f"hesel v .dic: {len(dic)}, ručně ověřených navíc: {len(extra)}")
+
+    unknown = sorted(w for w in extra if w not in dic)
+    if unknown:
+        print(f"  pozor, base_extra.txt má {len(unknown)} slov mimo .dic: {unknown[:20]}")
+
     lexicon = json.load(open(os.path.join(OUT, "lexicon.json"), encoding="utf-8"))
-    words = [w for length in lexicon for w, _ in lexicon[length]]
-    print(f"kandidátů: {len(words)}")
-
-    started = time.time()
-    headwords = set()
-    with mp.Pool(processes=mp.cpu_count(), initializer=_init) as pool:
-        for result in pool.imap_unordered(_headwords, chunked(words, 2000)):
-            headwords.update(result)
-    print(
-        f"hesel bez přípony: {len(headwords)}  ({time.time() - started:.0f}s)"
-    )
-
     lemmatizer = Lemmatizer("cs")
+
     base: dict[str, list] = {}
     for length, entries in sorted(lexicon.items(), key=lambda kv: int(kv[0])):
-        kept = [
-            [w, f]
-            for w, f in entries
-            if w in headwords and lemmatizer.lemmatize(w) == w
-        ]
+        kept = []
+        for word, freq in entries:
+            proven = bool(dic.get(word, set()) & BASE_FLAGS) or word in extra
+            if proven and lemmatizer.lemmatize(word) == word:
+                kept.append([word, freq])
         base[length] = kept
 
     print()

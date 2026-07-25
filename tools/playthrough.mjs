@@ -1,0 +1,229 @@
+/**
+ * Deset odehraných kol od každého režimu — a kontrola, že se za celou dobu
+ * neobjevilo slovo mimo povolené tvary.
+ *
+ * Slovník se ověřuje i testem nad daty (tests/data.test.ts), jenže ten čte
+ * vygenerované soubory. Tenhle běh jde opačnou cestou: co doopravdy prošlo
+ * přes obrazovku, ať už to hra sama vypsala (žebřík, patra, nápovědy, řešení
+ * ve výsledku), nebo to přijala od hráče. Kdyby se někde do hry dostal jiný
+ * seznam slov než ten ověřený, chytí se to tady.
+ *
+ * Kola se hrají nápovědami — hra si tím sama ukáže korektní řešení a projde
+ * se celá cesta až do výsledku.
+ */
+
+import { chromium } from 'playwright'
+import { readFileSync } from 'node:fs'
+
+const APP_URL = process.env.URL ?? 'http://localhost:4173/'
+const ROUNDS = Number(process.env.ROUNDS ?? 10)
+
+const allowed = new Set(
+  JSON.parse(readFileSync(new URL('../tests/fixtures/base-forms.json', import.meta.url))),
+)
+
+const problems = []
+const seenWords = new Set()
+const log = (...args) => console.log(...args)
+
+function check(condition, message) {
+  if (condition) log(`  ✓ ${message}`)
+  else {
+    log(`  ✗ ${message}`)
+    problems.push(message)
+  }
+}
+
+/** Každé slovo, které hra ukázala nebo přijala, musí být povolený tvar. */
+function collect(words, where) {
+  for (const raw of words) {
+    const word = (raw ?? '').trim().toLowerCase()
+    if (!/^[a-záčďéěíňóřšťúůýž]{3,}$/.test(word)) continue
+    seenWords.add(word)
+    if (!allowed.has(word)) problems.push(`${where}: nepovolený tvar „${word}"`)
+  }
+}
+
+const browser = await chromium.launch({
+  executablePath:
+    process.env.CHROME_PATH ?? '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
+})
+const context = await browser.newContext({
+  viewport: { width: 390, height: 844 },
+  locale: 'cs-CZ',
+})
+const page = await context.newPage()
+page.on('pageerror', (error) => problems.push(`chyba stránky: ${error.message}`))
+page.on('console', (message) => {
+  if (message.type() === 'error') problems.push(`console.error: ${message.text()}`)
+})
+await page.goto(APP_URL, { waitUntil: 'networkidle' })
+
+async function dismissTutorial() {
+  const card = page.locator('.tut-card')
+  if (await card.isVisible().catch(() => false)) {
+    await page.locator('.tut-head').getByText('Přeskočit').click()
+    await page.waitForTimeout(200)
+  }
+}
+
+async function home() {
+  // Výsledek kola je modální — dokud se nezavře, na hlavičku se nedá kliknout.
+  const back = page.locator('.result-actions .btn', { hasText: 'Domů' })
+  if (await back.isVisible().catch(() => false)) await back.click()
+  else {
+    const brand = page.locator('.topbar .brand')
+    if (await brand.isVisible().catch(() => false)) await brand.click()
+  }
+  await page.waitForSelector('h1:has-text("Vyber si hru")')
+}
+
+async function start(mode) {
+  await home()
+  // Nová hra zahodí rozehrané kolo, takže se pokaždé začíná načisto.
+  await page.locator(`.mode-card[data-mode="${mode}"] .btn-primary`).click()
+  await page.waitForSelector('.board', { timeout: 15000 })
+  await dismissTutorial()
+}
+
+/* ---------- ŘETĚZ ---------- */
+
+async function playChain() {
+  await start('chain')
+  for (let guard = 0; guard < 40; guard++) {
+    if (await page.locator('.result-card').isVisible().catch(() => false)) break
+    const word = page.locator('.hints .btn', { hasText: 'Celé slovo' })
+    if (!(await word.isEnabled().catch(() => false))) break
+    await word.click()
+    await page.waitForTimeout(120)
+    // Nápověda slovo jen předepíše, zahrát ho musí hráč.
+    await page.keyboard.press('Enter')
+    await page.waitForTimeout(250)
+    collect(await page.locator('.ladder .rung').allInnerTexts().then(clean), 'řetěz — žebřík')
+  }
+  const result = page.locator('.result-card')
+  if (await result.isVisible().catch(() => false)) {
+    collect(
+      await result.locator('.solution-path > span').allInnerTexts().then(clean),
+      'řetěz — řešení',
+    )
+  }
+  return await result.isVisible().catch(() => false)
+}
+
+/* ---------- VOŠTINA ---------- */
+
+async function playHive() {
+  await start('hive')
+  for (let i = 0; i < 8; i++) {
+    await page.locator('.board-footer .btn', { hasText: 'Nápověda' }).click()
+    await page.waitForTimeout(120)
+  }
+  collect(await page.locator('.found-word').allInnerTexts().then(clean), 'voština — nalezená')
+  await page.locator('.board-footer .btn', { hasText: 'Ukončit plástev' }).click()
+  const result = page.locator('.result-card')
+  await result.waitFor({ timeout: 5000 }).catch(() => undefined)
+  return await result.isVisible().catch(() => false)
+}
+
+/* ---------- VĚŽ ---------- */
+
+async function playTower() {
+  await start('tower')
+  for (let guard = 0; guard < 20; guard++) {
+    if (await page.locator('.result-card').isVisible().catch(() => false)) break
+    const word = page.locator('.hints .btn', { hasText: 'Celé slovo' })
+    if (!(await word.isEnabled().catch(() => false))) break
+    await word.click()
+    await page.waitForTimeout(150)
+    const build = page.locator('.board-footer .btn', { hasText: 'Postavit patro' })
+    if (await build.isEnabled().catch(() => false)) await build.click()
+    await page.waitForTimeout(250)
+    collect(await page.locator('.floor.done').allInnerTexts().then(clean), 'věž — patra')
+  }
+  const result = page.locator('.result-card')
+  return await result.isVisible().catch(() => false)
+}
+
+function clean(texts) {
+  return texts.map((t) => t.replace(/[\s\n▸·0-9]/g, ''))
+}
+
+const MODES = [
+  ['ŘETĚZ', playChain],
+  ['VOŠTINA', playHive],
+  ['VĚŽ', playTower],
+]
+
+for (const [name, play] of MODES) {
+  log(`\n${name} — ${ROUNDS} kol`)
+  let finished = 0
+  for (let round = 1; round <= ROUNDS; round++) {
+    const done = await play()
+    if (done) finished++
+    else problems.push(`${name}: kolo ${round} nedošlo k výsledku`)
+  }
+  check(finished === ROUNDS, `dohráno ${finished}/${ROUNDS} kol`)
+}
+
+/* ---------- Pokračování v rozehraném kole ---------- */
+
+log('\nROZEHRANÉ KOLO')
+{
+  await start('chain')
+  await page.locator('.hints .btn', { hasText: 'Celé slovo' }).click()
+  await page.waitForTimeout(200)
+  const before = await page.locator('.ladder .rung').count()
+  await page.locator('.topbar .brand').click()
+  await page.waitForSelector('h1:has-text("Vyber si hru")')
+  check(await page.locator('.resume-card').isVisible(), 'úvodní obrazovka nabídne pokračování')
+
+  await page.reload({ waitUntil: 'networkidle' })
+  check(
+    await page.locator('.resume-card').isVisible(),
+    'nabídka přežije i zavření a otevření hry',
+  )
+  await page.locator('.resume-card').click()
+  await page.waitForSelector('.ladder')
+  const after = await page.locator('.ladder .rung').count()
+  check(after === before, `řetěz pokračuje tam, kde skončil (${after} článků)`)
+}
+
+/* ---------- Vejde se hra na jednu obrazovku ---------- */
+
+log('\nJEDNA OBRAZOVKA')
+for (const mode of ['chain', 'hive', 'tower']) {
+  await start(mode)
+  const box = await page.evaluate(() => {
+    const main = document.querySelector('.main')
+    const footer = document.querySelector('.board-footer')
+    const hints = document.querySelector('.hints')
+    return {
+      pageScroll: document.documentElement.scrollHeight - window.innerHeight,
+      mainScroll: main.scrollHeight - main.clientHeight,
+      footerBottom: footer?.getBoundingClientRect().bottom ?? 0,
+      hintsBottom: hints?.getBoundingClientRect().bottom ?? 0,
+      viewport: window.innerHeight,
+    }
+  })
+  check(box.pageScroll <= 1, `${mode}: stránka se neroluje (${box.pageScroll}px)`)
+  check(box.mainScroll <= 1, `${mode}: obsah hry se neroluje jako celek`)
+  check(
+    box.footerBottom > 0 && box.footerBottom <= box.viewport + 1,
+    `${mode}: ovládání je vidět bez rolování`,
+  )
+  check(
+    box.hintsBottom > 0 && box.hintsBottom <= box.viewport + 1,
+    `${mode}: nápovědy jsou vidět bez rolování`,
+  )
+}
+
+log(`\nzkontrolovaných slov: ${seenWords.size}`)
+await browser.close()
+
+if (problems.length > 0) {
+  log(`\nNÁLEZY (${problems.length}):`)
+  for (const problem of [...new Set(problems)].slice(0, 40)) log(`  • ${problem}`)
+  process.exit(1)
+}
+log('\nVŠE PROŠLO')

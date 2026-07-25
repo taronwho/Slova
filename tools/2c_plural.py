@@ -89,6 +89,11 @@ def generate(rules, entries):
                 if flag == "U" and strip == "0" and add == "i":
                     if "D" in flags or word.endswith("l"):
                         continue
+                # Vzor S má 1. pád mn. č. na -e („stroj -> stroje"), jenže
+                # jména na -en jdou podle „kámen" a mají -y („kmen -> kmeny",
+                # ne „kmene", což je 2. pád jednotného čísla).
+                if flag == "S" and strip == "0" and add == "e" and word.endswith("n"):
+                    continue
                 if strip != "0" and not word.endswith(strip):
                     continue
                 if not cond.search(word):
@@ -96,6 +101,19 @@ def generate(rules, entries):
                 stem = word[: -len(strip)] if strip != "0" else word
                 made.append((stem + add, word, flag, f"{strip}->{add}"))
     return made
+
+
+def conflicts(rules, entries):
+    """Slova, u kterých v jednom vzoru zabraly dvě různá pravidla.
+
+    Každý vzor má 1. pád mn. č. jen jeden, takže dvě pravidla znamenají, že
+    je jedno z nich pro tenhle konec slova špatně — přesně tak vzniklo
+    „kmen -> kmene" vedle správného „kmen -> kmeny".
+    """
+    found = defaultdict(set)
+    for form, word, flag, rule in generate(rules, entries):
+        found[(word, flag)].add((rule, form))
+    return {k: v for k, v in found.items() if len(v) > 1}
 
 
 def sample(rules, entries, per_rule=12):
@@ -126,6 +144,13 @@ def main():
     if "--vzorek" in sys.argv:
         sample(rules, entries)
         return
+
+    clash = conflicts(rules, entries)
+    if clash:
+        print(f"KOLIZE: {len(clash)} slov, kde jeden vzor dal dva tvary")
+        for (word, flag), variants in sorted(clash.items())[:20]:
+            print(f"  {word} [{flag}] -> {sorted(variants)}")
+        raise SystemExit("oprav _plural_rules.py, než se data vygenerují")
 
     lemmatizer = Lemmatizer("cs")
     lexicon = json.load(open(os.path.join(OUT, "lexicon.json"), encoding="utf-8"))
@@ -170,6 +195,14 @@ def main():
         json.dump(base, fh, ensure_ascii=False)
     total = sum(len(v) for v in base.values())
     print(f"\npřidáno {added} tvarů, celkem {total} -> {path}")
+
+    # Fixtura pro testy dat musí odpovídat slovníku, ze kterého se hádanky
+    # generují — proto se píše tady, ne ručně.
+    fixture = os.path.join(HERE, "..", "tests", "fixtures", "base-forms.json")
+    os.makedirs(os.path.dirname(fixture), exist_ok=True)
+    with open(fixture, "w", encoding="utf-8") as fh:
+        json.dump(sorted({w for v in base.values() for w, _ in v}), fh, ensure_ascii=False)
+    print(f"fixtura -> {os.path.normpath(fixture)}")
 
 
 if __name__ == "__main__":

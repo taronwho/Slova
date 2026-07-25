@@ -28,6 +28,9 @@ interface Props {
   onNext: () => void
   onHome: () => void
   onGiveUp: () => void
+  /** Uložený stav rozehraného kola, když se hráč vrací zpátky do hry. */
+  resume?: TowerState | null
+  onProgress: (state: TowerState) => void
 }
 
 export function TowerGame({
@@ -38,8 +41,10 @@ export function TowerGame({
   onNext,
   onHome,
   onGiveUp,
+  resume,
+  onProgress,
 }: Props) {
-  const [state, setState] = useState<TowerState>(() => createTowerState(puzzle))
+  const [state, setState] = useState<TowerState>(() => resume ?? createTowerState(puzzle))
   const [draft, setDraft] = useState('')
   const [flash, setFlash] = useState<{ text: string; tone: string; key: number } | null>(
     null,
@@ -52,13 +57,23 @@ export function TowerGame({
   const levelIndex = currentLevelIndex(state)
   const finished = isFinished(state)
 
+  // Nové kolo — všechno zpět na začátek. Na prvním renderu se přeskočí,
+  // jinak by přepsalo stav načtený z rozehraného kola.
+  const shown = useRef(puzzle.id)
   useEffect(() => {
+    if (shown.current === puzzle.id) return
+    shown.current = puzzle.id
     setState(createTowerState(puzzle))
     setDraft('')
     setFlash(null)
     setDone(false)
     reported.current = false
   }, [puzzle])
+
+  // Po každé změně stavu se kolo uloží, aby šlo pokračovat i po zavření hry.
+  useEffect(() => {
+    onProgress(state)
+  }, [state, onProgress])
 
   const breakdown = useMemo(() => scoreTower(state, streak), [state, streak])
 
@@ -187,35 +202,32 @@ export function TowerGame({
   return (
     <div className="game with-rail">
       <aside className="rail rail-left">
-        <div className="stat-row">
-          <div className="stat">
-            <div className="label">Patro</div>
-            <div className="value num accent">
-              {Math.min(levelIndex + 1, totalLevels)}/{totalLevels}
+        <div className="hud">
+          <div className="stat-row">
+            <div className="stat">
+              <div className="label">Patro</div>
+              <div className="value num accent">
+                {Math.min(levelIndex + 1, totalLevels)}/{totalLevels}
+              </div>
             </div>
-          </div>
-          <div className="stat">
-            <div className="label">Písmen</div>
-            <div className="value num gold">{level ? level.sig.length : '—'}</div>
+            <div className="stat">
+              <div className="label">Písmen</div>
+              <div className="value num gold">{level ? level.sig.length : '—'}</div>
+            </div>
+            {level?.added && (
+              <div className="stat">
+                <div className="label">Nové písmeno</div>
+                <span className="new-letter" key={levelIndex}>
+                  {level.added}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
-        {level?.added && (
-          <div className="card" style={{ padding: 'var(--sp-4)', textAlign: 'center' }}>
-            <div className="label" style={{ marginBottom: 'var(--sp-2)' }}>
-              Nové písmeno
-            </div>
-            <span className="new-letter" key={levelIndex}>
-              {level.added}
-            </span>
-          </div>
-        )}
-
-        <div className="card" style={{ padding: 'var(--sp-4)' }}>
-          <div className="label" style={{ marginBottom: 'var(--sp-3)' }}>
-            Nápovědy · {state.hintsUsed} použito
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-2)' }}>
+        <div className="hints card">
+          <div className="label">Nápovědy · {state.hintsUsed} použito</div>
+          <div className="hint-buttons">
             <button
               type="button"
               className="btn btn-sm"
@@ -288,54 +300,55 @@ export function TowerGame({
           })}
         </div>
 
-        {level && (
-          <div className="board-footer">
-            <div className="tiles-tray">
-              {tileStates.map((tile, i) => (
-                <button
-                  type="button"
-                  key={`${tile.letter}-${i}`}
-                  className={`tray-tile ${tile.used ? 'used' : ''} ${
-                    tile.letter === level.added ? 'is-new' : ''
-                  }`}
-                  onClick={() => typeLetter(tile.letter)}
-                >
-                  {tile.letter}
-                </button>
-              ))}
-            </div>
-
-            <div style={{ display: 'flex', gap: 'var(--sp-2)', flexWrap: 'wrap', justifyContent: 'center' }}>
-              <button
-                type="button"
-                className="btn"
-                onClick={() => setDraft((prev) => prev.slice(0, -1))}
-                disabled={!draft}
-              >
-                Smazat
-              </button>
-              <button
-                type="button"
-                className="btn"
-                onClick={() => setState((prev) => shuffleTiles(prev))}
-              >
-                Zamíchat
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={submit}
-                disabled={draft.length !== level.sig.length}
-              >
-                Postavit patro
-              </button>
-              <button type="button" className="btn btn-sm btn-ghost" onClick={onGiveUp}>
-                Vzdát věž
-              </button>
-            </div>
-          </div>
-        )}
       </div>
+
+      {level && (
+        <div className="board-footer">
+          <div className="tiles-tray">
+            {tileStates.map((tile, i) => (
+              <button
+                type="button"
+                key={`${tile.letter}-${i}`}
+                className={`tray-tile ${tile.used ? 'used' : ''} ${
+                  tile.letter === level.added ? 'is-new' : ''
+                }`}
+                onClick={() => typeLetter(tile.letter)}
+              >
+                {tile.letter}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', gap: 'var(--sp-2)', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => setDraft((prev) => prev.slice(0, -1))}
+              disabled={!draft}
+            >
+              Smazat
+            </button>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => setState((prev) => shuffleTiles(prev))}
+            >
+              Zamíchat
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={submit}
+              disabled={draft.length !== level.sig.length}
+            >
+              Postavit patro
+            </button>
+            <button type="button" className="btn btn-sm btn-ghost" onClick={onGiveUp}>
+              Vzdát věž
+            </button>
+          </div>
+        </div>
+      )}
 
       <aside className="rail rail-right">
         <div className="card" style={{ padding: 'var(--sp-4)' }}>

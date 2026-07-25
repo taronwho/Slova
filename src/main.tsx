@@ -21,11 +21,24 @@ createRoot(document.getElementById('root')!).render(
  * skončila chybou 404.
  */
 if (import.meta.env.PROD && 'serviceWorker' in navigator && !window.__SLOVA_DATA__) {
+  // Nová verze hry přináší i nový slovník. Když se service worker vymění,
+  // stránka se hned načte znovu, aby hráč nedohrával kolo ze starých dat.
+  // Rozehrané kolo tím nepřijde — drží se v localStorage.
+  let hadController = Boolean(navigator.serviceWorker.controller)
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController) {
+      hadController = true
+      return // první instalace, tady se přenačítat nemá co
+    }
+    window.location.reload()
+  })
+
   window.addEventListener('load', () => {
     navigator.serviceWorker
       .register(`${import.meta.env.BASE_URL}sw.js`, {
         scope: import.meta.env.BASE_URL,
       })
+      .then((registration) => registration.update())
       .catch(() => {
         // Hra funguje i bez offline režimu — není důvod obtěžovat hráče.
       })

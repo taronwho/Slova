@@ -3,6 +3,7 @@
 import type { Difficulty, ModeId, RoundResult } from '../game/types'
 
 const KEY = 'slova.profile.v1'
+const ROUND_KEY = 'slova.round.v1'
 
 export interface ModeStats {
   played: number
@@ -80,6 +81,52 @@ export function saveProfile(profile: Profile): void {
     localStorage.setItem(KEY, JSON.stringify(profile))
   } catch {
     // Soukromý režim prohlížeče — hra běží dál, jen se neuloží.
+  }
+}
+
+/**
+ * Rozehrané kolo.
+ *
+ * Ukládá se stranou od profilu: zapisuje se po každém tahu, takže se nesmí
+ * dít, aby jeho poškození vzalo s sebou i statistiky. Stav hry je prostý
+ * objekt (cesta řetězu, nalezená slova, postavená patra), takže stačí
+ * JSON — rekonstruovat se z něj dá celé kolo včetně hádanky.
+ */
+export interface SavedRound {
+  mode: ModeId
+  daily: boolean
+  difficulty: Difficulty
+  puzzleId: string
+  /** ChainState | HiveState | TowerState — typ hlídá režim. */
+  state: unknown
+  savedAt: number
+}
+
+export function loadRound(): SavedRound | null {
+  try {
+    const raw = localStorage.getItem(ROUND_KEY)
+    if (!raw) return null
+    const saved = JSON.parse(raw) as SavedRound
+    if (!saved || typeof saved !== 'object' || !saved.mode || !saved.state) return null
+    return saved
+  } catch {
+    return null
+  }
+}
+
+export function saveRound(round: SavedRound): void {
+  try {
+    localStorage.setItem(ROUND_KEY, JSON.stringify(round))
+  } catch {
+    // Soukromý režim nebo plná kvóta — hra běží dál, jen se nedá pokračovat.
+  }
+}
+
+export function clearRound(): void {
+  try {
+    localStorage.removeItem(ROUND_KEY)
+  } catch {
+    // viz výš
   }
 }
 

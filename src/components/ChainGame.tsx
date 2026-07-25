@@ -33,6 +33,9 @@ interface Props {
   onNext: () => void
   onHome: () => void
   onGiveUp: () => void
+  /** Uložený stav rozehraného kola, když se hráč vrací zpátky do hry. */
+  resume?: ChainState | null
+  onProgress: (state: ChainState) => void
 }
 
 interface Flash {
@@ -50,8 +53,10 @@ export function ChainGame({
   onNext,
   onHome,
   onGiveUp,
+  resume,
+  onProgress,
 }: Props) {
-  const [state, setState] = useState<ChainState>(() => createChainState(puzzle))
+  const [state, setState] = useState<ChainState>(() => resume ?? createChainState(puzzle))
   const [draft, setDraft] = useState<string[]>(() => [...puzzle.start])
   const [cursor, setCursor] = useState(0)
   const [flash, setFlash] = useState<Flash | null>(null)
@@ -72,8 +77,12 @@ export function ChainGame({
     [graph, state, solved],
   )
 
-  // Nové kolo — všechno zpět na začátek.
+  // Nové kolo — všechno zpět na začátek. Na prvním renderu se přeskočí,
+  // jinak by přepsalo stav načtený z rozehraného kola.
+  const shown = useRef(puzzle.id)
   useEffect(() => {
+    if (shown.current === puzzle.id) return
+    shown.current = puzzle.id
     setState(createChainState(puzzle))
     setDraft([...puzzle.start])
     setCursor(0)
@@ -83,6 +92,11 @@ export function ChainGame({
     setDone(false)
     reported.current = false
   }, [puzzle])
+
+  // Po každé změně stavu se kolo uloží, aby šlo pokračovat i po zavření hry.
+  useEffect(() => {
+    onProgress(state)
+  }, [state, onProgress])
 
   useEffect(() => {
     if (!solved || reported.current) return
@@ -271,31 +285,29 @@ export function ChainGame({
   return (
     <div className="game with-rail">
       <aside className="rail rail-left">
-        <div className="stat-row">
-          <div className="stat">
-            <div className="label">Tahy</div>
-            <div className={`value num ${moves > budget ? 'warn' : ''}`}>{moves}</div>
-          </div>
-          <div className="stat">
-            <div className="label">Nejkratší cesta</div>
-            <div className="value num gold">{puzzle.par}</div>
-          </div>
-        </div>
-        <div className="stat">
-          <div className="label">Zbývá nejméně</div>
-          <div className={`value num ${remaining === -1 ? 'warn' : 'accent'}`}>
-            {solved ? 0 : remaining === -1 ? '—' : remaining}
-          </div>
-          <div className="faint" style={{ fontSize: '0.76rem', marginTop: 4 }}>
-            rozpočet {budget} tahů
+        <div className="hud">
+          <div className="stat-row">
+            <div className="stat">
+              <div className="label">Tahy</div>
+              <div className={`value num ${moves > budget ? 'warn' : ''}`}>{moves}</div>
+            </div>
+            <div className="stat">
+              <div className="label">Nejkratší cesta</div>
+              <div className="value num gold">{puzzle.par}</div>
+            </div>
+            <div className="stat">
+              <div className="label">Zbývá nejméně</div>
+              <div className={`value num ${remaining === -1 ? 'warn' : 'accent'}`}>
+                {solved ? 0 : remaining === -1 ? '—' : remaining}
+              </div>
+              <div className="stat-note faint">rozpočet {budget} tahů</div>
+            </div>
           </div>
         </div>
 
-        <div className="card" style={{ padding: 'var(--sp-4)' }}>
-          <div className="label" style={{ marginBottom: 'var(--sp-3)' }}>
-            Nápovědy · {state.hintsUsed} použito
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-2)' }}>
+        <div className="hints card">
+          <div className="label">Nápovědy · {state.hintsUsed} použito</div>
+          <div className="hint-buttons">
             <button
               type="button"
               className="btn btn-sm"
@@ -405,40 +417,41 @@ export function ChainGame({
           </div>
         </div>
 
-        {!solved && (
-          <div className="board-footer">
-            <div style={{ display: 'flex', gap: 'var(--sp-2)', flexWrap: 'wrap', justifyContent: 'center' }}>
-              <button
-                type="button"
-                className="btn btn-sm"
-                onClick={() => resetDraft(current)}
-                disabled={draftDiff === 0}
-              >
-                Zrušit úpravu
-              </button>
-              <button
-                type="button"
-                className="btn btn-sm"
-                onClick={undo}
-                disabled={state.path.length <= 1}
-              >
-                Vrátit tah
-              </button>
-              <button type="button" className="btn btn-sm btn-ghost" onClick={onGiveUp}>
-                Vzdát kolo
-              </button>
-            </div>
-
-            <Keyboard
-              onLetter={typeLetter}
-              onBackspace={backspace}
-              onEnter={submit}
-              enterDisabled={draftDiff !== 1}
-              enterLabel="Zahrát"
-            />
-          </div>
-        )}
       </div>
+
+      {!solved && (
+        <div className="board-footer">
+          <div style={{ display: 'flex', gap: 'var(--sp-2)', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <button
+              type="button"
+              className="btn btn-sm"
+              onClick={() => resetDraft(current)}
+              disabled={draftDiff === 0}
+            >
+              Zrušit úpravu
+            </button>
+            <button
+              type="button"
+              className="btn btn-sm"
+              onClick={undo}
+              disabled={state.path.length <= 1}
+            >
+              Vrátit tah
+            </button>
+            <button type="button" className="btn btn-sm btn-ghost" onClick={onGiveUp}>
+              Vzdát kolo
+            </button>
+          </div>
+
+          <Keyboard
+            onLetter={typeLetter}
+            onBackspace={backspace}
+            onEnter={submit}
+            enterDisabled={draftDiff !== 1}
+            enterLabel="Zahrát"
+          />
+        </div>
+      )}
 
       <aside className="rail rail-right">
         <div className="card" style={{ padding: 'var(--sp-4)' }}>

@@ -11,7 +11,7 @@ import {
   type Difficulty,
   type ModeId,
 } from '../game/types'
-import type { Profile } from '../lib/storage'
+import type { Profile, SavedRound } from '../lib/storage'
 
 interface Props {
   profile: Profile
@@ -20,6 +20,9 @@ interface Props {
   onDifficulty: (mode: ModeId, difficulty: Difficulty) => void
   onStats: () => void
   onRules: (mode: ModeId) => void
+  /** Kolo přerušené odchodem do menu nebo zavřením hry. */
+  saved: SavedRound | null
+  onResume: () => void
 }
 
 const MODES: { id: ModeId; glyph: string; color: string }[] = [
@@ -29,6 +32,21 @@ const MODES: { id: ModeId; glyph: string; color: string }[] = [
 ]
 
 const DIFFICULTIES: Difficulty[] = ['easy', 'normal', 'hard']
+
+/** Kolik toho v přerušeném kole zbývá — ať hráč ví, do čeho se vrací. */
+function progressNote(saved: SavedRound): string {
+  const state = saved.state as {
+    path?: string[]
+    found?: string[]
+    built?: string[]
+    puzzle?: { solutions?: string[]; levels?: unknown[] }
+  }
+  if (saved.mode === 'chain') return `${(state.path?.length ?? 1) - 1} tahů`
+  if (saved.mode === 'hive') {
+    return `${state.found?.length ?? 0} z ${state.puzzle?.solutions?.length ?? 0} slov`
+  }
+  return `${(state.built?.length ?? 1) - 1} z ${(state.puzzle?.levels?.length ?? 1) - 1} pater`
+}
 
 const DIFFICULTY_NOTE: Record<ModeId, Record<Difficulty, string>> = {
   chain: {
@@ -55,6 +73,8 @@ export function Home({
   onDifficulty,
   onStats,
   onRules,
+  saved,
+  onResume,
 }: Props) {
   const level = levelFor(profile.xp)
   const [openRules, setOpenRules] = useState<ModeId | null>(null)
@@ -68,6 +88,22 @@ export function Home({
         <h1>Vyber si hru</h1>
         <p className="muted">Tři české slovní hry. Každá hádanka jde vždycky dohrát.</p>
       </div>
+
+      {saved && (
+        <button type="button" className="resume-card" onClick={onResume} data-mode={saved.mode}>
+          <span className="resume-mark" aria-hidden="true">
+            {MODES.find((m) => m.id === saved.mode)?.glyph}
+          </span>
+          <span className="resume-text">
+            <strong>Pokračovat ve hře</strong>
+            <span className="muted">
+              {MODE_LABEL[saved.mode]} · {DIFFICULTY_LABEL[saved.difficulty]}
+              {saved.daily ? ' · denní výzva' : ''} · {progressNote(saved)}
+            </span>
+          </span>
+          <span className="resume-go" aria-hidden="true">→</span>
+        </button>
+      )}
 
       <div className="mode-grid">
         {MODES.map((mode) => {

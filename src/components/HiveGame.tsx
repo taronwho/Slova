@@ -29,6 +29,9 @@ interface Props {
   onFinish: (result: RoundResult) => void
   onNext: () => void
   onHome: () => void
+  /** Uložený stav rozehraného kola, když se hráč vrací zpátky do hry. */
+  resume?: HiveState | null
+  onProgress: (state: HiveState) => void
 }
 
 /** Souřadnice šesti okrajových buněk plástve v procentech rámu plástve. */
@@ -43,8 +46,17 @@ const RING = [
 
 const CENTER = { left: '33.5%', top: '33.8%' }
 
-export function HiveGame({ puzzle, streak, dayLabel, onFinish, onNext, onHome }: Props) {
-  const [state, setState] = useState<HiveState>(() => createHiveState(puzzle))
+export function HiveGame({
+  puzzle,
+  streak,
+  dayLabel,
+  onFinish,
+  onNext,
+  onHome,
+  resume,
+  onProgress,
+}: Props) {
+  const [state, setState] = useState<HiveState>(() => resume ?? createHiveState(puzzle))
   const [draft, setDraft] = useState('')
   const [flash, setFlash] = useState<{ text: string; tone: string; key: number } | null>(
     null,
@@ -59,13 +71,23 @@ export function HiveGame({ puzzle, streak, dayLabel, onFinish, onNext, onHome }:
   const rank = rankFor(points, max)
   const complete = state.found.length >= puzzle.solutions.length
 
+  // Nové kolo — všechno zpět na začátek. Na prvním renderu se přeskočí,
+  // jinak by přepsalo stav načtený z rozehraného kola.
+  const shown = useRef(puzzle.id)
   useEffect(() => {
+    if (shown.current === puzzle.id) return
+    shown.current = puzzle.id
     setState(createHiveState(puzzle))
     setDraft('')
     setFlash(null)
     setDone(false)
     reported.current = false
   }, [puzzle])
+
+  // Po každé změně stavu se kolo uloží, aby šlo pokračovat i po zavření hry.
+  useEffect(() => {
+    onProgress(state)
+  }, [state, onProgress])
 
   const breakdown = useMemo(() => scoreHive(state, streak), [state, streak])
 
@@ -175,6 +197,7 @@ export function HiveGame({ puzzle, streak, dayLabel, onFinish, onNext, onHome }:
   return (
     <div className="game with-rail">
       <aside className="rail rail-left">
+        <div className="hud">
         <div className="panel">
           <div className="rank-line">
             <span className="rank">{rank.name}</span>
@@ -213,10 +236,10 @@ export function HiveGame({ puzzle, streak, dayLabel, onFinish, onNext, onHome }:
           </div>
         </div>
 
-        <div className="card" style={{ padding: 'var(--sp-4)' }}>
-          <div className="label" style={{ marginBottom: 'var(--sp-2)' }}>
-            Kolik slov ještě zbývá
-          </div>
+        </div>
+
+        <div className="hints card">
+          <div className="label">Kolik slov ještě zbývá</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--sp-2)' }}>
             {[...remaining.entries()].map(([length, count]) => (
               <span className="chip" key={length}>
@@ -276,38 +299,39 @@ export function HiveGame({ puzzle, streak, dayLabel, onFinish, onNext, onHome }:
             ))}
           </div>
 
-          <div className="board-footer">
-            <div style={{ display: 'flex', gap: 'var(--sp-2)', flexWrap: 'wrap', justifyContent: 'center' }}>
-              <button
-                type="button"
-                className="btn"
-                onClick={() => setDraft((prev) => prev.slice(0, -1))}
-              >
-                Smazat
-              </button>
-              <button
-                type="button"
-                className="btn"
-                onClick={() => setState((prev) => ({ ...prev, ring: shuffle(prev.ring) }))}
-              >
-                Zamíchat
-              </button>
-              <button type="button" className="btn btn-primary" onClick={submit}>
-                Potvrdit
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', gap: 'var(--sp-2)', flexWrap: 'wrap', justifyContent: 'center' }}>
-              <button type="button" className="btn btn-sm" onClick={hint}>
-                Nápověda −80
-              </button>
-              <button type="button" className="btn btn-sm btn-ghost" onClick={finishRound}>
-                Ukončit plástev
-              </button>
-            </div>
-          </div>
         </div>
       </div>
+
+        <div className="board-footer">
+          <div style={{ display: 'flex', gap: 'var(--sp-2)', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => setDraft((prev) => prev.slice(0, -1))}
+            >
+              Smazat
+            </button>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => setState((prev) => ({ ...prev, ring: shuffle(prev.ring) }))}
+            >
+              Zamíchat
+            </button>
+            <button type="button" className="btn btn-primary" onClick={submit}>
+              Potvrdit
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', gap: 'var(--sp-2)', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <button type="button" className="btn btn-sm" onClick={hint}>
+              Nápověda −80
+            </button>
+            <button type="button" className="btn btn-sm btn-ghost" onClick={finishRound}>
+              Ukončit plástev
+            </button>
+          </div>
+        </div>
 
       <aside className="rail rail-right">
         <div className="card" style={{ padding: 'var(--sp-4)' }}>
