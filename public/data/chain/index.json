@@ -1,17 +1,17 @@
 {
  "4": {
-  "words": 6246,
+  "words": 2499,
   "puzzles": 2499,
   "difficulty": "easy"
  },
  "5": {
-  "words": 18105,
+  "words": 6346,
   "puzzles": 3500,
   "difficulty": "normal"
  },
  "6": {
-  "words": 34456,
-  "puzzles": 2880,
+  "words": 9580,
+  "puzzles": 2739,
   "difficulty": "hard"
  }
 }

@@ -8,12 +8,16 @@ z nich jako povinný střed se pak spočítá kompletní množina řešení.
 má pangram a dost slov, a její seznam řešení je uložený celý.
 """
 
+import glob
 import json
 import os
 import random
 
 OUT = os.path.join(os.path.dirname(__file__), "out")
 DATA = os.path.join(os.path.dirname(__file__), "..", "public", "data", "hive")
+
+# Lexikon omezený na základní tvary (krok 2b).
+LEXICON = "lexicon_base.json"
 
 FOLD = str.maketrans("áčďéěíňóřšťúůýž", "acdeeinorstuuyz")
 
@@ -64,7 +68,11 @@ def submasks(mask: int):
 def main():
     random.seed(20260724)
     os.makedirs(DATA, exist_ok=True)
-    lexicon = json.load(open(os.path.join(OUT, "lexicon.json"), encoding="utf-8"))
+    # Staré balíčky je nutné smazat — když jich nová sada vyrobí míň, osiřelý
+    # soubor by zůstal ležet a index by mu neodpovídal.
+    for stale in glob.glob(os.path.join(DATA, "pack-*.json")):
+        os.remove(stale)
+    lexicon = json.load(open(os.path.join(OUT, LEXICON), encoding="utf-8"))
 
     by_mask: dict[int, list[tuple[str, int]]] = {}
     pangram_candidates: dict[int, list[tuple[str, int]]] = {}

@@ -13,6 +13,7 @@ Věž se staví shora dolů: nejdřív se najdou podpisy, ze kterých vede úpln
 řetěz až na tři písmena.
 """
 
+import glob
 import json
 import os
 import random
@@ -20,8 +21,11 @@ import random
 OUT = os.path.join(os.path.dirname(__file__), "out")
 DATA = os.path.join(os.path.dirname(__file__), "..", "public", "data", "tower")
 
+# Lexikon omezený na základní tvary (krok 2b).
+LEXICON = "lexicon_base.json"
+
 # Věž se staví jen ze slov, která hráč reálně zná …
-CORE_MIN_FREQ = 100
+CORE_MIN_FREQ = 20
 # … ale uznáváme i vzácnější platný anagram, když ho hráč vymyslí.
 ACCEPT_MIN_FREQ = 2
 
@@ -40,7 +44,11 @@ def signature(word: str) -> str:
 def main():
     random.seed(20260724)
     os.makedirs(DATA, exist_ok=True)
-    lexicon = json.load(open(os.path.join(OUT, "lexicon.json"), encoding="utf-8"))
+    # Staré balíčky je nutné smazat — když jich nová sada vyrobí míň, osiřelý
+    # soubor by zůstal ležet a index by mu neodpovídal.
+    for stale in glob.glob(os.path.join(DATA, "pack-*.json")):
+        os.remove(stale)
+    lexicon = json.load(open(os.path.join(OUT, LEXICON), encoding="utf-8"))
 
     core: dict[str, list[str]] = {}
     accept: dict[str, list[str]] = {}

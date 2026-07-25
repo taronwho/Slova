@@ -36,9 +36,39 @@ nemůže zablokovat cestu nahoru. Řetěz podpisů je ověřený už při genero
 | | zdroj | výsledek |
 |---|---|---|
 | Slovník | frekvenční seznam češtiny profiltrovaný přes hunspell `cs_CZ` | 248 811 ověřených slov |
-| Řetěz | grafy pro délky 4, 5 a 6 | 8 879 hádanek |
+| Základní tvary | lemmatizace přes LemmaGen3 | 60 444 slov |
+| Řetěz | grafy pro délky 4, 5 a 6 | 8 738 hádanek |
 | Voština | plástve odvozené od pangramů | 2 400 hádanek |
-| Věž | ověřené řetězy přesmyček 3→6/7/8 | 2 700 hádanek |
+| Věž | ověřené řetězy přesmyček 3→6/7/8 | 2 419 hádanek |
+
+### Jen základní tvary
+
+Hra pracuje výhradně se základními tvary: podstatná jména v 1. pádu jednotného
+čísla, slovesa v infinitivu, přídavná jména, číslovky, zájmena, příslovce
+a spojky. Bez toho hráč ve Voštině sbíral varianty jednoho slova („hravá,
+hravé, hravě, hrává") místo aby hledal nová.
+
+Základní tvar se pozná tak, že se slovo lemmatizuje a výsledek se rovná
+původnímu slovu. Lemmatizér je **LemmaGen3**. Zvažoval jsem `simplemma`, ale
+ta má pro češtinu špatnou kvalitu — lemmatizuje „dobrý" na „dokonavý" a
+„dělat" na „udělat". Nestačí ani hesla z hunspellového `.dic`: obsahují
+i ohýbané tvary („boha", „bohu", „bohů").
+
+Navíc se odfiltrují 5. pády ženských jmen („babo", „osobo"), které lemmatizér
+propouští. Pozná se to tak, že po záměně koncového -o za -a vznikne 1. pád,
+který je mezi základními tvary — podmínka je dost přísná na to, aby nepadla
+běžná slova jako „jitro" nebo „kilo".
+
+**Co chybí:** 1. pád množného čísla („hrady"). Odlišit ho od ostatních pádů
+(„hradu", „hradem") vyžaduje morfologii se značkami pádu — MorfFlex, modely
+pro Stanzu či spaCy, výtahy z Wikislovníku. Všechny tyhle zdroje jsou
+v prostředí, kde se hra staví, blokované, a heuristika by místo 1. pádu
+množného čísla propouštěla 4. pád.
+
+Omezení na základní tvary má cenu: propojenost grafu pro Řetěz klesla natolik,
+že se musely snížit prahy frekvence. Základní tvary jsou ale samy o sobě
+srozumitelnější, takže nižší práh nevadí — „kaktus" pozná každý, i když se
+v korpusu objevuje méně než „kaktusům".
 
 Hunspell zároveň spolehlivě odfiltruje vlastní jména: ta jsou ve slovníku
 uložena jen s velkým počátečním písmenem, takže lookup malé varianty („praha",

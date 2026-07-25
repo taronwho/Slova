@@ -17,12 +17,18 @@ from collections import deque
 OUT = os.path.join(os.path.dirname(__file__), "out")
 DATA = os.path.join(os.path.dirname(__file__), "..", "public", "data", "chain")
 
+# Lexikon omezený na základní tvary (krok 2b).
+LEXICON = "lexicon_base.json"
+
 # Slovo musí být aspoň takhle časté, aby smělo být startem nebo cílem.
-ENDPOINT_MIN_FREQ = 500
+# Prahy jsou proti verzi s ohýbanými tvary nižší: základních tvarů je zhruba
+# třetina a jsou přirozeně vzácnější, zato jsou samy o sobě srozumitelnější
+# — „kaktus" pozná každý, i když se v korpusu objevuje méně než „kaktusům".
+ENDPOINT_MIN_FREQ = {4: 300, 5: 150, 6: 120}
 # Slovo musí být aspoň takhle časté, aby se počítalo za „srozumitelné"
 # při kontrole humánní cesty. Delší slova jsou přirozeně vzácnější, proto
 # klesající práh podle délky.
-HUMANE_MIN_FREQ = {4: 200, 5: 100, 6: 25}
+HUMANE_MIN_FREQ = {4: 60, 5: 10, 6: 5}
 
 # délka -> (obtížnost, rozsah par, kolik hádanek chceme)
 PLAN = {
@@ -114,7 +120,7 @@ def largest_component(adj):
 def main():
     random.seed(20260724)
     os.makedirs(DATA, exist_ok=True)
-    lexicon = json.load(open(os.path.join(OUT, "lexicon.json"), encoding="utf-8"))
+    lexicon = json.load(open(os.path.join(OUT, LEXICON), encoding="utf-8"))
 
     all_puzzles = []
     summary = {}
@@ -128,7 +134,9 @@ def main():
 
         humane = [freq[w] >= HUMANE_MIN_FREQ[length] for w in words]
         endpoints = [
-            i for i in component if freq[words[i]] >= ENDPOINT_MIN_FREQ and humane[i]
+            i
+            for i in component
+            if freq[words[i]] >= ENDPOINT_MIN_FREQ[length] and humane[i]
         ]
         print(
             f"délka {length}: slov {len(words)}, LCC {len(component)}, "
