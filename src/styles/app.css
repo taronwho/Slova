@@ -1835,6 +1835,23 @@
   color: var(--gold);
 }
 
+/* Údaj, který si po ťuknutí řekne, co znamená. Vypadá jako ostatní údaje,
+   jen s tečkovaným podtržením popisku — aby bylo poznat, že se dá zmáčknout. */
+button.stat-tap {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+button.stat-tap .label {
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+
+button.stat-tap:hover {
+  border-color: var(--accent);
+}
+
 .board {
   display: flex;
   flex-direction: column;
@@ -1874,6 +1891,13 @@
 .banner-ok {
   background: var(--ok-soft);
   color: var(--ok-text);
+}
+
+/* Vysvětlivka, ne výsledek tahu — proto klidná barva panelu. */
+.banner-info {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
 }
 
 .banner .banner-actions {

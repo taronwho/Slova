@@ -36,11 +36,11 @@ nemůže zablokovat cestu nahoru. Řetěz podpisů je ověřený už při genero
 | | zdroj | výsledek |
 |---|---|---|
 | Slovník | frekvenční seznam češtiny profiltrovaný přes hunspell `cs_CZ` | 248 181 ověřených slov |
-| Základní tvary | slova se skloňovacím/časovacím vzorem + lemmatizace | 39 237 slov |
-| 1. pád množného čísla | buňky deklinačních vzorů z `cs_CZ.aff` | + 7 685 slov |
-| Řetěz | grafy pro délky 4, 5 a 6 | 7 791 hádanek |
+| Základní tvary | slova se skloňovacím/časovacím vzorem + lemmatizace | 39 220 slov |
+| 1. pád množného čísla | buňky deklinačních vzorů z `cs_CZ.aff` | + 8 265 slov |
+| Řetěz | grafy pro délky 4, 5 a 6 | 7 824 hádanek |
 | Voština | plástve odvozené od pangramů | 2 400 hádanek |
-| Věž | ověřené řetězy přesmyček 3→6/7/8 | 1 932 hádanek |
+| Věž | ověřené řetězy přesmyček 3→6/7/8 | 1 962 hádanek |
 
 ### Jen 1. pád a infinitiv
 
@@ -107,9 +107,18 @@ bez vlastního 1. pádu mn. č.), `R`, `Y` ani slovesné příznaky.
 
 Pojistky: příznaky `I`, `V` a `D` visí i na číslovkách („deset → deseti")
 a slovesech, takže platí jen se jmenným vzorem; každý vygenerovaný tvar musí
-být v ověřeném lexikonu a lemmatizér ho musí vrátit na výchozí heslo; a když
-v jednom vzoru zaberou na jedno slovo dvě pravidla, generování se zastaví —
-právě takhle se chytlo „kmen → kmene" vedle správného „kmen → kmeny".
+být v ověřeném lexikonu; a když v jednom vzoru zaberou na jedno slovo dvě
+pravidla, generování se zastaví — právě takhle se chytlo „kmen → kmene" vedle
+správného „kmen → kmeny".
+
+Poslední pojistkou je lemmatizér, ale jen jako **námitka**, ne jako potvrzení.
+LemmaGen3 zná jen část slovní zásoby: u „sekery" vrátí „sekery", protože to
+slovo prostě nemá. Když se to bralo jako neshoda, mizelo přes pět set správných
+množných čísel („jablka", „trička", „pavouci", „sloni", „třešně") a hráč pak
+ve Voštině napsal *sekery* a hra tvrdila, že to slovo nezná. Teď se tvar
+zahodí, jen když ho lemmatizér přiřadí k **jinému** heslu — to znamená, že
+vzor sáhl vedle. Že filtr není přísný na úkor správných tvarů, hlídá test
+„zná i množná čísla, která lemmatizér neumí".
 
 Vedlejším produktem je mapa tvar → výchozí heslo, kterou používá Věž: patro
 nad „trajekt" nesmí nabídnout „trajekty". Přidat koncovku není hádanka, jen

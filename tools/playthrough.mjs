@@ -249,6 +249,13 @@ log('\nOVLÁDÁNÍ')
   await page.waitForTimeout(300)
   check(!(await page.locator('.found-groups').isVisible()), 'zpět seznam zavře')
 
+  await page.locator('.stat-tap').click()
+  await page.waitForTimeout(250)
+  check(
+    (await page.locator('.banner-info').innerText()).includes('sedmi písmen'),
+    'ťuknutí na pangramy vysvětlí, co to je',
+  )
+
   await goHome(page)
   await openGame(page, 'tower')
   await page.locator('.hints .btn', { hasText: 'Celé slovo' }).click()

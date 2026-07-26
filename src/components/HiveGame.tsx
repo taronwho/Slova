@@ -233,13 +233,21 @@ export function HiveGame({
             <div className="label">Z celku</div>
             <div className="value num">{puzzle.solutions.length}</div>
           </div>
-          <div className="stat">
+          {/* Návod se dá přeskočit a pak je „Pangramy" jen záhadné číslo.
+              Ťuknutím se vysvětlí tam, kde na něj hráč kouká. */}
+          <button
+            type="button"
+            className="stat stat-tap"
+            onClick={() =>
+              showFlash('Pangram = slovo ze všech sedmi písmen · +7 bodů', 'info')
+            }
+          >
             <div className="label">Pangramy</div>
             <div className="value num gold">
               {state.found.filter((w) => puzzle.pangrams.includes(w)).length}/
               {puzzle.pangrams.length}
             </div>
-          </div>
+          </button>
         </div>
 
         </div>

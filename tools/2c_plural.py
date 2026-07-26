@@ -12,8 +12,9 @@ Postup:
    základní tvar (lemma se rovná slovu), jinak by se stavělo na nesmyslu.
 3. Pravidlo se aplikuje, sedí-li jeho podmínka na konec hesla.
 4. Vygenerovaný tvar projde, jen když ho zná hunspell (je v lexicon.json)
-   a když ho lemmatizér vrátí zpátky na heslo. To je poslední pojistka
-   proti chybě ve vzoru.
+   a když ho lemmatizér nepošle k *jinému* heslu. To je poslední pojistka
+   proti chybě ve vzoru: lemmatizér má díry (u „sekery" vrátí „sekery"),
+   takže „nezná ho" se bere jako v pořádku, kdežto „patří jinam" ne.
 
 Výsledek se přimíchá do lexicon_base.json (s frekvencí z lexicon.json).
 
@@ -33,6 +34,12 @@ from _plural_rules import NEEDS_NOUN_FLAG, NOM_PL, NOUN_FLAGS
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "out")
 RAW = os.path.join(HERE, "raw")
+
+# Tvary, které vzor odvodil správně, ale hráč je jako samostatné slovo nezná:
+# čte je jako pád úplně jiného, běžnějšího slova.
+BLOCK = {
+    "jaře",  # 1. p. mn. č. od „jař" (jarní obilí); každý v tom vidí „na jaře"
+}
 
 
 def load_rules(path):
@@ -168,7 +175,14 @@ def main():
             continue
         if form not in freq:
             continue
-        if lemmatizer.lemmatize(form) != word:
+        if form in BLOCK:
+            continue
+        # Lemmatizér zná jen část slovní zásoby. Když tvar nezná, vrátí ho
+        # nezměněný — to není námitka, jen mezera („sekera -> sekery" takhle
+        # o pět set správných množných čísel přišlo). Námitka je, až když ho
+        # přiřadí k jinému heslu, protože pak vzor sáhl vedle.
+        lemma = lemmatizer.lemmatize(form)
+        if lemma != word and lemma != form:
             continue
         plurals[form] = max(plurals.get(form, 0), freq[form])
         source.setdefault(form, word)

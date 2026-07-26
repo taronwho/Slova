@@ -277,6 +277,18 @@ describe('slovník — jen základní tvary', () => {
     expect(allowed.size).toBeGreaterThan(20_000)
   })
 
+  // Druhá strana téhož: filtr nesmí být tak přísný, aby vyhazoval správné
+  // tvary. Lemmatizér zná jen část slovní zásoby, a když se jeho neznalost
+  // brala jako námitka, chybělo pět set správných množných čísel — hráč pak
+  // ve Voštině napsal „sekery" a hra tvrdila, že to slovo nezná.
+  it('zná i množná čísla, která lemmatizér neumí', () => {
+    const missing = [
+      'sekery', 'jablka', 'trička', 'pavouci', 'sloni', 'kopce',
+      'třešně', 'směsi', 'žebra', 'videa', 'latě', 'mniši',
+    ].filter((word) => !allowed.has(word))
+    expect(missing).toEqual([])
+  })
+
   it('řetěz používá jen povolené tvary', () => {
     const problems: string[] = []
     for (const length of [4, 5, 6]) {
