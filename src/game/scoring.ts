@@ -137,25 +137,5 @@ export function scoreHive(state: HiveState, streak: number): ScoreBreakdown {
   )
 }
 
-/** Úrovně profilu — prahové hodnoty celkových XP. */
-export const LEVEL_TITLES = [
-  'Učeň',
-  'Písmák',
-  'Slovař',
-  'Skladatel',
-  'Mistr slova',
-  'Velmistr',
-]
-
-export function levelFor(xp: number): { level: number; title: string; into: number; span: number } {
-  let level = 1
-  let need = 2000
-  let remaining = xp
-  while (remaining >= need && level < 60) {
-    remaining -= need
-    level += 1
-    need = Math.round(need * 1.15)
-  }
-  const titleIndex = Math.min(Math.floor((level - 1) / 5), LEVEL_TITLES.length - 1)
-  return { level, title: LEVEL_TITLES[titleIndex]!, into: remaining, span: need }
-}
+/* Postup profilu (hodnosti 1–20) je v game/ranks.ts — je to samostatná věc
+   od bodování kola a mluví do něj i vitrína ocenění. */

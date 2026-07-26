@@ -290,6 +290,47 @@ nebo z domovské obrazovky, kde jsou pravidla i v rozbalovací textové podobě.
 Texty žijí v `src/game/tutorials.ts` odděleně od komponent, aby je šlo použít
 na obou místech.
 
+## Hodnosti a ocenění
+
+Postup drží dvě věci: **dvacet hodností** (`src/game/ranks.ts`) a **třicet
+ocenění** (`src/game/awards.ts`). Hodnost roste s XP přes všechny režimy
+dohromady, ocenění jsou jednotlivé mety.
+
+Mety jsou schválně **za dovednost, ne za vysedění**. Nejpočetnější skupina je
+„Bez nápovědy" (devět met, od jednoho čistého kola po padesát a po pět čistých
+v řadě), hned za ní „Body" (osm met za skóre v jednom kole a za nasbírané XP).
+„Odehraj sto kol" tu není — takovou metu splní každý, kdo vydrží klikat.
+Hlídá to i test „většina met stojí na dovednosti nebo bodech": skupiny `clean`
+a `score` musí dohromady tvořit víc než polovinu.
+
+Podmínka ocenění se čte **jen z profilu**, nikdy z právě dohraného kola.
+Ocenění se proto dají kdykoli přepočítat znovu (a při načtení profilu se to
+dělá): kdyby kolo spadlo dřív, než se zapsalo, meta se dožene sama. Profil
+kvůli tomu vedle statistik drží počítadla, která se ze statistik odvodit
+nedají — čistá kola a jejich nejdelší řada, pangramy, dostavěné věže bez
+nápovědy, nejrychlejší čistý řetěz.
+
+Kresby jsou vlastní, ne emoji ani ikony odjinud:
+
+- `src/components/art/RankBadge.tsx` — odznak hodnosti. Tvar štítu říká kov
+  (kolo bronz, šestiúhelník stříbro, štít zlato, hvězda plazma), uvnitř je
+  vždycky prstenec ze tří oblouků — totéž znamení jako v logu a v úvodní
+  animaci — a krokve pod štítem říkají pořadí uvnitř kovu.
+- `src/components/art/AwardArt.tsx` — dvacet kreseb v poli 48×48, linka 2,6
+  se zakulacenými konci a právě jedna plná plocha v barvě mety. Tvarosloví je
+  ze hry: článek řetězu, buňka plástve, patra věže rozšiřující se nahoru
+  (každé má o písmeno víc). Odstupňované mety sdílejí kresbu a liší se
+  krokvemi, stejnou řečí jako hodnosti.
+
+Domovská obrazovka zůstává, jaká byla — přibylo na ní jediné tlačítko
+„Ocenění n/30". Všechno ostatní žije na vlastní obrazovce (`Awards.tsx`),
+kde je i celý žebříček dvaceti hodností. Zamčené mety se neschovávají a
+u met na počet se pod dlaždicí táhne proužek postupu; schovaná meta
+nemotivuje, protože o ní nikdo neví.
+
+Co v kole padlo, oznámí `AwardPopup.tsx` až **nad** výsledkem — nejdřív skóre,
+pak odměna za něj. Když padne víc věcí naráz, jdou po jedné.
+
 ## Mobil
 
 Na telefonu se hra chová jako aplikace, ne jako dokument, a **vejde se na jednu

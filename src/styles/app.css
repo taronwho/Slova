@@ -2106,3 +2106,287 @@ button.stat-tap:hover {
 .found-groups .label {
   margin-bottom: var(--sp-2);
 }
+
+/* ---------- Vitrína: hodnosti a ocenění ---------- */
+
+/* Karta s odznakem. Na úvodní obrazovce je to tlačítko do vitríny, ve
+   statistikách jen panel — proto se resetuje zarovnání i barva textu. */
+.rank-card {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  width: 100%;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+}
+
+button.rank-card {
+  cursor: pointer;
+}
+
+button.rank-card:hover {
+  border-color: var(--accent);
+}
+
+.rank-card .rank-badge {
+  flex: 0 0 auto;
+}
+
+.rank-card-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.rank-card-body .faint {
+  font-size: 0.78rem;
+}
+
+.rank-name {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-variation-settings: 'wght' 800;
+  line-height: 1.1;
+}
+
+.rank-card-awards {
+  flex: 0 0 auto;
+  align-self: flex-start;
+}
+
+/* Zamčený odznak nemá strhávat pozornost, ale musí jít poznat, co to bude. */
+.rank-badge.locked {
+  opacity: 0.7;
+}
+
+.award-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: var(--sp-4) 0 var(--sp-2);
+}
+
+.group-note {
+  font-size: 0.82rem;
+  margin: calc(-1 * var(--sp-2)) 0 var(--sp-3);
+}
+
+.award-grid {
+  display: grid;
+  gap: var(--sp-3);
+  grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
+}
+
+.award {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-4) var(--sp-3) var(--sp-3);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  text-align: center;
+}
+
+/* Barva prosakuje do kresby přes --tone; dlaždice ji jen nastaví. Meta
+   patřící k jedné hře si bere její barvu, obecné mety mají svou vlastní. */
+.award[data-tone='brand'] { --tone: var(--brand); }
+.award[data-tone='chain'] { --tone: var(--mode-chain); }
+.award[data-tone='hive'] { --tone: var(--mode-hive); }
+.award[data-tone='tower'] { --tone: var(--mode-tower); }
+.award[data-tone='ok'] { --tone: var(--ok); }
+.award[data-tone='gold'] { --tone: var(--gold); }
+.award[data-tone='warn'] { --tone: var(--warn); }
+
+/* Získané ocenění svítí barvou skupiny, nezískané je popelavé — rozdíl musí
+   být vidět na první pohled z celé mřížky, ne až po přečtení popisku. */
+.award.has {
+  border-color: color-mix(in oklab, var(--tone) 45%, var(--border));
+  background: color-mix(in oklab, var(--tone) 9%, var(--surface));
+}
+
+.award:not(.has) {
+  --tone: var(--text-faint);
+}
+
+.award:not(.has) .award-art {
+  opacity: 0.55;
+}
+
+.award-art {
+  color: var(--text-muted);
+}
+
+.award.has .award-art {
+  color: var(--text);
+}
+
+.award-art .ln {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.award-art .tn {
+  fill: none;
+  stroke: var(--tone);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.award-art .tf {
+  fill: var(--tone);
+  stroke: none;
+}
+
+.award-art .pip {
+  fill: none;
+  stroke: var(--tone);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.award-title {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-variation-settings: 'wght' 700;
+  line-height: 1.15;
+  margin-top: var(--sp-1);
+}
+
+.award-goal {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  line-height: 1.25;
+}
+
+.award-date {
+  font-size: 0.72rem;
+  color: var(--accent-text);
+  font-variant-numeric: tabular-nums;
+  margin-top: var(--sp-1);
+}
+
+.award.has .award-date {
+  color: color-mix(in oklab, var(--tone) 70%, var(--text));
+}
+
+/* Proužek postupu u zamčené mety — „jsem skoro tam" je silnější motivace
+   než holé „zamčeno". */
+.award-track {
+  width: 100%;
+  height: 5px;
+  margin-top: var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.award-track span {
+  display: block;
+  height: 100%;
+  background: var(--text-faint);
+}
+
+.ladder-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.ladder-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  border: 1px solid transparent;
+}
+
+.ladder-row.has {
+  background: var(--surface-2);
+  border-color: var(--border);
+}
+
+.ladder-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.ladder-row:not(.has) .ladder-name {
+  color: var(--text-faint);
+  font-weight: 500;
+}
+
+/* ---------- Oznámení o postupu ---------- */
+
+/* Vlastní vrstva, ne `.result` — leží nad výsledkem kola a testy i kód se
+   na výsledek pořád musí umět odkázat jedním selektorem. */
+.gained {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: var(--sp-4);
+  background: color-mix(in oklab, var(--bg) 78%, transparent);
+  backdrop-filter: blur(12px);
+  animation: rise var(--t-base) var(--ease) both;
+}
+
+.gained-card {
+  width: min(400px, 100%);
+  max-height: 88dvh;
+  overflow-y: auto;
+  padding: var(--sp-6) var(--sp-5);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-3);
+  text-align: center;
+  animation: pop var(--t-slow) var(--ease-back) both;
+}
+
+.gained-card h2 {
+  font-size: 1.7rem;
+  margin-top: var(--sp-2);
+}
+
+.gained-kicker {
+  display: inline-block;
+  padding: 0.2rem 0.7rem;
+  border-radius: var(--r-full);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gained-art {
+  display: grid;
+  place-items: center;
+  margin: var(--sp-4) 0 var(--sp-3);
+  --tone: var(--gold);
+  color: var(--text);
+  animation: pop var(--t-slow) var(--ease-back) both;
+  animation-delay: 90ms;
+}
+
+.gained-count {
+  display: block;
+  margin-top: var(--sp-3);
+  font-size: 0.8rem;
+}

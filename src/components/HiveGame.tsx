@@ -114,9 +114,13 @@ export function HiveGame({
         total: puzzle.solutions.length,
         rank: rank.name,
         extra: state.found.length,
+        // Pro ocenění: kolik pangramů padlo a jestli hráč došel na nejvyšší
+        // hodnost. Ze samotného skóre se to zpětně dopočítat nedá.
+        pangrams: state.found.filter((word) => puzzle.pangrams.includes(word)).length,
+        rankTop: rank.index === RANKS.length - 1 ? 1 : 0,
       },
     })
-  }, [breakdown, onFinish, puzzle, rank.name, state])
+  }, [breakdown, onFinish, puzzle, rank, state])
 
   useEffect(() => {
     if (complete && !reported.current) finishRound()

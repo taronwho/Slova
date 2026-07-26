@@ -31,8 +31,24 @@ export async function openGame(page, mode, { daily = false, resume = false } = {
   await dismissTutorial(page)
 }
 
+/**
+ * Odbaví oznámení o nové hodnosti a čerstvých oceněních.
+ *
+ * Leží nad výsledkem kola, takže dokud se neproklikne, nejde sáhnout na nic
+ * pod ním. Když je toho víc naráz, chodí se po jednom.
+ */
+export async function dismissGained(page) {
+  for (let guard = 0; guard < 12; guard++) {
+    const card = page.locator('.gained-card')
+    if (!(await card.isVisible().catch(() => false))) return
+    await card.locator('.btn').click()
+    await page.waitForTimeout(200)
+  }
+}
+
 /** Zpět do menu, ať už je nad hrou výsledek kola, nebo ne. */
 export async function goHome(page) {
+  await dismissGained(page)
   // Otevřený panel nebo potvrzení překrývá hlavičku — nejdřív pryč s ním.
   const cancel = page.locator('.sheet.confirm .btn', { hasText: 'Zrušit' })
   if (await cancel.isVisible().catch(() => false)) await cancel.click()

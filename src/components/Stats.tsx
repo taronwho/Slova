@@ -1,6 +1,6 @@
 /** Přehled statistik a historie kol. */
 
-import { levelFor } from '../game/scoring'
+import { rankFor } from '../game/ranks'
 import { MODE_LABEL, type ModeId } from '../game/types'
 import type { Profile } from '../lib/storage'
 
@@ -30,7 +30,7 @@ const EXTRA_LABEL: Record<ModeId, string> = {
 }
 
 export function Stats({ profile, onBack, onReset }: Props) {
-  const level = levelFor(profile.xp)
+  const progress = rankFor(profile.xp)
 
   return (
     <>
@@ -45,16 +45,53 @@ export function Stats({ profile, onBack, onReset }: Props) {
       <div className="panel" style={{ marginBottom: 'var(--sp-5)' }}>
         <div className="rank-line">
           <span className="rank">
-            {level.title} · úroveň {level.level}
+            {progress.rank.name} · hodnost {progress.rank.index}
           </span>
           <span className="num muted">{profile.xp.toLocaleString('cs-CZ')} XP</span>
         </div>
         <div className="xp-bar">
-          <span style={{ width: `${(level.into / level.span) * 100}%` }} />
+          <span
+            style={{ width: `${progress.span ? (progress.into / progress.span) * 100 : 100}%` }}
+          />
         </div>
         <p className="faint" style={{ fontSize: '0.8rem', marginTop: 'var(--sp-2)' }}>
-          Do další úrovně zbývá {(level.span - level.into).toLocaleString('cs-CZ')} XP
+          {progress.next
+            ? `Do hodnosti ${progress.next.name} zbývá ${(
+                progress.span - progress.into
+              ).toLocaleString('cs-CZ')} XP`
+            : 'Nejvyšší hodnost — dál už se nešplhá'}
         </p>
+      </div>
+
+      <div className="stats-grid" style={{ marginBottom: 'var(--sp-5)' }}>
+        <div className="stat">
+          <div className="label">Kol bez nápovědy</div>
+          <div className="value num accent">{profile.counters.noHint}</div>
+        </div>
+        <div className="stat">
+          <div className="label">Nejdelší čistá řada</div>
+          <div className="value num accent">{profile.counters.bestNoHintStreak}</div>
+        </div>
+        <div className="stat">
+          <div className="label">Pangramů</div>
+          <div className="value num gold">{profile.counters.pangrams}</div>
+        </div>
+        <div className="stat">
+          <div className="label">Celých pláství</div>
+          <div className="value num">{profile.counters.hiveFull}</div>
+        </div>
+        <div className="stat">
+          <div className="label">Nejkratších cest</div>
+          <div className="value num">{profile.counters.chainPar}</div>
+        </div>
+        <div className="stat">
+          <div className="label">Dostavěných věží</div>
+          <div className="value num">{profile.counters.towerFull}</div>
+        </div>
+        <div className="stat">
+          <div className="label">Denních výzev</div>
+          <div className="value num">{profile.counters.dailies}</div>
+        </div>
       </div>
 
       {MODES.map((mode) => {

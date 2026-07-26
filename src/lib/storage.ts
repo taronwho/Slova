@@ -1,5 +1,6 @@
 /** Perzistence profilu, statistik a rozehraných kol v localStorage. */
 
+import { AWARDS } from '../game/awards'
 import type { Difficulty, ModeId, RoundResult } from '../game/types'
 
 const KEY = 'slova.profile.v1'
@@ -14,6 +15,46 @@ export interface ModeStats {
   perfect: number
 }
 
+/**
+ * Čísla, na která běžné statistiky nestačí, ale ocenění je potřebují.
+ *
+ * Držet je průběžně je jediná možnost — historie kol se ořezává na padesát
+ * záznamů, takže zpětně dopočítat, kolik pangramů hráč za celou dobu našel,
+ * by nešlo.
+ */
+export interface Counters {
+  /** Kolik kol hráč dohrál bez jediné nápovědy. */
+  noHint: number
+  /** Kolik takových kol má za sebou právě teď v řadě. */
+  noHintStreak: number
+  /** Nejdelší řada kol bez nápovědy. */
+  bestNoHintStreak: number
+  /** Věž: dostavěná až nahoru a bez jediné nápovědy. */
+  towerFullNoHint: number
+  /** Voština: kolik pangramů hráč celkem našel. */
+  pangrams: number
+  /** Voština: kolikrát vysbíral celou plástev. */
+  hiveFull: number
+  /** Voština: kolikrát došel na nejvyšší hodnost. */
+  hiveQueen: number
+  /** Voština: nejvíc slov v jednom kole. */
+  hiveBestWords: number
+  /** Řetěz: kolik kol dohrál na počet tahů nejkratší cesty. */
+  chainPar: number
+  /** Řetěz: nejrychleji dohrané kolo *bez nápovědy* v ms (0 = zatím žádné). */
+  chainFastMs: number
+  /** Věž: kolik věží dostavěl až nahoru. */
+  towerFull: number
+  /** Věž: nejdelší postavené patro. */
+  towerBestFloor: number
+  /** Věž: nejrychleji dostavěná věž v ms (0 = zatím žádná). */
+  towerFastMs: number
+  /** Kolik denních výzev dohrál. */
+  dailies: number
+  /** Nejlepší skóre v jednom kole napříč režimy. */
+  bestScore: number
+}
+
 export interface Profile {
   xp: number
   streak: number
@@ -22,6 +63,9 @@ export interface Profile {
   /** ID hádanek, které už hráč dohrál — aby se neopakovaly. */
   seen: Record<ModeId, string[]>
   stats: Record<ModeId, ModeStats>
+  counters: Counters
+  /** ID získaného ocenění -> kdy padlo (ms). */
+  awards: Record<string, number>
   history: RoundResult[]
   difficulty: Record<ModeId, Difficulty>
   theme: 'light' | 'dark' | 'system'
@@ -34,6 +78,26 @@ function emptyStats(): ModeStats {
   return { played: 0, bestScore: 0, totalScore: 0, extra: 0, perfect: 0 }
 }
 
+export function emptyCounters(): Counters {
+  return {
+    noHint: 0,
+    noHintStreak: 0,
+    bestNoHintStreak: 0,
+    towerFullNoHint: 0,
+    pangrams: 0,
+    hiveFull: 0,
+    hiveQueen: 0,
+    hiveBestWords: 0,
+    chainPar: 0,
+    chainFastMs: 0,
+    towerFull: 0,
+    towerBestFloor: 0,
+    towerFastMs: 0,
+    dailies: 0,
+    bestScore: 0,
+  }
+}
+
 export function emptyProfile(): Profile {
   return {
     xp: 0,
@@ -42,6 +106,8 @@ export function emptyProfile(): Profile {
     lastPlayedDay: null,
     seen: { chain: [], hive: [], tower: [] },
     stats: { chain: emptyStats(), hive: emptyStats(), tower: emptyStats() },
+    counters: emptyCounters(),
+    awards: {},
     history: [],
     difficulty: { chain: 'normal', hive: 'normal', tower: 'normal' },
     theme: 'system',
@@ -60,6 +126,8 @@ function migrate(raw: unknown): Profile {
     ...saved,
     seen: { ...base.seen, ...(saved.seen ?? {}) },
     stats: { ...base.stats, ...(saved.stats ?? {}) },
+    counters: { ...base.counters, ...(saved.counters ?? {}) },
+    awards: { ...(saved.awards ?? {}) },
     difficulty: { ...base.difficulty, ...(saved.difficulty ?? {}) },
     dailyDone: { ...base.dailyDone, ...(saved.dailyDone ?? {}) },
     tutorialSeen: { ...base.tutorialSeen, ...(saved.tutorialSeen ?? {}) },
@@ -67,10 +135,28 @@ function migrate(raw: unknown): Profile {
   }
 }
 
+/**
+ * Dopočítá ocenění, na která profil má.
+ *
+ * Volá se po každém kole i hned po načtení profilu. Podmínky se čtou jen ze
+ * statistik, takže druhé spuštění nic nezmění — a hráč, který si zahrál dřív,
+ * než ocenění existovala, dostane zpětně všechno, na co dosáhl.
+ */
+export function grantAwards(profile: Profile, now = Date.now()): Profile {
+  let awards = profile.awards
+  for (const award of AWARDS) {
+    if (awards[award.id] !== undefined) continue
+    if (!award.done(profile)) continue
+    if (awards === profile.awards) awards = { ...awards }
+    awards[award.id] = now
+  }
+  return awards === profile.awards ? profile : { ...profile, awards }
+}
+
 export function loadProfile(): Profile {
   try {
     const raw = localStorage.getItem(KEY)
-    return raw ? migrate(JSON.parse(raw)) : emptyProfile()
+    return grantAwards(raw ? migrate(JSON.parse(raw)) : emptyProfile())
   } catch {
     return emptyProfile()
   }
@@ -134,7 +220,63 @@ export function saveRounds(rounds: SavedRounds): void {
 /** Seznam dohraných hádanek držíme omezený, ať localStorage neroste bez konce. */
 const SEEN_LIMIT = 4000
 
-export function recordRound(profile: Profile, result: RoundResult, day: string): Profile {
+/** Číslo z detailu kola; chybějící údaj se počítá jako nula. */
+function num(result: RoundResult, key: string): number {
+  const value = result.detail[key]
+  return typeof value === 'number' ? value : 0
+}
+
+/** Menší z dvojice, ale nula znamená „zatím nic" a prohrává vždy. */
+function fastest(current: number, candidate: number): number {
+  if (candidate <= 0) return current
+  return current === 0 ? candidate : Math.min(current, candidate)
+}
+
+function updateCounters(profile: Profile, result: RoundResult, daily: boolean): Counters {
+  const c = { ...profile.counters }
+  const clean = result.hintsUsed === 0
+  c.bestScore = Math.max(c.bestScore, result.score)
+  if (daily) c.dailies += 1
+
+  // Řada čistých kol se láme na prvním kole s nápovědou — jinak by „pět
+  // načisto v řadě" šlo posbírat po jednom mezi nápovědovými koly.
+  if (clean) {
+    c.noHint += 1
+    c.noHintStreak += 1
+    c.bestNoHintStreak = Math.max(c.bestNoHintStreak, c.noHintStreak)
+  } else {
+    c.noHintStreak = 0
+  }
+
+  if (result.mode === 'chain') {
+    if (num(result, 'moves') <= num(result, 'par')) c.chainPar += 1
+    // Rychlost se počítá jen bez nápovědy — s „Celé slovo" je pod minutou
+    // každý řetěz a meta by nic neznamenala.
+    if (clean) c.chainFastMs = fastest(c.chainFastMs, result.elapsedMs)
+  } else if (result.mode === 'hive') {
+    c.pangrams += num(result, 'pangrams')
+    c.hiveBestWords = Math.max(c.hiveBestWords, num(result, 'found'))
+    if (num(result, 'found') >= num(result, 'total') && num(result, 'total') > 0) c.hiveFull += 1
+    if (num(result, 'rankTop') === 1) c.hiveQueen += 1
+  } else {
+    c.towerBestFloor = Math.max(c.towerBestFloor, num(result, 'top'))
+    if (num(result, 'full') === 1) {
+      c.towerFull += 1
+      if (clean) c.towerFullNoHint += 1
+      // Rychlost dává smysl měřit jen u dostavěné věže — vzdané kolo po
+      // dvou patrech by jinak bylo „nejrychlejší" vždycky.
+      c.towerFastMs = fastest(c.towerFastMs, result.elapsedMs)
+    }
+  }
+  return c
+}
+
+export function recordRound(
+  profile: Profile,
+  result: RoundResult,
+  day: string,
+  daily = false,
+): Profile {
   const stats = { ...profile.stats[result.mode] }
   stats.played += 1
   stats.totalScore += result.score
@@ -145,7 +287,7 @@ export function recordRound(profile: Profile, result: RoundResult, day: string):
   const seen = [...profile.seen[result.mode], result.puzzleId].slice(-SEEN_LIMIT)
   const streak = profile.streak + 1
 
-  return {
+  return grantAwards({
     ...profile,
     xp: profile.xp + result.score,
     streak,
@@ -153,8 +295,9 @@ export function recordRound(profile: Profile, result: RoundResult, day: string):
     lastPlayedDay: day,
     seen: { ...profile.seen, [result.mode]: seen },
     stats: { ...profile.stats, [result.mode]: stats },
+    counters: updateCounters(profile, result, daily),
     history: [result, ...profile.history].slice(0, 50),
-  }
+  })
 }
 
 /** Vzdání kola sérii ukončí, ale statistiky nechá být. */

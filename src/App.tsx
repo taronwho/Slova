@@ -1,6 +1,6 @@
 /** Kořen aplikace — téma, profil, výběr hádanek a přepínání obrazovek. */
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import {
   loadChain,
@@ -11,6 +11,8 @@ import {
   pickUnseen,
   type ChainBundle,
 } from './app/data'
+import { AwardPopup, type Gained } from './components/AwardPopup'
+import { Awards } from './components/Awards'
 import { ChainGame } from './components/ChainGame'
 import { HiveGame } from './components/HiveGame'
 import { Home } from './components/Home'
@@ -20,6 +22,7 @@ import { Tutorial } from './components/Tutorial'
 import { TowerGame } from './components/TowerGame'
 import type { ChainPuzzle, ChainState } from './game/chain'
 import type { HivePuzzle, HiveState } from './game/hive'
+import { rankFor } from './game/ranks'
 import type { TowerPuzzle, TowerState } from './game/tower'
 import { MODE_LABEL, type Difficulty, type ModeId, type RoundResult } from './game/types'
 import { useBackGuard } from './lib/back'
@@ -40,6 +43,7 @@ import {
 type View =
   | { kind: 'home' }
   | { kind: 'stats' }
+  | { kind: 'awards' }
   | { kind: 'game'; mode: ModeId; daily: boolean; nonce: number }
 
 interface Loaded {
@@ -64,6 +68,8 @@ export default function App() {
   const [resume, setResume] = useState<unknown>(null)
   /** Úvodní značka. Hra se pod ní mezitím načítá, takže nikoho nezdržuje. */
   const [splash, setSplash] = useState(true)
+  /** Co hráči za poslední kolo přibylo — ukáže se nad výsledkem. */
+  const [gained, setGained] = useState<Gained | null>(null)
 
   const dayKey = todayKey()
   const dayLabel = `#${dayNumber()}`
@@ -82,6 +88,33 @@ export default function App() {
   const updateProfile = useCallback((patch: (previous: Profile) => Profile) => {
     setProfile(patch)
   }, [])
+
+  /**
+   * Co hráči přibylo, se pozná až na hotovém profilu.
+   *
+   * Ocenění uděluje `recordRound` uvnitř aktualizace stavu a ta musí zůstat
+   * čistá — oznámení se proto odvodí až tady, porovnáním s poslední viděnou
+   * podobou. První průchod jen zapamatuje, co profil má, aby po zapnutí hry
+   * nevyskočilo všechno, co hráč nasbíral dřív.
+   */
+  const seenAwards = useRef<Set<string> | null>(null)
+  const seenRank = useRef(0)
+  useEffect(() => {
+    const rank = rankFor(profile.xp).rank.index
+    const ids = Object.keys(profile.awards)
+    if (seenAwards.current === null) {
+      seenAwards.current = new Set(ids)
+      seenRank.current = rank
+      return
+    }
+    const fresh = ids.filter((id) => !seenAwards.current!.has(id))
+    const promoted = rank > seenRank.current
+    seenAwards.current = new Set(ids)
+    seenRank.current = rank
+    if (fresh.length > 0 || promoted) {
+      setGained({ rank: promoted ? rank : null, awards: fresh })
+    }
+  }, [profile.awards, profile.xp])
 
   /** Načte hádanku pro daný režim. Denní výzva je deterministická podle data. */
   const startRound = useCallback(
@@ -215,8 +248,8 @@ export default function App() {
         return rest
       })
       updateProfile((previous) => {
-        const next = recordRound(previous, result, dayKey)
         const isDaily = view.kind === 'game' && view.daily
+        const next = recordRound(previous, result, dayKey, isDaily)
         if (!isDaily) return next
         return {
           ...next,
@@ -365,6 +398,7 @@ export default function App() {
               }))
             }
             onStats={() => setView({ kind: 'stats' })}
+            onAwards={() => setView({ kind: 'awards' })}
             onRules={(mode) => setTutorial({ mode, pending: false })}
             saved={saved}
             onResume={(mode) => {
@@ -381,6 +415,8 @@ export default function App() {
             onReset={() => setProfile(emptyProfile())}
           />
         )}
+
+        {!loading && view.kind === 'awards' && <Awards profile={profile} onBack={goHome} />}
 
         {!loading && view.kind === 'game' && view.mode === 'chain' && loaded.chain && (
           <ChainGame
@@ -432,6 +468,9 @@ export default function App() {
             }
           />
         )}
+
+        {/* Nad výsledkem kola: nejdřív skóre, pak co za něj přibylo. */}
+        {gained && !splash && <AwardPopup gained={gained} onClose={() => setGained(null)} />}
 
         {splash && <Splash onDone={() => setSplash(false)} />}
 

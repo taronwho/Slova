@@ -97,6 +97,8 @@ export function TowerGame({
         floors: state.built.length - 1,
         top: state.built[state.built.length - 1]!.length,
         extra: state.built.length - 1,
+        // Pro ocenění: dostavěná věž je něco jiného než vzdaná v půlce.
+        full: state.built.length === puzzle.levels.length ? 1 : 0,
       },
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps

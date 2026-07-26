@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 
-import { levelFor } from '../game/scoring'
+import { AWARDS } from '../game/awards'
+import { rankFor } from '../game/ranks'
 import { MODE_SUMMARY, TUTORIALS } from '../game/tutorials'
 import {
   DIFFICULTY_LABEL,
@@ -20,6 +21,7 @@ interface Props {
   onPlay: (mode: ModeId, daily: boolean) => void
   onDifficulty: (mode: ModeId, difficulty: Difficulty) => void
   onStats: () => void
+  onAwards: () => void
   onRules: (mode: ModeId) => void
   /** Kola přerušená odchodem do menu nebo zavřením hry, po jednom od režimu. */
   saved: SavedRounds
@@ -82,11 +84,13 @@ export function Home({
   onPlay,
   onDifficulty,
   onStats,
+  onAwards,
   onRules,
   saved,
   onResume,
 }: Props) {
-  const level = levelFor(profile.xp)
+  const progress = rankFor(profile.xp)
+  const awards = AWARDS.filter((award) => profile.awards[award.id] !== undefined).length
   const [openRules, setOpenRules] = useState<ModeId | null>(null)
   /** Otevřená dlaždice — volba obtížnosti a spuštění se dějí až v ní. */
   const [picked, setPicked] = useState<ModeId | null>(null)
@@ -234,17 +238,22 @@ export function Home({
       <div className="panel home-profile">
         <div className="rank-line">
           <span className="rank">
-            {level.title} · úroveň {level.level}
+            {progress.rank.name} · hodnost {progress.rank.index}
           </span>
           <span className="num muted">{profile.xp.toLocaleString('cs-CZ')} XP</span>
         </div>
         <div className="xp-bar">
-          <span style={{ width: `${(level.into / level.span) * 100}%` }} />
+          <span
+            style={{ width: `${progress.span ? (progress.into / progress.span) * 100 : 100}%` }}
+          />
         </div>
         <div className="home-profile-chips">
           <span className="chip chip-accent">Série {profile.streak}</span>
           <span className="chip">Nejlepší série {profile.bestStreak}</span>
           <span className="chip">Odehráno {played}</span>
+          <button type="button" className="btn btn-sm btn-ghost" onClick={onAwards}>
+            Ocenění {awards}/{AWARDS.length}
+          </button>
           <button type="button" className="btn btn-sm btn-ghost" onClick={onStats}>
             Statistiky
           </button>

@@ -31,7 +31,13 @@ import {
 } from '../src/game/tower'
 import { fold, letterMask, normalizeInput, signature } from '../src/lib/czech'
 import { mulberry32, shuffled } from '../src/lib/rng'
-import { levelFor, scoreChain, streakMultiplier } from '../src/game/scoring'
+// Hodnost v plástvi (rankFor z game/hive) a hodnost profilu jsou dvě různé
+// věci se stejným jménem — v testu se proto rozlišují předponou.
+import { RANKS as PROFILE_RANKS, rankFor as profileRankFor } from '../src/game/ranks'
+import { AWARDS, AWARD_GROUPS } from '../src/game/awards'
+import { scoreChain, streakMultiplier } from '../src/game/scoring'
+import type { RoundResult } from '../src/game/types'
+import { emptyProfile, grantAwards, recordRound } from '../src/lib/storage'
 
 describe('české utility', () => {
   it('skládá diakritiku', () => {
@@ -379,11 +385,34 @@ describe('bodování', () => {
     expect(streakMultiplier(100)).toBe(1.5)
   })
 
-  it('úrovně rostou plynule', () => {
-    expect(levelFor(0).level).toBe(1)
-    expect(levelFor(0).title).toBe('Učeň')
-    expect(levelFor(2000).level).toBe(2)
-    expect(levelFor(1_000_000).level).toBeGreaterThan(10)
+})
+
+describe('hodnosti', () => {
+  it('má dvacet stupňů, které jdou vzestupně', () => {
+    expect(PROFILE_RANKS).toHaveLength(20)
+    for (let i = 1; i < PROFILE_RANKS.length; i++) {
+      expect(PROFILE_RANKS[i]!.at).toBeGreaterThan(PROFILE_RANKS[i - 1]!.at)
+    }
+  })
+
+  it('zařadí hráče podle XP', () => {
+    expect(profileRankFor(0).rank.index).toBe(1)
+    expect(profileRankFor(PROFILE_RANKS[1]!.at).rank.index).toBe(2)
+    expect(profileRankFor(PROFILE_RANKS[1]!.at - 1).rank.index).toBe(1)
+    expect(profileRankFor(10_000_000).rank.index).toBe(20)
+  })
+
+  it('na vrcholu žebříčku už nikam neukazuje', () => {
+    const top = profileRankFor(10_000_000)
+    expect(top.next).toBeNull()
+    expect(top.span).toBe(0)
+  })
+
+  it('zbytek do další hodnosti sedí na práh', () => {
+    const progress = profileRankFor(PROFILE_RANKS[3]!.at + 100)
+    expect(progress.rank.index).toBe(4)
+    expect(progress.into).toBe(100)
+    expect(progress.span).toBe(PROFILE_RANKS[4]!.at - PROFILE_RANKS[3]!.at)
   })
 })
 
@@ -399,5 +428,132 @@ describe('rng', () => {
     const out = shuffled(mulberry32(7), input)
     expect(input).toEqual([1, 2, 3, 4, 5])
     expect([...out].sort()).toEqual(input)
+  })
+})
+
+describe('ocenění', () => {
+  const round = (over: Partial<RoundResult> = {}): RoundResult => ({
+    mode: 'chain',
+    difficulty: 'normal',
+    puzzleId: 'p1',
+    score: 1000,
+    perfect: false,
+    elapsedMs: 120_000,
+    hintsUsed: 0,
+    detail: {},
+    ...over,
+  })
+
+  it('má třicet ocenění s jedinečnými klíči', () => {
+    expect(AWARDS).toHaveLength(30)
+    expect(new Set(AWARDS.map((a) => a.id)).size).toBe(30)
+  })
+
+  it('každé ocenění patří do některé skupiny a má kresbu', () => {
+    for (const award of AWARDS) {
+      expect(AWARD_GROUPS).toContain(award.group)
+      expect(award.art).not.toBe('')
+      expect(award.goal.length).toBeGreaterThan(5)
+    }
+  })
+
+  // Za sezení u hry se nemá dávat skoro nic — mety mají být za to, že hráč
+  // hraje sám, nebo že nasbírá body.
+  it('většina met stojí na dovednosti nebo bodech, ne na počtu kol', () => {
+    const skill = AWARDS.filter((a) => a.group === 'clean' || a.group === 'score')
+    expect(skill.length).toBeGreaterThan(AWARDS.length / 2)
+  })
+
+  it('čerstvý profil nemá zadarmo ani jedno', () => {
+    expect(Object.keys(grantAwards(emptyProfile()).awards)).toEqual([])
+  })
+
+  it('první dohrané kolo odemkne, co na něj padne', () => {
+    const after = recordRound(emptyProfile(), round(), '2026-01-01')
+    expect(after.awards['prvni-retez']).toBeDefined()
+    expect(after.awards['cisto-1']).toBeDefined()
+    // Cizí režim se nechytí — kolo Řetězu není kolo Věže.
+    expect(after.awards['prvni-vez']).toBeUndefined()
+  })
+
+  it('kolo s nápovědou se do čistých nepočítá a řadu zlomí', () => {
+    let profile = recordRound(emptyProfile(), round(), '2026-01-01')
+    profile = recordRound(profile, round({ puzzleId: 'p2' }), '2026-01-02')
+    expect(profile.counters.noHintStreak).toBe(2)
+    profile = recordRound(profile, round({ puzzleId: 'p3', hintsUsed: 1 }), '2026-01-03')
+    expect(profile.counters.noHint).toBe(2)
+    expect(profile.counters.noHintStreak).toBe(0)
+    expect(profile.counters.bestNoHintStreak).toBe(2)
+  })
+
+  it('pět čistých v řadě odemkne metu, roztroušená ne', () => {
+    let profile = emptyProfile()
+    for (let i = 0; i < 4; i++) {
+      profile = recordRound(profile, round({ puzzleId: `a${i}` }), '2026-01-01')
+      profile = recordRound(profile, round({ puzzleId: `b${i}`, hintsUsed: 2 }), '2026-01-01')
+    }
+    expect(profile.counters.noHint).toBe(4)
+    expect(profile.awards['cisto-v-rade']).toBeUndefined()
+    for (let i = 0; i < 5; i++) {
+      profile = recordRound(profile, round({ puzzleId: `c${i}` }), '2026-01-02')
+    }
+    expect(profile.awards['cisto-v-rade']).toBeDefined()
+  })
+
+  it('rychlík se počítá jen bez nápovědy', () => {
+    const fast = (hintsUsed: number, puzzleId: string) =>
+      round({ hintsUsed, puzzleId, elapsedMs: 30_000 })
+    let profile = recordRound(emptyProfile(), fast(3, 'p1'), '2026-01-01')
+    expect(profile.counters.chainFastMs).toBe(0)
+    expect(profile.awards['retez-rychlik']).toBeUndefined()
+    profile = recordRound(profile, fast(0, 'p2'), '2026-01-02')
+    expect(profile.counters.chainFastMs).toBe(30_000)
+    expect(profile.awards['retez-rychlik']).toBeDefined()
+  })
+
+  it('pangramy se sčítají přes kola', () => {
+    const hive = (pangrams: number, puzzleId: string) =>
+      round({ mode: 'hive', puzzleId, detail: { found: 10, total: 30, pangrams, rankTop: 0 } })
+    let profile = recordRound(emptyProfile(), hive(1, 'h1'), '2026-01-01')
+    profile = recordRound(profile, hive(2, 'h2'), '2026-01-02')
+    expect(profile.counters.pangrams).toBe(3)
+    expect(profile.awards['pangram-1']).toBeDefined()
+    expect(profile.awards['pangram-10']).toBeUndefined()
+  })
+
+  it('věž bez lešení musí být dostavěná i bez nápovědy', () => {
+    const tower = (full: number, hintsUsed: number, puzzleId: string) =>
+      round({ mode: 'tower', hintsUsed, puzzleId, detail: { floors: 2, top: 5, full } })
+    let profile = recordRound(emptyProfile(), tower(1, 2, 't1'), '2026-01-01')
+    expect(profile.counters.towerFullNoHint).toBe(0)
+    profile = recordRound(profile, tower(0, 0, 't2'), '2026-01-02')
+    expect(profile.counters.towerFullNoHint).toBe(0)
+    profile = recordRound(profile, tower(1, 0, 't3'), '2026-01-03')
+    expect(profile.counters.towerFullNoHint).toBe(1)
+    expect(profile.awards['vez-cista']).toBeDefined()
+  })
+
+  it('denní výzva se počítá, jen když se o ni hraje', () => {
+    let profile = recordRound(emptyProfile(), round(), '2026-01-01', false)
+    expect(profile.counters.dailies).toBe(0)
+    profile = recordRound(profile, round({ puzzleId: 'p2' }), '2026-01-02', true)
+    expect(profile.counters.dailies).toBe(1)
+  })
+
+  it('získané ocenění se podruhé nepřepíše ani neztratí', () => {
+    const first = recordRound(emptyProfile(), round(), '2026-01-01')
+    const when = first.awards['prvni-retez']!
+    const again = grantAwards(recordRound(first, round({ puzzleId: 'p2' }), '2026-01-02'), when + 999)
+    expect(again.awards['prvni-retez']).toBe(when)
+  })
+
+  it('ukazatel postupu roste od nuly k jedné', () => {
+    const award = AWARDS.find((a) => a.id === 'cisto-50')!
+    const empty = emptyProfile()
+    expect(award.progress!(empty)).toBe(0)
+    const half = { ...empty, counters: { ...empty.counters, noHint: 25 } }
+    expect(award.progress!(half)).toBeCloseTo(0.5)
+    const over = { ...empty, counters: { ...empty.counters, noHint: 500 } }
+    expect(award.progress!(over)).toBe(1)
   })
 })

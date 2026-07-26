@@ -300,6 +300,48 @@ for (const mode of ['chain', 'hive', 'tower']) {
   )
 }
 
+/* ---------- Vitrína ---------- */
+
+log('\nVITRÍNA')
+{
+  await goHome(page)
+  const chip = page.locator('.home-profile-chips .btn', { hasText: 'Ocenění' })
+  const label = await chip.innerText()
+  // Po třiceti odehraných kolech musí být něco odemčené — kdyby se ocenění
+  // neudělovala, stálo by tu 0/30.
+  const gotSome = Number(label.match(/(\d+)\s*\//)?.[1] ?? 0) > 0
+  check(gotSome, `odehraná kola odemkla ocenění (${label.replace(/\s+/g, ' ')})`)
+
+  await chip.click()
+  await page.waitForSelector('.award-grid')
+  const tiles = await page.locator('.award').count()
+  check(tiles === 30, `vitrína ukáže všech ${tiles} ocenění`)
+  check(
+    (await page.locator('.award.has').count()) > 0,
+    'získaná ocenění jsou odlišená od zamčených',
+  )
+  // Kresba musí být vlastní grafika, ne znak z fontu.
+  check(
+    (await page.locator('.award svg.award-art').count()) === 30,
+    'každé ocenění má vlastní kresbu',
+  )
+
+  await page.locator('.award-summary .btn').click()
+  await page.waitForSelector('.ladder-list')
+  check(
+    (await page.locator('.ladder-row').count()) === 20,
+    'žebříček má dvacet hodností',
+  )
+  check(
+    (await page.locator('.ladder-row.has').count()) > 0,
+    'dosažené hodnosti jsou odlišené',
+  )
+  await page.goBack()
+  await page.waitForTimeout(300)
+  check(!(await page.locator('.ladder-list').isVisible()), 'zpět žebříček zavře')
+  await goHome(page)
+}
+
 log(`\nzkontrolovaných slov: ${seenWords.size}`)
 await browser.close()
 
