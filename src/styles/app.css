@@ -1896,8 +1896,12 @@
   z-index: 90;
   display: grid;
   place-items: center;
-  background: var(--bg);
-  transition: opacity 300ms var(--ease), transform 300ms var(--ease);
+  /* Pevná tmavá podložka, ne barva podle motivu. Je to táž barva jako
+     `background_color` v manifestu a jako plocha pod ikonou, takže úvodní
+     obrazovka systému přejde do téhle bez blesku a bez švu. */
+  background: #121028;
+  color: #fff;
+  transition: opacity 380ms var(--ease), transform 380ms var(--ease);
 }
 
 .splash.leaving {

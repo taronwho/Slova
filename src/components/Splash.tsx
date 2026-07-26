@@ -21,24 +21,6 @@ const ARCS = [
   { color: 'var(--mode-tower)', angle: 154 },
 ]
 
-/**
- * Má se úvodní značka vůbec ukázat?
- *
- * V nainstalované aplikaci ne. Android i iOS při spuštění samy ukážou ikonu
- * na barevné ploše a teprve pak pustí stránku — dvě loga za sebou působí,
- * jako by hra naskočila dvakrát. V prohlížeči žádná systémová úvodní
- * obrazovka není, tam se značka ukáže.
- */
-export function shouldShowSplash(): boolean {
-  if (typeof window === 'undefined') return false
-  const standalone =
-    window.matchMedia?.('(display-mode: standalone)').matches ||
-    window.matchMedia?.('(display-mode: fullscreen)').matches ||
-    // iOS Safari nezná display-mode, hlásí to vlastním příznakem.
-    (navigator as { standalone?: boolean }).standalone === true
-  return !standalone
-}
-
 interface Props {
   onDone: () => void
 }
@@ -48,8 +30,8 @@ export function Splash({ onDone }: Props) {
 
   useEffect(() => {
     const calm = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
-    const hold = calm ? 500 : 1150
-    const fade = calm ? 200 : 320
+    const hold = calm ? 1200 : 2000
+    const fade = calm ? 250 : 400
     const out = window.setTimeout(() => setLeaving(true), hold)
     const gone = window.setTimeout(onDone, hold + fade)
     return () => {
@@ -79,7 +61,7 @@ export function Splash({ onDone }: Props) {
               }}
             />
           ))}
-          <circle className="splash-core" cx="50" cy="50" r="13" fill="var(--surface)" />
+          <circle className="splash-core" cx="50" cy="50" r="13" fill="#fff" />
         </svg>
 
         <div className="splash-word" aria-label="Slova">
