@@ -50,6 +50,10 @@ export interface Counters {
   towerBestFloor: number
   /** Věž: nejrychleji dostavěná věž v ms (0 = zatím žádná). */
   towerFastMs: number
+  /** Šibenice: kolik slov uhodl. */
+  gallowsSolved: number
+  /** Šibenice: kolik slov uhodl bez jediné chyby (a bez nápovědy). */
+  gallowsClean: number
   /** Kolik denních výzev dohrál. */
   dailies: number
   /** Nejlepší skóre v jednom kole napříč režimy. */
@@ -102,6 +106,8 @@ export function emptyCounters(): Counters {
     towerFull: 0,
     towerBestFloor: 0,
     towerFastMs: 0,
+    gallowsSolved: 0,
+    gallowsClean: 0,
     dailies: 0,
     bestScore: 0,
   }
@@ -113,18 +119,23 @@ export function emptyProfile(): Profile {
     streak: 0,
     bestStreak: 0,
     lastPlayedDay: null,
-    seen: { chain: [], hive: [], tower: [] },
-    stats: { chain: emptyStats(), hive: emptyStats(), tower: emptyStats() },
+    seen: { chain: [], hive: [], tower: [], gallows: [] },
+    stats: {
+      chain: emptyStats(),
+      hive: emptyStats(),
+      tower: emptyStats(),
+      gallows: emptyStats(),
+    },
     counters: emptyCounters(),
     // Tři na uvítanou, ať si hráč nápovědu zkusí, než začne řešit, co ho stojí.
     hints: 3,
     hintRankPaid: 1,
     awards: {},
     history: [],
-    difficulty: { chain: 'normal', hive: 'normal', tower: 'normal' },
+    difficulty: { chain: 'normal', hive: 'normal', tower: 'normal', gallows: 'normal' },
     theme: 'system',
     dailyDone: {},
-    tutorialSeen: { chain: false, hive: false, tower: false },
+    tutorialSeen: { chain: false, hive: false, tower: false, gallows: false },
   }
 }
 
@@ -223,7 +234,7 @@ export function loadRounds(): SavedRounds {
     const saved = JSON.parse(raw) as SavedRounds
     if (!saved || typeof saved !== 'object') return {}
     const rounds: SavedRounds = {}
-    for (const mode of ['chain', 'hive', 'tower'] as ModeId[]) {
+    for (const mode of ['chain', 'hive', 'tower', 'gallows'] as ModeId[]) {
       const round = saved[mode]
       if (round && round.mode === mode && round.state) rounds[mode] = round
     }
@@ -291,6 +302,11 @@ function updateCounters(profile: Profile, result: RoundResult, daily: boolean): 
     c.hiveBestWords = Math.max(c.hiveBestWords, num(result, 'found'))
     if (num(result, 'found') >= num(result, 'total') && num(result, 'total') > 0) c.hiveFull += 1
     if (num(result, 'rankTop') === 1) c.hiveQueen += 1
+  } else if (result.mode === 'gallows') {
+    if (num(result, 'solved') === 1) {
+      c.gallowsSolved += 1
+      if (num(result, 'wrong') === 0 && clean) c.gallowsClean += 1
+    }
   } else {
     c.towerBestFloor = Math.max(c.towerBestFloor, num(result, 'top'))
     if (num(result, 'full') === 1) {

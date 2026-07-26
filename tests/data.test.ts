@@ -265,6 +265,40 @@ describe('věž — data', () => {
   })
 })
 
+describe('šibenice — data', () => {
+  const puzzles = readJson<{ id: string; word: string; difficulty: string }[]>(
+    'gallows',
+    'puzzles.json',
+  )
+
+  it('má slova pro všechny tři obtížnosti', () => {
+    for (const difficulty of ['easy', 'normal', 'hard']) {
+      expect(puzzles.filter((p) => p.difficulty === difficulty).length).toBeGreaterThan(300)
+    }
+  })
+
+  it('id jsou jedinečná a slova se neopakují', () => {
+    expect(new Set(puzzles.map((p) => p.id)).size).toBe(puzzles.length)
+    expect(new Set(puzzles.map((p) => p.word)).size).toBe(puzzles.length)
+  })
+
+  it('délky sedí na obtížnost a slovo má dost různých písmen', () => {
+    const bands: Record<string, [number, number]> = {
+      easy: [4, 5],
+      normal: [6, 7],
+      hard: [8, 9],
+    }
+    const problems: string[] = []
+    for (const puzzle of puzzles) {
+      const [min, max] = bands[puzzle.difficulty]!
+      if (puzzle.word.length < min || puzzle.word.length > max) problems.push(puzzle.word)
+      // Slovo ze dvou různých písmen se uhodne dvěma tahy — to není hádanka.
+      if (new Set(fold(puzzle.word)).size < 3) problems.push(puzzle.word)
+    }
+    expect(problems.slice(0, 10)).toEqual([])
+  })
+})
+
 describe('slovník — jen základní tvary', () => {
   // Seznam povolených slov vzniká v tools/2b_base_forms.py: hunspell musí
   // slovo přečíst bez jediné přípony a předpony (je to tedy přímo heslo
@@ -287,6 +321,14 @@ describe('slovník — jen základní tvary', () => {
       'třešně', 'směsi', 'žebra', 'videa', 'latě', 'mniši',
     ].filter((word) => !allowed.has(word))
     expect(missing).toEqual([])
+  })
+
+  it('šibenice hádá jen povolené tvary', () => {
+    const problems: string[] = []
+    for (const puzzle of readJson<{ word: string }[]>('gallows', 'puzzles.json')) {
+      if (!allowed.has(puzzle.word)) problems.push(puzzle.word)
+    }
+    expect(problems.slice(0, 10)).toEqual([])
   })
 
   it('řetěz používá jen povolené tvary', () => {

@@ -21,6 +21,8 @@ export type TutorialVisual =
   | { kind: 'tower-letter' }
   | { kind: 'tower-safe' }
   | { kind: 'word-forms' }
+  | { kind: 'gallows' }
+  | { kind: 'gallows-fold' }
 
 export interface TutorialStep {
   title: string
@@ -224,6 +226,52 @@ export const TUTORIALS: Record<ModeId, TutorialStep[]> = {
       ],
     },
   ],
+  gallows: [
+    {
+      title: 'Uhodni schované slovo',
+      visual: { kind: 'gallows' },
+      body: [
+        'Slovo je schované za prázdnými políčky — víš jen, kolik má písmen.',
+        'Zkoušíš písmena. Když sedí, doplní se do všech míst, kde ve slově je. Když nesedí, přibude jeden díl šibenice.',
+      ],
+      key: 'Osm chybných písmen a kolo končí. Devátý díl už se nekreslí.',
+    },
+    {
+      title: 'Háčky a čárky se nehádají',
+      visual: { kind: 'gallows-fold' },
+      body: [
+        'Klávesnice má jen základní písmena. „u" odhalí **u**, **ú** i **ů**, „c" odhalí **c** i **č**.',
+        'Hádá se slovo, ne diakritika — jinak by to bylo trápení s háčky místo hry.',
+      ],
+      key: 'Diakritika se doplní sama tak, jak ve slově opravdu je.',
+    },
+    {
+      title: 'Jaké tvary slov platí',
+      visual: { kind: 'word-forms' },
+      body: [
+        'Hra pracuje **jen se základními tvary** — tak, jak slovo najdeš ve slovníku.',
+        '**Platí:** podstatná jména v 1. pádu — jednotné i množné číslo (pes, psi, kočka, kočky), slovesa v infinitivu (psát, běhat), přídavná jména (velký, rychlý), číslovky (pět), zájmena (ten, každý), příslovce (dnes, brzy) a spojky (nebo, ale).',
+        '**Neplatí:** ostatní pády (psa, psovi, psem, psy), časované tvary (píšu, píšeš, psal), rozkazy (piš) ani stupňování (rychlejší).',
+      ],
+      key: 'Slova jsou navíc vybíraná od nejběžnějších, takže nejde o hádání raritních výrazů.',
+    },
+    {
+      title: 'Nápovědy',
+      body: [
+        '**Odhal písmeno** ukáže jedno z těch, která ti ještě chybí — vybere to, které je ve slově nejčastěji.',
+        '**Vyškrtni pět** zhasne na klávesnici pět písmen, která ve slově nejsou. Život tě to nestojí, jen body.',
+      ],
+      key: 'Nápověda zdarma z profilu body nestrhne. Kolo s ní ale pořád není kolo bez nápovědy.',
+    },
+    {
+      title: 'Body',
+      body: [
+        'Za uhodnuté slovo je základ, k němu prémie za každý nevyužitý život.',
+        'Za chybné písmeno se strhává, rychlost přidává. Kolo bez jediné chyby a bez nápovědy má násobitel.',
+        'I neuhodnuté slovo něco dá — počítají se odhalená písmena.',
+      ],
+    },
+  ],
 }
 
 /** Krátký souhrn pravidel na kartu režimu. */
@@ -241,6 +289,11 @@ export const MODE_SUMMARY: Record<ModeId, string[]> = {
   tower: [
     'Každé patro přidá jedno písmeno.',
     'Použij všechna písmena, v libovolném pořadí.',
+    'Jen 1. pád a infinitiv.',
+  ],
+  gallows: [
+    'Zkoušej písmena, osm chyb a konec.',
+    'Háčky a čárky se nehádají — „u" odhalí i „ů".',
     'Jen 1. pád a infinitiv.',
   ],
 }

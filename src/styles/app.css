@@ -504,9 +504,13 @@
   color: var(--mode-color, var(--accent));
 }
 
-/* Medová je světlá barva, bílý text na ní má slabý kontrast. */
+/* Medová a tyrkysová jsou světlé barvy, bílý text na nich má slabý kontrast. */
 .mode-tile[data-mode='hive'] {
   color: #2b1b00;
+}
+
+.mode-tile[data-mode='gallows'] {
+  color: #002325;
 }
 
 /* ---------- Panel s volbami jedné hry ---------- */
@@ -570,7 +574,8 @@
   font-weight: 800;
 }
 
-.sheet[data-mode='hive'] .mode-glyph {
+.sheet[data-mode='hive'] .mode-glyph,
+.sheet[data-mode='gallows'] .mode-glyph {
   color: #2b1b00;
 }
 
@@ -2224,6 +2229,7 @@ button.rank-card:hover {
 .award[data-tone='chain'] { --tone: var(--mode-chain); }
 .award[data-tone='hive'] { --tone: var(--mode-hive); }
 .award[data-tone='tower'] { --tone: var(--mode-tower); }
+.award[data-tone='gallows'] { --tone: var(--mode-gallows); }
 .award[data-tone='ok'] { --tone: var(--ok); }
 .award[data-tone='gold'] { --tone: var(--gold); }
 .award[data-tone='warn'] { --tone: var(--warn); }
@@ -2565,4 +2571,172 @@ button.rank-card:hover {
   font-size: 0.78rem;
   font-weight: 700;
   white-space: nowrap;
+}
+
+/* ---------- Šibenice ---------- */
+
+/* Kresba se přizpůsobí výšce hrací plochy stejně jako žebřík nebo věž —
+   na telefonu musí zbýt místo na slovo i na klávesnici. */
+.gallows-wrap {
+  display: grid;
+  place-items: center;
+  width: 100%;
+}
+
+.gallows-art {
+  width: auto;
+  height: clamp(130px, 32cqh, 260px);
+  aspect-ratio: 100 / 124;
+  color: var(--accent);
+}
+
+.gallows-part {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /* Nepostavený díl se nekreslí vůbec — ne jen průhledně, aby nešlo
+     „vykouknout", jak bude šibenice vypadat dál. */
+  opacity: 0;
+}
+
+.gallows-part.up {
+  opacity: 1;
+  animation: draw-part var(--t-slow) var(--ease) both;
+}
+
+.gallows-art.lost {
+  color: var(--error);
+}
+
+@keyframes draw-part {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gallows-part.up {
+    animation: none;
+  }
+}
+
+/* Políčka slova. Šířka se dopočítá z počtu písmen, aby se devítipísmenné
+   slovo vešlo na 320px displej stejně jako čtyřpísmenné. */
+.word-slots {
+  display: flex;
+  gap: clamp(3px, 1.2vw, 8px);
+  justify-content: center;
+  width: 100%;
+  --slot: min(
+    calc((100cqw - (var(--slots, 5) - 1) * 8px) / var(--slots, 5)),
+    52px
+  );
+}
+
+.slot {
+  display: grid;
+  place-items: center;
+  width: var(--slot);
+  height: calc(var(--slot) * 1.15);
+  border-radius: var(--r-sm);
+  border-bottom: 3px solid var(--border-strong);
+  background: var(--surface);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: calc(var(--slot) * 0.62);
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.slot.filled {
+  border-bottom-color: var(--accent);
+  animation: pop var(--t-base) var(--ease-back) both;
+}
+
+/* Po prohře se dopíše, co hráč neuhodl — jinak by se nedozvěděl řešení. */
+.slot.missed {
+  color: var(--error);
+  border-bottom-color: var(--error);
+  opacity: 0.75;
+}
+
+/* Klávesnice Šibenice. Vlastní, protože každá klávesa nese stav a písmena
+   jsou jen základní — diakritika se skládá sama. */
+.letter-keys {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(4px, 1vw, 7px);
+  width: 100%;
+  align-items: center;
+}
+
+.letter-row {
+  display: flex;
+  gap: clamp(3px, 0.9vw, 6px);
+  justify-content: center;
+  width: 100%;
+}
+
+.letter-key {
+  flex: 1 1 0;
+  max-width: 42px;
+  min-width: 0;
+  height: clamp(38px, 6.4vh, 48px);
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-key);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(0.85rem, 3.4vw, 1.05rem);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
+}
+
+.letter-key:active {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+
+.letter-key.hit {
+  background: var(--ok-soft);
+  color: var(--ok-text);
+  border-color: color-mix(in oklab, var(--ok) 45%, var(--border));
+}
+
+.letter-key.miss {
+  background: var(--error-soft);
+  color: var(--error);
+  border-color: color-mix(in oklab, var(--error) 40%, var(--border));
+}
+
+/* Vyškrtnuté nápovědou: zhasne, ale nevypadá jako chyba hráče. */
+.letter-key.struck {
+  background: var(--surface-2);
+  color: var(--text-faint);
+  text-decoration: line-through;
+  box-shadow: none;
+}
+
+.letter-key:disabled {
+  cursor: default;
+}
+
+.tut-arrow {
+  font-size: 1.4rem;
+  color: var(--text-faint);
+}
+
+/* Kresba šibenice v návodu má pevnou velikost — není uvnitř hrací plochy,
+   takže se nemá o co opřít. */
+.tut-visual .gallows-art {
+  height: 110px;
 }

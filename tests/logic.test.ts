@@ -29,13 +29,25 @@ import {
   takeTowerHint,
   type TowerPuzzle,
 } from '../src/game/tower'
+import {
+  createGallowsState,
+  GALLOWS_LIVES,
+  guessLetter,
+  isLost,
+  isOver,
+  isWon,
+  revealed,
+  takeGallowsHint,
+  wrongCount,
+  type GallowsPuzzle,
+} from '../src/game/gallows'
 import { fold, letterMask, normalizeInput, signature } from '../src/lib/czech'
 import { mulberry32, shuffled } from '../src/lib/rng'
 // Hodnost v plástvi (rankFor z game/hive) a hodnost profilu jsou dvě různé
 // věci se stejným jménem — v testu se proto rozlišují předponou.
 import { RANKS as PROFILE_RANKS, rankFor as profileRankFor } from '../src/game/ranks'
 import { AWARDS, AWARD_GROUPS } from '../src/game/awards'
-import { scoreChain, streakMultiplier } from '../src/game/scoring'
+import { scoreChain, scoreGallows, streakMultiplier } from '../src/game/scoring'
 import type { RoundResult } from '../src/game/types'
 import { DAILY_HINTS, emptyProfile, grantAwards, recordRound, spendHint } from '../src/lib/storage'
 
@@ -448,9 +460,18 @@ describe('ocenění', () => {
     ...over,
   })
 
-  it('má třicet ocenění s jedinečnými klíči', () => {
-    expect(AWARDS).toHaveLength(30)
-    expect(new Set(AWARDS.map((a) => a.id)).size).toBe(30)
+  it('klíče ocenění jsou jedinečné', () => {
+    expect(AWARDS.length).toBeGreaterThanOrEqual(30)
+    expect(new Set(AWARDS.map((a) => a.id)).size).toBe(AWARDS.length)
+  })
+
+  // Každá hra musí mít v každé skupině, kde to dává smysl, aspoň jednu metu —
+  // jinak by nový režim vypadal jako přílepek.
+  it('každá hra má první krok i metu bez nápovědy', () => {
+    for (const mode of ['chain', 'hive', 'tower', 'gallows']) {
+      expect(AWARDS.some((a) => a.group === 'start' && a.tone === mode)).toBe(true)
+      expect(AWARDS.some((a) => a.group === 'clean' && a.tone === mode)).toBe(true)
+    }
   })
 
   it('každé ocenění patří do některé skupiny a má kresbu', () => {
@@ -635,5 +656,110 @@ describe('nápovědy zdarma', () => {
     const plain = recordRound(emptyProfile(), round(), '2026-01-01', false)
     const daily = recordRound(emptyProfile(), round(), '2026-01-01', true)
     expect(daily.hints - plain.hints).toBe(DAILY_HINTS)
+  })
+})
+
+describe('šibenice', () => {
+  const puzzle: GallowsPuzzle = { id: 'g-1', word: 'kůň', difficulty: 'normal' }
+  // „protože" má dvakrát o — nápověda „odhal písmeno" má sáhnout právě po něm.
+  const long: GallowsPuzzle = { id: 'g-2', word: 'protože', difficulty: 'hard' }
+
+  it('písmeno bez diakritiky odhalí i tvar s háčkem a kroužkem', () => {
+    let state = createGallowsState(puzzle)
+    for (const letter of ['k', 'u', 'n']) {
+      const result = guessLetter(state, letter)
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      expect(result.hit).toBe(true)
+      state = result.state
+    }
+    expect(revealed(state)).toEqual(['k', 'ů', 'ň'])
+    expect(isWon(state)).toBe(true)
+  })
+
+  it('chybné písmeno ubere život, správné ne', () => {
+    const miss = guessLetter(createGallowsState(long), 'x')
+    expect(miss.ok).toBe(true)
+    if (!miss.ok) return
+    expect(miss.hit).toBe(false)
+    expect(wrongCount(miss.state)).toBe(1)
+
+    const hit = guessLetter(miss.state, 'o')
+    expect(hit.ok).toBe(true)
+    if (!hit.ok) return
+    expect(hit.hit).toBe(true)
+    expect(wrongCount(hit.state)).toBe(1)
+  })
+
+  it('osm chyb kolo ukončí a slovo se prohraje', () => {
+    let state = createGallowsState(puzzle)
+    for (const letter of 'bcfgjmr') {
+      const result = guessLetter(state, letter)
+      expect(result.ok).toBe(true)
+      if (result.ok) state = result.state
+    }
+    expect(isLost(state)).toBe(false)
+    const last = guessLetter(state, 'x')
+    expect(last.ok).toBe(true)
+    if (!last.ok) return
+    expect(wrongCount(last.state)).toBe(GALLOWS_LIVES)
+    expect(isLost(last.state)).toBe(true)
+    expect(isOver(last.state)).toBe(true)
+    // Po konci už se nehádá dál.
+    expect(guessLetter(last.state, 'z')).toMatchObject({ ok: false, error: 'over' })
+  })
+
+  it('stejné písmeno podruhé neprojde', () => {
+    const first = guessLetter(createGallowsState(puzzle), 'k')
+    expect(first.ok).toBe(true)
+    if (!first.ok) return
+    expect(guessLetter(first.state, 'k')).toMatchObject({ ok: false, error: 'used' })
+  })
+
+  it('„vyškrtni" odstraní jen písmena, která ve slově nejsou', () => {
+    const result = takeGallowsHint(createGallowsState(long), 'strike')
+    expect(result).not.toBeNull()
+    if (!result) return
+    const base = fold(long.word)
+    for (const letter of result.letters) expect(base).not.toContain(letter)
+    // Vyškrtnutí nestojí život — je to nákup, ne tah.
+    expect(wrongCount(result.state)).toBe(0)
+    expect(result.state.hintsUsed).toBe(1)
+  })
+
+  it('„odhal písmeno" ukáže to nejčastější a nestojí život', () => {
+    const result = takeGallowsHint(createGallowsState(long), 'letter')
+    expect(result).not.toBeNull()
+    if (!result) return
+    expect(result.letters).toEqual(['o'])
+    expect(wrongCount(result.state)).toBe(0)
+  })
+
+  it('nápověda zdarma nestojí body, ale počítá se jako nápověda', () => {
+    const free = takeGallowsHint(createGallowsState(long), 'letter', true)!
+    expect(free.state.hintCost).toBe(0)
+    expect(free.state.hintsUsed).toBe(1)
+    expect(free.state.freeHints).toBe(1)
+  })
+
+  it('bodování odmění zbylé životy a prohru netrestá nulou', () => {
+    let state = createGallowsState(puzzle)
+    for (const letter of ['k', 'u', 'n']) {
+      const result = guessLetter(state, letter)
+      if (result.ok) state = result.state
+    }
+    const won = scoreGallows(state, 1, state.startedAt + 20_000)
+    expect(won.perfect).toBe(true)
+    expect(won.total).toBeGreaterThan(900)
+
+    let dead = createGallowsState(puzzle)
+    for (const letter of 'bcfgjmrx') {
+      const result = guessLetter(dead, letter)
+      if (result.ok) dead = result.state
+    }
+    const lost = scoreGallows(dead, 1, dead.startedAt + 20_000)
+    expect(lost.perfect).toBe(false)
+    expect(lost.total).toBeGreaterThanOrEqual(0)
+    expect(lost.total).toBeLessThan(won.total)
   })
 })

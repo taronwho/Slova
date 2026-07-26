@@ -8,6 +8,7 @@ import { useState, type ReactNode } from 'react'
 
 import { TUTORIALS, type TutorialVisual } from '../game/tutorials'
 import { MODE_LABEL, type ModeId } from '../game/types'
+import { Gallows } from './art/Gallows'
 
 interface Props {
   mode: ModeId
@@ -269,6 +270,43 @@ function Visual({ visual }: { visual: TutorialVisual }) {
           <p className="tut-caption">
             Obě řešení mají stejná písmena, takže obě vedou dál. Nemůžeš vybrat špatně.
           </p>
+        </div>
+      )
+
+    case 'gallows':
+      return (
+        <div className="tut-visual">
+          <Gallows parts={3} />
+          <div className="word-slots" style={{ ['--slots' as string]: 5 }}>
+            {['k', null, 'n', null, null].map((letter, i) => (
+              <span className={`slot ${letter ? 'filled' : ''}`} key={i}>
+                {letter ?? ''}
+              </span>
+            ))}
+          </div>
+          <p className="tut-caption">Tři chybná písmena, tři díly. Zbývá pět životů.</p>
+        </div>
+      )
+
+    case 'gallows-fold':
+      return (
+        <div className="tut-visual">
+          <div style={{ display: 'flex', gap: 'var(--sp-3)', alignItems: 'center' }}>
+            <span className="letter-key hit" style={{ maxWidth: 46, flex: '0 0 46px' }}>
+              u
+            </span>
+            <span className="tut-arrow" aria-hidden="true">
+              →
+            </span>
+            <div className="word-slots" style={{ ['--slots' as string]: 3 }}>
+              {['k', 'ů', 'ň'].map((letter, i) => (
+                <span className={`slot ${i === 1 ? 'filled' : ''}`} key={i}>
+                  {i === 1 ? letter : ''}
+                </span>
+              ))}
+            </div>
+          </div>
+          <p className="tut-caption">Písmeno „u" odhalí „u", „ú" i „ů".</p>
         </div>
       )
   }

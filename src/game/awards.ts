@@ -1,5 +1,5 @@
 /**
- * Ocenění — třicet trvalých met napříč hrou.
+ * Ocenění — trvalé mety napříč hrou.
  *
  * Těžiště je na **dovednosti, ne na vysedění**: většina met stojí na tom, že
  * hráč kolo dohrál bez nápovědy, nebo že v něm nasbíral hodně bodů. „Odehraj
@@ -12,15 +12,26 @@
  * se to taky dělá): kdyby některé kolo spadlo dřív, než se zapsalo, meta se
  * dožene sama, místo aby zůstala navždy zamčená. Profil proto vedle statistik
  * drží i pár počítadel, která se z běžných statistik odvodit nedají — čistá
- * kola, pangramy, dostavěné věže bez nápovědy.
+ * kola, pangramy, dostavěné věže bez nápovědy, uhodnutá slova v Šibenici.
  */
 
 import type { Profile } from '../lib/storage'
+import type { ModeId } from './types'
+
+const MODES: ModeId[] = ['chain', 'hive', 'tower', 'gallows']
 
 export type AwardGroup = 'start' | 'clean' | 'score' | 'feat' | 'grit'
 
 /** Barva kresby. Meta patřící k jednomu režimu si bere jeho barvu. */
-export type AwardTone = 'brand' | 'chain' | 'hive' | 'tower' | 'ok' | 'gold' | 'warn'
+export type AwardTone =
+  | 'brand'
+  | 'chain'
+  | 'hive'
+  | 'tower'
+  | 'gallows'
+  | 'ok'
+  | 'gold'
+  | 'warn'
 
 export interface Award {
   id: string
@@ -92,20 +103,17 @@ export const AWARDS: Award[] = [
     (p) => p.stats.hive.played),
   count('prvni-vez', 'start', 'tower', 'První věž', 'Dohraj kolo Věže', 'blocks', 1,
     (p) => p.stats.tower.played),
+  count('prvni-sibenice', 'start', 'gallows', 'První slovo', 'Uhodni slovo v Šibenici',
+    'noose', 1, (p) => p.counters.gallowsSolved),
   {
-    id: 'trojboj',
+    id: 'ctyrboj',
     group: 'start',
     tone: 'brand',
-    title: 'Trojboj',
-    goal: 'Dohraj kolo ve všech třech hrách',
+    title: 'Čtyřboj',
+    goal: 'Dohraj kolo ve všech čtyřech hrách',
     art: 'triad',
-    done: (p) => p.stats.chain.played > 0 && p.stats.hive.played > 0 && p.stats.tower.played > 0,
-    progress: (p) =>
-      ratio(
-        [p.stats.chain.played, p.stats.hive.played, p.stats.tower.played].filter((n) => n > 0)
-          .length,
-        3,
-      ),
+    done: (p) => MODES.every((mode) => p.stats[mode].played > 0),
+    progress: (p) => ratio(MODES.filter((mode) => p.stats[mode].played > 0).length, MODES.length),
   },
 
   // --- Bez nápovědy -----------------------------------------------------
@@ -131,6 +139,12 @@ export const AWARDS: Award[] = [
   count('vez-cista-10', 'clean', 'tower', 'Deset věží bez lešení',
     'Dostav deset věží bez jediné nápovědy', 'flag', 10,
     (p) => p.counters.towerFullNoHint, 3),
+  count('sibenice-cista', 'clean', 'gallows', 'Napoprvé',
+    'Uhodni slovo bez jediné chyby a bez nápovědy', 'noose', 1,
+    (p) => p.counters.gallowsClean, 1),
+  count('sibenice-cista-10', 'clean', 'gallows', 'Deset napoprvé',
+    'Uhodni deset slov bez jediné chyby a bez nápovědy', 'noose', 10,
+    (p) => p.counters.gallowsClean, 3),
 
   // --- Body -------------------------------------------------------------
   count('skore-1500', 'score', 'gold', 'Patnáct set', 'Nasbírej v jednom kole 1 500 bodů',

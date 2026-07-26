@@ -3,7 +3,7 @@ import { chromium } from 'playwright'
 import { readFileSync, writeFileSync, unlinkSync } from 'node:fs'
 import { dismissTutorial, goHome, openGame, waitReady } from './_ui.mjs'
 
-const MODE_ID = { 'Řetěz': 'chain', 'Voština': 'hive', 'Věž': 'tower' }
+const MODE_ID = { 'Řetěz': 'chain', 'Voština': 'hive', 'Věž': 'tower', 'Šibenice': 'gallows' }
 
 const FILE = process.env.SURL ?? 'http://localhost:4180/slova-standalone.html'
 const problems = []
@@ -37,7 +37,12 @@ check(
   'zabudovaný font se použil',
 )
 
-for (const [mode, sel] of [['Řetěz', '.ladder'], ['Voština', '.hive'], ['Věž', '.tower']]) {
+for (const [mode, sel] of [
+  ['Řetěz', '.ladder'],
+  ['Voština', '.hive'],
+  ['Věž', '.tower'],
+  ['Šibenice', '.gallows-art'],
+]) {
   await page.goto(FILE, { waitUntil: 'networkidle' })
   await page.locator('.splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined)
   await openGame(page, MODE_ID[mode])

@@ -129,6 +129,27 @@ async function playTower() {
   return await result.isVisible().catch(() => false)
 }
 
+/* ---------- ŠIBENICE ---------- */
+
+async function playGallows() {
+  await start('gallows')
+  // Postupně se zkusí celá abeceda — kolo tím vždycky dojde k výsledku,
+  // ať už uhodnutím, nebo osmi chybami.
+  for (const letter of 'aeiounrstlkvpmdczybhjfg') {
+    if (await page.locator('.result-card').isVisible().catch(() => false)) break
+    const key = page.locator('.letter-key', { hasText: new RegExp(`^${letter}$`) })
+    if (!(await key.isEnabled().catch(() => false))) continue
+    await key.click()
+    await page.waitForTimeout(90)
+  }
+  const result = page.locator('.result-card')
+  await result.waitFor({ timeout: 5000 }).catch(() => undefined)
+  if (await result.isVisible().catch(() => false)) {
+    collect(await result.locator('.result-card p.muted').allInnerTexts().then(clean), 'šibenice — slovo')
+  }
+  return await result.isVisible().catch(() => false)
+}
+
 function clean(texts) {
   return texts.map((t) => t.replace(/[\s\n▸·0-9]/g, ''))
 }
@@ -137,6 +158,7 @@ const MODES = [
   ['ŘETĚZ', playChain],
   ['VOŠTINA', playHive],
   ['VĚŽ', playTower],
+  ['ŠIBENICE', playGallows],
 ]
 
 for (const [name, play] of MODES) {
@@ -274,7 +296,7 @@ log('\nOVLÁDÁNÍ')
 /* ---------- Vejde se hra na jednu obrazovku ---------- */
 
 log('\nJEDNA OBRAZOVKA')
-for (const mode of ['chain', 'hive', 'tower']) {
+for (const mode of ['chain', 'hive', 'tower', 'gallows']) {
   await start(mode)
   const box = await page.evaluate(() => {
     const main = document.querySelector('.main')
@@ -315,14 +337,14 @@ log('\nVITRÍNA')
   await chip.click()
   await page.waitForSelector('.award-grid')
   const tiles = await page.locator('.award').count()
-  check(tiles === 30, `vitrína ukáže všech ${tiles} ocenění`)
+  check(tiles >= 30, `vitrína ukáže všech ${tiles} ocenění`)
   check(
     (await page.locator('.award.has').count()) > 0,
     'získaná ocenění jsou odlišená od zamčených',
   )
   // Kresba musí být vlastní grafika, ne znak z fontu.
   check(
-    (await page.locator('.award svg.award-art').count()) === 30,
+    (await page.locator('.award svg.award-art').count()) === tiles,
     'každé ocenění má vlastní kresbu',
   )
 
@@ -348,7 +370,7 @@ log('\nDENNÍ VÝZVA A NÁPOVĚDY')
 {
   await goHome(page)
   check(
-    (await page.locator('.daily-strip .daily-item').count()) === 3,
+    (await page.locator('.daily-strip .daily-item').count()) === 4,
     'denní výzva je vidět rovnou v menu, jedna dlaždice na hru',
   )
   const strip = await page.locator('.daily-strip').boundingBox()

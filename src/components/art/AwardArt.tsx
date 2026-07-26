@@ -144,6 +144,19 @@ function Glyph({ art }: { art: string }) {
         </>
       )
 
+    // --- Šibenice -------------------------------------------------------
+    // Rameno šibenice s oprátkou. Kresba je stejná jako ve hře, jen zmenšená,
+    // takže je meta poznat dřív, než se přečte nadpis.
+    case 'noose':
+      return (
+        <>
+          <path d="M8 44h16M12 44V8h20" className="ln" />
+          <path d="M12 15 19 8" className="ln" />
+          <path d="M32 8v9" className="ln" />
+          <path d="M32 17a7 7 0 1 1 0 14 7 7 0 0 1 0-14Z" className="tn" />
+        </>
+      )
+
     // --- Voština --------------------------------------------------------
     case 'star-cell':
       return (

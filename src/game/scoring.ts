@@ -1,6 +1,13 @@
 /** Bodování — jednotné napříč režimy, s režimově specifickými pravidly. */
 
 import { budgetFor, type ChainState } from './chain'
+import {
+  GALLOWS_LIVES,
+  isWon,
+  neededLetters,
+  wrongCount,
+  type GallowsState,
+} from './gallows'
 import { currentScore, type HiveState } from './hive'
 import type { TowerState } from './tower'
 
@@ -142,6 +149,55 @@ export function scoreHive(state: HiveState, streak: number): ScoreBreakdown {
     perfect,
     0,
   )
+}
+
+/**
+ * Šibenice: základ minus chyby, plus prémie za nevyužité životy.
+ *
+ * Prohrané kolo dostane jen zbytek za uhodnutá písmena — nula by hráče
+ * odradila od dohrání, ale plný základ by zase nic neznamenal.
+ */
+export function scoreGallows(
+  state: GallowsState,
+  streak: number,
+  now = Date.now(),
+): ScoreBreakdown {
+  const elapsed = (state.finishedAt ?? now) - state.startedAt
+  const wrong = wrongCount(state)
+  const won = isWon(state)
+  const lives = Math.max(0, GALLOWS_LIVES - wrong)
+
+  const lines: { label: string; value: number }[] = []
+  if (won) {
+    lines.push({ label: 'Uhodnuté slovo', value: 900 })
+    if (lives > 0) lines.push({ label: `Zbylé životy (${lives})`, value: 60 * lives })
+  } else {
+    // Za rozluštěnou část slova se něco počítá i po prohře.
+    const guessed = [...neededLetters(state.puzzle)].filter((letter) =>
+      state.tried.includes(letter),
+    ).length
+    lines.push({ label: `Odhalená písmena (${guessed})`, value: 40 * guessed })
+    lines.push({ label: 'Slovo neuhodnuto', value: -100 })
+  }
+  if (wrong > 0) lines.push({ label: `Chybná písmena (${wrong})`, value: -70 * wrong })
+
+  if (state.hintCost > 0) {
+    const paid = Math.max(0, state.hintsUsed - (state.freeHints ?? 0))
+    lines.push({ label: `Nápovědy (${paid})`, value: -state.hintCost })
+  }
+
+  const bonus = won ? speedBonus(elapsed, 45_000, 180_000, 200) : 0
+  if (bonus > 0) lines.push({ label: 'Rychlost', value: bonus })
+
+  const perfect = won && wrong === 0 && state.hintsUsed === 0
+  const streakMul = streakMultiplier(streak)
+  const multiplier = (perfect ? 1.5 : 1) * streakMul
+
+  const labels: string[] = []
+  if (perfect) labels.push('BEZ CHYBY ×1,5')
+  if (streakMul > 1) labels.push(`Série ×${streakMul.toFixed(2).replace('.', ',')}`)
+
+  return finish(lines, multiplier, labels.join('  ·  ') || null, perfect, 0)
 }
 
 /* Postup profilu (hodnosti 1–50) je v game/ranks.ts — je to samostatná věc

@@ -2,6 +2,7 @@
 
 import { buildChainGraph, type ChainGraph, type ChainPuzzle } from '../game/chain'
 import type { HivePuzzle } from '../game/hive'
+import type { GallowsPuzzle } from '../game/gallows'
 import type { TowerPuzzle } from '../game/tower'
 import type { Difficulty } from '../game/types'
 
@@ -121,6 +122,14 @@ export async function loadTower(entry: TowerIndexEntry): Promise<TowerPuzzle> {
   const tower = pack.find((item) => item.id === entry.id)
   if (!tower) throw new Error(`Věž ${entry.id} chybí v balíčku`)
   return tower
+}
+
+/* ---------- Šibenice ---------- */
+
+/* Slova jsou krátká a je jich jen pár tisíc, takže se vejdou do jednoho
+   souboru — dělit je na balíčky by bylo zbytečné. */
+export function loadGallows(): Promise<GallowsPuzzle[]> {
+  return fetchJson<GallowsPuzzle[]>('gallows/puzzles.json')
 }
 
 /* ---------- Výběr hádanky ---------- */

@@ -1,6 +1,6 @@
 # Slova
 
-Tři české slovní hry v jedné webové aplikaci. Běží čistě staticky, bez serveru,
+Čtyři české slovní hry v jedné webové aplikaci. Běží čistě staticky, bez serveru,
 a **každá vygenerovaná hádanka je ověřeně dohratelná**.
 
 ## Režimy
@@ -23,6 +23,16 @@ sedm písmen. Postup vede přes hodnosti od Začátečníka po Královnu češti
 Diakritika se proti plástvi skládá (á=a, č=c, ř=r …), takže „cili" najde slovo
 „cíli" — jinak by nešlo hrát ťukáním do šestiúhelníků na mobilu.
 
+### Šibenice — hádání po písmenech
+Slovo je schované za prázdnými políčky, hráč zkouší písmena a osm chybných
+znamená konec. Dvě věci jsou jinak než na papíře: **diakritika se hádá po
+základním písmeni** („u" odhalí u, ú i ů), takže se hádá slovo a ne háčky a na
+telefonu stačí šestadvacet kláves; a nápověda „vyškrtni pět" zhasne písmena,
+která ve slově nejsou, za body, ne za život.
+
+Slova se vybírají podle frekvence, ne náhodně — u ostatních režimů se dá dojít
+oklikou, tady buď slovo znáš, nebo visíš.
+
 ### Věž — anagramová věž
 Od tří písmen nahoru. V každém patře přibude jedno písmeno a hráč ze **všech**
 dostupných písmen složí nové slovo v libovolném pořadí.
@@ -41,6 +51,7 @@ nemůže zablokovat cestu nahoru. Řetěz podpisů je ověřený už při genero
 | Řetěz | grafy pro délky 4, 5 a 6 | 7 824 hádanek |
 | Voština | plástve odvozené od pangramů | 2 400 hádanek |
 | Věž | ověřené řetězy přesmyček 3→6/7/8 | 1 962 hádanek |
+| Šibenice | nejčastější základní tvary po délkách | 2 100 slov |
 
 ### Jen 1. pád a infinitiv
 
@@ -150,9 +161,12 @@ hráči, a ověří:
   plástev má aspoň jeden pangram a dost slov na rozehrání.
 - **Věž** — každé patro má aspoň jedno slovo, všechna sedí na podpis a každé
   patro vzniklo přidáním právě jednoho písmene k tomu pod ním.
+- **Šibenice** — hádané slovo je v ověřeném seznamu základních tvarů, délka
+  sedí na obtížnost a slovo má aspoň tři různá písmena (dvoupísmenné slovo se
+  uhodne dvěma tahy a hádanka to není).
 
 A protože testy čtou vygenerované soubory, jde `npm run play:verify` opačnou
-cestou: v Chromiu **odehraje deset kol od každého režimu** a každé slovo, které
+cestou: v Chromiu **odehraje deset kol od každého ze čtyř režimů** a každé slovo, které
 se objevilo na obrazovce nebo ho hra přijala, porovná se seznamem povolených
 tvarů. Zároveň ověří, že se rozehrané kolo dá dohrát po návratu do menu
 i po zavření hry a že se na telefonu všechno vejde na jednu obrazovku.
@@ -232,7 +246,8 @@ Skripty v `tools/` běží po krocích:
 | `3_build_chain.py` | postaví grafy, najde dvojice a ověří nejkratší cesty |
 | `4_build_hive.py` | odvodí plástve od pangramů a spočítá kompletní řešení |
 | `5_build_tower.py` | najde ověřené řetězy přesmyček |
-| `playthrough.mjs` | odehraje 10 kol od každého režimu a zkontroluje tvary slov |
+| `5b_build_gallows.py` | vybere nejčastější slova po délkách pro Šibenici |
+| `playthrough.mjs` | odehraje 10 kol od každého ze čtyř režimů a zkontroluje tvary slov |
 
 ## Struktura
 
