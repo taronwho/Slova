@@ -103,6 +103,8 @@ async function playHive() {
   }
   collect(await page.locator('.found-word').allInnerTexts().then(clean), 'voština — nalezená')
   await page.locator('.board-footer .btn', { hasText: 'Ukončit plástev' }).click()
+  // Ukončení se ptá na potvrzení, ať se netrefí omylem.
+  await page.locator('.sheet.confirm .btn', { hasText: 'Ukončit' }).click()
   const result = page.locator('.result-card')
   await result.waitFor({ timeout: 5000 }).catch(() => undefined)
   return await result.isVisible().catch(() => false)
@@ -191,6 +193,75 @@ log('\nROZEHRANÉ KOLO')
     (await page.locator('.floor.done').count()) === towerFloors,
     `Věž pokračuje tam, kde skončila (${towerFloors} pater)`,
   )
+}
+
+/* ---------- Ovládání ---------- */
+
+log('\nOVLÁDÁNÍ')
+{
+  // Vlastní okno: historie prohlížeče je prázdná stejně jako po skutečném
+  // spuštění hry, takže systémové zpět měříme na tom, co zažije hráč.
+  const fresh = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'cs-CZ' })
+  const page = await fresh.newPage()
+  await page.goto(APP_URL, { waitUntil: 'networkidle' })
+  await waitReady(page)
+  await openGame(page, 'chain')
+  const ladder = await page.evaluate(() => {
+    const board = document.querySelector('.board').getBoundingClientRect()
+    const rows = [...document.querySelectorAll('.ladder .rung')].map((r) => r.getBoundingClientRect())
+    return {
+      count: rows.length,
+      fits: rows.every((r) => r.top >= board.top - 1 && r.bottom <= board.bottom + 1),
+    }
+  })
+  check(ladder.count >= 3, `řetěz ukáže start, rozepsané slovo i cíl (${ladder.count} řady)`)
+  check(ladder.fits, 'všechny řady žebříku se vejdou do hrací plochy')
+
+  await page.locator('.board-footer .btn', { hasText: 'Vzdát kolo' }).click()
+  check(await page.locator('.sheet.confirm').isVisible(), 'vzdání se nejdřív zeptá')
+  await page.locator('.sheet.confirm .btn', { hasText: 'Zrušit' }).click()
+  check(await page.locator('.ladder').isVisible(), 'zrušené vzdání nechá kolo běžet')
+
+  // Systémové zpět (na Androidu gesto) nesmí zavřít celou hru. Chvíli počkat:
+  // zavřené potvrzení po sobě uklízí vlastní záznam v historii.
+  await page.waitForTimeout(500)
+  await page.goBack()
+  await page.waitForTimeout(400)
+  check(
+    await page.locator('h1:has-text("Vyber si hru")').isVisible(),
+    'zpět ze hry vede do menu, ne ven z aplikace',
+  )
+  await page.locator('.mode-tile[data-mode="hive"]').click()
+  await page.locator('.sheet').waitFor()
+  await page.goBack()
+  await page.waitForTimeout(300)
+  check(!(await page.locator('.sheet').isVisible()), 'zpět zavře panel režimu')
+
+  await openGame(page, 'hive')
+  await page.locator('.board-footer .btn', { hasText: 'Nápověda' }).click()
+  await page.waitForTimeout(250)
+  await page.locator('.found-toggle').click()
+  check(
+    await page.locator('.found-groups .found-word').first().isVisible(),
+    'voština ukáže seznam nalezených slov',
+  )
+  await page.goBack()
+  await page.waitForTimeout(300)
+  check(!(await page.locator('.found-groups').isVisible()), 'zpět seznam zavře')
+
+  await goHome(page)
+  await openGame(page, 'tower')
+  await page.locator('.hints .btn', { hasText: 'Celé slovo' }).click()
+  await page.waitForTimeout(200)
+  await page.locator('.board-footer .btn', { hasText: 'Postavit patro' }).click()
+  await page.waitForTimeout(400)
+  const green = await page.evaluate(() => {
+    const color = getComputedStyle(document.querySelector('.floor.done .tile')).color
+    const [r, g, b] = color.match(/\d+/g).map(Number)
+    return { color, green: g > r && g > b }
+  })
+  check(green.green, `postavené patro věže je zelené, ne červené (${green.color})`)
+  await fresh.close()
 }
 
 /* ---------- Vejde se hra na jednu obrazovku ---------- */

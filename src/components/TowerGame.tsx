@@ -18,6 +18,7 @@ import {
 import { createTowerState } from '../game/tower'
 import type { RoundResult } from '../game/types'
 import { CZECH_LETTERS } from '../lib/czech'
+import { Confirm } from './Confirm'
 import { ResultOverlay } from './ResultOverlay'
 
 interface Props {
@@ -51,6 +52,7 @@ export function TowerGame({
   )
   const [shakeKey, setShakeKey] = useState(0)
   const [done, setDone] = useState(false)
+  const [confirmGiveUp, setConfirmGiveUp] = useState(false)
   const reported = useRef(false)
 
   const level = currentLevel(state)
@@ -138,7 +140,7 @@ export function TowerGame({
       const next = result.state.puzzle.levels[result.state.built.length]
       showFlash(
         `${result.word.toUpperCase()} stojí. Nové písmeno: ${next?.added?.toUpperCase() ?? ''}`,
-        'accent',
+        'ok',
       )
     }
   }, [draft, level, showFlash, state])
@@ -355,7 +357,11 @@ export function TowerGame({
             >
               Postavit patro
             </button>
-            <button type="button" className="btn btn-sm btn-ghost" onClick={onGiveUp}>
+            <button
+              type="button"
+              className="btn btn-sm btn-ghost"
+              onClick={() => setConfirmGiveUp(true)}
+            >
               Vzdát věž
             </button>
           </div>
@@ -384,6 +390,16 @@ export function TowerGame({
           nemůže věž zablokovat.
         </p>
       </aside>
+
+      {confirmGiveUp && (
+        <Confirm
+          title="Vzdát věž?"
+          body="Postavená patra se zahodí a série se přeruší. Vrátit to nepůjde."
+          confirmLabel="Vzdát věž"
+          onConfirm={onGiveUp}
+          onCancel={() => setConfirmGiveUp(false)}
+        />
+      )}
 
       {done && (
         <ResultOverlay

@@ -11,6 +11,7 @@ import {
   type Difficulty,
   type ModeId,
 } from '../game/types'
+import { useBackGuard } from '../lib/back'
 import type { Profile, SavedRound, SavedRounds } from '../lib/storage'
 
 interface Props {
@@ -94,6 +95,9 @@ export function Home({
 
   const pickedMode = picked ? MODES.find((m) => m.id === picked)! : null
   const pickedSaved = picked ? saved[picked] : undefined
+
+  // Systémové zpět zavře panel, ne celou hru.
+  useBackGuard(picked !== null, () => setPicked(null))
 
   return (
     <>

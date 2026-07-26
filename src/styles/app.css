@@ -923,10 +923,12 @@
   animation: rise var(--t-base) var(--ease) both;
 }
 
+/* Postavené patro je hotová věc, ne barva režimu. Vermilion Věže vypadal
+   jako chyba, i když šlo o správně složené slovo. */
 .floor.done .tile {
-  background: var(--accent-soft);
-  border-color: color-mix(in oklab, var(--accent) 40%, transparent);
-  color: var(--accent-text);
+  background: var(--ok-soft);
+  border-color: color-mix(in oklab, var(--ok) 45%, transparent);
+  color: var(--ok-text);
 }
 
 .floor.base .tile {
@@ -1867,6 +1869,13 @@
   color: var(--accent-text);
 }
 
+/* Hláška o povedeném tahu. Zelená, ne barva režimu — u Věže by červená
+   znamenala opak toho, co se stalo. */
+.banner-ok {
+  background: var(--ok-soft);
+  color: var(--ok-text);
+}
+
 .banner .banner-actions {
   margin-left: auto;
   display: flex;
@@ -2011,4 +2020,65 @@
   font-size: 0.72rem;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
+}
+
+/* Dvě znění téhož popisku — plné na monitoru, zkrácené na telefonu. */
+.narrow-only {
+  display: none;
+}
+
+@media (max-width: 899px) {
+  .wide-only {
+    display: none;
+  }
+
+  .narrow-only {
+    display: inline;
+  }
+}
+
+/* ---------- Potvrzení a nalezená slova ---------- */
+
+.sheet.confirm {
+  gap: var(--sp-3);
+  border-top-color: var(--error);
+}
+
+.sheet.confirm h2 {
+  font-size: 1.25rem;
+}
+
+.btn-danger {
+  background: var(--error-soft);
+  color: var(--error);
+  border-color: color-mix(in oklab, var(--error) 35%, transparent);
+}
+
+.btn-danger:hover {
+  background: color-mix(in oklab, var(--error) 18%, var(--surface));
+}
+
+.found-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  width: 100%;
+  margin-bottom: var(--sp-3);
+}
+
+.found-toggle small {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--accent-text);
+}
+
+.found-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.found-groups .label {
+  margin-bottom: var(--sp-2);
 }

@@ -22,6 +22,7 @@ import type { ChainPuzzle, ChainState } from './game/chain'
 import type { HivePuzzle, HiveState } from './game/hive'
 import type { TowerPuzzle, TowerState } from './game/tower'
 import { MODE_LABEL, type Difficulty, type ModeId, type RoundResult } from './game/types'
+import { useBackGuard } from './lib/back'
 import { dayNumber, hashSeed, mulberry32, todayKey } from './lib/rng'
 import {
   breakStreak,
@@ -251,6 +252,11 @@ export default function App() {
       return null
     })
   }, [updateProfile])
+
+  // Systémové zpět zavírá vrstvy odshora dolů: nejdřív návod, pak hru.
+  // Až na domovské obrazovce se chová normálně a hru opustí.
+  useBackGuard(view.kind !== 'home', goHome)
+  useBackGuard(tutorial !== null, closeTutorial)
 
   const themeButton = useMemo(() => {
     const order: Profile['theme'][] = ['system', 'light', 'dark']

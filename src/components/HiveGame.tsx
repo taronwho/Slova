@@ -20,6 +20,8 @@ import {
 import { scoreHive } from '../game/scoring'
 import type { RoundResult } from '../game/types'
 import { CZECH_LETTERS, fold } from '../lib/czech'
+import { Confirm } from './Confirm'
+import { FoundWords } from './FoundWords'
 import { ResultOverlay } from './ResultOverlay'
 
 interface Props {
@@ -63,6 +65,8 @@ export function HiveGame({
   )
   const [shakeKey, setShakeKey] = useState(0)
   const [done, setDone] = useState(false)
+  const [showFound, setShowFound] = useState(false)
+  const [confirmEnd, setConfirmEnd] = useState(false)
   const reported = useRef(false)
 
   const letters = useMemo(() => letterSet(puzzle), [puzzle])
@@ -241,6 +245,17 @@ export function HiveGame({
         </div>
 
         <div className="hints card">
+          {/* Nalezená slova jsou na monitoru v pravém sloupci; na telefonu
+              se tam nevejdou, tak se otevřou přes tlačítko. */}
+          <button
+            type="button"
+            className="btn btn-sm found-toggle"
+            onClick={() => setShowFound(true)}
+            disabled={state.found.length === 0}
+          >
+            <span>Nalezená slova</span>
+            <small>{state.found.length}</small>
+          </button>
           <div className="label">Kolik slov ještě zbývá</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--sp-2)' }}>
             {[...remaining.entries()].map(([length, count]) => (
@@ -329,7 +344,11 @@ export function HiveGame({
             <button type="button" className="btn btn-sm" onClick={hint}>
               Nápověda −80
             </button>
-            <button type="button" className="btn btn-sm btn-ghost" onClick={finishRound}>
+            <button
+              type="button"
+              className="btn btn-sm btn-ghost"
+              onClick={() => setConfirmEnd(true)}
+            >
               Ukončit plástev
             </button>
           </div>
@@ -362,6 +381,29 @@ export function HiveGame({
           Písmena se smí opakovat. Diakritiku piš normálně — plástev ji skládá.
         </p>
       </aside>
+
+      {showFound && (
+        <FoundWords
+          words={state.found}
+          pangrams={puzzle.pangrams}
+          total={puzzle.solutions.length}
+          score={(word) => wordScore(puzzle, word)}
+          onClose={() => setShowFound(false)}
+        />
+      )}
+
+      {confirmEnd && (
+        <Confirm
+          title="Ukončit plástev?"
+          body={`Kolo se spočítá tak, jak je — máš ${state.found.length} z ${puzzle.solutions.length} slov. Zbytek už nedohledáš.`}
+          confirmLabel="Ukončit"
+          onConfirm={() => {
+            setConfirmEnd(false)
+            finishRound()
+          }}
+          onCancel={() => setConfirmEnd(false)}
+        />
+      )}
 
       {done && (
         <ResultOverlay

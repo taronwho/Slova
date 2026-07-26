@@ -165,6 +165,15 @@ npm run build     # typecheck + produkční build do dist/
 npm run preview   # náhled produkčního buildu
 ```
 
+Systémové tlačítko zpět (na Androidu gesto) zavírá vrstvy hry, ne celou
+aplikaci: nejdřív potvrzení nebo seznam, pak návod, pak hru, a teprve na
+úvodní obrazovce se chová normálně. Řeší to `src/lib/back.ts` — každá
+otevřená vrstva si přidá jeden záznam do historie a při návratu se zavře
+místo toho, aby se opustila stránka.
+
+Nevratné kroky (vzdát kolo, ukončit plástev) se nejdřív zeptají — tlačítka
+jsou hned vedle ovládání a dají se trefit omylem.
+
 Aplikace nepotřebuje žádný backend — `dist/` se dá nasadit na jakýkoli statický
 hosting. Postup hráče se ukládá do `localStorage`, a to ve dvou klíčích:
 profil se statistikami a zvlášť **rozehraná kola**, jedno od každého režimu.

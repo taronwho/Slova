@@ -33,6 +33,12 @@ export async function openGame(page, mode, { daily = false, resume = false } = {
 
 /** Zpět do menu, ať už je nad hrou výsledek kola, nebo ne. */
 export async function goHome(page) {
+  // Otevřený panel nebo potvrzení překrývá hlavičku — nejdřív pryč s ním.
+  const cancel = page.locator('.sheet.confirm .btn', { hasText: 'Zrušit' })
+  if (await cancel.isVisible().catch(() => false)) await cancel.click()
+  const close = page.locator('.sheet-head .btn', { hasText: 'Zavřít' })
+  if (await close.isVisible().catch(() => false)) await close.click()
+
   const back = page.locator('.result-actions .btn', { hasText: 'Domů' })
   if (await back.isVisible().catch(() => false)) await back.click()
   else {

@@ -21,6 +21,7 @@ import {
 import { scoreChain } from '../game/scoring'
 import type { RoundResult } from '../game/types'
 import { CZECH_LETTERS } from '../lib/czech'
+import { Confirm } from './Confirm'
 import { Keyboard } from './Keyboard'
 import { ResultOverlay } from './ResultOverlay'
 
@@ -64,6 +65,7 @@ export function ChainGame({
   const [hintPosition, setHintPosition] = useState<number | null>(null)
   const [pendingUndo, setPendingUndo] = useState(false)
   const [done, setDone] = useState(false)
+  const [confirmGiveUp, setConfirmGiveUp] = useState(false)
   const reported = useRef(false)
 
   const draftRef = useRef<HTMLDivElement | null>(null)
@@ -294,7 +296,13 @@ export function ChainGame({
               <div className={`value num ${moves > budget ? 'warn' : ''}`}>{moves}</div>
             </div>
             <div className="stat">
-              <div className="label">Nejkratší cesta</div>
+              {/* Na tři sloupce se celý popisek na řádek nevejde a zalomil by
+                  se, což ukrojí z hrací plochy. Na úzkém displeji stačí
+                  zkrácený. */}
+              <div className="label">
+                <span className="wide-only">Nejkratší cesta</span>
+                <span className="narrow-only">Nejkratší</span>
+              </div>
               <div className="value num gold">{puzzle.par}</div>
             </div>
             <div className="stat">
@@ -355,12 +363,13 @@ export function ChainGame({
           </div>
         )}
 
-        {/* Rozměr dlaždice se dopočítá z délky řetězu — čím delší, tím menší
-            dlaždice, aby bylo pod sebou vidět co nejvíc slov. */}
+        {/* Rozměr dlaždice se dopočítá z toho, kolik řad se doopravdy kreslí:
+            celý dosavadní řetěz, rozepsané slovo a cílové slovo. Čím delší
+            řetěz, tím menší dlaždice, aby bylo pod sebou vidět co nejvíc. */}
         <div
           className="ladder"
           style={{
-            ['--rows' as string]: state.path.length + 1,
+            ['--rows' as string]: state.path.length + (solved ? 0 : 2),
             ['--cols' as string]: puzzle.start.length,
           }}
         >
@@ -451,7 +460,11 @@ export function ChainGame({
             >
               Vrátit tah
             </button>
-            <button type="button" className="btn btn-sm btn-ghost" onClick={onGiveUp}>
+            <button
+              type="button"
+              className="btn btn-sm btn-ghost"
+              onClick={() => setConfirmGiveUp(true)}
+            >
               Vzdát kolo
             </button>
           </div>
@@ -488,6 +501,16 @@ export function ChainGame({
           k cíli s ohledem na už použitá slova.
         </p>
       </aside>
+
+      {confirmGiveUp && (
+        <Confirm
+          title="Vzdát kolo?"
+          body="Rozehraný řetěz se zahodí a série se přeruší. Vrátit to nepůjde."
+          confirmLabel="Vzdát kolo"
+          onConfirm={onGiveUp}
+          onCancel={() => setConfirmGiveUp(false)}
+        />
+      )}
 
       {done && breakdown && (
         <ResultOverlay

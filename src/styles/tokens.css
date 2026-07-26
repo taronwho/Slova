@@ -71,6 +71,12 @@
   --warn-soft: #fbe6d7;
   --error: #d1284a;
   --error-soft: #fbdde4;
+  /* Zelená pro hotovo. Barvy režimů se používají jako identita, ne jako
+     stav — postavené patro věže musí být poznat na první pohled jako
+     povedené, ne jako chyba. */
+  --ok: #17794a;
+  --ok-soft: #d9f2e4;
+  --ok-text: #0f5c37;
 
   /* Text na barevném pruhu karty. V tmavém tématu jsou barvy režimů světlé,
      takže se na nich musí obrátit na tmavý, jinak by kontrast neprošel. */
@@ -117,6 +123,9 @@
     --warn-soft: #3e2612;
     --error: #ff6b85;
     --error-soft: #401824;
+    --ok: #4ade9b;
+    --ok-soft: #10321f;
+    --ok-text: #7cebb9;
     --band-ink: #14112a;
 
     --shadow-1: 0 1px 2px rgb(0 0 0 / 45%);
@@ -153,6 +162,12 @@
   --warn-soft: #fbe6d7;
   --error: #d1284a;
   --error-soft: #fbdde4;
+  /* Zelená pro hotovo. Barvy režimů se používají jako identita, ne jako
+     stav — postavené patro věže musí být poznat na první pohled jako
+     povedené, ne jako chyba. */
+  --ok: #17794a;
+  --ok-soft: #d9f2e4;
+  --ok-text: #0f5c37;
   --band-ink: #ffffff;
   --shadow-1: 0 1px 2px rgb(35 25 80 / 7%);
   --shadow-2: 0 2px 6px rgb(35 25 80 / 7%), 0 10px 24px -12px rgb(35 25 80 / 22%);
@@ -186,6 +201,9 @@
   --warn-soft: #3e2612;
   --error: #ff6b85;
   --error-soft: #401824;
+  --ok: #4ade9b;
+  --ok-soft: #10321f;
+  --ok-text: #7cebb9;
   --band-ink: #14112a;
   --shadow-1: 0 1px 2px rgb(0 0 0 / 45%);
   --shadow-2: 0 2px 6px rgb(0 0 0 / 45%), 0 10px 24px -12px rgb(0 0 0 / 65%);
