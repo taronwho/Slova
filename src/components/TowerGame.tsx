@@ -30,7 +30,7 @@ interface Props {
   onGiveUp: () => void
   /** Uložený stav rozehraného kola, když se hráč vrací zpátky do hry. */
   resume?: TowerState | null
-  onProgress: (state: TowerState) => void
+  onProgress: (state: TowerState, finished: boolean) => void
 }
 
 export function TowerGame({
@@ -71,9 +71,11 @@ export function TowerGame({
   }, [puzzle])
 
   // Po každé změně stavu se kolo uloží, aby šlo pokračovat i po zavření hry.
+  // Dohrané ani předčasně ukončené kolo se neukládá — nabízet „pokračovat"
+  // u něčeho, co je za sebou, nedává smysl.
   useEffect(() => {
-    onProgress(state)
-  }, [state, onProgress])
+    onProgress(state, state.finishedAt !== null || done)
+  }, [state, done, onProgress])
 
   const breakdown = useMemo(() => scoreTower(state, streak), [state, streak])
 
@@ -234,7 +236,8 @@ export function TowerGame({
               disabled={finished}
               onClick={() => hint('letter')}
             >
-              Odhalit písmeno −{TOWER_HINT_COST.letter}
+              <span>Písmeno</span>
+              <small>−{TOWER_HINT_COST.letter}</small>
             </button>
             <button
               type="button"
@@ -242,7 +245,8 @@ export function TowerGame({
               disabled={finished}
               onClick={() => hint('word')}
             >
-              Celé slovo −{TOWER_HINT_COST.word}
+              <span>Celé slovo</span>
+              <small>−{TOWER_HINT_COST.word}</small>
             </button>
           </div>
         </div>
@@ -255,7 +259,15 @@ export function TowerGame({
           </div>
         )}
 
-        <div className="tower">
+        {/* Rozměr dlaždice se dopočítá z počtu pater a nejdelšího patra —
+            osmipísmenná věž se musí vejít na displej celá. */}
+        <div
+          className="tower"
+          style={{
+            ['--floors' as string]: puzzle.levels.length,
+            ['--cols' as string]: puzzle.levels[puzzle.levels.length - 1]!.sig.length,
+          }}
+        >
           {puzzle.levels.map((floor, index) => {
             const word = state.built[index]
             if (word) {

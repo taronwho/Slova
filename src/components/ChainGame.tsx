@@ -35,7 +35,7 @@ interface Props {
   onGiveUp: () => void
   /** Uložený stav rozehraného kola, když se hráč vrací zpátky do hry. */
   resume?: ChainState | null
-  onProgress: (state: ChainState) => void
+  onProgress: (state: ChainState, finished: boolean) => void
 }
 
 interface Flash {
@@ -94,9 +94,11 @@ export function ChainGame({
   }, [puzzle])
 
   // Po každé změně stavu se kolo uloží, aby šlo pokračovat i po zavření hry.
+  // Dohrané ani předčasně ukončené kolo se neukládá — nabízet „pokračovat"
+  // u něčeho, co je za sebou, nedává smysl.
   useEffect(() => {
-    onProgress(state)
-  }, [state, onProgress])
+    onProgress(state, state.finishedAt !== null || done)
+  }, [state, done, onProgress])
 
   useEffect(() => {
     if (!solved || reported.current) return
@@ -314,7 +316,8 @@ export function ChainGame({
               disabled={solved}
               onClick={() => useHint('distance')}
             >
-              Vzdálenost −{HINT_COST.distance}
+              <span>Vzdálenost</span>
+              <small>−{HINT_COST.distance}</small>
             </button>
             <button
               type="button"
@@ -322,7 +325,8 @@ export function ChainGame({
               disabled={solved}
               onClick={() => useHint('position')}
             >
-              Které písmeno −{HINT_COST.position}
+              <span>Písmeno</span>
+              <small>−{HINT_COST.position}</small>
             </button>
             <button
               type="button"
@@ -330,7 +334,8 @@ export function ChainGame({
               disabled={solved}
               onClick={() => useHint('word')}
             >
-              Celé slovo −{HINT_COST.word}
+              <span>Celé slovo</span>
+              <small>−{HINT_COST.word}</small>
             </button>
           </div>
         </div>
@@ -350,7 +355,15 @@ export function ChainGame({
           </div>
         )}
 
-        <div className="ladder">
+        {/* Rozměr dlaždice se dopočítá z délky řetězu — čím delší, tím menší
+            dlaždice, aby bylo pod sebou vidět co nejvíc slov. */}
+        <div
+          className="ladder"
+          style={{
+            ['--rows' as string]: state.path.length + 1,
+            ['--cols' as string]: puzzle.start.length,
+          }}
+        >
           {state.path.map((word, index) => {
             const previous = index > 0 ? state.path[index - 1]! : null
             return (

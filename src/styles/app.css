@@ -102,25 +102,10 @@
 
 /* Kompaktní hlavička — velký hero by výběr hry odsunul pod okraj displeje. */
 .home-head {
-  padding: 0 0 var(--sp-4);
-}
-
-.home-head h1 {
-  font-size: clamp(1.7rem, 6vw, 2.3rem);
+  margin-bottom: var(--sp-4);
+  font-size: clamp(1.6rem, 5.5vw, 2.2rem);
   letter-spacing: -0.03em;
   font-variation-settings: 'wght' 800;
-}
-
-.home-head p {
-  margin-top: var(--sp-2);
-  font-size: 0.95rem;
-}
-
-.mode-card-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-2);
 }
 
 .mode-rules {
@@ -403,100 +388,170 @@
   border-top: 1px solid var(--border);
 }
 
+/* Mřížka her — „šachovnice". Vejde se celá na displej a nové režimy do ní
+   jen přibudou jako další dlaždice. */
 .mode-grid {
   display: grid;
-  gap: var(--sp-4);
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--sp-3);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 }
 
-.mode-card {
+.mode-tile {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
-  padding: 0 var(--sp-5) var(--sp-5);
+  gap: 2px;
+  padding: var(--sp-4);
   text-align: left;
+  color: var(--band-ink);
   border-radius: var(--r-xl);
-  border: 1px solid var(--border);
-  background: var(--surface);
+  border: none;
+  /* Plná barva režimu — dlaždici pozná hráč dřív, než přečte název. */
+  background: var(--mode-color, var(--accent));
   box-shadow: var(--shadow-1);
+  cursor: pointer;
   overflow: hidden;
+  isolation: isolate;
   transition:
     transform var(--t-base) var(--ease),
-    box-shadow var(--t-base) var(--ease),
-    border-color var(--t-base) var(--ease);
+    box-shadow var(--t-base) var(--ease);
 }
 
-/* Barevný pruh přes celou šířku karty — poznávací znamení režimu. */
-.mode-band {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  margin: 0 calc(var(--sp-5) * -1) var(--sp-1);
-  padding: var(--sp-4) var(--sp-5);
-  background: var(--mode-color, var(--accent));
-  color: var(--band-ink);
+/* Velký průsvitný glyf v rohu — dekorace, která zároveň nese význam. */
+.mode-tile::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  right: -18%;
+  bottom: -30%;
+  width: 74%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: color-mix(in oklab, currentColor 14%, transparent);
 }
 
-.mode-band h2 {
-  flex: 1;
-  font-size: 1.5rem;
-  font-variation-settings: 'wght' 800;
+.mode-tile:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-3);
 }
 
-.mode-band .mode-glyph {
-  font-size: 1.5rem;
+.mode-tile:active {
+  transform: translateY(0);
+}
+
+.mode-tile .mode-glyph {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.6rem;
   line-height: 1;
+  color: inherit;
 }
 
-.mode-new {
-  padding: 0.15rem 0.55rem;
+.mode-name {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.25rem;
+  letter-spacing: -0.01em;
+}
+
+.mode-tag {
+  font-size: 0.82rem;
+  line-height: 1.35;
+  opacity: 0.82;
+}
+
+.mode-flag {
+  align-self: flex-start;
+  margin-top: var(--sp-2);
+  padding: 0.15rem 0.5rem;
   border-radius: var(--r-full);
-  /* Odvozeno z barvy textu, takže funguje na světlém i tmavém pruhu. */
-  background: color-mix(in oklab, currentColor 18%, transparent);
-  color: inherit;
-  font-size: 0.7rem;
+  background: color-mix(in oklab, currentColor 20%, transparent);
+  font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
-.mode-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-3);
-  border-color: color-mix(in oklab, var(--mode-color, var(--accent)) 40%, var(--border));
-}
-
-.mode-card .mode-glyph {
-  font-family: var(--font-display);
-  font-weight: 800;
+/* Rozehraná hra svítí — je to nejsilnější důvod dlaždici zmáčknout. */
+.mode-flag.live {
+  background: var(--surface);
   color: var(--mode-color, var(--accent));
 }
 
-/* Uvnitř barevného pruhu se glyf řídí barvou pruhu, ne barvou režimu —
-   jinak by splynul s pozadím. */
-.mode-card .mode-band .mode-glyph,
-.mode-card .mode-band h2 {
-  color: inherit;
-}
-
-/* Medová je světlá barva; bílý text na ní má slabý kontrast, tak na ní
-   sedí tmavý. */
-.mode-card[data-mode='hive'] .mode-band {
+/* Medová je světlá barva, bílý text na ní má slabý kontrast. */
+.mode-tile[data-mode='hive'] {
   color: #2b1b00;
 }
 
-.mode-card[data-mode='hive'] .mode-new {
-  background: rgb(0 0 0 / 16%);
-  color: inherit;
+/* ---------- Panel s volbami jedné hry ---------- */
+
+.sheet-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: var(--sp-4);
+  background: rgb(6 4 20 / 55%);
+  backdrop-filter: blur(3px);
+  animation: fade var(--t-base) var(--ease) both;
 }
 
-.mode-card .mode-meta {
+@media (min-width: 640px) {
+  .sheet-scrim {
+    align-items: center;
+  }
+}
+
+.sheet {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: var(--sp-4);
+  width: min(460px, 100%);
+  max-height: 86dvh;
+  overflow-y: auto;
+  padding: var(--sp-5);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--mode-color, var(--accent));
+  box-shadow: var(--shadow-3);
+  animation: rise var(--t-slow) var(--ease-back) both;
+}
+
+.sheet-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.sheet-head h2 {
+  flex: 1;
+  font-size: 1.4rem;
+  font-variation-settings: 'wght' 800;
+}
+
+.sheet-head .mode-glyph {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--r-md);
+  background: var(--mode-color, var(--accent));
+  color: var(--band-ink);
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.sheet[data-mode='hive'] .mode-glyph {
+  color: #2b1b00;
+}
+
+.sheet-actions {
+  display: flex;
+  flex-direction: column;
   gap: var(--sp-2);
-  margin-top: auto;
-  padding-top: var(--sp-2);
 }
 
 .section-head {
@@ -1388,8 +1443,12 @@
     display: none;
   }
 
+  /* Hrací plocha je měřítkem pro dlaždice: pravidla níž se odvolávají na
+     její výšku (100cqh), takže se osmipísmenná věž i dlouhý řetěz vejdou
+     na displej samy od sebe, bez pevných rozměrů. */
   .shell.playing .board {
     order: 2;
+    container-type: size;
     display: flex;
     flex-direction: column;
     /* „safe" kvůli přetečení: kdyby byl obsah vyšší než plocha, zarovná se
@@ -1437,6 +1496,72 @@
     flex: 0 0 auto;
   }
 
+  /* --- Dlaždice podle volného místa -------------------------------- */
+
+  /* Řetěz: řádků je tolik, kolik má cesta článků, plus cílové slovo.
+     Na každý řádek padne ještě spojka a mezera (~13 px), bloku
+     „zbývá nejméně" nechávám 46 px. */
+  .shell.playing .ladder {
+    /* Řádek zabere výšku dlaždice (1,1× její šířka) plus spojku a mezeru. */
+    --fit-h: calc((100cqh - 48px - var(--rows, 4) * 11px) / (var(--rows, 4) * 1.1));
+    --fit-w: calc((100cqw - (var(--cols, 5) - 1) * 6px) / var(--cols, 5));
+    /* Dlaždice žebříku se klikají (nastavují pozici písmene), takže se
+       nesmí zmenšit pod pohodlný dotykový cíl — radši ať se roluje. */
+    --tile: clamp(40px, min(var(--fit-w), var(--fit-h)), 58px);
+    gap: 3px;
+  }
+
+  /* Věž: pater je pevný počet, nejširší patro dá počet sloupců. */
+  .shell.playing .tower {
+    --fit-h: calc((100cqh - var(--floors, 6) * 5px) / (var(--floors, 6) * 1.1));
+    --fit-w: calc((100cqw - (var(--cols, 8) - 1) * 5px) / var(--cols, 8));
+    --tile: clamp(20px, min(var(--fit-w), var(--fit-h)), 54px);
+    gap: 4px;
+  }
+
+  .shell.playing .ladder .tile,
+  .shell.playing .tower .tile {
+    width: var(--tile);
+    height: calc(var(--tile) * 1.1);
+    font-size: calc(var(--tile) * 0.52);
+    border-radius: calc(var(--tile) * 0.22);
+  }
+
+  .shell.playing .floor {
+    gap: 4px;
+  }
+
+  .shell.playing .connector {
+    height: 8px;
+  }
+
+  /* Voština dostane celou zbylou výšku a šířku si dopočítá z poměru stran,
+     takže se vejde i s řádkem „piš slovo". */
+  .shell.playing .hive-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    justify-content: center;
+    gap: var(--sp-2);
+  }
+
+  .shell.playing .hive {
+    flex: 0 1 auto;
+    height: 100%;
+    /* Buňky se ťukají prstem, takže plástev má spodní hranici i za cenu
+       rolování — 190 px dá šestiúhelník kolem 53 px. */
+    min-height: 190px;
+    width: auto;
+    max-width: min(300px, 84vw);
+  }
+
+  /* Nápovědy: popisek a cena pod sebou, jinak text přeteče z tlačítka ven. */
+  .shell.playing .hint-buttons .btn {
+    flex-direction: column;
+    gap: 0;
+    line-height: 1.15;
+    padding-block: var(--sp-2);
+  }
+
   /* Pravý sloupec je jen opis toho, co je vidět na hrací ploše. */
   .shell.playing .rail-right {
     display: none;
@@ -1476,20 +1601,12 @@
     scroll-margin-bottom: var(--sp-5);
   }
 
-  /* Budoucí patra věže se na telefonu srazí do tenkých pruhů. V plné
-     velikosti by zabrala celou horní půlku displeje, přitom nesou jedinou
-     informaci: kolik pater ještě zbývá a jak věž poroste. */
-  .shell.playing .floor.future {
-    gap: 3px;
-  }
-
+  /* Budoucí patra jsou jen náznak, takže smějí být nižší než postavená —
+     ušetřená výška jde do dlaždic, se kterými hráč pracuje. */
   .shell.playing .floor.future .tile {
-    width: clamp(14px, 4.5vw, 22px);
-    height: 7px;
-    border-radius: 3px;
-    border-width: 1px;
+    height: calc(var(--tile) * 0.5);
     background: var(--surface-2);
-    opacity: 0.85;
+    opacity: 0.9;
   }
 
   .shell.playing .floor.future .tile::after {
@@ -1756,69 +1873,131 @@
   gap: var(--sp-2);
 }
 
-/* ---------- Karta „Pokračovat ve hře" ---------- */
-
-/* Nabídne se na úvodní obrazovce, když je něco rozehrané. Je nad výběrem
-   her, protože rozehrané kolo má přednost před založením nového. */
-.resume-card {
+/* Nápovědy: dvouřádkové tlačítko (popisek + cena) se vejde do řady třikrát
+   vedle sebe, kdežto „Které písmeno −100" na jednom řádku přetékalo ven. */
+.hint-buttons .btn {
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
-  width: 100%;
-  margin-bottom: var(--sp-4);
-  padding: var(--sp-3) var(--sp-4);
-  text-align: left;
-  color: inherit;
-  background: var(--surface);
-  border: 1px solid var(--mode-color, var(--accent));
-  border-left-width: 4px;
-  border-radius: var(--radius-3);
-  cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  justify-content: center;
+  gap: var(--sp-2);
 }
 
-.resume-card[data-mode='chain'] {
-  --mode-color: var(--mode-chain);
+.hint-buttons .btn small {
+  color: var(--text-faint);
+  font-size: 0.78em;
+  font-variant-numeric: tabular-nums;
 }
 
-.resume-card[data-mode='hive'] {
-  --mode-color: var(--mode-hive);
-}
+/* ---------- Úvodní obrazovka se značkou ---------- */
 
-.resume-card[data-mode='tower'] {
-  --mode-color: var(--mode-tower);
-}
-
-.resume-card:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-2);
-}
-
-.resume-mark {
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
   display: grid;
   place-items: center;
-  flex: 0 0 auto;
-  width: 38px;
-  height: 38px;
-  font-size: 1.25rem;
-  color: var(--on-accent);
-  background: var(--mode-color);
-  border-radius: var(--radius-2);
+  background: var(--bg);
+  transition: opacity 300ms var(--ease), transform 300ms var(--ease);
 }
 
-.resume-text {
+.splash.leaving {
+  opacity: 0;
+  /* Značka se s odchodem nadechne — menu tím působí, že vyplulo zpod ní. */
+  transform: scale(1.06);
+  pointer-events: none;
+}
+
+.splash-inner {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  min-width: 0;
+  align-items: center;
+  gap: var(--sp-5);
 }
 
-.resume-text .muted {
-  font-size: 0.85rem;
+.splash-mark {
+  width: clamp(96px, 34vw, 152px);
+  height: auto;
+  filter: drop-shadow(0 12px 30px color-mix(in oklab, var(--brand) 30%, transparent));
+  animation: splash-mark 700ms var(--ease-back) both;
 }
 
-.resume-go {
-  margin-left: auto;
-  font-size: 1.2rem;
-  color: var(--mode-color);
+.splash-mark circle[stroke] {
+  animation: splash-arc 620ms var(--ease) both;
+}
+
+.splash-core {
+  transform-origin: 50% 50%;
+  animation: splash-core 500ms var(--ease-back) 420ms both;
+}
+
+.splash-word {
+  display: flex;
+  gap: 0.04em;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2rem, 11vw, 3.2rem);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.splash-word span {
+  display: block;
+  animation: splash-letter 420ms var(--ease-back) both;
+}
+
+@keyframes splash-mark {
+  from {
+    opacity: 0;
+    transform: scale(0.72) rotate(-24deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+
+/* Oblouky se „nakreslí" — dashoffset jede z délky oblouku na nulu. */
+@keyframes splash-arc {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes splash-core {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes splash-letter {
+  from {
+    opacity: 0;
+    transform: translateY(0.35em);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* S vypnutými animacemi zůstane jen prolnutí — značku hráč uvidí taky,
+   jen se nehýbe. */
+@media (prefers-reduced-motion: reduce) {
+  .splash-mark,
+  .splash-mark circle[stroke],
+  .splash-core,
+  .splash-word span {
+    animation: none;
+  }
+
+  .splash-mark circle[stroke] {
+    stroke-dashoffset: 0 !important;
+  }
+
+  .splash.leaving {
+    transform: none;
+  }
 }

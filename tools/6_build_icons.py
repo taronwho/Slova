@@ -3,82 +3,88 @@
 Vygeneruje sadu ikon pro PWA (a tím i pro balíček do Google Play přes TWA).
 Kromě běžných ikon vzniknou i „maskable" varianty, u kterých si systém může
 oříznout rohy do libovolného tvaru — obsah proto musí zůstat v bezpečné zóně
-uprostřed, jinak Android ustřihne půl písmene.
+uprostřed.
 
-Písmo se bere z Bricolage Grotesque, které používá i samotná hra, aby
-ikona seděla se značkou.
+Motiv je vzatý přímo ze značky ve hře: prostřední „O" ve slově SLOVA je terč
+a vedle názvu svítí tři tečky, jedna za každou hru. Ikona z toho dělá jeden
+znak — kroužek složený ze tří stejných oblouků v barvách Řetězu, Voštiny
+a Věže, uprostřed světlý bod. Na ploše telefonu je poznat i v 48 px a nese
+přitom informaci: tři hry v jedné.
 """
 
 import os
 
-from fontTools.ttLib import TTFont
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFilter
 
 ROOT = os.path.join(os.path.dirname(__file__), "..")
 OUT = os.path.join(ROOT, "public", "icons")
-WOFF2 = os.path.join(
-    ROOT, "node_modules", "@fontsource-variable", "bricolage-grotesque", "files",
-    "bricolage-grotesque-latin-wght-normal.woff2",
-)
-TTF = os.path.join(OUT, ".display.ttf")
 
-# Barva značky — stejná elektrická fialová jako v aplikaci.
-BRAND = (91, 61, 245)
+# Barvy značky — stejné hodnoty jako v src/styles/tokens.css.
+INK = (18, 16, 44)
+CHAIN = (91, 61, 245)
+HIVE = (217, 135, 4)
+TOWER = (226, 58, 46)
 PAPER = (255, 255, 255)
 
 # Maskable ikona musí počítat s oříznutím: bezpečná zóna je vnitřních 80 %.
-MASKABLE_SAFE = 0.62
-PLAIN_SAFE = 0.78
+MASKABLE_SCALE = 0.66
+PLAIN_SCALE = 0.84
 
-
-def ensure_font() -> str:
-    os.makedirs(OUT, exist_ok=True)
-    if not os.path.exists(TTF):
-        font = TTFont(WOFF2)
-        font.flavor = None
-        font.save(TTF)
-    return TTF
+# Kreslí se čtyřnásobně a pak zmenší — hrany oblouků jsou pak hladké.
+SS = 4
 
 
 def rounded_mask(size: int, radius_ratio: float) -> Image.Image:
-    mask = Image.new("L", (size * 4, size * 4), 0)
+    mask = Image.new("L", (size * SS, size * SS), 0)
     draw = ImageDraw.Draw(mask)
     draw.rounded_rectangle(
-        (0, 0, size * 4 - 1, size * 4 - 1),
-        radius=int(size * 4 * radius_ratio),
+        (0, 0, size * SS - 1, size * SS - 1),
+        radius=int(size * SS * radius_ratio),
         fill=255,
     )
     return mask.resize((size, size), Image.LANCZOS)
 
 
 def draw_icon(size: int, maskable: bool) -> Image.Image:
-    path = ensure_font()
-    image = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(image)
+    big = size * SS
+    plate = Image.new("RGBA", (big, big), INK + (255,))
+    draw = ImageDraw.Draw(plate)
 
+    # Rozostřené světlo vlevo nahoře, aby plocha nebyla placatá. Bez rozmazání
+    # by z elipsy zůstala ostrá hrana přes celou ikonu.
+    glow = Image.new("RGBA", (big, big), (0, 0, 0, 0))
+    ImageDraw.Draw(glow).ellipse(
+        (-big * 0.25, -big * 0.45, big * 0.8, big * 0.6), fill=CHAIN + (86,)
+    )
+    plate.alpha_composite(glow.filter(ImageFilter.GaussianBlur(big * 0.11)))
+
+    scale = MASKABLE_SCALE if maskable else PLAIN_SCALE
+    radius = big * 0.30 * scale
+    width = int(big * 0.115 * scale)
+    box = (
+        big / 2 - radius,
+        big / 2 - radius,
+        big / 2 + radius,
+        big / 2 + radius,
+    )
+
+    # Tři stejné oblouky = tři hry. Začínají nahoře a jdou po směru hodin.
+    for index, color in enumerate((CHAIN, HIVE, TOWER)):
+        start = -90 + index * 120 + 4
+        draw.arc(box, start, start + 112, fill=color, width=width)
+
+    # Terč uprostřed — stejný motiv jako „O" ve slově SLOVA.
+    dot = radius * 0.34
+    draw.ellipse(
+        (big / 2 - dot, big / 2 - dot, big / 2 + dot, big / 2 + dot), fill=PAPER
+    )
+
+    image = plate.resize((size, size), Image.LANCZOS)
     if maskable:
-        # Plná plocha — ořez si systém udělá sám.
-        draw.rectangle((0, 0, size, size), fill=BRAND)
-        glyph_ratio = MASKABLE_SAFE
-    else:
-        plate = Image.new("RGBA", (size, size), BRAND + (255,))
-        image.paste(plate, (0, 0), rounded_mask(size, 0.22))
-        draw = ImageDraw.Draw(image)
-        glyph_ratio = PLAIN_SAFE
-
-    font = ImageFont.truetype(path, int(size * glyph_ratio))
-    # Bricolage je variabilní font a bez nastavení osy by se vykreslil
-    # v základní váze — na ikonu příliš tenké. Značka používá 800.
-    try:
-        font.set_variation_by_axes([800])
-    except (OSError, AttributeError):
-        pass
-
-    box = draw.textbbox((0, 0), "S", font=font)
-    x = (size - (box[2] - box[0])) / 2 - box[0]
-    y = (size - (box[3] - box[1])) / 2 - box[1]
-    draw.text((x, y), "S", font=font, fill=PAPER)
-    return image
+        return image
+    out = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    out.paste(image, (0, 0), rounded_mask(size, 0.22))
+    return out
 
 
 def main():
@@ -91,13 +97,10 @@ def main():
             made.append(name)
 
     # Apple touch icon nesmí být průhledná ani zaoblená — iOS si ji zaoblí sám.
-    apple = Image.new("RGB", (180, 180), BRAND)
+    apple = Image.new("RGB", (180, 180), INK)
     apple.paste(draw_icon(180, True).convert("RGB"), (0, 0))
     apple.save(os.path.join(OUT, "apple-touch-icon.png"))
     made.append("apple-touch-icon.png")
-
-    if os.path.exists(TTF):
-        os.remove(TTF)
 
     for name in made:
         path = os.path.join(OUT, name)

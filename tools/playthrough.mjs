@@ -15,6 +15,8 @@
 import { chromium } from 'playwright'
 import { readFileSync } from 'node:fs'
 
+import { goHome, openGame, waitReady } from './_ui.mjs'
+
 const APP_URL = process.env.URL ?? 'http://localhost:4173/'
 const ROUNDS = Number(process.env.ROUNDS ?? 10)
 
@@ -58,32 +60,12 @@ page.on('console', (message) => {
   if (message.type() === 'error') problems.push(`console.error: ${message.text()}`)
 })
 await page.goto(APP_URL, { waitUntil: 'networkidle' })
-
-async function dismissTutorial() {
-  const card = page.locator('.tut-card')
-  if (await card.isVisible().catch(() => false)) {
-    await page.locator('.tut-head').getByText('Přeskočit').click()
-    await page.waitForTimeout(200)
-  }
-}
-
-async function home() {
-  // Výsledek kola je modální — dokud se nezavře, na hlavičku se nedá kliknout.
-  const back = page.locator('.result-actions .btn', { hasText: 'Domů' })
-  if (await back.isVisible().catch(() => false)) await back.click()
-  else {
-    const brand = page.locator('.topbar .brand')
-    if (await brand.isVisible().catch(() => false)) await brand.click()
-  }
-  await page.waitForSelector('h1:has-text("Vyber si hru")')
-}
+  await page.locator('.splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined)
 
 async function start(mode) {
-  await home()
+  await goHome(page)
   // Nová hra zahodí rozehrané kolo, takže se pokaždé začíná načisto.
-  await page.locator(`.mode-card[data-mode="${mode}"] .btn-primary`).click()
-  await page.waitForSelector('.board', { timeout: 15000 })
-  await dismissTutorial()
+  await openGame(page, mode)
 }
 
 /* ---------- ŘETĚZ ---------- */
@@ -170,23 +152,45 @@ for (const [name, play] of MODES) {
 
 log('\nROZEHRANÉ KOLO')
 {
+  // Řetěz i Věž se rozehrají a nechají rozdělané naráz — každý režim má
+  // vlastní uložené kolo.
   await start('chain')
   await page.locator('.hints .btn', { hasText: 'Celé slovo' }).click()
-  await page.waitForTimeout(200)
-  const before = await page.locator('.ladder .rung').count()
-  await page.locator('.topbar .brand').click()
-  await page.waitForSelector('h1:has-text("Vyber si hru")')
-  check(await page.locator('.resume-card').isVisible(), 'úvodní obrazovka nabídne pokračování')
+  await page.keyboard.press('Enter')
+  await page.waitForTimeout(300)
+  const chainRungs = await page.locator('.ladder .rung').count()
+
+  await goHome(page)
+  await start('tower')
+  await page.locator('.hints .btn', { hasText: 'Celé slovo' }).click()
+  await page.waitForTimeout(150)
+  await page.locator('.board-footer .btn', { hasText: 'Postavit patro' }).click()
+  await page.waitForTimeout(300)
+  const towerFloors = await page.locator('.floor.done').count()
+
+  await goHome(page)
+  const live = await page.locator('.mode-tile .mode-flag.live').allInnerTexts()
+  check(live.length === 2, `obě rozehrané hry se nabízejí zvlášť (${JSON.stringify(live)})`)
 
   await page.reload({ waitUntil: 'networkidle' })
+  await waitReady(page)
   check(
-    await page.locator('.resume-card').isVisible(),
-    'nabídka přežije i zavření a otevření hry',
+    (await page.locator('.mode-tile .mode-flag.live').count()) === 2,
+    'nabídka přežije zavření a otevření hry',
   )
-  await page.locator('.resume-card').click()
-  await page.waitForSelector('.ladder')
-  const after = await page.locator('.ladder .rung').count()
-  check(after === before, `řetěz pokračuje tam, kde skončil (${after} článků)`)
+
+  await openGame(page, 'chain', { resume: true })
+  check(
+    (await page.locator('.ladder .rung').count()) === chainRungs,
+    `Řetěz pokračuje tam, kde skončil (${chainRungs} článků)`,
+  )
+
+  await goHome(page)
+  await openGame(page, 'tower', { resume: true })
+  check(
+    (await page.locator('.floor.done').count()) === towerFloors,
+    `Věž pokračuje tam, kde skončila (${towerFloors} pater)`,
+  )
 }
 
 /* ---------- Vejde se hra na jednu obrazovku ---------- */

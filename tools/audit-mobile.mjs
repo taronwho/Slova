@@ -5,6 +5,9 @@
 
 import { chromium, devices } from 'playwright'
 import { mkdirSync } from 'node:fs'
+import { dismissTutorial, goHome, openGame, waitReady } from './_ui.mjs'
+
+const MODE_ID = { 'Řetěz': 'chain', 'Voština': 'hive', 'Věž': 'tower' }
 
 const APP_URL = process.env.URL ?? 'http://localhost:4173/'
 const SHOTS = new URL('../shots/mobile/', import.meta.url).pathname
@@ -55,6 +58,7 @@ for (const size of SIZES) {
   })
   const page = await context.newPage()
   await page.goto(APP_URL, { waitUntil: 'networkidle' })
+  await page.locator('.splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined)
 
   const homeOverflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
@@ -66,7 +70,8 @@ for (const size of SIZES) {
 
   for (const [mode, selector] of MODES) {
     await page.goto(APP_URL, { waitUntil: 'networkidle' })
-    await page.locator('.mode-card', { hasText: mode }).getByText('Hrát').click()
+  await page.locator('.splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined)
+    await openGame(page, MODE_ID[mode])
     await page.waitForSelector(selector, { timeout: 20000 })
     // Návod při prvním spuštění by ležel přes hru a měření by bylo nesmyslné.
     const tut = page.locator('.tut-card')
@@ -148,6 +153,7 @@ for (const size of SIZES) {
   }
 
   await page.goto(APP_URL, { waitUntil: 'networkidle' })
+  await page.locator('.splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined)
   await page.screenshot({ path: `${SHOTS}${size.name}-home.png`, fullPage: true })
   await context.close()
 }

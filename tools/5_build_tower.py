@@ -49,6 +49,8 @@ def main():
     for stale in glob.glob(os.path.join(DATA, "pack-*.json")):
         os.remove(stale)
     lexicon = json.load(open(os.path.join(OUT, LEXICON), encoding="utf-8"))
+    # tvar 1. pádu mn. č. -> jeho jednotné číslo (krok 2c)
+    plural_of = json.load(open(os.path.join(OUT, "plurals.json"), encoding="utf-8"))
 
     core: dict[str, list[str]] = {}
     accept: dict[str, list[str]] = {}
@@ -123,6 +125,12 @@ def main():
             ok = True
             for depth, sig in enumerate(chain):
                 words = sorted(set(accept.get(sig, [])), key=lambda w: -freq_of.get(w, 0))
+                if depth > 0:
+                    # „trajekt" a nad ním „trajekty" není hádanka, jen přidané
+                    # koncové písmeno. Množné číslo slova z patra pod sebou se
+                    # proto z nabídky vyhodí.
+                    below = set(levels[depth - 1]["words"])
+                    words = [w for w in words if plural_of.get(w) not in below]
                 if not words:
                     ok = False
                     break

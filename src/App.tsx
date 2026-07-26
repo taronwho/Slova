@@ -14,6 +14,7 @@ import {
 import { ChainGame } from './components/ChainGame'
 import { HiveGame } from './components/HiveGame'
 import { Home } from './components/Home'
+import { Splash } from './components/Splash'
 import { Stats } from './components/Stats'
 import { Tutorial } from './components/Tutorial'
 import { TowerGame } from './components/TowerGame'
@@ -24,15 +25,15 @@ import { MODE_LABEL, type Difficulty, type ModeId, type RoundResult } from './ga
 import { dayNumber, hashSeed, mulberry32, todayKey } from './lib/rng'
 import {
   breakStreak,
-  clearRound,
   emptyProfile,
   loadProfile,
-  loadRound,
+  loadRounds,
   recordRound,
   saveProfile,
-  saveRound,
+  saveRounds,
   type Profile,
   type SavedRound,
+  type SavedRounds,
 } from './lib/storage'
 
 type View =
@@ -56,10 +57,12 @@ export default function App() {
   const [tutorial, setTutorial] = useState<{ mode: ModeId; pending: boolean } | null>(
     null,
   )
-  /** Rozehrané kolo z minulé návštěvy — nabídne se na úvodní obrazovce. */
-  const [saved, setSaved] = useState<SavedRound | null>(() => loadRound())
+  /** Rozehraná kola, jedno od každého režimu — nabídnou se na úvodní obrazovce. */
+  const [saved, setSaved] = useState<SavedRounds>(() => loadRounds())
   /** Stav, se kterým se má hra nastartovat, když hráč klikne na Pokračovat. */
   const [resume, setResume] = useState<unknown>(null)
+  /** Úvodní značka. Hra se pod ní mezitím načítá, takže nikoho nezdržuje. */
+  const [splash, setSplash] = useState(true)
 
   const dayKey = todayKey()
   const dayLabel = `#${dayNumber()}`
@@ -120,8 +123,11 @@ export default function App() {
           daily,
           nonce: previous.kind === 'game' ? previous.nonce + 1 : 1,
         }))
-        clearRound()
-        setSaved(null)
+        setSaved((previous) => {
+          const { [mode]: _dropped, ...rest } = previous
+          saveRounds(rest)
+          return rest
+        })
         // Při prvním spuštění režimu se návod otevře sám nad rozehranou hrou.
         if (!profile.tutorialSeen[mode]) setTutorial({ mode, pending: true })
       } catch (cause) {
@@ -157,8 +163,11 @@ export default function App() {
         }))
       } catch (cause) {
         setError(cause instanceof Error ? cause.message : 'Kolo se nepodařilo obnovit')
-        clearRound()
-        setSaved(null)
+        setSaved((previous) => {
+          const { [round.mode]: _dropped, ...rest } = previous
+          saveRounds(rest)
+          return rest
+        })
       } finally {
         setLoading(false)
       }
@@ -173,29 +182,37 @@ export default function App() {
    */
   const keepProgress = useCallback(
     (mode: ModeId, puzzleId: string, difficulty: Difficulty, state: unknown, over: boolean) => {
-      if (over) {
-        clearRound()
-        setSaved(null)
-        return
-      }
-      const round: SavedRound = {
-        mode,
-        daily: view.kind === 'game' ? view.daily : false,
-        difficulty,
-        puzzleId,
-        state,
-        savedAt: Date.now(),
-      }
-      saveRound(round)
-      setSaved(round)
+      const daily = view.kind === 'game' ? view.daily : false
+      setSaved((previous) => {
+        let next: SavedRounds
+        if (over) {
+          const { [mode]: _dropped, ...rest } = previous
+          next = rest
+        } else {
+          const round: SavedRound = {
+            mode,
+            daily,
+            difficulty,
+            puzzleId,
+            state,
+            savedAt: Date.now(),
+          }
+          next = { ...previous, [mode]: round }
+        }
+        saveRounds(next)
+        return next
+      })
     },
     [view],
   )
 
   const finishRound = useCallback(
     (result: RoundResult) => {
-      clearRound()
-      setSaved(null)
+      setSaved((previous) => {
+        const { [result.mode]: _dropped, ...rest } = previous
+        saveRounds(rest)
+        return rest
+      })
       updateProfile((previous) => {
         const next = recordRound(previous, result, dayKey)
         const isDaily = view.kind === 'game' && view.daily
@@ -210,11 +227,16 @@ export default function App() {
   )
 
   const giveUp = useCallback(() => {
-    clearRound()
-    setSaved(null)
+    setSaved((previous) => {
+      const mode = view.kind === 'game' ? view.mode : null
+      if (!mode) return previous
+      const { [mode]: _dropped, ...rest } = previous
+      saveRounds(rest)
+      return rest
+    })
     updateProfile(breakStreak)
     setView({ kind: 'home' })
-  }, [updateProfile])
+  }, [updateProfile, view])
 
   const goHome = useCallback(() => setView({ kind: 'home' }), [])
 
@@ -277,6 +299,16 @@ export default function App() {
         </button>
         {view.kind === 'game' && (
           <>
+            {/* Zpět do menu. Rozehrané kolo se tím neztrácí — na úvodní
+                obrazovce se nabídne k pokračování. */}
+            <button
+              type="button"
+              className="btn btn-sm btn-ghost btn-back"
+              onClick={goHome}
+              aria-label="Zpět do menu"
+            >
+              <span aria-hidden="true">←</span> Menu
+            </button>
             <span className="chip">{MODE_LABEL[view.mode]}</span>
             {view.daily && <span className="chip chip-gold">Denní {dayLabel}</span>}
             <button
@@ -329,7 +361,10 @@ export default function App() {
             onStats={() => setView({ kind: 'stats' })}
             onRules={(mode) => setTutorial({ mode, pending: false })}
             saved={saved}
-            onResume={() => saved && resumeRound(saved)}
+            onResume={(mode) => {
+              const round = saved[mode]
+              if (round) void resumeRound(round)
+            }}
           />
         )}
 
@@ -353,14 +388,8 @@ export default function App() {
             onHome={goHome}
             onGiveUp={giveUp}
             resume={resume as ChainState | null}
-            onProgress={(state) =>
-              keepProgress(
-                'chain',
-                state.puzzle.id,
-                state.puzzle.difficulty,
-                state,
-                state.finishedAt !== null,
-              )
+            onProgress={(state, finished) =>
+              keepProgress('chain', state.puzzle.id, state.puzzle.difficulty, state, finished)
             }
           />
         )}
@@ -375,14 +404,8 @@ export default function App() {
             onNext={() => startRound('hive', false)}
             onHome={goHome}
             resume={resume as HiveState | null}
-            onProgress={(state) =>
-              keepProgress(
-                'hive',
-                state.puzzle.id,
-                state.puzzle.difficulty,
-                state,
-                state.found.length >= state.puzzle.solutions.length,
-              )
+            onProgress={(state, finished) =>
+              keepProgress('hive', state.puzzle.id, state.puzzle.difficulty, state, finished)
             }
           />
         )}
@@ -398,17 +421,13 @@ export default function App() {
             onHome={goHome}
             onGiveUp={giveUp}
             resume={resume as TowerState | null}
-            onProgress={(state) =>
-              keepProgress(
-                'tower',
-                state.puzzle.id,
-                state.puzzle.difficulty,
-                state,
-                state.finishedAt !== null,
-              )
+            onProgress={(state, finished) =>
+              keepProgress('tower', state.puzzle.id, state.puzzle.difficulty, state, finished)
             }
           />
         )}
+
+        {splash && <Splash onDone={() => setSplash(false)} />}
 
         {tutorial && (
           <Tutorial

@@ -5,6 +5,7 @@
 
 import { chromium } from 'playwright'
 import { mkdirSync } from 'node:fs'
+import { dismissTutorial, goHome, openGame, waitReady } from './_ui.mjs'
 
 const APP_URL = process.env.URL ?? 'http://localhost:4173/'
 const SHOTS = new URL('../shots/', import.meta.url).pathname
@@ -40,18 +41,11 @@ async function newPage(size) {
     }
   })
   await page.goto(APP_URL, { waitUntil: 'networkidle' })
+  await page.locator('.splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined)
   return page
 }
 
 
-/** Po prvním spuštění režimu se otevře návod — testy ho odbaví. */
-async function dismissTutorial(page) {
-  const card = page.locator('.tut-card')
-  if (await card.isVisible().catch(() => false)) {
-    await page.locator('.tut-head').getByText('Přeskočit').click()
-    await page.waitForTimeout(250)
-  }
-}
 
 const desktop = { width: 1280, height: 900 }
 const mobile = { width: 390, height: 844 }
@@ -64,7 +58,7 @@ log('\nDOMŮ')
     await page.locator('h1', { hasText: 'Vyber si hru' }).isVisible(),
     'výběr hry je hned na úvodu',
   )
-  check((await page.locator('.mode-card').count()) === 3, 'tři karty režimů')
+  check((await page.locator('.mode-tile').count()) === 3, 'tři dlaždice režimů')
   await page.screenshot({ path: `${SHOTS}01-home-light.png`, fullPage: true })
 
   // Tmavé téma
@@ -83,7 +77,7 @@ log('\nDOMŮ')
 log('\nŘETĚZ')
 {
   const page = await newPage(desktop)
-  await page.locator('.mode-card', { hasText: 'Řetěz' }).getByText('Hrát').click()
+  await openGame(page, 'chain')
   await page.waitForSelector('.ladder', { timeout: 20000 })
   await dismissTutorial(page)
 
@@ -149,7 +143,7 @@ log('\nŘETĚZ')
 log('\nVOŠTINA')
 {
   const page = await newPage(desktop)
-  await page.locator('.mode-card', { hasText: 'Voština' }).getByText('Hrát').click()
+  await openGame(page, 'hive')
   await page.waitForSelector('.hive', { timeout: 20000 })
   await dismissTutorial(page)
   check((await page.locator('.hex').count()) === 7, 'plástev má sedm buněk')
@@ -196,7 +190,7 @@ log('\nVOŠTINA')
 log('\nVĚŽ')
 {
   const page = await newPage(desktop)
-  await page.locator('.mode-card', { hasText: 'Věž' }).getByText('Hrát').click()
+  await openGame(page, 'tower')
   await page.waitForSelector('.tower', { timeout: 20000 })
   await dismissTutorial(page)
   check((await page.locator('.tray-tile').count()) >= 4, 'zásobník dlaždic je připravený')
@@ -227,7 +221,7 @@ log('\nMOBIL')
   check(overflow <= 0, `domů se nepřetéká vodorovně (${overflow}px)`)
   await page.screenshot({ path: `${SHOTS}10-mobil-home.png`, fullPage: true })
 
-  await page.locator('.mode-card', { hasText: 'Řetěz' }).getByText('Hrát').click()
+  await openGame(page, 'chain')
   await page.waitForSelector('.ladder', { timeout: 20000 })
   await dismissTutorial(page)
   const overflowGame = await page.evaluate(
@@ -238,13 +232,15 @@ log('\nMOBIL')
   await page.screenshot({ path: `${SHOTS}11-mobil-chain.png`, fullPage: true })
 
   await page.goto(APP_URL, { waitUntil: 'networkidle' })
-  await page.locator('.mode-card', { hasText: 'Voština' }).getByText('Hrát').click()
+  await page.locator('.splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined)
+  await openGame(page, 'hive')
   await dismissTutorial(page)
   await page.waitForSelector('.hive', { timeout: 20000 })
   await page.screenshot({ path: `${SHOTS}12-mobil-hive.png`, fullPage: true })
 
   await page.goto(APP_URL, { waitUntil: 'networkidle' })
-  await page.locator('.mode-card', { hasText: 'Věž' }).getByText('Hrát').click()
+  await page.locator('.splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined)
+  await openGame(page, 'tower')
   await dismissTutorial(page)
   await page.waitForSelector('.tower', { timeout: 20000 })
   await page.screenshot({ path: `${SHOTS}13-mobil-tower.png`, fullPage: true })

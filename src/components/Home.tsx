@@ -1,4 +1,4 @@
-/** Domovská obrazovka — výběr hry nahoře, pod ním profil a pravidla. */
+/** Domovská obrazovka — mřížka her nahoře, pod ní profil a pravidla. */
 
 import { useState } from 'react'
 
@@ -11,7 +11,7 @@ import {
   type Difficulty,
   type ModeId,
 } from '../game/types'
-import type { Profile, SavedRound } from '../lib/storage'
+import type { Profile, SavedRound, SavedRounds } from '../lib/storage'
 
 interface Props {
   profile: Profile
@@ -20,9 +20,9 @@ interface Props {
   onDifficulty: (mode: ModeId, difficulty: Difficulty) => void
   onStats: () => void
   onRules: (mode: ModeId) => void
-  /** Kolo přerušené odchodem do menu nebo zavřením hry. */
-  saved: SavedRound | null
-  onResume: () => void
+  /** Kola přerušená odchodem do menu nebo zavřením hry, po jednom od režimu. */
+  saved: SavedRounds
+  onResume: (mode: ModeId) => void
 }
 
 const MODES: { id: ModeId; glyph: string; color: string }[] = [
@@ -32,21 +32,6 @@ const MODES: { id: ModeId; glyph: string; color: string }[] = [
 ]
 
 const DIFFICULTIES: Difficulty[] = ['easy', 'normal', 'hard']
-
-/** Kolik toho v přerušeném kole zbývá — ať hráč ví, do čeho se vrací. */
-function progressNote(saved: SavedRound): string {
-  const state = saved.state as {
-    path?: string[]
-    found?: string[]
-    built?: string[]
-    puzzle?: { solutions?: string[]; levels?: unknown[] }
-  }
-  if (saved.mode === 'chain') return `${(state.path?.length ?? 1) - 1} tahů`
-  if (saved.mode === 'hive') {
-    return `${state.found?.length ?? 0} z ${state.puzzle?.solutions?.length ?? 0} slov`
-  }
-  return `${(state.built?.length ?? 1) - 1} z ${(state.puzzle?.levels?.length ?? 1) - 1} pater`
-}
 
 const DIFFICULTY_NOTE: Record<ModeId, Record<Difficulty, string>> = {
   chain: {
@@ -66,6 +51,30 @@ const DIFFICULTY_NOTE: Record<ModeId, Record<Difficulty, string>> = {
   },
 }
 
+/** Česká čísla: 1 tah, 2–4 tahy, 5 a víc tahů. */
+function plural(count: number, one: string, few: string, many: string): string {
+  const form = count === 1 ? one : count >= 2 && count <= 4 ? few : many
+  return `${count} ${form}`
+}
+
+/** Kolik toho v přerušeném kole zbývá — ať hráč ví, do čeho se vrací. */
+function progressNote(saved: SavedRound): string {
+  const state = saved.state as {
+    path?: string[]
+    found?: string[]
+    built?: string[]
+    puzzle?: { solutions?: string[]; levels?: unknown[] }
+  }
+  if (saved.mode === 'chain') {
+    return plural((state.path?.length ?? 1) - 1, 'tah', 'tahy', 'tahů')
+  }
+  if (saved.mode === 'hive') {
+    return `${state.found?.length ?? 0} z ${state.puzzle?.solutions?.length ?? 0} slov`
+  }
+  const built = (state.built?.length ?? 1) - 1
+  return `${built} z ${(state.puzzle?.levels?.length ?? 1) - 1} pater`
+}
+
 export function Home({
   profile,
   dayKey,
@@ -78,106 +87,144 @@ export function Home({
 }: Props) {
   const level = levelFor(profile.xp)
   const [openRules, setOpenRules] = useState<ModeId | null>(null)
+  /** Otevřená dlaždice — volba obtížnosti a spuštění se dějí až v ní. */
+  const [picked, setPicked] = useState<ModeId | null>(null)
   const played =
     profile.stats.chain.played + profile.stats.hive.played + profile.stats.tower.played
 
+  const pickedMode = picked ? MODES.find((m) => m.id === picked)! : null
+  const pickedSaved = picked ? saved[picked] : undefined
+
   return (
     <>
-      {/* Výběr hry je první věc na stránce — nikam se kvůli němu neroluje. */}
-      <div className="home-head">
-        <h1>Vyber si hru</h1>
-        <p className="muted">Tři české slovní hry. Každá hádanka jde vždycky dohrát.</p>
-      </div>
-
-      {saved && (
-        <button type="button" className="resume-card" onClick={onResume} data-mode={saved.mode}>
-          <span className="resume-mark" aria-hidden="true">
-            {MODES.find((m) => m.id === saved.mode)?.glyph}
-          </span>
-          <span className="resume-text">
-            <strong>Pokračovat ve hře</strong>
-            <span className="muted">
-              {MODE_LABEL[saved.mode]} · {DIFFICULTY_LABEL[saved.difficulty]}
-              {saved.daily ? ' · denní výzva' : ''} · {progressNote(saved)}
-            </span>
-          </span>
-          <span className="resume-go" aria-hidden="true">→</span>
-        </button>
-      )}
+      {/* Mřížka her je první věc na stránce a vejde se celá na displej.
+          Až přibudou další režimy, jen se do ní přidají další dlaždice. */}
+      <h1 className="home-head">Vyber si hru</h1>
 
       <div className="mode-grid">
         {MODES.map((mode) => {
           const dailyDone = profile.dailyDone[`${dayKey}:${mode.id}`] !== undefined
-          const isNew = !profile.tutorialSeen[mode.id]
+          const round = saved[mode.id]
           return (
-            <article
-              className="mode-card"
+            <button
+              type="button"
+              className="mode-tile"
               key={mode.id}
               data-mode={mode.id}
               style={{ ['--mode-color' as string]: mode.color }}
+              onClick={() => setPicked(mode.id)}
             >
-              {/* Plný barevný pruh — karta je poznat na první pohled
-                  a barva se pak drží i uvnitř hry. */}
-              <div className="mode-band">
-                <span className="mode-glyph">{mode.glyph}</span>
-                <h2>{MODE_LABEL[mode.id]}</h2>
-                {isNew && <span className="mode-new">Nové</span>}
-              </div>
-
-              <p className="muted" style={{ fontSize: '0.94rem' }}>
-                {MODE_TAGLINE[mode.id]}
-              </p>
-
-              <ul className="mode-rules">
-                {MODE_SUMMARY[mode.id].map((rule) => (
-                  <li key={rule}>{rule}</li>
-                ))}
-              </ul>
-
-              <div>
-                <div className="label" style={{ marginBottom: 'var(--sp-2)' }}>
-                  Obtížnost
-                </div>
-                <div className="seg">
-                  {DIFFICULTIES.map((difficulty) => (
-                    <button
-                      type="button"
-                      key={difficulty}
-                      aria-pressed={profile.difficulty[mode.id] === difficulty}
-                      onClick={() => onDifficulty(mode.id, difficulty)}
-                    >
-                      {DIFFICULTY_LABEL[difficulty]}
-                    </button>
-                  ))}
-                </div>
-                <p className="faint" style={{ fontSize: '0.8rem', marginTop: 'var(--sp-2)' }}>
-                  {DIFFICULTY_NOTE[mode.id][profile.difficulty[mode.id]]}
-                </p>
-              </div>
-
-              <div className="mode-meta">
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={() => onPlay(mode.id, false)}
-                >
-                  Hrát
-                </button>
-                <button type="button" className="btn" onClick={() => onPlay(mode.id, true)}>
-                  {dailyDone ? 'Denní ✓' : 'Denní výzva'}
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  onClick={() => onRules(mode.id)}
-                >
-                  Návod
-                </button>
-              </div>
-            </article>
+              <span className="mode-glyph" aria-hidden="true">
+                {mode.glyph}
+              </span>
+              <span className="mode-name">{MODE_LABEL[mode.id]}</span>
+              <span className="mode-tag">{MODE_TAGLINE[mode.id]}</span>
+              {round ? (
+                <span className="mode-flag live">Rozehráno · {progressNote(round)}</span>
+              ) : !profile.tutorialSeen[mode.id] ? (
+                <span className="mode-flag">Nové</span>
+              ) : dailyDone ? (
+                <span className="mode-flag">Denní ✓</span>
+              ) : null}
+            </button>
           )
         })}
       </div>
+
+      {pickedMode && (
+        <div
+          className="sheet-scrim"
+          role="dialog"
+          aria-modal="true"
+          aria-label={MODE_LABEL[pickedMode.id]}
+          onClick={() => setPicked(null)}
+        >
+          <div
+            className="sheet"
+            data-mode={pickedMode.id}
+            style={{ ['--mode-color' as string]: pickedMode.color }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="sheet-head">
+              <span className="mode-glyph" aria-hidden="true">
+                {pickedMode.glyph}
+              </span>
+              <h2>{MODE_LABEL[pickedMode.id]}</h2>
+              <button
+                type="button"
+                className="btn btn-sm btn-ghost"
+                onClick={() => setPicked(null)}
+              >
+                Zavřít
+              </button>
+            </div>
+
+            <ul className="mode-rules">
+              {MODE_SUMMARY[pickedMode.id].map((rule) => (
+                <li key={rule}>{rule}</li>
+              ))}
+            </ul>
+
+            <div>
+              <div className="label" style={{ marginBottom: 'var(--sp-2)' }}>
+                Obtížnost
+              </div>
+              <div className="seg">
+                {DIFFICULTIES.map((difficulty) => (
+                  <button
+                    type="button"
+                    key={difficulty}
+                    aria-pressed={profile.difficulty[pickedMode.id] === difficulty}
+                    onClick={() => onDifficulty(pickedMode.id, difficulty)}
+                  >
+                    {DIFFICULTY_LABEL[difficulty]}
+                  </button>
+                ))}
+              </div>
+              <p className="faint" style={{ fontSize: '0.8rem', marginTop: 'var(--sp-2)' }}>
+                {DIFFICULTY_NOTE[pickedMode.id][profile.difficulty[pickedMode.id]]}
+              </p>
+            </div>
+
+            <div className="sheet-actions">
+              {pickedSaved && (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => onResume(pickedMode.id)}
+                >
+                  Pokračovat · {progressNote(pickedSaved)}
+                </button>
+              )}
+              <button
+                type="button"
+                className={`btn ${pickedSaved ? '' : 'btn-primary'}`}
+                onClick={() => onPlay(pickedMode.id, false)}
+              >
+                {pickedSaved ? 'Nová hra' : 'Hrát'}
+              </button>
+              <button type="button" className="btn" onClick={() => onPlay(pickedMode.id, true)}>
+                {profile.dailyDone[`${dayKey}:${pickedMode.id}`] !== undefined
+                  ? 'Denní ✓'
+                  : 'Denní výzva'}
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => onRules(pickedMode.id)}
+              >
+                Návod
+              </button>
+            </div>
+
+            {pickedSaved && (
+              <p className="faint" style={{ fontSize: '0.8rem' }}>
+                Nová hra rozehrané kolo zahodí.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Profil až pod výběrem hry — je to doplněk, ne to hlavní. */}
       <div className="panel home-profile">

@@ -5,6 +5,9 @@
  */
 
 import { chromium } from 'playwright'
+import { dismissTutorial, goHome, openGame, waitReady } from './_ui.mjs'
+
+const MODE_ID = { 'Řetěz': 'chain', 'Voština': 'hive', 'Věž': 'tower' }
 
 const APP_URL = process.env.URL ?? 'http://localhost:4173/'
 const problems = []
@@ -24,6 +27,7 @@ const context = await browser.newContext({
 })
 const page = await context.newPage()
 await page.goto(APP_URL, { waitUntil: 'networkidle' })
+  await page.locator('.splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined)
 
 /* ---------- Manifest ---------- */
 
@@ -82,7 +86,8 @@ check(swState !== null && swState.active, 'service worker je zaregistrovaný a a
 // Projít režimy, aby se datové balíčky dostaly do cache.
 for (const mode of ['Řetěz', 'Voština', 'Věž']) {
   await page.goto(APP_URL, { waitUntil: 'networkidle' })
-  await page.locator('.mode-card', { hasText: mode }).getByText('Hrát').click()
+  await page.locator('.splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined)
+  await openGame(page, MODE_ID[mode])
   await page.waitForSelector('.board', { timeout: 20000 })
   const tut = page.locator('.tut-card')
   if (await tut.isVisible().catch(() => false)) {
@@ -102,7 +107,7 @@ const offlineOk = await page
 check(offlineOk, 'aplikace se načte i offline')
 
 if (offlineOk) {
-  await page.locator('.mode-card', { hasText: 'Řetěz' }).getByText('Hrát').click()
+  await openGame(page, 'chain')
   const played = await page
     .waitForSelector('.ladder', { timeout: 15000 })
     .then(() => true)

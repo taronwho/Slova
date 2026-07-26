@@ -31,7 +31,7 @@ interface Props {
   onHome: () => void
   /** Uložený stav rozehraného kola, když se hráč vrací zpátky do hry. */
   resume?: HiveState | null
-  onProgress: (state: HiveState) => void
+  onProgress: (state: HiveState, finished: boolean) => void
 }
 
 /** Souřadnice šesti okrajových buněk plástve v procentech rámu plástve. */
@@ -85,9 +85,11 @@ export function HiveGame({
   }, [puzzle])
 
   // Po každé změně stavu se kolo uloží, aby šlo pokračovat i po zavření hry.
+  // Dohrané ani předčasně ukončené kolo se neukládá — nabízet „pokračovat"
+  // u něčeho, co je za sebou, nedává smysl.
   useEffect(() => {
-    onProgress(state)
-  }, [state, onProgress])
+    onProgress(state, complete || done)
+  }, [state, done, onProgress])
 
   const breakdown = useMemo(() => scoreHive(state, streak), [state, streak])
 

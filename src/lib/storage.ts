@@ -3,7 +3,7 @@
 import type { Difficulty, ModeId, RoundResult } from '../game/types'
 
 const KEY = 'slova.profile.v1'
-const ROUND_KEY = 'slova.round.v1'
+const ROUNDS_KEY = 'slova.rounds.v1'
 
 export interface ModeStats {
   played: number
@@ -87,10 +87,12 @@ export function saveProfile(profile: Profile): void {
 /**
  * Rozehrané kolo.
  *
- * Ukládá se stranou od profilu: zapisuje se po každém tahu, takže se nesmí
- * dít, aby jeho poškození vzalo s sebou i statistiky. Stav hry je prostý
- * objekt (cesta řetězu, nalezená slova, postavená patra), takže stačí
- * JSON — rekonstruovat se z něj dá celé kolo včetně hádanky.
+ * Drží se **zvlášť pro každý režim**, aby si hráč mohl nechat rozehraný
+ * Řetěz i Voštinu naráz. Ukládá se stranou od profilu: zapisuje se po
+ * každém tahu, takže se nesmí stát, aby jeho poškození vzalo s sebou
+ * i statistiky. Stav hry je prostý objekt (cesta řetězu, nalezená slova,
+ * postavená patra), takže stačí JSON — rekonstruovat se z něj dá celé kolo
+ * včetně hádanky.
  */
 export interface SavedRound {
   mode: ModeId
@@ -102,31 +104,30 @@ export interface SavedRound {
   savedAt: number
 }
 
-export function loadRound(): SavedRound | null {
+export type SavedRounds = Partial<Record<ModeId, SavedRound>>
+
+export function loadRounds(): SavedRounds {
   try {
-    const raw = localStorage.getItem(ROUND_KEY)
-    if (!raw) return null
-    const saved = JSON.parse(raw) as SavedRound
-    if (!saved || typeof saved !== 'object' || !saved.mode || !saved.state) return null
-    return saved
+    const raw = localStorage.getItem(ROUNDS_KEY)
+    if (!raw) return {}
+    const saved = JSON.parse(raw) as SavedRounds
+    if (!saved || typeof saved !== 'object') return {}
+    const rounds: SavedRounds = {}
+    for (const mode of ['chain', 'hive', 'tower'] as ModeId[]) {
+      const round = saved[mode]
+      if (round && round.mode === mode && round.state) rounds[mode] = round
+    }
+    return rounds
   } catch {
-    return null
+    return {}
   }
 }
 
-export function saveRound(round: SavedRound): void {
+export function saveRounds(rounds: SavedRounds): void {
   try {
-    localStorage.setItem(ROUND_KEY, JSON.stringify(round))
+    localStorage.setItem(ROUNDS_KEY, JSON.stringify(rounds))
   } catch {
     // Soukromý režim nebo plná kvóta — hra běží dál, jen se nedá pokračovat.
-  }
-}
-
-export function clearRound(): void {
-  try {
-    localStorage.removeItem(ROUND_KEY)
-  } catch {
-    // viz výš
   }
 }
 

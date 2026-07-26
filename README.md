@@ -38,9 +38,9 @@ nemůže zablokovat cestu nahoru. Řetěz podpisů je ověřený už při genero
 | Slovník | frekvenční seznam češtiny profiltrovaný přes hunspell `cs_CZ` | 248 181 ověřených slov |
 | Základní tvary | slova se skloňovacím/časovacím vzorem + lemmatizace | 39 237 slov |
 | 1. pád množného čísla | buňky deklinačních vzorů z `cs_CZ.aff` | + 7 685 slov |
-| Řetěz | grafy pro délky 4  5 a 6 | 7 791 hádanek |
+| Řetěz | grafy pro délky 4, 5 a 6 | 7 791 hádanek |
 | Voština | plástve odvozené od pangramů | 2 400 hádanek |
-| Věž | ověřené řetězy přesmyček 3→6/7/8 | 2 182 hádanek |
+| Věž | ověřené řetězy přesmyček 3→6/7/8 | 1 932 hádanek |
 
 ### Jen 1. pád a infinitiv
 
@@ -111,6 +111,11 @@ být v ověřeném lexikonu a lemmatizér ho musí vrátit na výchozí heslo; a
 v jednom vzoru zaberou na jedno slovo dvě pravidla, generování se zastaví —
 právě takhle se chytlo „kmen → kmene" vedle správného „kmen → kmeny".
 
+Vedlejším produktem je mapa tvar → výchozí heslo, kterou používá Věž: patro
+nad „trajekt" nesmí nabídnout „trajekty". Přidat koncovku není hádanka, jen
+opsané slovo, takže množné číslo slova z patra pod sebou se z nabídky vyhazuje
+(a když by patro zůstalo prázdné, celá věž se zahodí).
+
 Omezení na základní tvary má cenu: propojenost grafu pro Řetěz klesla natolik,
 že se musely snížit prahy frekvence. Základní tvary jsou ale samy o sobě
 srozumitelnější, takže nižší práh nevadí — „kaktus" pozná každý, i když se
@@ -162,10 +167,12 @@ npm run preview   # náhled produkčního buildu
 
 Aplikace nepotřebuje žádný backend — `dist/` se dá nasadit na jakýkoli statický
 hosting. Postup hráče se ukládá do `localStorage`, a to ve dvou klíčích:
-profil se statistikami a zvlášť **rozehrané kolo**. To se zapisuje po každém
-tahu, takže se hra dá dohrát i po odchodu do menu nebo zavření prohlížeče —
-na úvodní obrazovce se nabídne „Pokračovat ve hře". Stranou od profilu je
-schválně: zapisuje se často a jeho poškození nesmí vzít s sebou statistiky.
+profil se statistikami a zvlášť **rozehraná kola**, jedno od každého režimu.
+Zapisují se po každém tahu, takže se hra dá dohrát i po odchodu do menu nebo
+zavření prohlížeče, a rozehraný Řetěz nezruší rozehranou Voštinu — dlaždice
+v menu ukáže „Rozehráno · 4 tahy" a panel nabídne Pokračovat i Novou hru.
+Stranou od profilu jsou schválně: zapisují se často a jejich poškození nesmí
+vzít s sebou statistiky.
 
 ### Jednosouborová verze
 
@@ -221,6 +228,20 @@ tools/           generátory dat a prohlížečový test
 tests/           testy logiky a validace dat
 ```
 
+## Značka
+
+Prostřední „O" ve slově SLOVA je terč a vedle názvu svítí tři tečky, jedna za
+každou hru. Z toho vychází i **ikona aplikace**: kroužek složený ze tří
+stejných oblouků v barvách Řetězu, Voštiny a Věže, uprostřed světlý bod.
+Nese informaci (tři hry v jedné) a čte se i v 48 px. Generuje ji
+`tools/6_build_icons.py` v obou variantách, běžné i maskable.
+
+Totéž znamení se při spuštění krátce ukáže na celé obrazovce: oblouky se
+nakreslí (animovaný `stroke-dashoffset`), název se poskládá po písmenech,
+značka vteřinu vydrží a rozplyne se do menu. Hra se pod ní mezitím načítá,
+takže úvod nikoho nezdržuje, a s `prefers-reduced-motion` zůstane jen
+prolnutí.
+
 ## Vzhled
 
 Identita stojí na elektrické fialové a triádě barev pro tři režimy: fialová
@@ -258,6 +279,23 @@ obrazovku**: nahoře proužek s ukazateli, uprostřed hrací plocha, pod ní
 nápovědy a úplně dole ovládání s klávesnicí. Stránka jako celek se neroluje
 vůbec; roluje se jedině hrací plocha, a to jen když se do své výšky nevejde.
 Pro nápovědu ani pro klávesnici se tedy nikam jezdit nemusí.
+
+Dlaždice se **dopočítávají z volného místa**, ne z pevné velikosti. Hrací
+plocha je kontejner (`container-type: size`) a Řetěz i Věž si z jejích rozměrů
+odvodí stranu dlaždice:
+
+```css
+--fit-h: calc((100cqh - 48px - var(--rows) * 11px) / (var(--rows) * 1.1));
+--fit-w: calc((100cqw - (var(--cols) - 1) * 6px) / var(--cols));
+--tile: clamp(40px, min(var(--fit-w), var(--fit-h)), 58px);
+```
+
+Počet řádků a sloupců dodá komponenta (`--rows` roste s délkou řetězu,
+`--cols` je nejdelší patro věže), takže osmipísmenná věž se vejde celá
+a v Řetězu je pod sebou vidět co nejvíc slov. Dolní mez 40 px je dotykový
+cíl — pod ni se dlaždice nesmrskne ani na 320px displeji, tam radši žebřík
+roluje. Plástev jde stejnou cestou: dostane zbylou výšku a šířku si dopočítá
+z poměru stran, takže je vidět i s řádkem „piš slovo".
 
 Postranní sloupce, které jsou na monitoru vlevo a vpravo od hrací plochy, se
 na telefonu rozpadnou (`display: contents`) a jejich dvě části se zařadí nad

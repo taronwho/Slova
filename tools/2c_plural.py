@@ -162,6 +162,7 @@ def main():
     print(f"hesel, která jsou lemma: {len(lemmas)}")
 
     plurals = {}
+    source = {}
     for form, word, _flag, _rule in generate(rules, entries):
         if word not in lemmas or form == word:
             continue
@@ -170,6 +171,7 @@ def main():
         if lemmatizer.lemmatize(form) != word:
             continue
         plurals[form] = max(plurals.get(form, 0), freq[form])
+        source.setdefault(form, word)
     print(f"1. pád mn. č.: {len(plurals)}")
 
     base = json.load(open(os.path.join(OUT, "lexicon_base.json"), encoding="utf-8"))
@@ -198,6 +200,11 @@ def main():
 
     # Fixtura pro testy dat musí odpovídat slovníku, ze kterého se hádanky
     # generují — proto se píše tady, ne ručně.
+    # Mapa tvar -> výchozí heslo. Věž ji používá, aby nad sebou nestavěla
+    # jednotné a hned množné číslo téhož slova („trajekt", „trajekty").
+    with open(os.path.join(OUT, "plurals.json"), "w", encoding="utf-8") as fh:
+        json.dump(source, fh, ensure_ascii=False)
+
     fixture = os.path.join(HERE, "..", "tests", "fixtures", "base-forms.json")
     os.makedirs(os.path.dirname(fixture), exist_ok=True)
     with open(fixture, "w", encoding="utf-8") as fh:

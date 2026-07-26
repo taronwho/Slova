@@ -1,6 +1,9 @@
 /** Ověří, že jednosouborová verze funguje bez jakéhokoli síťového požadavku. */
 import { chromium } from 'playwright'
 import { readFileSync, writeFileSync, unlinkSync } from 'node:fs'
+import { dismissTutorial, goHome, openGame, waitReady } from './_ui.mjs'
+
+const MODE_ID = { 'Řetěz': 'chain', 'Voština': 'hive', 'Věž': 'tower' }
 
 const FILE = process.env.SURL ?? 'http://localhost:4180/slova-standalone.html'
 const problems = []
@@ -20,19 +23,13 @@ page.on('pageerror', e => { problems.push('chyba: ' + e.message); console.log(' 
 page.on('console', m => { if (m.type() === 'error' && !/favicon/.test(m.location()?.url ?? '')) { problems.push('console: ' + m.text()); console.log('  ✗ console: ' + m.text()) } })
 
 await page.goto(FILE, { waitUntil: 'networkidle' })
+  await page.locator('.splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined)
 check(
   await page.locator('h1', { hasText: 'Vyber si hru' }).isVisible(),
   'stránka se vykreslila',
 )
 
 /** Po prvním spuštění režimu leží přes hru návod — test ho odbaví. */
-async function dismissTutorial(target) {
-  const card = target.locator('.tut-card')
-  if (await card.isVisible().catch(() => false)) {
-    await target.locator('.tut-head').getByText('Přeskočit').click()
-    await target.waitForTimeout(250)
-  }
-}
 check(
   await page.evaluate(() =>
     getComputedStyle(document.querySelector('h1')).fontFamily.includes('Bricolage'),
@@ -42,7 +39,8 @@ check(
 
 for (const [mode, sel] of [['Řetěz', '.ladder'], ['Voština', '.hive'], ['Věž', '.tower']]) {
   await page.goto(FILE, { waitUntil: 'networkidle' })
-  await page.locator('.mode-card', { hasText: mode }).getByText('Hrát').click()
+  await page.locator('.splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined)
+  await openGame(page, MODE_ID[mode])
   await page.waitForSelector(sel, { timeout: 15000 })
   await dismissTutorial(page)
   check(true, `${mode} se rozehrál ze zabudovaných dat`)
@@ -50,7 +48,8 @@ for (const [mode, sel] of [['Řetěz', '.ladder'], ['Voština', '.hive'], ['Vě�
 
 // dohrát řetěz do konce
 await page.goto(FILE, { waitUntil: 'networkidle' })
-await page.locator('.mode-card', { hasText: 'Řetěz' }).getByText('Hrát').click()
+  await page.locator('.splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined)
+await openGame(page, 'chain')
 await page.waitForSelector('.ladder')
 await dismissTutorial(page)
 for (let i = 0; i < 14 && !(await page.locator('.result-card').isVisible()); i++) {
@@ -79,7 +78,7 @@ const vp = await mobile.evaluate(() => ({
 }))
 check(vp.width === 390, `stránka se vykreslí v šířce displeje (${vp.width}px)`)
 check(vp.mobileLayout, 'uplatní se mobilní rozvržení')
-await mobile.locator('.mode-card', { hasText: 'Řetěz' }).getByText('Hrát').click()
+await openGame(mobile, 'chain')
 await mobile.waitForSelector('.ladder', { timeout: 15000 })
 await dismissTutorial(mobile)
 const kb = await mobile.evaluate(() => {
