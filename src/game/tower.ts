@@ -33,6 +33,8 @@ export interface TowerState {
   /** Pořadí dlaždic aktuálního patra — mění tlačítko Zamíchat. */
   tiles: string[]
   hintsUsed: number
+  /** Kolik z nich bylo zdarma — ty se do bodů nepočítají. */
+  freeHints: number
   /** Body skutečně utracené za nápovědy — každý druh stojí jinak. */
   hintCost: number
   /** Patra, u kterých hráč použil nápovědu na celé slovo. */
@@ -73,6 +75,7 @@ export function createTowerState(puzzle: TowerPuzzle, now = Date.now()): TowerSt
     tiles: next ? shuffleLetters(next.sig) : [],
     hintsUsed: 0,
     hintCost: 0,
+    freeHints: 0,
     revealedLevels: [],
     startedAt: now,
     finishedAt: null,
@@ -148,6 +151,8 @@ export interface TowerHintResult {
 export function takeTowerHint(
   state: TowerState,
   kind: TowerHintKind,
+  /** Zaplacená z peněženky profilu — do bodů se pak nepromítne. */
+  free = false,
 ): TowerHintResult | null {
   const level = currentLevel(state)
   if (!level) return null
@@ -161,7 +166,8 @@ export function takeTowerHint(
       state: {
         ...state,
         hintsUsed: state.hintsUsed + 1,
-        hintCost: state.hintCost + TOWER_HINT_COST.word,
+        hintCost: state.hintCost + (free ? 0 : TOWER_HINT_COST.word),
+        freeHints: (state.freeHints ?? 0) + (free ? 1 : 0),
         revealedLevels: [...state.revealedLevels, index],
       },
     }
@@ -175,7 +181,8 @@ export function takeTowerHint(
     state: {
       ...state,
       hintsUsed: state.hintsUsed + 1,
-      hintCost: state.hintCost + TOWER_HINT_COST.letter,
+      hintCost: state.hintCost + (free ? 0 : TOWER_HINT_COST.letter),
+      freeHints: (state.freeHints ?? 0) + (free ? 1 : 0),
       revealedLevels: [...state.revealedLevels, index],
     },
   }

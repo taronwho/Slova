@@ -1,6 +1,7 @@
 /** Perzistence profilu, statistik a rozehraných kol v localStorage. */
 
-import { AWARDS } from '../game/awards'
+import { AWARD_HINTS, AWARDS } from '../game/awards'
+import { RANK_HINTS, rankFor } from '../game/ranks'
 import type { Difficulty, ModeId, RoundResult } from '../game/types'
 
 const KEY = 'slova.profile.v1'
@@ -64,6 +65,14 @@ export interface Profile {
   seen: Record<ModeId, string[]>
   stats: Record<ModeId, ModeStats>
   counters: Counters
+  /**
+   * Nápovědy zdarma. Utratí se místo bodů — kolo se tím pořád počítá jako
+   * „s nápovědou", takže se jimi nedají získat mety za hru bez nápovědy, ale
+   * skóre neutrpí. Sype je nová hodnost, každé ocenění a denní výzva.
+   */
+  hints: number
+  /** Nejvyšší hodnost, za kterou už nápovědy padly — aby nepadly dvakrát. */
+  hintRankPaid: number
   /** ID získaného ocenění -> kdy padlo (ms). */
   awards: Record<string, number>
   history: RoundResult[]
@@ -107,6 +116,9 @@ export function emptyProfile(): Profile {
     seen: { chain: [], hive: [], tower: [] },
     stats: { chain: emptyStats(), hive: emptyStats(), tower: emptyStats() },
     counters: emptyCounters(),
+    // Tři na uvítanou, ať si hráč nápovědu zkusí, než začne řešit, co ho stojí.
+    hints: 3,
+    hintRankPaid: 1,
     awards: {},
     history: [],
     difficulty: { chain: 'normal', hive: 'normal', tower: 'normal' },
@@ -136,21 +148,33 @@ function migrate(raw: unknown): Profile {
 }
 
 /**
- * Dopočítá ocenění, na která profil má.
+ * Dopočítá ocenění a hodnosti, na které profil má, a připíše za ně nápovědy.
  *
  * Volá se po každém kole i hned po načtení profilu. Podmínky se čtou jen ze
  * statistik, takže druhé spuštění nic nezmění — a hráč, který si zahrál dřív,
  * než ocenění existovala, dostane zpětně všechno, na co dosáhl.
+ *
+ * Nápovědy se připisují právě jednou: u ocenění proto, že se připisují jen
+ * spolu s nově přidaným klíčem, u hodností přes `hintRankPaid`.
  */
 export function grantAwards(profile: Profile, now = Date.now()): Profile {
   let awards = profile.awards
+  let hints = profile.hints
+
   for (const award of AWARDS) {
     if (awards[award.id] !== undefined) continue
     if (!award.done(profile)) continue
     if (awards === profile.awards) awards = { ...awards }
     awards[award.id] = now
+    hints += AWARD_HINTS(award)
   }
-  return awards === profile.awards ? profile : { ...profile, awards }
+
+  const rank = rankFor(profile.xp).rank.index
+  const paid = Math.max(profile.hintRankPaid, 1)
+  if (rank > paid) hints += (rank - paid) * RANK_HINTS
+
+  if (awards === profile.awards && hints === profile.hints && rank <= paid) return profile
+  return { ...profile, awards, hints, hintRankPaid: Math.max(paid, rank) }
 }
 
 export function loadProfile(): Profile {
@@ -219,6 +243,15 @@ export function saveRounds(rounds: SavedRounds): void {
 
 /** Seznam dohraných hádanek držíme omezený, ať localStorage neroste bez konce. */
 const SEEN_LIMIT = 4000
+
+/** Kolik nápověd zdarma padne za dohranou denní výzvu. */
+export const DAILY_HINTS = 1
+
+/** Utratí nápovědu zdarma, pokud nějakou má. */
+export function spendHint(profile: Profile): Profile {
+  if (profile.hints <= 0) return profile
+  return { ...profile, hints: profile.hints - 1 }
+}
 
 /** Číslo z detailu kola; chybějící údaj se počítá jako nula. */
 function num(result: RoundResult, key: string): number {
@@ -289,6 +322,9 @@ export function recordRound(
 
   return grantAwards({
     ...profile,
+    // Denní výzva je jediná věc, za kterou padá nápověda jen za účast —
+    // je to důvod se vrátit zítra.
+    hints: profile.hints + (daily ? DAILY_HINTS : 0),
     xp: profile.xp + result.score,
     streak,
     bestStreak: Math.max(profile.bestStreak, streak),

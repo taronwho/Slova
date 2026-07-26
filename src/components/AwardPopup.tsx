@@ -9,8 +9,8 @@
 
 import { useState } from 'react'
 
-import { awardById } from '../game/awards'
-import { RANKS } from '../game/ranks'
+import { AWARD_HINTS, awardById } from '../game/awards'
+import { RANK_HINTS, RANKS } from '../game/ranks'
 import { useBackGuard } from '../lib/back'
 import { AwardArt } from './art/AwardArt'
 import { RankBadge } from './art/RankBadge'
@@ -43,6 +43,7 @@ export function AwardPopup({ gained, onClose }: Props) {
 
   const rank = item.kind === 'rank' ? RANKS[Number(item.id) - 1]! : null
   const award = item.kind === 'award' ? awardById(item.id) : undefined
+  const reward = rank ? RANK_HINTS : award ? AWARD_HINTS(award) : 0
 
   return (
     <div className="gained" role="dialog" aria-modal="true" aria-label="Nové ocenění">
@@ -61,6 +62,11 @@ export function AwardPopup({ gained, onClose }: Props) {
         <p className="muted">
           {rank ? `${rank.index}. hodnost z ${RANKS.length}` : (award?.goal ?? '')}
         </p>
+
+        {/* Odměna je půlka radosti — bez ní by oznámení bylo jen pochvala. */}
+        <span className="gained-reward">
+          +{reward} {reward === 1 ? 'nápověda' : reward <= 4 ? 'nápovědy' : 'nápověd'} zdarma
+        </span>
 
         {items.length > 1 && (
           <span className="faint num gained-count">

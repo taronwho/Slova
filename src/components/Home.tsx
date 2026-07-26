@@ -18,6 +18,8 @@ import type { Profile, SavedRound, SavedRounds } from '../lib/storage'
 interface Props {
   profile: Profile
   dayKey: string
+  /** Označení dne, třeba „#412" — ukazuje se u denní výzvy. */
+  dayLabel: string
   onPlay: (mode: ModeId, daily: boolean) => void
   onDifficulty: (mode: ModeId, difficulty: Difficulty) => void
   onStats: () => void
@@ -81,6 +83,7 @@ function progressNote(saved: SavedRound): string {
 export function Home({
   profile,
   dayKey,
+  dayLabel,
   onPlay,
   onDifficulty,
   onStats,
@@ -91,6 +94,9 @@ export function Home({
 }: Props) {
   const progress = rankFor(profile.xp)
   const awards = AWARDS.filter((award) => profile.awards[award.id] !== undefined).length
+  const dailyLeft = MODES.filter(
+    (mode) => profile.dailyDone[`${dayKey}:${mode.id}`] === undefined,
+  ).length
   const [openRules, setOpenRules] = useState<ModeId | null>(null)
   /** Otevřená dlaždice — volba obtížnosti a spuštění se dějí až v ní. */
   const [picked, setPicked] = useState<ModeId | null>(null)
@@ -137,6 +143,43 @@ export function Home({
             </button>
           )
         })}
+      </div>
+
+      {/* Denní výzva hned pod mřížkou. Je to hlavní důvod, proč se hráč
+          vrací každý den, takže nesmí být schovaná v panelu režimu — odsud
+          se do ní vejde jedním ťuknutím a je vidět, co ještě dneska zbývá. */}
+      <div className="panel daily-strip">
+        <div className="daily-head">
+          <span className="label">Denní výzva {dayLabel}</span>
+          <span className="faint">
+            {dailyLeft === 0
+              ? 'Hotovo — všechny tři dneska máš'
+              : `Zbývá ${plural(dailyLeft, 'výzva', 'výzvy', 'výzev')}`}
+          </span>
+        </div>
+        <div className="daily-row">
+          {MODES.map((mode) => {
+            const score = profile.dailyDone[`${dayKey}:${mode.id}`]
+            const done = score !== undefined
+            return (
+              <button
+                type="button"
+                key={mode.id}
+                className={`daily-item ${done ? 'done' : ''}`}
+                style={{ ['--mode-color' as string]: mode.color }}
+                onClick={() => onPlay(mode.id, true)}
+              >
+                <span className="mode-glyph" aria-hidden="true">
+                  {mode.glyph}
+                </span>
+                <span className="daily-name">{MODE_LABEL[mode.id]}</span>
+                <span className="daily-note num">
+                  {done ? `✓ ${score.toLocaleString('cs-CZ')}` : 'Hrát'}
+                </span>
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       {pickedMode && (

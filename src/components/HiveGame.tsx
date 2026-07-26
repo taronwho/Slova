@@ -33,6 +33,9 @@ interface Props {
   onHome: () => void
   /** Uložený stav rozehraného kola, když se hráč vrací zpátky do hry. */
   resume?: HiveState | null
+  /** Nápovědy zdarma z profilu. Když nějaká je, nápověda nestojí body. */
+  freeHints: number
+  onSpendHint: () => void
   onProgress: (state: HiveState, finished: boolean) => void
 }
 
@@ -56,6 +59,8 @@ export function HiveGame({
   onNext,
   onHome,
   resume,
+  freeHints,
+  onSpendHint,
   onProgress,
 }: Props) {
   const [state, setState] = useState<HiveState>(() => resume ?? createHiveState(puzzle))
@@ -182,11 +187,14 @@ export function HiveGame({
   }, [submit, typeLetter])
 
   function hint() {
-    const result = takeHiveHint(state)
+    // Nápověda z peněženky profilu nestojí body; utratí se, až když padne.
+    const free = freeHints > 0
+    const result = takeHiveHint(state, free)
     if (!result) {
       showFlash('Všechna slova už máš.', 'accent')
       return
     }
+    if (free) onSpendHint()
     setState(result.state)
     showFlash(`Nápověda: ${result.word.toUpperCase()}`, 'warn')
   }
@@ -354,7 +362,7 @@ export function HiveGame({
 
           <div style={{ display: 'flex', gap: 'var(--sp-2)', flexWrap: 'wrap', justifyContent: 'center' }}>
             <button type="button" className="btn btn-sm" onClick={hint}>
-              Nápověda −80
+              {freeHints > 0 ? `Nápověda zdarma · ${freeHints}` : 'Nápověda −80'}
             </button>
             <button
               type="button"

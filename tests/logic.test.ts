@@ -37,7 +37,7 @@ import { RANKS as PROFILE_RANKS, rankFor as profileRankFor } from '../src/game/r
 import { AWARDS, AWARD_GROUPS } from '../src/game/awards'
 import { scoreChain, streakMultiplier } from '../src/game/scoring'
 import type { RoundResult } from '../src/game/types'
-import { emptyProfile, grantAwards, recordRound } from '../src/lib/storage'
+import { DAILY_HINTS, emptyProfile, grantAwards, recordRound, spendHint } from '../src/lib/storage'
 
 describe('české utility', () => {
   it('skládá diakritiku', () => {
@@ -388,8 +388,8 @@ describe('bodování', () => {
 })
 
 describe('hodnosti', () => {
-  it('má dvacet stupňů, které jdou vzestupně', () => {
-    expect(PROFILE_RANKS).toHaveLength(20)
+  it('má padesát stupňů, které jdou vzestupně', () => {
+    expect(PROFILE_RANKS).toHaveLength(50)
     for (let i = 1; i < PROFILE_RANKS.length; i++) {
       expect(PROFILE_RANKS[i]!.at).toBeGreaterThan(PROFILE_RANKS[i - 1]!.at)
     }
@@ -399,7 +399,11 @@ describe('hodnosti', () => {
     expect(profileRankFor(0).rank.index).toBe(1)
     expect(profileRankFor(PROFILE_RANKS[1]!.at).rank.index).toBe(2)
     expect(profileRankFor(PROFILE_RANKS[1]!.at - 1).rank.index).toBe(1)
-    expect(profileRankFor(10_000_000).rank.index).toBe(20)
+    expect(profileRankFor(10_000_000).rank.index).toBe(50)
+  })
+
+  it('jména hodností se neopakují', () => {
+    expect(new Set(PROFILE_RANKS.map((r) => r.name)).size).toBe(PROFILE_RANKS.length)
   })
 
   it('na vrcholu žebříčku už nikam neukazuje', () => {
@@ -555,5 +559,81 @@ describe('ocenění', () => {
     expect(award.progress!(half)).toBeCloseTo(0.5)
     const over = { ...empty, counters: { ...empty.counters, noHint: 500 } }
     expect(award.progress!(over)).toBe(1)
+  })
+})
+
+describe('nápovědy zdarma', () => {
+  const puzzle: ChainPuzzle = {
+    id: 'test',
+    start: 'kosa',
+    target: 'mísa',
+    par: 3,
+    difficulty: 'normal',
+  }
+  const graph = buildChainGraph(['kosa', 'koza', 'kasa', 'masa', 'mísa'])
+
+  const round = (over: Partial<RoundResult> = {}): RoundResult => ({
+    mode: 'chain',
+    difficulty: 'normal',
+    puzzleId: 'p1',
+    score: 1000,
+    perfect: false,
+    elapsedMs: 120_000,
+    hintsUsed: 0,
+    detail: {},
+    ...over,
+  })
+
+  it('nová hra začíná s pár nápovědami na uvítanou', () => {
+    expect(emptyProfile().hints).toBeGreaterThan(0)
+  })
+
+  it('nápověda zdarma nestojí body, ale pořád se počítá jako nápověda', () => {
+    const state = takeHint(graph, createChainState(puzzle), 'word', true)!.state
+    expect(state.hintCost).toBe(0)
+    expect(state.hintsUsed).toBe(1)
+    expect(state.freeHints).toBe(1)
+  })
+
+  it('placená nápověda peněženku neošidí', () => {
+    const state = takeHint(graph, createChainState(puzzle), 'word', false)!.state
+    expect(state.hintCost).toBe(HINT_COST.word)
+    expect(state.freeHints).toBe(0)
+  })
+
+  // Za nápovědu zdarma se nesmí dát koupit meta „bez nápovědy" — jinak by
+  // stačilo si nápovědy nasbírat a mety si jimi odemknout.
+  it('kolo s nápovědou zdarma není kolo bez nápovědy', () => {
+    const after = recordRound(emptyProfile(), round({ hintsUsed: 1 }), '2026-01-01')
+    expect(after.counters.noHint).toBe(0)
+    expect(after.awards['cisto-1']).toBeUndefined()
+  })
+
+  it('bodování počítá jen zaplacené nápovědy', () => {
+    let state = createChainState(puzzle)
+    state = takeHint(graph, state, 'word', true)!.state
+    const free = scoreChain(state, 1, state.startedAt + 10_000)
+    expect(free.lines.some((line) => line.label.startsWith('Nápovědy'))).toBe(false)
+    expect(free.lines.find((line) => line.label.startsWith('Nevyužité'))?.label).toContain('3')
+  })
+
+  it('utrácení nikdy nespadne pod nulu', () => {
+    const empty = { ...emptyProfile(), hints: 0 }
+    expect(spendHint(empty).hints).toBe(0)
+    expect(spendHint({ ...empty, hints: 2 }).hints).toBe(1)
+  })
+
+  it('nová hodnost i ocenění sypou nápovědy, ale každé jen jednou', () => {
+    const start = emptyProfile()
+    const after = recordRound(start, round({ score: 20_000 }), '2026-01-01')
+    expect(after.hints).toBeGreaterThan(start.hints)
+    // Druhý průchod týchž podmínek už nic nepřipíše.
+    expect(grantAwards(after).hints).toBe(after.hints)
+  })
+
+  it('denní výzva připíše nápovědu navíc', () => {
+    const plain = recordRound(emptyProfile(), round(), '2026-01-01', false)
+    const daily = recordRound(emptyProfile(), round(), '2026-01-01', true)
+    expect(daily.hints - plain.hints).toBe(DAILY_HINTS)
   })
 })

@@ -29,6 +29,8 @@ export interface HiveState {
   /** Aktuální pořadí okrajových písmen — mění tlačítko Zamíchat. */
   ring: string[]
   hintsUsed: number
+  /** Kolik z nich bylo zdarma — ty se do bodů nepočítají. */
+  freeHints: number
   startedAt: number
 }
 
@@ -95,6 +97,7 @@ export function createHiveState(puzzle: HivePuzzle, now = Date.now()): HiveState
     found: [],
     ring: [...puzzle.outer],
     hintsUsed: 0,
+    freeHints: 0,
     startedAt: now,
   }
 }
@@ -161,14 +164,23 @@ export function submitWord(
 }
 
 /** Nápověda: odhalí nejkratší dosud nenalezené slovo. */
-export function takeHiveHint(state: HiveState): { state: HiveState; word: string } | null {
+export function takeHiveHint(
+  state: HiveState,
+  /** Zaplacená z peněženky profilu — do bodů se pak nepromítne. */
+  free = false,
+): { state: HiveState; word: string } | null {
   const remaining = state.puzzle.solutions
     .filter((word) => !state.found.includes(word))
     .sort((a, b) => a.length - b.length)
   const word = remaining[0]
   if (!word) return null
   return {
-    state: { ...state, found: [...state.found, word], hintsUsed: state.hintsUsed + 1 },
+    state: {
+      ...state,
+      found: [...state.found, word],
+      hintsUsed: state.hintsUsed + 1,
+      freeHints: (state.freeHints ?? 0) + (free ? 1 : 0),
+    },
     word,
   }
 }

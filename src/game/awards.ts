@@ -180,6 +180,16 @@ export const AWARDS: Award[] = [
     (p) => p.counters.dailies),
 ]
 
+/**
+ * Kolik nápověd zdarma padne za ocenění.
+ *
+ * Podle stupně v rodině: první stupeň jednu, poslední tři. Meta bez stupně
+ * (Kompletní plástev, Královna češtiny) je sama o sobě náročná, takže dvě.
+ */
+export function AWARD_HINTS(award: Award): number {
+  return award.tier ?? 2
+}
+
 export const AWARD_GROUPS: AwardGroup[] = ['start', 'clean', 'score', 'feat', 'grit']
 
 export function awardById(id: string): Award | undefined {

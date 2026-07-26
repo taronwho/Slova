@@ -1,58 +1,96 @@
 /**
  * Hodnosti profilu.
  *
- * Dvacet stupňů od Nováčka po Vládce slov. Hodnost je jediné číslo, které
+ * Padesát stupňů od Nováčka po Vládce slov. Hodnost je jediné číslo, které
  * roste přes všechny tři režimy dohromady — hráč tak vidí, že se mu počítá
  * všechno, ať si zrovna zahrál cokoli.
  *
- * Prahy jsou naschvál nerovnoměrné: prvních pět hodností odsýpá (ať má nový
- * hráč co slavit hned první večer), od desítky se rozestupy natahují a
- * poslední čtyři jsou běh na dlouhou trať. Průměrné dobré kolo dá kolem
- * 1 200 bodů, takže poslední hodnost je zhruba pět set kol.
+ * Prahy jsou naschvál nerovnoměrné: prvních pár hodností odsýpá (ať má nový
+ * hráč co slavit hned první večer) a rozestupy se pak plynule natahují, každý
+ * o zhruba dvanáct procent. Průměrné dobré kolo dá kolem 1 200 bodů, takže
+ * druhá hodnost padne po prvním kole a poslední je běh na hodně dlouhou trať.
  *
- * Čtyři pětice hodností mají čtyři různé odznaky (bronz, stříbro, zlato,
- * plazma) a uvnitř pětice se liší počtem stupňů — kresba je v RankBadge.tsx.
+ * Odznak (RankBadge.tsx) se mění po pěti hodnostech: deset kovů a k nim pět
+ * tvarů štítu, každý pro dva sousední kovy. Uvnitř pětice se hodnosti liší
+ * počtem krokví. Za každou novou hodnost dostane hráč nápovědy zdarma —
+ * kolik, říká RANK_HINTS.
  */
 
 export interface Rank {
-  /** Pořadí 1–20, používá se i jako klíč do kresby odznaku. */
+  /** Pořadí 1–50, používá se i jako klíč do kresby odznaku. */
   index: number
   name: string
   /** Kolik XP je potřeba nasbírat. */
   at: number
-  /** 0 bronz, 1 stříbro, 2 zlato, 3 plazma. */
+  /** 0–9; určuje kov odznaku a po dvou i tvar štítu. */
   tier: number
-  /** Kolikátá hodnost uvnitř svého kovu (0–4) — počet stupňů pod odznakem. */
+  /** Kolikátá hodnost uvnitř své pětice (0–4) — počet krokví pod odznakem. */
   step: number
 }
+
+/** Kolik nápověd zdarma padne za každou nově dosaženou hodnost. */
+export const RANK_HINTS = 2
 
 const NAMES = [
   'Nováček',
   'Slabikář',
   'Písmenkář',
+  'Čtenář',
+  'Opisovač',
   'Luštitel',
   'Písař',
   'Skladač slov',
-  'Slovař',
   'Hláskomistr',
+  'Slovař',
+  'Sběratel slov',
   'Vypravěč',
   'Písmák',
+  'Zapisovatel',
   'Skladatel',
+  'Veršotepec',
   'Rétor',
-  'Jazykozpytec',
   'Slovotepec',
+  'Jazykozpytec',
   'Mistr slova',
+  'Tvůrce vět',
+  'Znalec kořenů',
+  'Etymolog',
+  'Lexikograf',
   'Velmistr',
-  'Strážce slovníku',
+  'Slovní alchymista',
+  'Strážce pravopisu',
   'Kronikář',
+  'Vykladač',
+  'Arcimistr',
+  'Bard',
+  'Klenotník slov',
+  'Slovní architekt',
+  'Hlasatel',
+  'Slovní mág',
+  'Pán přesmyček',
+  'Vládce plástve',
+  'Kovář vět',
+  'Strážce slovníku',
   'Legenda češtiny',
+  'Mudrc',
+  'Titán slovníku',
+  'Věštec slov',
+  'Nesmrtelný písmák',
+  'Patriarcha jazyka',
+  'Kníže slova',
+  'Král slabik',
+  'Císař češtiny',
+  'Génius jazyka',
   'Vládce slov',
 ]
 
 const THRESHOLDS = [
-  0, 1_500, 4_000, 8_000, 14_000, 22_000, 33_000, 47_000, 65_000, 88_000,
-  115_000, 148_000, 188_000, 235_000, 292_000, 360_000, 440_000, 535_000,
-  650_000, 800_000,
+  0, 1_300, 2_800, 4_500, 6_300, 8_400, 10_500, 13_500, 16_000, 19_500,
+  23_000, 27_000, 31_500, 36_500, 42_000, 48_000, 55_000, 62_500, 71_000, 80_500,
+  91_000, 103_000, 116_000, 131_000, 147_000, 165_000, 186_000, 208_000, 234_000, 262_000,
+  293_000, 328_000, 367_000, 411_000, 459_000, 514_000, 574_000, 641_000, 716_000, 800_000,
+  894_000, 998_000, 1_115_000, 1_245_000, 1_385_000, 1_550_000, 1_730_000, 1_930_000,
+  2_150_000, 2_400_000,
 ]
 
 export const RANKS: Rank[] = NAMES.map((name, i) => ({

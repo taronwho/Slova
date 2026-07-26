@@ -53,10 +53,13 @@ export function scoreChain(
   if (moves > budget) {
     lines.push({ label: 'Překročený rozpočet', value: -200 })
   }
-  const unused = Math.max(0, 3 - state.hintsUsed)
+  // Nápovědy zdarma z peněženky profilu nic nestojí, takže se z bonusu za
+  // nevyužité nápovědy neodečítají a ani se nestrhávají body.
+  const paidHints = Math.max(0, state.hintsUsed - (state.freeHints ?? 0))
+  const unused = Math.max(0, 3 - paidHints)
   if (unused > 0) lines.push({ label: `Nevyužité nápovědy (${unused})`, value: 50 * unused })
   if (state.hintCost > 0) {
-    lines.push({ label: `Nápovědy (${state.hintsUsed})`, value: -state.hintCost })
+    lines.push({ label: `Nápovědy (${paidHints})`, value: -state.hintCost })
   }
 
   const bonus = speedBonus(elapsed, 60_000, 240_000, 300)
@@ -89,7 +92,8 @@ export function scoreTower(
   lines.push({ label: `Postavená patra (${state.built.length - 1})`, value: levelPoints })
 
   if (state.hintCost > 0) {
-    lines.push({ label: `Nápovědy (${state.hintsUsed})`, value: -state.hintCost })
+    const paid = Math.max(0, state.hintsUsed - (state.freeHints ?? 0))
+    lines.push({ label: `Nápovědy (${paid})`, value: -state.hintCost })
   }
 
   const bonus = speedBonus(elapsed, 90_000, 360_000, 250)
@@ -118,8 +122,11 @@ export function scoreHive(state: HiveState, streak: number): ScoreBreakdown {
   if (foundPangrams > 0) {
     lines.push({ label: `Pangramy (${foundPangrams})`, value: 150 * foundPangrams })
   }
-  if (state.hintsUsed > 0) {
-    lines.push({ label: `Nápovědy (${state.hintsUsed})`, value: -80 * state.hintsUsed })
+  // Nápovědy zdarma z peněženky profilu se do bodů nepromítají. Do
+  // `hintsUsed` se ale počítají, takže kolo pořád není „bez nápovědy".
+  const paidHints = Math.max(0, state.hintsUsed - (state.freeHints ?? 0))
+  if (paidHints > 0) {
+    lines.push({ label: `Nápovědy (${paidHints})`, value: -80 * paidHints })
   }
   const complete = found >= state.puzzle.solutions.length
   if (complete) lines.push({ label: 'Kompletní plástev', value: 500 })
@@ -137,5 +144,5 @@ export function scoreHive(state: HiveState, streak: number): ScoreBreakdown {
   )
 }
 
-/* Postup profilu (hodnosti 1–20) je v game/ranks.ts — je to samostatná věc
+/* Postup profilu (hodnosti 1–50) je v game/ranks.ts — je to samostatná věc
    od bodování kola a mluví do něj i vitrína ocenění. */

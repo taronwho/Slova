@@ -36,6 +36,9 @@ interface Props {
   onGiveUp: () => void
   /** Uložený stav rozehraného kola, když se hráč vrací zpátky do hry. */
   resume?: ChainState | null
+  /** Nápovědy zdarma z profilu. Když nějaká je, nápověda nestojí body. */
+  freeHints: number
+  onSpendHint: () => void
   onProgress: (state: ChainState, finished: boolean) => void
 }
 
@@ -55,6 +58,8 @@ export function ChainGame({
   onHome,
   onGiveUp,
   resume,
+  freeHints,
+  onSpendHint,
   onProgress,
 }: Props) {
   const [state, setState] = useState<ChainState>(() => resume ?? createChainState(puzzle))
@@ -246,11 +251,15 @@ export function ChainGame({
   }, [backspace, current.length, submit, typeLetter])
 
   function useHint(kind: HintKind) {
-    const result = takeHint(graph, state, kind)
+    // Nápověda z peněženky profilu nestojí body. Utratí se až tady, když se
+    // opravdu povedla — za nápovědu, která nemá co poradit, se neplatí.
+    const free = freeHints > 0
+    const result = takeHint(graph, state, kind, free)
     if (!result) {
       showFlash('Odsud už nápověda nepomůže — vrať tah zpět.', 'warn')
       return
     }
+    if (free) onSpendHint()
     setState(result.state)
     if (kind === 'distance') {
       showFlash(`K cíli zbývá nejméně ${result.distance} tahů.`, 'accent')
@@ -316,7 +325,10 @@ export function ChainGame({
         </div>
 
         <div className="hints card">
-          <div className="label">Nápovědy · {state.hintsUsed} použito</div>
+          <div className="label">
+            Nápovědy · {state.hintsUsed} použito
+            {freeHints > 0 && <span className="free-left"> · {freeHints} zdarma</span>}
+          </div>
           <div className="hint-buttons">
             <button
               type="button"
@@ -325,7 +337,7 @@ export function ChainGame({
               onClick={() => useHint('distance')}
             >
               <span>Vzdálenost</span>
-              <small>−{HINT_COST.distance}</small>
+              <small>{freeHints > 0 ? 'zdarma' : `−${HINT_COST.distance}`}</small>
             </button>
             <button
               type="button"
@@ -334,7 +346,7 @@ export function ChainGame({
               onClick={() => useHint('position')}
             >
               <span>Písmeno</span>
-              <small>−{HINT_COST.position}</small>
+              <small>{freeHints > 0 ? 'zdarma' : `−${HINT_COST.position}`}</small>
             </button>
             <button
               type="button"
@@ -343,7 +355,7 @@ export function ChainGame({
               onClick={() => useHint('word')}
             >
               <span>Celé slovo</span>
-              <small>−{HINT_COST.word}</small>
+              <small>{freeHints > 0 ? 'zdarma' : `−${HINT_COST.word}`}</small>
             </button>
           </div>
         </div>

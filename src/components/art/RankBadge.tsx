@@ -4,12 +4,15 @@
  * Odznak se skládá ze tří vrstev, které dohromady řeknou hodnost na první
  * pohled, i když si hráč nepřečte jméno:
  *
- *   1. **Tvar štítu** podle kovu — kolo (bronz), šestiúhelník (stříbro),
- *      štít (zlato), hvězda (plazma). Šestiúhelník je zároveň buňka Voštiny,
- *      takže i tady zůstává hra ve svém tvarosloví.
- *   2. **Znamení uvnitř** je vždycky prstenec ze tří oblouků — totéž „O"
+ *   1. **Tvar štítu** — kolo, šestiúhelník, štít, hvězda, vavřín. Mění se po
+ *      deseti hodnostech. Šestiúhelník je zároveň buňka Voštiny, takže i tady
+ *      zůstává hra ve svém tvarosloví.
+ *   2. **Kov** se mění po pěti hodnostech, takže každý tvar má dvě podoby:
+ *      chudší a bohatší. Padesát hodností tak vystačí s pěti tvary a deseti
+ *      kovy, místo aby se rozpadlo do padesáti nesouvisejících obrázků.
+ *   3. **Znamení uvnitř** je vždycky prstenec ze tří oblouků — totéž „O"
  *      jako ve značce a v úvodní animaci. Tři barvy, tři hry.
- *   3. **Krokve pod štítem** říkají, kolikátá hodnost uvnitř kovu to je.
+ *   4. **Krokve pod štítem** říkají, kolikátá hodnost uvnitř pětice to je.
  *
  * Barvy kovů jsou napevno, ne z tokenů: odznak má vypadat jako ražený kus,
  * ne jako plocha uživatelského rozhraní, a musí být týž ve světlém i tmavém
@@ -17,7 +20,7 @@
  */
 
 interface Props {
-  /** Pořadí hodnosti 1–20. */
+  /** Pořadí hodnosti 1–50. */
   rank: number
   /** Hrana v pixelech. */
   size?: number
@@ -32,11 +35,18 @@ interface Metal {
   glow: string
 }
 
+/** Deset kovů, po pěti hodnostech jeden. Pořadí je vzestup od bronzu k démantu. */
 const METALS: Metal[] = [
-  { light: '#e3a86a', dark: '#9a5a22', rim: '#c07c38', glow: '#ffd9ab' },
-  { light: '#e9edf5', dark: '#8d97ad', rim: '#aab4c8', glow: '#ffffff' },
-  { light: '#ffd86b', dark: '#c08a06', rim: '#e0a91d', glow: '#fff1bd' },
-  { light: '#b9a6ff', dark: '#5b3df5', rim: '#7c60ff', glow: '#e4dbff' },
+  { light: '#e3a86a', dark: '#9a5a22', rim: '#c07c38', glow: '#ffd9ab' }, // bronz
+  { light: '#f0b98c', dark: '#a8471b', rim: '#d1743a', glow: '#ffe2c4' }, // měď
+  { light: '#e9edf5', dark: '#8d97ad', rim: '#aab4c8', glow: '#ffffff' }, // stříbro
+  { light: '#d8e4f0', dark: '#6b7f96', rim: '#94a8be', glow: '#f4faff' }, // ocel
+  { light: '#ffd86b', dark: '#c08a06', rim: '#e0a91d', glow: '#fff1bd' }, // zlato
+  { light: '#ffc94a', dark: '#b06a00', rim: '#e08f0c', glow: '#ffe9a8' }, // jantar
+  { light: '#e6f0f4', dark: '#7d95a0', rim: '#a6bcc6', glow: '#ffffff' }, // platina
+  { light: '#b9a6ff', dark: '#5b3df5', rim: '#7c60ff', glow: '#e4dbff' }, // ametyst
+  { light: '#8ff0e6', dark: '#0d7f86', rim: '#2aa9ae', glow: '#d6fffa' }, // plazma
+  { light: '#ffffff', dark: '#7f93c9', rim: '#b3c4ea', glow: '#ffffff' }, // démant
 ]
 
 const LOCKED: Metal = {
@@ -46,16 +56,39 @@ const LOCKED: Metal = {
   glow: '#d7d5e0',
 }
 
-/** Obrys štítu pro každý kov. Všechny se vejdou do čtverce 100×100. */
+/**
+ * Rozeta — kruh z vypouklých oblouků, jako ražená růžice na medaili.
+ *
+ * Počítá se, ne píše ručně: dvanáct obloučků se stejným poloměrem je přesně
+ * ta věc, u které se ruční `d` rozjede a tvar se scvrkne do beztvarého fleku.
+ */
+function rosette(cx: number, cy: number, r: number, lobes: number): string {
+  const step = (Math.PI * 2) / lobes
+  const arc = r * 0.3
+  let d = ''
+  for (let i = 0; i < lobes; i++) {
+    const a0 = i * step - Math.PI / 2
+    const a1 = a0 + step
+    const x1 = (cx + r * Math.cos(a1)).toFixed(2)
+    const y1 = (cy + r * Math.sin(a1)).toFixed(2)
+    if (i === 0) d += `M${(cx + r * Math.cos(a0)).toFixed(2)} ${(cy + r * Math.sin(a0)).toFixed(2)}`
+    d += `A${arc.toFixed(2)} ${arc.toFixed(2)} 0 0 1 ${x1} ${y1}`
+  }
+  return `${d}Z`
+}
+
+/** Pět obrysů štítu, každý pro dva sousední kovy. Vejdou se do pole 100×100. */
 const PLATES = [
-  // bronz — kolo
+  // kolo
   'M50 6a44 44 0 1 1 0 88 44 44 0 0 1 0-88Z',
-  // stříbro — šestiúhelník na výšku
+  // šestiúhelník na výšku
   'M50 5 88 27v46L50 95 12 73V27Z',
-  // zlato — štít
+  // štít
   'M50 5 89 19v37c0 22-17 33-39 39-22-6-39-17-39-39V19Z',
-  // plazma — osmicípá hvězda se zaoblenými hroty
+  // osmicípá hvězda
   'M50 4 62 18l18-4 3 18 17 8-11 15 11 15-17 8-3 18-18-4-12 14-12-14-18 4-3-18-17-8 11-15L1 42l17-8 3-18 18 4Z',
+  // rozeta — dvanáctilistá růžice
+  rosette(50, 50, 45, 12),
 ]
 
 /** Obvod kružnice r=21 a délka jednoho ze tří oblouků (108°). */
@@ -70,8 +103,10 @@ const ARCS = [
 ]
 
 export function RankBadge({ rank, size = 56, locked = false }: Props) {
-  const index = Math.max(1, Math.min(rank, 20)) - 1
+  const index = Math.max(1, Math.min(rank, 50)) - 1
+  // Kov se mění po pěti hodnostech, tvar štítu po deseti.
   const tier = Math.floor(index / 5)
+  const shape = Math.floor(tier / 2)
   const step = index % 5
   const metal = locked ? LOCKED : METALS[tier]!
   const id = `rank-${rank}${locked ? '-off' : ''}`
@@ -98,8 +133,8 @@ export function RankBadge({ rank, size = 56, locked = false }: Props) {
         </linearGradient>
       </defs>
 
-      <path d={PLATES[tier]} fill={`url(#${id}-plate)`} stroke={metal.dark} strokeWidth="2.5" />
-      <path d={PLATES[tier]} fill={`url(#${id}-shine)`} />
+      <path d={PLATES[shape]} fill={`url(#${id}-plate)`} stroke={metal.dark} strokeWidth="2.5" />
+      <path d={PLATES[shape]} fill={`url(#${id}-shine)`} />
 
       {/* Zapuštěné pole, ve kterém sedí znamení. */}
       <circle cx="50" cy="50" r="27" fill={metal.dark} opacity="0.28" />

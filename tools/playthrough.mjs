@@ -15,7 +15,7 @@
 import { chromium } from 'playwright'
 import { readFileSync } from 'node:fs'
 
-import { goHome, openGame, waitReady } from './_ui.mjs'
+import { dismissTutorial, goHome, openGame, waitReady } from './_ui.mjs'
 
 const APP_URL = process.env.URL ?? 'http://localhost:4173/'
 const ROUNDS = Number(process.env.ROUNDS ?? 10)
@@ -329,8 +329,8 @@ log('\nVITRÍNA')
   await page.locator('.award-summary .btn').click()
   await page.waitForSelector('.ladder-list')
   check(
-    (await page.locator('.ladder-row').count()) === 20,
-    'žebříček má dvacet hodností',
+    (await page.locator('.ladder-row').count()) === 50,
+    'žebříček má padesát hodností',
   )
   check(
     (await page.locator('.ladder-row.has').count()) > 0,
@@ -339,6 +339,54 @@ log('\nVITRÍNA')
   await page.goBack()
   await page.waitForTimeout(300)
   check(!(await page.locator('.ladder-list').isVisible()), 'zpět žebříček zavře')
+  await goHome(page)
+}
+
+/* ---------- Denní výzva a nápovědy zdarma ---------- */
+
+log('\nDENNÍ VÝZVA A NÁPOVĚDY')
+{
+  await goHome(page)
+  check(
+    (await page.locator('.daily-strip .daily-item').count()) === 3,
+    'denní výzva je vidět rovnou v menu, jedna dlaždice na hru',
+  )
+  const strip = await page.locator('.daily-strip').boundingBox()
+  const grid = await page.locator('.mode-grid').boundingBox()
+  check(strip.y > grid.y, 'denní výzva je pod mřížkou her, ne místo ní')
+
+  check(
+    await page.locator('.profile-chip').isVisible(),
+    'hodnost je vidět v liště na úvodní obrazovce',
+  )
+
+  // Denní výzva se spouští jedním ťuknutím, bez oklik přes panel režimu.
+  await page.locator('.daily-item', { hasText: 'Řetěz' }).click()
+  await page.waitForSelector('.board', { timeout: 20000 })
+  await dismissTutorial(page)
+  check(await page.locator('.chip-gold').isVisible(), 'spustí se rovnou denní kolo')
+  check(await page.locator('.profile-chip').isVisible(), 'hodnost je vidět i ve hře')
+
+  const before = Number((await page.locator('.chip-hints .num').innerText()).trim())
+  check(before > 0, `hráč má nápovědy zdarma (${before})`)
+  const label = await page.locator('.hints .btn', { hasText: 'Celé slovo' }).innerText()
+  check(label.includes('zdarma'), 'nápověda se nabízí zdarma, dokud je z čeho brát')
+
+  await page.locator('.hints .btn', { hasText: 'Celé slovo' }).click()
+  await page.waitForTimeout(300)
+  // Při vynulování peněženky ukazatel z lišty zmizí — není co ukazovat.
+  const chip = page.locator('.chip-hints .num')
+  const after = (await chip.isVisible().catch(() => false))
+    ? Number((await chip.innerText()).trim())
+    : 0
+  check(after === before - 1, `nápověda zdarma ubrala z peněženky (${before} → ${after})`)
+
+  const paid = await page.locator('.hints .btn', { hasText: 'Celé slovo' }).innerText()
+  check(
+    after > 0 ? paid.includes('zdarma') : paid.includes('−'),
+    'po vyčerpání peněženky se nápověda zase platí body',
+  )
+
   await goHome(page)
 }
 

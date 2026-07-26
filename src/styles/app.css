@@ -44,6 +44,32 @@
   .topbar .chip-streak .chip-label {
     display: none;
   }
+
+  /* Na nejužších telefonech zbyde z profilu jen odznak — pořadí hodnosti si
+     hráč přečte v menu, ale poznat, jak daleko je, musí i tady. */
+  .profile-chip .profile-rank {
+    display: none;
+  }
+
+  .profile-chip {
+    padding: 3px 5px;
+  }
+
+  /* Tři tečky triády jsou ozdoba značky; na 320 px se místo hodí na profil
+     a značku unese samotné „O" v logu. */
+  .brand-triad {
+    display: none;
+  }
+}
+
+/* Nejužší telefony (320 px): lišta veze značku, profil, nápovědy, sérii
+   i téma. Aby se to vešlo, stáhnou se mezery — schovat další ukazatel by
+   bylo horší než pár pixelů natěsno. */
+@media (max-width: 360px) {
+  .topbar {
+    gap: 6px;
+    padding-inline: 8px;
+  }
 }
 
 .brand {
@@ -2389,4 +2415,154 @@ button.rank-card:hover {
   display: block;
   margin-top: var(--sp-3);
   font-size: 0.8rem;
+}
+
+/* ---------- Denní výzva na úvodní obrazovce ---------- */
+
+.daily-strip {
+  margin-top: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.daily-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.daily-head .faint {
+  font-size: 0.78rem;
+}
+
+.daily-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-2);
+}
+
+/* Tlačítko denní výzvy nese barvu své hry, ale zůstává drobné — mřížka her
+   nad ním musí být pořád to hlavní, na co se kouká. */
+.daily-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--sp-2) var(--sp-1);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  cursor: pointer;
+  transition: border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
+}
+
+.daily-item:hover {
+  border-color: var(--mode-color);
+}
+
+.daily-item .mode-glyph {
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: var(--r-sm);
+  background: var(--mode-color);
+  color: var(--band-ink);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.daily-item[style*='--mode-hive'] .mode-glyph {
+  color: #2b1b00;
+}
+
+.daily-name {
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.daily-note {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.daily-item.done {
+  background: var(--surface);
+  border-color: color-mix(in oklab, var(--ok) 40%, var(--border));
+}
+
+.daily-item.done .daily-note {
+  color: var(--ok-text);
+  font-weight: 700;
+}
+
+/* ---------- Nápovědy zdarma ---------- */
+
+/* V liště vedle série. Musí být vidět odkudkoli, protože je to zásoba,
+   se kterou hráč počítá při rozhodování, jestli si nápovědu vzít. */
+.chip-hints {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--ok-soft);
+  color: var(--ok-text);
+  border-color: color-mix(in oklab, var(--ok) 35%, transparent);
+}
+
+.chip-hints .bulb {
+  width: 11px;
+  height: 11px;
+}
+
+.free-left {
+  color: var(--ok-text);
+  font-weight: 700;
+}
+
+.gained-reward {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--sp-3);
+  padding: 0.3rem 0.8rem;
+  border-radius: var(--r-full);
+  background: var(--ok-soft);
+  color: var(--ok-text);
+  font-weight: 700;
+  font-size: 0.86rem;
+}
+
+/* Profil v horní liště — odznak hodnosti, který je vidět na každé obrazovce.
+   Jméno hodnosti se vejde jen na širším displeji; na telefonu zbyde odznak
+   a číslo, což pořád stačí na „vidím, kde jsem". */
+.profile-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 3px 10px 3px 5px;
+  border-radius: var(--r-full);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color var(--t-fast) var(--ease);
+}
+
+.profile-chip:hover {
+  border-color: var(--accent);
+}
+
+.profile-chip .rank-badge {
+  display: block;
+}
+
+.profile-rank {
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
 }

@@ -31,6 +31,9 @@ interface Props {
   onGiveUp: () => void
   /** Uložený stav rozehraného kola, když se hráč vrací zpátky do hry. */
   resume?: TowerState | null
+  /** Nápovědy zdarma z profilu. Když nějaká je, nápověda nestojí body. */
+  freeHints: number
+  onSpendHint: () => void
   onProgress: (state: TowerState, finished: boolean) => void
 }
 
@@ -43,6 +46,8 @@ export function TowerGame({
   onHome,
   onGiveUp,
   resume,
+  freeHints,
+  onSpendHint,
   onProgress,
 }: Props) {
   const [state, setState] = useState<TowerState>(() => resume ?? createTowerState(puzzle))
@@ -184,8 +189,11 @@ export function TowerGame({
   }, [submit, typeLetter])
 
   function hint(kind: 'letter' | 'word') {
-    const result = takeTowerHint(state, kind)
+    // Nápověda z peněženky profilu nestojí body; utratí se, až když padne.
+    const free = freeHints > 0
+    const result = takeTowerHint(state, kind, free)
     if (!result) return
+    if (free) onSpendHint()
     setState(result.state)
     setDraft(result.text)
     showFlash(
@@ -232,7 +240,10 @@ export function TowerGame({
         </div>
 
         <div className="hints card">
-          <div className="label">Nápovědy · {state.hintsUsed} použito</div>
+          <div className="label">
+            Nápovědy · {state.hintsUsed} použito
+            {freeHints > 0 && <span className="free-left"> · {freeHints} zdarma</span>}
+          </div>
           <div className="hint-buttons">
             <button
               type="button"
@@ -241,7 +252,7 @@ export function TowerGame({
               onClick={() => hint('letter')}
             >
               <span>Písmeno</span>
-              <small>−{TOWER_HINT_COST.letter}</small>
+              <small>{freeHints > 0 ? 'zdarma' : `−${TOWER_HINT_COST.letter}`}</small>
             </button>
             <button
               type="button"
@@ -250,7 +261,7 @@ export function TowerGame({
               onClick={() => hint('word')}
             >
               <span>Celé slovo</span>
-              <small>−{TOWER_HINT_COST.word}</small>
+              <small>{freeHints > 0 ? 'zdarma' : `−${TOWER_HINT_COST.word}`}</small>
             </button>
           </div>
         </div>

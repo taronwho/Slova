@@ -312,24 +312,48 @@ nápovědy, nejrychlejší čistý řetěz.
 
 Kresby jsou vlastní, ne emoji ani ikony odjinud:
 
-- `src/components/art/RankBadge.tsx` — odznak hodnosti. Tvar štítu říká kov
-  (kolo bronz, šestiúhelník stříbro, štít zlato, hvězda plazma), uvnitř je
-  vždycky prstenec ze tří oblouků — totéž znamení jako v logu a v úvodní
-  animaci — a krokve pod štítem říkají pořadí uvnitř kovu.
+- `src/components/art/RankBadge.tsx` — odznak hodnosti. Padesát stupňů má pět
+  tvarů štítu (kolo, šestiúhelník, štít, hvězda, rozeta) a deset kovů: tvar se
+  mění po deseti hodnostech, kov po pěti, takže každý tvar má chudší a bohatší
+  podobu. Uvnitř je vždycky prstenec ze tří oblouků — totéž znamení jako v logu
+  a v úvodní animaci — a krokve pod štítem říkají pořadí uvnitř pětice. Rozeta
+  se počítá, nekreslí ručně: dvanáct stejných obloučků je přesně ta věc, u které
+  se ruční `d` rozjede.
 - `src/components/art/AwardArt.tsx` — dvacet kreseb v poli 48×48, linka 2,6
   se zakulacenými konci a právě jedna plná plocha v barvě mety. Tvarosloví je
   ze hry: článek řetězu, buňka plástve, patra věže rozšiřující se nahoru
   (každé má o písmeno víc). Odstupňované mety sdílejí kresbu a liší se
   krokvemi, stejnou řečí jako hodnosti.
 
-Domovská obrazovka zůstává, jaká byla — přibylo na ní jediné tlačítko
-„Ocenění n/30". Všechno ostatní žije na vlastní obrazovce (`Awards.tsx`),
-kde je i celý žebříček dvaceti hodností. Zamčené mety se neschovávají a
+Domovská obrazovka zůstává, jaká byla — přibylo na ní tlačítko „Ocenění n/30"
+a pruh denní výzvy. Všechno ostatní žije na vlastní obrazovce (`Awards.tsx`),
+kde je i celý žebříček padesáti hodností. Zamčené mety se neschovávají a
 u met na počet se pod dlaždicí táhne proužek postupu; schovaná meta
 nemotivuje, protože o ní nikdo neví.
 
 Co v kole padlo, oznámí `AwardPopup.tsx` až **nad** výsledkem — nejdřív skóre,
 pak odměna za něj. Když padne víc věcí naráz, jdou po jedné.
+
+### Nápovědy zdarma
+
+Ocenění a hodnosti nejsou jen odznaky: za každou sypou **nápovědy zdarma**
+(dvě za hodnost, jednu až tři za ocenění podle stupně, jednu za denní výzvu).
+Zásoba se veze v profilu a je vidět v horní liště, protože podle ní se hráč
+rozhoduje, jestli si nápovědu vzít.
+
+Nápověda zdarma **nestojí body, ale pořád se počítá jako nápověda**. Do
+`hintsUsed` se započítá stejně jako placená, jen do `freeHints` navíc — a
+bodování odečítá jen rozdíl. Kolo s nápovědou zdarma tedy není „kolo bez
+nápovědy" a mety ze skupiny „Bez nápovědy" se za ni koupit nedají. Jinak by
+stačilo nasbírat nápovědy a odemknout si jimi právě ty mety, které mají
+dokazovat opak.
+
+### Denní výzva v menu
+
+Denní výzva má vlastní pruh hned pod mřížkou her, jednu dlaždici na hru, s
+označením dne a se skóre u toho, co je dneska hotové. Je to hlavní důvod, proč
+se hráč vrací každý den, takže nesmí být schovaná v panelu režimu — odsud se do
+ní vejde jedním ťuknutím.
 
 ## Mobil
 

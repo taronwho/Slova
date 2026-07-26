@@ -44,6 +44,8 @@ const PROFILE = {
     bestScore: 3400,
   },
   awards: {},
+  hints: 6,
+  hintRankPaid: 1,
   history: [],
   difficulty: { chain: 'normal', hive: 'normal', tower: 'normal' },
   theme: 'system',
