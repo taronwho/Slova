@@ -245,6 +245,8 @@ export function Home({
             Statistiky
           </button>
         </div>
+        {/* Verze buildu — podle ní se pozná, jestli telefon drží starou cache. */}
+        <p className="faint build-mark">verze {__BUILD__}</p>
       </div>
 
       <div className="section-head">

@@ -64,6 +64,27 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
+  // Manifest a index.html se z cache neberou nikdy. Skript a styly mají
+  // v názvu otisk obsahu, takže nová verze = nová adresa a cache je pustí
+  // sama; manifest a index.html ale svoji adresu nemění, a kdyby se braly
+  // z cache, držel by telefon starou hru i starou ikonu donekonečna.
+  const alwaysFresh =
+    url.pathname.endsWith('.webmanifest') || url.pathname.endsWith('index.html')
+  if (alwaysFresh) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok && response.type === 'basic') {
+            const copy = response.clone()
+            caches.open(SHELL).then((cache) => cache.put(request, copy))
+          }
+          return response
+        })
+        .catch(() => caches.match(request)),
+    )
+    return
+  }
+
   // Datové balíčky: z cache, jinak stáhnout a uložit.
   const isData = url.pathname.includes('/data/')
   const cacheName = isData ? DATA : SHELL

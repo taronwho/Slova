@@ -2001,3 +2001,10 @@
     transform: none;
   }
 }
+
+.build-mark {
+  margin-top: var(--sp-3);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
