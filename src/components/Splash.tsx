@@ -21,6 +21,24 @@ const ARCS = [
   { color: 'var(--mode-tower)', angle: 154 },
 ]
 
+/**
+ * Má se úvodní značka vůbec ukázat?
+ *
+ * V nainstalované aplikaci ne. Android i iOS při spuštění samy ukážou ikonu
+ * na barevné ploše a teprve pak pustí stránku — dvě loga za sebou působí,
+ * jako by hra naskočila dvakrát. V prohlížeči žádná systémová úvodní
+ * obrazovka není, tam se značka ukáže.
+ */
+export function shouldShowSplash(): boolean {
+  if (typeof window === 'undefined') return false
+  const standalone =
+    window.matchMedia?.('(display-mode: standalone)').matches ||
+    window.matchMedia?.('(display-mode: fullscreen)').matches ||
+    // iOS Safari nezná display-mode, hlásí to vlastním příznakem.
+    (navigator as { standalone?: boolean }).standalone === true
+  return !standalone
+}
+
 interface Props {
   onDone: () => void
 }

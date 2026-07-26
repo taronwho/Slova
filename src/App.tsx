@@ -14,7 +14,7 @@ import {
 import { ChainGame } from './components/ChainGame'
 import { HiveGame } from './components/HiveGame'
 import { Home } from './components/Home'
-import { Splash } from './components/Splash'
+import { shouldShowSplash, Splash } from './components/Splash'
 import { Stats } from './components/Stats'
 import { Tutorial } from './components/Tutorial'
 import { TowerGame } from './components/TowerGame'
@@ -61,8 +61,12 @@ export default function App() {
   const [saved, setSaved] = useState<SavedRounds>(() => loadRounds())
   /** Stav, se kterým se má hra nastartovat, když hráč klikne na Pokračovat. */
   const [resume, setResume] = useState<unknown>(null)
-  /** Úvodní značka. Hra se pod ní mezitím načítá, takže nikoho nezdržuje. */
-  const [splash, setSplash] = useState(true)
+  /**
+   * Úvodní značka. Hra se pod ní mezitím načítá, takže nikoho nezdržuje.
+   * V nainstalované aplikaci se přeskočí — systém tam ukazuje svoji vlastní
+   * úvodní obrazovku s ikonou a značka by naskočila dvakrát po sobě.
+   */
+  const [splash, setSplash] = useState(shouldShowSplash)
 
   const dayKey = todayKey()
   const dayLabel = `#${dayNumber()}`

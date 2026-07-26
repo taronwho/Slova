@@ -9,7 +9,7 @@
   "display": "standalone",
   "display_override": ["standalone", "fullscreen"],
   "orientation": "portrait-primary",
-  "background_color": "#f2f1fa",
+  "background_color": "#121028",
   "theme_color": "#5b3df5",
   "categories": ["games", "education", "word"],
   "icons": [
