@@ -56,7 +56,7 @@ import { mulberry32, shuffled } from '../src/lib/rng'
 // Hodnost v plástvi (rankFor z game/hive) a hodnost profilu jsou dvě různé
 // věci se stejným jménem — v testu se proto rozlišují předponou.
 import { RANKS as PROFILE_RANKS, rankFor as profileRankFor } from '../src/game/ranks'
-import { AWARDS, AWARD_GROUPS } from '../src/game/awards'
+import { AWARDS, AWARD_GROUPS, visibleAwards } from '../src/game/awards'
 import { scoreChain, scoreDetective, scoreGallows, streakMultiplier } from '../src/game/scoring'
 import {
   cells,
@@ -401,7 +401,7 @@ describe('bodování', () => {
     expect(score.perfect).toBe(true)
     expect(score.multiplier).toBeCloseTo(1.5)
     // 1000 základ + 150 nevyužité nápovědy + 300 rychlost = 1450, ×1,5
-    expect(score.total).toBe(2175)
+    expect(score.total).toBe(713)
   })
 
   it('tahy nad par ubírají body', () => {
@@ -412,7 +412,7 @@ describe('bodování', () => {
     }
     const score = scoreChain(state, 1, 30_000)
     expect(score.perfect).toBe(false)
-    expect(score.total).toBe(1350)
+    expect(score.total).toBe(440)
   })
 
   it('skóre nikdy nespadne pod minimum', () => {
@@ -423,7 +423,7 @@ describe('bodování', () => {
       hintCost: 600,
       finishedAt: 600_000,
     }
-    expect(scoreChain(state, 1, 600_000).total).toBe(100)
+    expect(scoreChain(state, 1, 600_000).total).toBe(35)
   })
 
   it('série má strop', () => {
@@ -519,10 +519,85 @@ describe('ocenění', () => {
   })
 
   // Za sezení u hry se nemá dávat skoro nic — mety mají být za to, že hráč
-  // hraje sám, nebo že nasbírá body.
+  // hraje sám, nebo že nasbírá body. Mistrovství sem patří taky: počítá jen
+  // kola dohraná bez nápovědy, ne odehraná.
   it('většina met stojí na dovednosti nebo bodech, ne na počtu kol', () => {
-    const skill = AWARDS.filter((a) => a.group === 'clean' || a.group === 'score')
+    const skill = AWARDS.filter(
+      (a) =>
+        a.group === 'clean' ||
+        a.group === 'score' ||
+        a.group === 'mastery' ||
+        a.group === 'feat',
+    )
     expect(skill.length).toBeGreaterThan(AWARDS.length / 2)
+  })
+
+  // Hra má vydržet roky. Kdyby se dala vyčerpat za měsíc, přestala by mít
+  // po měsíci smysl — proto je met hodně a nejvyšší stupně jsou daleko.
+  it('met je dost na roky hraní a žebříčky mají pět stupňů', () => {
+    expect(AWARDS.length).toBeGreaterThan(140)
+    const families = new Set(AWARDS.map((a) => a.family).filter(Boolean))
+    expect(families.size).toBeGreaterThan(25)
+    expect(AWARDS.some((a) => a.tier === 5)).toBe(true)
+  })
+
+  // Klíč je navěky: podle něj se v uloženém profilu pozná, co hráč má.
+  // Duplikát by znamenal metu, která se udělí dvakrát — i s inkoustem.
+  it('žádné dvě mety nesdílejí klíč', () => {
+    const ids = AWARDS.map((a) => a.id)
+    expect(new Set(ids).size).toBe(ids.length)
+  })
+
+  // Uvnitř rodiny musí prahy růst. Kdyby ne, vyšší stupeň by padl dřív než
+  // nižší a žebříček by ztratil smysl.
+  it('žebříčky jdou stupeň po stupni nahoru', () => {
+    const probe = (award: (typeof AWARDS)[number], profile: Profile) =>
+      award.done(profile)
+    const families = new Map<string, (typeof AWARDS)[number][]>()
+    for (const award of AWARDS) {
+      if (!award.family) continue
+      const list = families.get(award.family) ?? []
+      list.push(award)
+      families.set(award.family, list)
+    }
+    for (const [, list] of families) {
+      list.forEach((award, i) => expect(award.tier).toBe(i + 1))
+      // Co splní vyšší stupeň, splní i všechny nižší.
+      const top = list[list.length - 1]!
+      const full: Profile = {
+        ...emptyProfile(),
+        fame: 9_999_999,
+        bestStreak: 9_999,
+        bestDayStreak: 9_999,
+        daysPlayed: 9_999,
+      }
+      if (probe(top, full)) {
+        for (const award of list) expect(probe(award, full)).toBe(true)
+      }
+    }
+  })
+
+  // Sto šedesát dlaždic naráz nikoho nemotivuje; jeden další stupeň ano.
+  it('vitrína ukáže z rodiny získané stupně a jeden další', () => {
+    const family = AWARDS.filter((a) => a.family === 'mistr-chain')
+    expect(family.length).toBe(5)
+
+    const fresh = visibleAwards(family, emptyProfile())
+    expect(fresh.map((a) => a.id)).toEqual([family[0]!.id])
+
+    const two: Profile = {
+      ...emptyProfile(),
+      awards: { [family[0]!.id]: 1, [family[1]!.id]: 2 },
+    }
+    expect(visibleAwards(family, two).map((a) => a.id)).toEqual([
+      family[0]!.id,
+      family[1]!.id,
+      family[2]!.id,
+    ])
+
+    // Samostatná meta se neschovává nikdy.
+    const solo = AWARDS.filter((a) => a.id === 'petiboj')
+    expect(visibleAwards(solo, emptyProfile())).toEqual(solo)
   })
 
   it('čerstvý profil nemá zadarmo ani jedno', () => {
@@ -760,8 +835,8 @@ describe('nápovědy zdarma', () => {
   // a nic to nestálo.
   it('velká nápověda stojí výrazně víc než malá', () => {
     expect(inkPrice(HINT_COST.word)).toBeGreaterThanOrEqual(inkPrice(HINT_COST.distance) * 3)
-    expect(inkPrice(50)).toBe(5)
-    expect(inkPrice(200)).toBe(20)
+    expect(inkPrice(HINT_COST.distance)).toBe(5)
+    expect(inkPrice(HINT_COST.word)).toBe(20)
   })
 
   it('nápověda za inkoust nestojí body, ale pořád se počítá jako nápověda', () => {
@@ -825,13 +900,13 @@ describe('nápovědy zdarma', () => {
   it('hodnosti po třetí výrazně zpomalí', () => {
     const gap = (i: number) => PROFILE_RANKS[i]!.at - PROFILE_RANKS[i - 1]!.at
     // Prvních pár kol dá hned tři hodnosti.
-    expect(PROFILE_RANKS[3]!.at).toBeLessThanOrEqual(6_000)
+    expect(PROFILE_RANKS[3]!.at).toBeLessThanOrEqual(2_500)
     // Od té chvíle každý další stupeň stojí víc než ten předchozí.
     for (let i = 4; i < PROFILE_RANKS.length; i += 1) {
       expect(gap(i)).toBeGreaterThan(gap(i - 1))
     }
     // Nejvyšší hodnost je běh na roky, ne na měsíc.
-    expect(PROFILE_RANKS[PROFILE_RANKS.length - 1]!.at).toBeGreaterThan(10_000_000)
+    expect(PROFILE_RANKS[PROFILE_RANKS.length - 1]!.at).toBeGreaterThan(3_000_000)
   })
 
   // Šest režimů krát odměna denně by peněženku zaplavilo rychleji než všechno
@@ -855,10 +930,33 @@ describe('nápovědy zdarma', () => {
         [`${day}:tetris`]: 1,
       },
     }
+    // Rozdíl je aspoň DAILY_INK. Kompletní várka navíc rovnou odemkne první
+    // stupeň mety „Celá várka", takže se k němu připočte ještě inkoust za ni —
+    // proto se porovnává „aspoň", ne „přesně".
     expect(
       recordRound(almost, round(), day, true).ink -
         recordRound(almost, round(), day, false).ink,
-    ).toBe(DAILY_INK)
+    ).toBeGreaterThanOrEqual(DAILY_INK)
+  })
+
+  // Denní várka se počítá jen jednou za den a jen když je opravdu celá.
+  it('celá denní várka se započítá právě jednou', () => {
+    const day = '2026-01-01'
+    const start = emptyProfile()
+    expect(recordRound(start, round(), day, true).counters.dailySets).toBe(0)
+
+    const almost: Profile = {
+      ...start,
+      dailyDone: {
+        [`${day}:hive`]: 1,
+        [`${day}:tower`]: 1,
+        [`${day}:gallows`]: 1,
+        [`${day}:detective`]: 1,
+        [`${day}:tetris`]: 1,
+      },
+    }
+    expect(recordRound(almost, round(), day, true).counters.dailySets).toBe(1)
+    expect(recordRound(almost, round(), day, false).counters.dailySets).toBe(0)
   })
 
   // Přesně to, co hráč nahlásil: dostal metu „bez nápovědy" za kolo, které
@@ -975,7 +1073,7 @@ describe('šibenice', () => {
     }
     const won = scoreGallows(state, 1, state.startedAt + 20_000)
     expect(won.perfect).toBe(true)
-    expect(won.total).toBeGreaterThan(900)
+    expect(won.total).toBeGreaterThan(300)
 
     let dead = createGallowsState(puzzle)
     for (const letter of 'bcfgjmrx') {

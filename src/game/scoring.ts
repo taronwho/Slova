@@ -1,4 +1,12 @@
-/** Bodování — jednotné napříč režimy, s režimově specifickými pravidly. */
+/**
+ * Bodování — jednotné napříč režimy, s režimově specifickými pravidly.
+ *
+ * Čísla jsou proti první verzi na **třetinu**. Kolo dávalo přes tisíc bodů,
+ * což znělo velkoryse, ale nic to neznamenalo: když je štědré všechno, není
+ * štědré nic. Teď dá dobré kolo kolem čtyř set a je poznat rozdíl mezi
+ * odbytým a povedeným. Prahy hodností jsou přepočítané stejným dílem, takže
+ * postup profilu zůstal, kde byl.
+ */
 
 import { budgetFor, type ChainState } from './chain'
 import {
@@ -52,7 +60,7 @@ function finish(
   return { lines, multiplier, multiplierLabel, total, perfect }
 }
 
-export const CHAIN_BASE = 1000
+export const CHAIN_BASE = 330
 
 export function scoreChain(
   state: ChainState,
@@ -65,20 +73,20 @@ export function scoreChain(
   const budget = budgetFor(state.puzzle)
 
   const lines = [{ label: 'Základ', value: CHAIN_BASE }]
-  if (over > 0) lines.push({ label: `Tahů navíc (${over})`, value: -100 * over })
+  if (over > 0) lines.push({ label: `Tahů navíc (${over})`, value: -35 * over })
   if (moves > budget) {
-    lines.push({ label: 'Překročený rozpočet', value: -200 })
+    lines.push({ label: 'Překročený rozpočet', value: -70 })
   }
   // Nápovědy zaplacené inkoustem nic nestojí, takže se z bonusu za
   // nevyužité nápovědy neodečítají a ani se nestrhávají body.
   const paidHints = Math.max(0, state.hintsUsed - (state.freeHints ?? 0))
   const unused = Math.max(0, 3 - paidHints)
-  if (unused > 0) lines.push({ label: `Nevyužité nápovědy (${unused})`, value: 50 * unused })
+  if (unused > 0) lines.push({ label: `Nevyužité nápovědy (${unused})`, value: 15 * unused })
   if (state.hintCost > 0) {
     lines.push({ label: `Nápovědy (${paidHints})`, value: -state.hintCost })
   }
 
-  const bonus = speedBonus(elapsed, 60_000, 240_000, 300)
+  const bonus = speedBonus(elapsed, 60_000, 240_000, 100)
   if (bonus > 0) lines.push({ label: 'Rychlost', value: bonus })
 
   const perfect = over === 0 && state.hintsUsed === 0
@@ -89,7 +97,7 @@ export function scoreChain(
   if (perfect) labels.push('PERFEKTNÍ ×1,5')
   if (streakMul > 1) labels.push(`Série ×${streakMul.toFixed(2).replace('.', ',')}`)
 
-  return finish(lines, multiplier, labels.join('  ·  ') || null, perfect, 100)
+  return finish(lines, multiplier, labels.join('  ·  ') || null, perfect, 35)
 }
 
 /** Věž: každé postavené patro boduje podle své délky. */
@@ -103,7 +111,7 @@ export function scoreTower(
 
   let levelPoints = 0
   for (let i = 1; i < state.built.length; i++) {
-    levelPoints += (state.built[i]!.length) * 25
+    levelPoints += (state.built[i]!.length) * 8
   }
   lines.push({ label: `Postavená patra (${state.built.length - 1})`, value: levelPoints })
 
@@ -112,7 +120,7 @@ export function scoreTower(
     lines.push({ label: `Nápovědy (${paid})`, value: -state.hintCost })
   }
 
-  const bonus = speedBonus(elapsed, 90_000, 360_000, 250)
+  const bonus = speedBonus(elapsed, 90_000, 360_000, 80)
   if (bonus > 0) lines.push({ label: 'Rychlost', value: bonus })
 
   const perfect = state.hintsUsed === 0
@@ -134,9 +142,9 @@ export function scoreHive(state: HiveState, streak: number): ScoreBreakdown {
     state.puzzle.pangrams.includes(w),
   ).length
 
-  const lines = [{ label: `Body za slova (${found})`, value: points * 8 }]
+  const lines = [{ label: `Body za slova (${found})`, value: points * 3 }]
   if (foundPangrams > 0) {
-    lines.push({ label: `Pangramy (${foundPangrams})`, value: 150 * foundPangrams })
+    lines.push({ label: `Pangramy (${foundPangrams})`, value: 50 * foundPangrams })
   }
   // Nápovědy zaplacené inkoustem se do bodů nepromítají. Do
   // `hintsUsed` se ale počítají, takže kolo pořád není „bez nápovědy".
@@ -145,7 +153,7 @@ export function scoreHive(state: HiveState, streak: number): ScoreBreakdown {
     lines.push({ label: `Nápovědy (${paidHints})`, value: -HIVE_HINT_COST * paidHints })
   }
   const complete = found >= state.puzzle.solutions.length
-  if (complete) lines.push({ label: 'Kompletní plástev', value: 500 })
+  if (complete) lines.push({ label: 'Kompletní plástev', value: 170 })
 
   const perfect = complete && state.hintsUsed === 0
   const streakMul = streakMultiplier(streak)
@@ -178,24 +186,24 @@ export function scoreGallows(
 
   const lines: { label: string; value: number }[] = []
   if (won) {
-    lines.push({ label: 'Uhodnuté slovo', value: 900 })
-    if (lives > 0) lines.push({ label: `Zbylé životy (${lives})`, value: 60 * lives })
+    lines.push({ label: 'Uhodnuté slovo', value: 300 })
+    if (lives > 0) lines.push({ label: `Zbylé životy (${lives})`, value: 20 * lives })
   } else {
     // Za rozluštěnou část slova se něco počítá i po prohře.
     const guessed = [...neededLetters(state.puzzle)].filter((letter) =>
       state.tried.includes(letter),
     ).length
-    lines.push({ label: `Odhalená písmena (${guessed})`, value: 40 * guessed })
-    lines.push({ label: 'Slovo neuhodnuto', value: -100 })
+    lines.push({ label: `Odhalená písmena (${guessed})`, value: 15 * guessed })
+    lines.push({ label: 'Slovo neuhodnuto', value: -35 })
   }
-  if (wrong > 0) lines.push({ label: `Chybná písmena (${wrong})`, value: -70 * wrong })
+  if (wrong > 0) lines.push({ label: `Chybná písmena (${wrong})`, value: -25 * wrong })
 
   if (state.hintCost > 0) {
     const paid = Math.max(0, state.hintsUsed - (state.freeHints ?? 0))
     lines.push({ label: `Nápovědy (${paid})`, value: -state.hintCost })
   }
 
-  const bonus = won ? speedBonus(elapsed, 45_000, 180_000, 200) : 0
+  const bonus = won ? speedBonus(elapsed, 45_000, 180_000, 70) : 0
   if (bonus > 0) lines.push({ label: 'Rychlost', value: bonus })
 
   const perfect = won && wrong === 0 && state.hintsUsed === 0
@@ -227,20 +235,20 @@ export function scoreDetective(
 
   const lines: { label: string; value: number }[] = []
   if (won) {
-    lines.push({ label: 'Rozluštěné slovo', value: 800 })
+    lines.push({ label: 'Rozluštěné slovo', value: 270 })
     if (state.solved) {
       // Kolik písmen zbývalo odhalit, když hráč slovo tipl — čím dřív, tím víc.
       const open = [...detectiveLetters(state.puzzle)].filter(
         (letter) => !state.tried.includes(letter),
       ).length
-      lines.push({ label: `Tip na slovo (${open} písmen skrytých)`, value: 100 * open })
+      lines.push({ label: `Tip na slovo (${open} písmen skrytých)`, value: 35 * open })
     }
   } else {
     const found = [...detectiveLetters(state.puzzle)].filter((letter) =>
       state.tried.includes(letter),
     ).length
-    lines.push({ label: `Odhalená písmena (${found})`, value: 40 * found })
-    lines.push({ label: 'Slovo nerozluštěno', value: -100 })
+    lines.push({ label: `Odhalená písmena (${found})`, value: 15 * found })
+    lines.push({ label: 'Slovo nerozluštěno', value: -35 })
   }
 
   if (misses > 0) {
@@ -257,7 +265,7 @@ export function scoreDetective(
     lines.push({ label: `Nápovědy (${paid})`, value: -state.hintCost })
   }
 
-  const bonus = won ? speedBonus(elapsed, 60_000, 240_000, 200) : 0
+  const bonus = won ? speedBonus(elapsed, 60_000, 240_000, 70) : 0
   if (bonus > 0) lines.push({ label: 'Rychlost', value: bonus })
 
   const perfect = won && misses === 0 && state.hintsUsed === 0 && state.guesses.length === 0
@@ -288,17 +296,17 @@ export function scoreTetris(state: TetrisState, streak: number): ScoreBreakdown 
   if (state.cleared.length > 0) {
     lines.push({
       label: `Složená slova (${state.cleared.length})`,
-      value: 100 * state.cleared.length + 40 * letters,
+      value: 35 * state.cleared.length + 13 * letters,
     })
   }
   if (state.bestChain >= 2) {
     lines.push({
       label: `Nejdelší řetěz (${state.bestChain})`,
-      value: 150 * (state.bestChain - 1) * state.bestChain,
+      value: 50 * (state.bestChain - 1) * state.bestChain,
     })
   }
   if (reached > 1) {
-    lines.push({ label: `Úroveň ${reached}`, value: 120 * (reached - 1) })
+    lines.push({ label: `Úroveň ${reached}`, value: 40 * (reached - 1) })
   }
   if (state.hintCost > 0) {
     const paid = Math.max(0, state.hintsUsed - (state.freeHints ?? 0))

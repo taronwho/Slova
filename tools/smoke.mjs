@@ -41,7 +41,7 @@ async function newPage(size) {
     }
   })
   await page.goto(APP_URL, { waitUntil: 'networkidle' })
-  await page.locator('.splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined)
+  await waitReady(page)
   return page
 }
 

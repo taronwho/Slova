@@ -51,9 +51,25 @@
     letter-spacing: 0.12em;
   }
 
-  /* Na úzkém displeji se z „Série 0" stane jen číslo se symbolem. */
+  /* Na úzkém displeji se z „Série 0" stane jen číslo se symbolem. Fajfka
+     tam musí být: samotné číslo v liště nic neříká a hráč nemá jak poznat,
+     že se dívá na řadu kol bez nápovědy. */
   .topbar .chip-streak .chip-label {
     display: none;
+  }
+
+  /* Fajfka se musí vejít do místa, které ušetřil schovaný popisek. Kdyby
+     chip povyrostl, vytlačí přepínač témat mimo obrazovku — přesně to hlásil
+     audit, když se mezery nestáhly spolu s ním. */
+  .topbar .chip-streak {
+    gap: 3px;
+    padding-inline: 0.42rem;
+  }
+
+  .topbar .chip-streak::before {
+    content: '✓';
+    font-size: 0.72rem;
+    opacity: 0.75;
   }
 
   /* Na nejužších telefonech se profil stáhne, ale číslo hodnosti zůstává —
@@ -2470,18 +2486,24 @@ button.rank-card:hover {
   text-align: center;
 }
 
-/* Barva prosakuje do kresby přes --tone; dlaždice ji jen nastaví. Meta
-   patřící k jedné hře si bere její barvu, obecné mety mají svou vlastní. */
-.award[data-tone='brand'] { --tone: var(--brand); }
-.award[data-tone='chain'] { --tone: var(--mode-chain); }
-.award[data-tone='hive'] { --tone: var(--mode-hive); }
-.award[data-tone='tower'] { --tone: var(--mode-tower); }
-.award[data-tone='gallows'] { --tone: var(--mode-gallows); }
-.award[data-tone='detective'] { --tone: var(--mode-detective); }
-.award[data-tone='tetris'] { --tone: var(--mode-tetris); }
-.award[data-tone='ok'] { --tone: var(--ok); }
-.award[data-tone='gold'] { --tone: var(--gold); }
-.award[data-tone='warn'] { --tone: var(--warn); }
+/* Barva prosakuje do kresby přes --tone; nositel ji jen nastaví. Meta
+   patřící k jedné hře si bere její barvu, obecné mety mají svou vlastní.
+   Selektor není vázaný na dlaždici, protože tutéž kresbu ukazuje i panel
+   s podrobnostmi mety — a tam má svítit stejně. */
+[data-tone='brand'] { --tone: var(--brand); }
+[data-tone='chain'] { --tone: var(--mode-chain); }
+[data-tone='hive'] { --tone: var(--mode-hive); }
+[data-tone='tower'] { --tone: var(--mode-tower); }
+[data-tone='gallows'] { --tone: var(--mode-gallows); }
+[data-tone='detective'] { --tone: var(--mode-detective); }
+[data-tone='tetris'] { --tone: var(--mode-tetris); }
+[data-tone='ok'] { --tone: var(--ok); }
+[data-tone='gold'] { --tone: var(--gold); }
+[data-tone='warn'] { --tone: var(--warn); }
+
+.sheet-term .award-art {
+  color: var(--text);
+}
 
 /* Získané ocenění svítí barvou skupiny, nezískané je popelavé — rozdíl musí
    být vidět na první pohled z celé mřížky, ne až po přečtení popisku. */
@@ -3376,4 +3398,215 @@ button.rank-card:hover {
 .guess-input:focus {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
+}
+
+/* ---------- Vysvětlivky ---------- */
+
+/* Klikací obal nad čímkoli, co má výklad. Dědí vzhled toho, co obaluje
+   (čip zůstane čipem, popisek popiskem) a přidá jen tečkované podtržení —
+   znamení „tady se dá ťuknout", které nekřičí přes celou obrazovku. */
+.explain {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: inherit;
+  position: relative;
+}
+
+/* U čipu se tečkovaná linka pod text nevejde — je vysoký sotva jako písmo.
+   Znamením je tam přerušovaný okraj: stejná řeč, jen po obvodu. */
+.chip.explain {
+  border-style: dashed;
+  border-color: color-mix(in oklab, currentColor 35%, transparent);
+}
+
+.chip.explain:hover {
+  border-color: color-mix(in oklab, currentColor 65%, transparent);
+}
+
+/* Všude jinde tečkované podtržení, tak jak se značí vysvětlivka v textu.
+   Velké skóre a celý řádek hodnosti jsou z toho venku — pod třemi centimetry
+   číslic vypadá tečkovaná linka jako chyba sazby, ne jako nabídka. */
+.explain:not(.chip):not(.rank-line):not(.score-big) {
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in oklab, currentColor 45%, transparent);
+}
+
+.explain.score-big {
+  display: block;
+  width: 100%;
+}
+
+/* Řádek hodnosti na domovské obrazovce i ve statistikách je celý klikací. */
+button.rank-line {
+  width: 100%;
+  cursor: pointer;
+}
+
+/* Panel výkladu. Užší než návod — je to jeden odstavec, ne kapitola. */
+.sheet-term {
+  max-width: 30rem;
+}
+
+.term-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  font-size: 0.94rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.term-body strong {
+  color: var(--text);
+  font-weight: 650;
+}
+
+.award-track.big {
+  height: 8px;
+  margin: var(--sp-1) 0;
+}
+
+/* ---------- Průvodce hrou ---------- */
+
+.sheet-guide {
+  max-width: 38rem;
+}
+
+.guide-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  overflow-y: auto;
+  font-size: 0.94rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.guide-body h3 {
+  font-family: var(--font-display);
+  font-size: 1.06rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: var(--sp-2);
+}
+
+.guide-body p + p {
+  margin-top: var(--sp-2);
+}
+
+.guide-body strong {
+  color: var(--text);
+  font-weight: 650;
+}
+
+.guide-more {
+  margin-top: var(--sp-2);
+  padding-left: 0;
+  padding-right: 0;
+  color: var(--accent);
+}
+
+.guide-modes {
+  display: grid;
+  gap: var(--sp-2);
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  margin-top: var(--sp-3);
+}
+
+.guide-mode {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  text-align: left;
+}
+
+.guide-mode:hover {
+  border-color: var(--border-strong);
+}
+
+.guide-mode-name {
+  font-family: var(--font-display);
+  font-weight: 650;
+  color: var(--text);
+}
+
+.guide-mode[data-mode='chain'] .guide-mode-name { color: var(--mode-chain); }
+.guide-mode[data-mode='hive'] .guide-mode-name { color: var(--mode-hive); }
+.guide-mode[data-mode='tower'] .guide-mode-name { color: var(--mode-tower); }
+.guide-mode[data-mode='gallows'] .guide-mode-name { color: var(--mode-gallows); }
+.guide-mode[data-mode='detective'] .guide-mode-name { color: var(--mode-detective); }
+.guide-mode[data-mode='tetris'] .guide-mode-name { color: var(--mode-tetris); }
+
+.guide-open {
+  width: 100%;
+}
+
+/* ---------- Vitrína: přepínač a klikací dlaždice ---------- */
+
+.seg-wide {
+  display: flex;
+  width: 100%;
+}
+
+.seg-wide button {
+  flex: 1 1 0;
+}
+
+.award-filter {
+  margin-bottom: var(--sp-2);
+}
+
+button.award {
+  cursor: pointer;
+  transition:
+    border-color var(--t-fast) var(--ease),
+    transform var(--t-fast) var(--ease);
+}
+
+button.award:active {
+  transform: scale(0.98);
+}
+
+button.award:hover {
+  border-color: color-mix(in oklab, var(--tone) 60%, var(--border));
+}
+
+/* ---------- Statistiky: dlaždice s vysvětlením ---------- */
+
+button.stat {
+  cursor: pointer;
+  width: 100%;
+}
+
+button.stat .label {
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in oklab, currentColor 45%, transparent);
+}
+
+button.stat:hover {
+  border-color: var(--border-strong);
+}
+
+button.stat.open {
+  border-color: var(--accent);
+}
+
+/* Věta, která se rozbalí pod číslem ve statistikách. Není to `.stat-note` —
+   ten už na desce Řetězu nese rozpočet tahů a vypadá jinak. */
+.stat-explain {
+  margin-top: var(--sp-2);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+  text-transform: none;
+  letter-spacing: 0;
+  text-align: left;
 }

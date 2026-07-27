@@ -18,7 +18,7 @@
 interface Props {
   /** Klíč kresby, viz Award.art. */
   art: string
-  /** Stupeň v rodině 1–3; kolik krokví se ukáže pod kresbou. */
+  /** Stupeň v rodině 1–5; kolik krokví se ukáže pod kresbou. */
   tier?: number | undefined
   size?: number | undefined
 }
@@ -301,7 +301,9 @@ function Glyph({ art }: { art: string }) {
 
 export function AwardArt({ art, tier, size = 44 }: Props) {
   const rows = tier ?? 0
-  const height = rows > 0 ? 64 : 48
+  // Krokve se kreslí od y=50 po čtyřech, špička o čtyři níž. Plátno proto
+  // musí růst s jejich počtem — u tří vyjde přesně 64 jako dřív, u pěti 76.
+  const height = rows > 0 ? 46 + rows * 6 : 48
 
   return (
     <svg

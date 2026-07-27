@@ -24,6 +24,7 @@ import type { RoundResult } from '../game/types'
 import { inkPrice } from '../game/economy'
 import { Confirm } from './Confirm'
 import { HintHead, HintPrice } from './HintPanel'
+import { StatTile } from './Explain'
 import { ResultOverlay } from './ResultOverlay'
 
 interface Props {
@@ -223,20 +224,24 @@ export function DetectiveGame({
       <aside className="rail rail-left">
         <div className="hud">
           <div className="stat-row">
-            <div className="stat">
-              <div className="label">Písmen</div>
-              <div className="value num accent">{puzzle.word.length}</div>
-            </div>
-            <div className="stat">
-              <div className="label">Odhaleno</div>
-              <div className="value num gold">
-                {foundLetters}/{needed.size}
-              </div>
-            </div>
-            <div className="stat">
-              <div className="label">Vedle</div>
-              <div className="value num warn">{misses}</div>
-            </div>
+            <StatTile
+              label="Písmen"
+              value={puzzle.word.length}
+              tone="accent"
+              note={'Jak dlouhé je hledané slovo. Diakritika se nehádá — „u" odhalí i „ů".'}
+            />
+            <StatTile
+              label="Odhaleno"
+              value={`${foundLetters}/${needed.size}`}
+              tone="gold"
+              note="Kolik různých písmen slova už je venku. Jakmile tušíš, o co jde, můžeš slovo rovnou tipnout celé — a čím dřív, tím víc bodů."
+            />
+            <StatTile
+              label="Vedle"
+              value={misses}
+              tone="warn"
+              note="Kolik písmen jsi zkusil mimo. V Detektivovi chyba kolo neukončí, jen ubere body — takže se dá hádat dál."
+            />
           </div>
         </div>
 

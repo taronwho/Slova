@@ -38,11 +38,11 @@ export const DETECTIVE_KEYS = 'abcdefghijklmnopqrstuvwxyz'.split('')
 
 export const DETECTIVE_COST = {
   /** Písmeno, které ve slově není. */
-  miss: 60,
+  miss: 20,
   /** Chybný tip na celé slovo. */
-  wrongGuess: 120,
+  wrongGuess: 40,
   /** Nápověda: odhalí jedno písmeno. */
-  letter: 150,
+  letter: 50,
 } as const
 
 /** Nad tolik chybných písmen se kolo ukončí, ať se nedá vyklikat abecedou. */

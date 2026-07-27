@@ -317,15 +317,33 @@ log('\nOVLÁDÁNÍ')
   await page.waitForTimeout(300)
   check(!(await page.locator('.found-groups').isVisible()), 'zpět seznam zavře')
 
-  await page.locator('.stat-tap').click()
-  await page.waitForTimeout(250)
+  // Ukazatelů na desce je víc a všechny jsou klikací; pangramy se hledají
+  // podle popisku. Výklad se otevře v panelu nad hrou, ne v pruhu pod ní —
+  // uprostřed kola se deska nesmí hnout pod prstem.
+  await page.locator('.stat-tap', { hasText: 'Pangramy' }).click()
+  await page.waitForTimeout(300)
   check(
-    (await page.locator('.banner-info').innerText()).includes('sedmi písmen'),
+    (await page.locator('.sheet-term').innerText()).includes('všech sedm'),
     'ťuknutí na pangramy vysvětlí, co to je',
   )
+  await page.locator('.sheet-term .sheet-head .btn').click()
+  await page.waitForTimeout(250)
 
   await goHome(page)
   await openGame(page, 'tower')
+
+  // Hlavička nápověd je jediné místo, kde se hráč rozhoduje, jestli pomoc
+  // vzít — takže tam musí být po ruce i to, co ho to stojí.
+  await page.locator('.hint-head').click()
+  await page.waitForTimeout(300)
+  const hintText = await page.locator('.sheet-term').innerText()
+  check(
+    hintText.includes('inkoust') && hintText.includes('body'),
+    'hlavička nápověd vysvětlí, čím se platí',
+  )
+  await page.locator('.sheet-term .sheet-head .btn').click()
+  await page.waitForTimeout(250)
+
   await page.locator('.hints .btn', { hasText: 'Celé slovo' }).click()
   await page.waitForTimeout(200)
   await page.locator('.board-footer .btn', { hasText: 'Postavit patro' }).click()

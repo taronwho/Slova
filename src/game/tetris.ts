@@ -93,9 +93,9 @@ export const TETRIS_PREVIEW = 2
 
 export const TETRIS_HINT_COST = {
   /** Ukáže polohu, ve které padající dvojice něco složí. */
-  spot: 100,
+  spot: 35,
   /** Vymění padající dvojici za tu následující. */
-  swap: 60,
+  swap: 20,
 } as const
 
 export type TetrisHintKind = keyof typeof TETRIS_HINT_COST

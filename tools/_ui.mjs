@@ -6,9 +6,23 @@
  * některé. Odsud si je berou všechny.
  */
 
-/** Počká, než zmizí úvodní značka — přes ni se nedá klikat. */
+/**
+ * Počká, než zmizí úvodní značka — přes ni se nedá klikat — a odbaví
+ * průvodce hrou, který se při úplně prvním spuštění otevře sám. Testy startují
+ * pokaždé s prázdným profilem, takže by na něj jinak narazily úplně všechny.
+ */
 export async function waitReady(page) {
   await page.locator('.splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined)
+  await dismissGuide(page)
+}
+
+/** Zavře průvodce „Jak se hrají Slova", pokud je otevřený. */
+export async function dismissGuide(page) {
+  const guide = page.locator('.sheet-guide')
+  if (await guide.isVisible().catch(() => false)) {
+    await guide.locator('.sheet-head .btn', { hasText: 'Zavřít' }).click()
+    await guide.waitFor({ state: 'detached', timeout: 4000 }).catch(() => undefined)
+  }
 }
 
 /** Po prvním spuštění režimu se otevře návod; testy ho odbaví. */
@@ -38,7 +52,9 @@ export async function openGame(page, mode, { daily = false, resume = false } = {
  * pod ním. Když je toho víc naráz, chodí se po jednom.
  */
 export async function dismissGained(page) {
-  for (let guard = 0; guard < 12; guard++) {
+  // Met je přes sto šedesát a jedno kolo jich může odemknout hrst naráz —
+  // dvanáct kliknutí by na to nemuselo stačit.
+  for (let guard = 0; guard < 40; guard++) {
     const card = page.locator('.gained-card')
     if (!(await card.isVisible().catch(() => false))) return
     await card.locator('.btn').click()

@@ -18,6 +18,14 @@ export interface ModeStats {
   /** Řetěz: součet tahů navíc. Věž: součet postavených pater. */
   extra: number
   perfect: number
+  /**
+   * Kolik kol v téhle hře hráč dotáhl bez jediné nápovědy.
+   *
+   * Na tomhle čísle stojí žebříčky mistrovství — jsou to jediné počty, které
+   * se v hodnocení počítají, protože „odehraj sto kol" splní každý, kdo
+   * vydrží klikat, kdežto „dohraj sto kol načisto" ne.
+   */
+  clean: number
 }
 
 /**
@@ -68,18 +76,33 @@ export interface Counters {
   tetrisChain: number
   /** Kolik denních výzev dohrál. */
   dailies: number
+  /** Kolikrát dohrál denní výzvy ve všech šesti hrách v jednom dni. */
+  dailySets: number
   /** Nejlepší skóre v jednom kole napříč režimy. */
   bestScore: number
 }
 
 export interface Profile {
+  /** Verze uloženého profilu — podle ní se pozná, co je potřeba přepočítat. */
+  version: number
   /**
    * Věhlas — součet bodů ze všech dohraných kol. Jediné číslo, které žene
    * hodnost nahoru. Dřív se jmenoval `xp`; migrace to přejmenuje.
    */
   fame: number
+  /**
+   * Série **čistých kol** — kol dohraných bez jediné nápovědy, jedno za
+   * druhým. Dřív se počítalo každé kolo, takže série osmnácti mohla vzniknout
+   * z osmnácti prohraných šibenic; to nedávalo smysl a hráč to nahlásil.
+   * Sérií se násobí skóre, takže musí něco stát.
+   */
   streak: number
   bestStreak: number
+  /** Dny po sobě, kdy hráč aspoň jednou hrál. Jiná věc než série kol. */
+  dayStreak: number
+  bestDayStreak: number
+  /** Kolik různých dní hráč hrál celkem. */
+  daysPlayed: number
   lastPlayedDay: string | null
   /** ID hádanek, které už hráč dohrál — aby se neopakovaly. */
   seen: Record<ModeId, string[]>
@@ -102,10 +125,15 @@ export interface Profile {
   dailyDone: Record<string, number>
   /** Režimy, u kterých hráč viděl návod — při prvním spuštění se otevře sám. */
   tutorialSeen: Record<ModeId, boolean>
+  /**
+   * Viděl hráč průvodce celou hrou? Otevře se sám při úplně prvním spuštění;
+   * potom už jen na vyžádání z domovské obrazovky.
+   */
+  guideSeen: boolean
 }
 
 function emptyStats(): ModeStats {
-  return { played: 0, bestScore: 0, totalScore: 0, extra: 0, perfect: 0 }
+  return { played: 0, bestScore: 0, totalScore: 0, extra: 0, perfect: 0, clean: 0 }
 }
 
 export function emptyCounters(): Counters {
@@ -130,15 +158,23 @@ export function emptyCounters(): Counters {
     tetrisWords: 0,
     tetrisChain: 0,
     dailies: 0,
+    dailySets: 0,
     bestScore: 0,
   }
 }
 
+/** Aktuální verze profilu. Zvýšit, kdykoli je potřeba data přepočítat. */
+const PROFILE_VERSION = 2
+
 export function emptyProfile(): Profile {
   return {
+    version: PROFILE_VERSION,
     fame: 0,
     streak: 0,
     bestStreak: 0,
+    dayStreak: 0,
+    bestDayStreak: 0,
+    daysPlayed: 0,
     lastPlayedDay: null,
     seen: { chain: [], hive: [], tower: [], gallows: [], detective: [], tetris: [] },
     stats: {
@@ -172,6 +208,7 @@ export function emptyProfile(): Profile {
       detective: false,
       tetris: false,
     },
+    guideSeen: false,
   }
 }
 
@@ -185,15 +222,58 @@ interface LegacyProfile {
   hintRankPaid?: number
 }
 
+/**
+ * Body šly na třetinu a prahy hodností s nimi. Nasbíraný věhlas i rekordy se
+ * proto přepočítají stejným dílem — hráč tím nepřijde o hodnost ani o
+ * ocenění, jen se čísla srovnají s novým měřítkem.
+ */
+const SCORE_RESCALE = 3
+
+function rescale(profile: Profile): Profile {
+  const stats = { ...profile.stats }
+  for (const mode of MODES) {
+    const one = stats[mode]
+    stats[mode] = {
+      ...one,
+      bestScore: Math.round(one.bestScore / SCORE_RESCALE),
+      totalScore: Math.round(one.totalScore / SCORE_RESCALE),
+    }
+  }
+  return {
+    ...profile,
+    version: PROFILE_VERSION,
+    fame: Math.round(profile.fame / SCORE_RESCALE),
+    stats,
+    counters: {
+      ...profile.counters,
+      bestScore: Math.round(profile.counters.bestScore / SCORE_RESCALE),
+    },
+    history: profile.history.map((round) => ({
+      ...round,
+      score: Math.round(round.score / SCORE_RESCALE),
+    })),
+  }
+}
+
+function mergeStats(
+  base: Record<ModeId, ModeStats>,
+  saved: Partial<Record<ModeId, ModeStats>> | undefined,
+): Record<ModeId, ModeStats> {
+  const stats = { ...base }
+  for (const mode of MODES) stats[mode] = { ...base[mode], ...(saved?.[mode] ?? {}) }
+  return stats
+}
+
 /** Doplní chybějící klíče, aby starší uložený profil nikdy nespadl. */
 function migrate(raw: unknown): Profile {
   const base = emptyProfile()
   if (!raw || typeof raw !== 'object') return base
   const saved = raw as Partial<Profile>
   const old = raw as LegacyProfile
-  return {
+  const merged: Profile = {
     ...base,
     ...saved,
+    version: saved.version ?? 0,
     // Přejmenování veličin. Nasbírané body zůstávají tak jak byly, jen se
     // teď jmenují věhlas; nápovědy zdarma se přepočtou na inkoust kurzem,
     // který odpovídá střední nápovědě — nikdo tím nepřijde zkrátka.
@@ -201,7 +281,11 @@ function migrate(raw: unknown): Profile {
     ink: saved.ink ?? (old.hints ?? 0) * LEGACY_HINT_INK,
     inkRankPaid: saved.inkRankPaid ?? old.hintRankPaid ?? 1,
     seen: { ...base.seen, ...(saved.seen ?? {}) },
-    stats: { ...base.stats, ...(saved.stats ?? {}) },
+    // Statistiky se slučují **po jednotlivých hrách**, ne jen po klíčích
+    // režimu: mělké sloučení by uložený objekt vzalo celý a nově přidané
+    // políčko (naposled `clean`) by zůstalo `undefined`, což by v podmínkách
+    // ocenění tiše vyhodnotilo NaN.
+    stats: mergeStats(base.stats, saved.stats),
     counters: { ...base.counters, ...(saved.counters ?? {}) },
     awards: { ...(saved.awards ?? {}) },
     difficulty: { ...base.difficulty, ...(saved.difficulty ?? {}) },
@@ -209,6 +293,7 @@ function migrate(raw: unknown): Profile {
     tutorialSeen: { ...base.tutorialSeen, ...(saved.tutorialSeen ?? {}) },
     history: saved.history ?? [],
   }
+  return merged.version >= PROFILE_VERSION ? merged : rescale(merged)
 }
 
 /**
@@ -328,7 +413,12 @@ function fastest(current: number, candidate: number): number {
   return current === 0 ? candidate : Math.min(current, candidate)
 }
 
-function updateCounters(profile: Profile, result: RoundResult, daily: boolean): Counters {
+function updateCounters(
+  profile: Profile,
+  result: RoundResult,
+  day: string,
+  daily: boolean,
+): Counters {
   const c = { ...profile.counters }
   // Čisté kolo je až to, které hráč **dotáhl** bez nápovědy. Viselec ani
   // plástev ukončená po třech slovech se nepočítají — jinak by se meta „Vlastní
@@ -336,6 +426,7 @@ function updateCounters(profile: Profile, result: RoundResult, daily: boolean): 
   const clean = result.hintsUsed === 0 && result.success
   c.bestScore = Math.max(c.bestScore, result.score)
   if (daily) c.dailies += 1
+  if (allDailiesDone(profile, result, day, daily)) c.dailySets += 1
 
   // Řada čistých kol se láme na prvním kole s nápovědou — jinak by „pět
   // načisto v řadě" šlo posbírat po jednom mezi nápovědovými koly.
@@ -405,15 +496,26 @@ export function recordRound(
   day: string,
   daily = false,
 ): Profile {
+  // Série je řada **čistých** kol: dotažených a bez jediné nápovědy. Dřív se
+  // počítalo každé odehrané kolo, takže série osmnácti mohla vzniknout
+  // z osmnácti prohraných šibenic. Násobí se jí skóre, takže musí něco stát.
+  const clean = result.hintsUsed === 0 && result.success
+
   const stats = { ...profile.stats[result.mode] }
   stats.played += 1
   stats.totalScore += result.score
   stats.bestScore = Math.max(stats.bestScore, result.score)
   if (result.perfect) stats.perfect += 1
+  if (clean) stats.clean += 1
   if (typeof result.detail.extra === 'number') stats.extra += result.detail.extra
 
   const seen = [...profile.seen[result.mode], result.puzzleId].slice(-SEEN_LIMIT)
-  const streak = profile.streak + 1
+
+  const streak = clean ? profile.streak + 1 : 0
+
+  // Denní série je jiná věc: dny po sobě, kdy hráč aspoň jednou hrál. Není
+  // za výkon, je za návyk — a proto se nepřeruší tím, že se kolo nepovedlo.
+  const days = dayStreakAfter(profile, day)
 
   return grantAwards({
     ...profile,
@@ -423,10 +525,13 @@ export function recordRound(
     fame: profile.fame + result.score,
     streak,
     bestStreak: Math.max(profile.bestStreak, streak),
+    dayStreak: days.streak,
+    bestDayStreak: Math.max(profile.bestDayStreak, days.streak),
+    daysPlayed: profile.daysPlayed + (days.fresh ? 1 : 0),
     lastPlayedDay: day,
     seen: { ...profile.seen, [result.mode]: seen },
     stats: { ...profile.stats, [result.mode]: stats },
-    counters: updateCounters(profile, result, daily),
+    counters: updateCounters(profile, result, day, daily),
     history: [result, ...profile.history].slice(0, 50),
   })
 }
@@ -434,4 +539,26 @@ export function recordRound(
 /** Vzdání kola sérii ukončí, ale statistiky nechá být. */
 export function breakStreak(profile: Profile): Profile {
   return { ...profile, streak: 0 }
+}
+
+/**
+ * Denní série po odehrání ve dni `day`.
+ *
+ * Navazuje se jen na **včerejšek**; mezera řadu utne. Dva zápasy v jeden den
+ * sérii neposunou, protože je to řada dnů, ne kol.
+ */
+function dayStreakAfter(profile: Profile, day: string): { streak: number; fresh: boolean } {
+  if (profile.lastPlayedDay === day) {
+    return { streak: Math.max(profile.dayStreak, 1), fresh: false }
+  }
+  const yesterday = shiftDay(day, -1)
+  const follows = profile.lastPlayedDay === yesterday
+  return { streak: follows ? profile.dayStreak + 1 : 1, fresh: true }
+}
+
+/** Datum ve tvaru YYYY-MM-DD posunuté o `by` dní. */
+function shiftDay(day: string, by: number): string {
+  const stamp = Date.parse(`${day}T12:00:00Z`)
+  if (Number.isNaN(stamp)) return day
+  return new Date(stamp + by * 86_400_000).toISOString().slice(0, 10)
 }

@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 
 import type { ScoreBreakdown } from '../game/scoring'
 import { Confetti } from './Confetti'
+import { Explain } from './Explain'
 
 interface Props {
   title: string
@@ -77,9 +78,15 @@ export function ResultOverlay({
           <h2>{title}</h2>
           {subtitle && <p className="muted" style={{ marginTop: 'var(--sp-2)' }}>{subtitle}</p>}
 
-          <div className="score-big num">{score.toLocaleString('cs-CZ')}</div>
+          {/* I skóre je klikací: rozpis pod ním říká, za co body padly, ale
+              ne to, kam se počítají a proč jsou čísla, jaká jsou. */}
+          <Explain term="body" className="score-big num">
+            {score.toLocaleString('cs-CZ')}
+          </Explain>
           {breakdown.multiplierLabel && (
-            <span className="chip chip-gold">{breakdown.multiplierLabel}</span>
+            <Explain term="serie" className="chip chip-gold">
+              {breakdown.multiplierLabel}
+            </Explain>
           )}
 
           {children}

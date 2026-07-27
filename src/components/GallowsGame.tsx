@@ -22,6 +22,7 @@ import {
 } from '../game/gallows'
 import { inkPrice } from '../game/economy'
 import { HintHead, HintPrice } from './HintPanel'
+import { StatTile } from './Explain'
 import { scoreGallows } from '../game/scoring'
 import type { RoundResult } from '../game/types'
 import { Confirm } from './Confirm'
@@ -193,22 +194,23 @@ export function GallowsGame({
       <aside className="rail rail-left">
         <div className="hud">
           <div className="stat-row">
-            <div className="stat">
-              <div className="label">Životy</div>
-              <div className="value num accent">
-                {Math.max(0, GALLOWS_LIVES - wrong)}/{GALLOWS_LIVES}
-              </div>
-            </div>
-            <div className="stat">
-              <div className="label">Písmen</div>
-              <div className="value num">{puzzle.word.length}</div>
-            </div>
-            <div className="stat">
-              <div className="label">Odhaleno</div>
-              <div className="value num gold">
-                {foundLetters}/{needed.size}
-              </div>
-            </div>
+            <StatTile
+              label="Životy"
+              value={`${Math.max(0, GALLOWS_LIVES - wrong)}/${GALLOWS_LIVES}`}
+              tone="accent"
+              note={`Kolik chyb ještě uneseš. Za každé písmeno mimo přibude kus šibenice; po ${GALLOWS_LIVES} chybách kolo končí. Zbylé životy se na konci připočtou k bodům.`}
+            />
+            <StatTile
+              label="Písmen"
+              value={puzzle.word.length}
+              note={'Jak dlouhé je hledané slovo. Háčky a čárky se nehádají — „u" odhalí i „ů".'}
+            />
+            <StatTile
+              label="Odhaleno"
+              value={`${foundLetters}/${needed.size}`}
+              tone="gold"
+              note="Kolik různých písmen slova už je venku. Až budou všechna, kolo je vyhrané."
+            />
           </div>
         </div>
 

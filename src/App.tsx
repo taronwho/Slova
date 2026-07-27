@@ -20,7 +20,9 @@ import { InkMark } from './components/art/InkMark'
 import { RankBadge } from './components/art/RankBadge'
 import { ChainGame } from './components/ChainGame'
 import { DetectiveGame } from './components/DetectiveGame'
+import { Explain, ExplainProvider } from './components/Explain'
 import { GallowsGame } from './components/GallowsGame'
+import { Guide } from './components/Guide'
 import { HiveGame } from './components/HiveGame'
 import { Home } from './components/Home'
 import { Splash } from './components/Splash'
@@ -30,6 +32,7 @@ import { TetrisGame } from './components/TetrisGame'
 import { TowerGame } from './components/TowerGame'
 import type { ChainPuzzle, ChainState } from './game/chain'
 import type { DetectivePuzzle, DetectiveState } from './game/detective'
+import type { ExplainTarget } from './game/glossary'
 import type { GallowsPuzzle, GallowsState } from './game/gallows'
 import type { HivePuzzle, HiveState } from './game/hive'
 import { RANKS, rankFor } from './game/ranks'
@@ -77,6 +80,11 @@ export default function App() {
   const [tutorial, setTutorial] = useState<{ mode: ModeId; pending: boolean } | null>(
     null,
   )
+  /**
+   * Průvodce celou hrou. Při úplně prvním spuštění se otevře sám — je to
+   * jediné místo, kde se hráč dozví, co je věhlas a odkud se bere inkoust.
+   */
+  const [guide, setGuide] = useState(false)
   /** Rozehraná kola, jedno od každého režimu — nabídnou se na úvodní obrazovce. */
   const [saved, setSaved] = useState<SavedRounds>(() => loadRounds())
   /** Stav, se kterým se má hra nastartovat, když hráč klikne na Pokračovat. */
@@ -327,6 +335,32 @@ export default function App() {
 
   const goHome = useCallback(() => setView({ kind: 'home' }), [])
 
+  const closeGuide = useCallback(() => {
+    setGuide(false)
+    updateProfile((previous) =>
+      previous.guideSeen ? previous : { ...previous, guideSeen: true },
+    )
+  }, [updateProfile])
+
+  // Průvodce se sám otevře jen jednou za život profilu, a až po úvodní značce,
+  // ať se hráči neotevře pod ještě neodkrytým plátnem.
+  useEffect(() => {
+    if (!splash && !profile.guideSeen) setGuide(true)
+  }, [splash, profile.guideSeen])
+
+  /**
+   * Kam vede odkaz z vysvětlivky. Jediné místo, které zná navigaci celé hry.
+   * Cíle `term:` sem nedojdou — ty si panel vysvětlivek vyřídí sám.
+   */
+  const goTo = useCallback((target: ExplainTarget) => {
+    if (target === 'awards') setView({ kind: 'awards' })
+    else if (target === 'stats') setView({ kind: 'stats' })
+    else if (target === 'guide') setGuide(true)
+    else if (target.startsWith('rules:')) {
+      setTutorial({ mode: target.slice('rules:'.length) as ModeId, pending: false })
+    }
+  }, [])
+
   const closeTutorial = useCallback(() => {
     setTutorial((open) => {
       if (open) {
@@ -371,6 +405,7 @@ export default function App() {
   }, [profile.theme, updateProfile])
 
   return (
+    <ExplainProvider onGo={goTo}>
     <div
       className={`shell ${view.kind === 'game' ? 'playing' : ''}`}
       data-mode={view.kind === 'game' ? view.mode : undefined}
@@ -401,8 +436,18 @@ export default function App() {
             >
               <span aria-hidden="true">←</span> Menu
             </button>
-            <span className="chip chip-mode">{MODE_LABEL[view.mode]}</span>
-            {view.daily && <span className="chip chip-gold">Denní {dayLabel}</span>}
+            <button
+              type="button"
+              className="chip chip-mode"
+              onClick={() => setTutorial({ mode: view.mode, pending: false })}
+            >
+              {MODE_LABEL[view.mode]}
+            </button>
+            {view.daily && (
+              <Explain term="denni" className="chip chip-gold">
+                Denní {dayLabel}
+              </Explain>
+            )}
             <button
               type="button"
               className="btn btn-sm btn-ghost"
@@ -432,17 +477,27 @@ export default function App() {
           <span className="profile-rank profile-rank-name">{rank.rank.name}</span>
         </button>
         {/* Kalamář. Hráč se podle něj rozhoduje, jestli si nápovědu vzít,
-            takže musí být vidět i uprostřed hry. */}
+            takže musí být vidět i uprostřed hry — a musí jít ťuknout, protože
+            odjinud se nedozví, co inkoust je a kde se bere. */}
         {profile.ink > 0 && (
-          <span className="chip chip-ink" title={`${profile.ink} inkoustu na nápovědy`}>
+          <Explain
+            term="inkoust"
+            className="chip chip-ink"
+            title={`${profile.ink} inkoustu na nápovědy`}
+            label={`Inkoust: ${profile.ink}. Co to je`}
+          >
             <InkMark size={11} />
             <span className="num">{profile.ink}</span>
-          </span>
+          </Explain>
         )}
-        <span className="chip chip-accent chip-streak">
+        <Explain
+          term="serie"
+          className="chip chip-accent chip-streak"
+          label={`Série ${profile.streak} kol bez nápovědy. Co to je`}
+        >
           <span className="chip-label">Série</span>
           <span className="num">{profile.streak}</span>
-        </span>
+        </Explain>
         {themeButton}
       </header>
 
@@ -480,6 +535,7 @@ export default function App() {
             onStats={() => setView({ kind: 'stats' })}
             onAwards={() => setView({ kind: 'awards' })}
             onRules={(mode) => setTutorial({ mode, pending: false })}
+            onGuide={() => setGuide(true)}
             saved={saved}
             onResume={(mode) => {
               const round = saved[mode]
@@ -630,7 +686,21 @@ export default function App() {
             finishLabel={tutorial.pending ? 'Začít hrát' : 'Zavřít'}
           />
         )}
+
+        {/* Průvodce je pod návodem režimu: když se otevřou oba, hráč řeší
+            nejdřív hru, kterou zrovna spustil. */}
+        {guide && !tutorial && !splash && (
+          <Guide
+            onClose={closeGuide}
+            onRules={(mode) => {
+              closeGuide()
+              setTutorial({ mode, pending: false })
+            }}
+            finishLabel={profile.guideSeen ? 'Zavřít' : 'Jdu na to'}
+          />
+        )}
       </main>
     </div>
+    </ExplainProvider>
   )
 }

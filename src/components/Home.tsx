@@ -14,6 +14,7 @@ import {
 } from '../game/types'
 import { useBackGuard } from '../lib/back'
 import { InkMark } from './art/InkMark'
+import { Explain } from './Explain'
 import type { Profile, SavedRound, SavedRounds } from '../lib/storage'
 
 interface Props {
@@ -26,6 +27,8 @@ interface Props {
   onStats: () => void
   onAwards: () => void
   onRules: (mode: ModeId) => void
+  /** Průvodce celou hrou — společná pravidla, body, inkoust, hodnosti. */
+  onGuide: () => void
   /** Kola přerušená odchodem do menu nebo zavřením hry, po jednom od režimu. */
   saved: SavedRounds
   onResume: (mode: ModeId) => void
@@ -117,6 +120,7 @@ export function Home({
   onStats,
   onAwards,
   onRules,
+  onGuide,
   saved,
   onResume,
 }: Props) {
@@ -179,10 +183,12 @@ export function Home({
           se do ní vejde jedním ťuknutím a je vidět, co ještě dneska zbývá. */}
       <div className="panel daily-strip">
         <div className="daily-head">
-          <span className="label">Denní výzva {dayLabel}</span>
+          <Explain term="denni" className="label">
+            Denní výzva {dayLabel}
+          </Explain>
           <span className="faint">
             {dailyLeft === 0
-              ? 'Hotovo — všechny tři dneska máš'
+              ? 'Hotovo — celou várku dneska máš'
               : `Zbývá ${plural(dailyLeft, 'výzva', 'výzvy', 'výzev')}`}
           </span>
         </div>
@@ -306,28 +312,39 @@ export function Home({
         </div>
       )}
 
-      {/* Profil až pod výběrem hry — je to doplněk, ne to hlavní. */}
+      {/* Profil až pod výběrem hry — je to doplněk, ne to hlavní. Na každý
+          údaj se dá ťuknout: hodnost a věhlas vedou do vitríny, čipy si
+          otevřou vlastní vysvětlivku. Nikde nemá zůstat mrtvý popisek. */}
       <div className="panel home-profile">
-        <div className="rank-line">
+        <button type="button" className="rank-line" onClick={onAwards}>
           <span className="rank">
             {progress.rank.name} · hodnost {progress.rank.index}
           </span>
           <span className="num muted">
             {profile.fame.toLocaleString('cs-CZ')} věhlasu
           </span>
-        </div>
+        </button>
         <div className="fame-bar">
           <span
             style={{ width: `${progress.span ? (progress.into / progress.span) * 100 : 100}%` }}
           />
         </div>
         <div className="home-profile-chips">
-          <span className="chip chip-accent">Série {profile.streak}</span>
-          <span className="chip">Nejlepší série {profile.bestStreak}</span>
-          <span className="chip">Odehráno {played}</span>
-          <span className="chip chip-ink" title="Inkoust na nápovědy">
+          <Explain term="serie" className="chip chip-accent">
+            Série {profile.streak}
+          </Explain>
+          <Explain term="serie" className="chip">
+            Nejlepší série {profile.bestStreak}
+          </Explain>
+          <Explain term="dny" className="chip">
+            Dny v řadě {profile.dayStreak}
+          </Explain>
+          <Explain term="odehrano" className="chip">
+            Odehráno {played}
+          </Explain>
+          <Explain term="inkoust" className="chip chip-ink" title="Inkoust na nápovědy">
             <InkMark size={11} /> <span className="num">{profile.ink}</span>
-          </span>
+          </Explain>
           <button type="button" className="btn btn-sm btn-ghost" onClick={onAwards}>
             Ocenění {awards}/{AWARDS.length}
           </button>
@@ -343,10 +360,21 @@ export function Home({
         <h2>Pravidla podrobně</h2>
         <span className="rule" />
       </div>
-      <p className="muted" style={{ marginBottom: 'var(--sp-4)', fontSize: '0.94rem' }}>
+      <p className="muted" style={{ marginBottom: 'var(--sp-3)', fontSize: '0.94rem' }}>
         Rozklikni hru a projdi si všechno, co v ní platí. Totéž ti hra ukáže
         i sama, když ji spustíš poprvé.
       </p>
+      {/* Průvodce celou hrou stojí nad návody jednotlivých her: nejdřív ať se
+          hráč dozví, co je věhlas a odkud se bere inkoust, teprve pak pravidla
+          Voštiny. */}
+      <button
+        type="button"
+        className="btn btn-primary guide-open"
+        onClick={onGuide}
+        style={{ marginBottom: 'var(--sp-4)' }}
+      >
+        Jak se hrají Slova — body, hodnosti, inkoust
+      </button>
 
       <div className="rules-list">
         {MODES.map((mode) => {

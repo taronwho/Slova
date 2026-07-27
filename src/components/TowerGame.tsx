@@ -20,6 +20,7 @@ import type { RoundResult } from '../game/types'
 import { CZECH_LETTERS } from '../lib/czech'
 import { inkPrice } from '../game/economy'
 import { Confirm } from './Confirm'
+import { StatTile, useExplain } from './Explain'
 import { HintHead, HintPrice } from './HintPanel'
 import { ResultOverlay } from './ResultOverlay'
 
@@ -216,29 +217,42 @@ export function TowerGame({
   }, [breakdown.total, dayLabel, state.built])
 
   const totalLevels = puzzle.levels.length
+  const explain = useExplain()
 
   return (
     <div className="game with-rail">
       <aside className="rail rail-left">
         <div className="hud">
           <div className="stat-row">
-            <div className="stat">
-              <div className="label">Patro</div>
-              <div className="value num accent">
-                {Math.min(levelIndex + 1, totalLevels)}/{totalLevels}
-              </div>
-            </div>
-            <div className="stat">
-              <div className="label">Písmen</div>
-              <div className="value num gold">{level ? level.sig.length : '—'}</div>
-            </div>
+            <StatTile
+              label="Patro"
+              value={`${Math.min(levelIndex + 1, totalLevels)}/${totalLevels}`}
+              tone="accent"
+              note={'Kolikáté patro zrovna stavíš a kolik jich věž má celkem. Dostavět ji až nahoru bez nápovědy je „věž bez lešení".'}
+            />
+            <StatTile
+              label="Písmen"
+              value={level ? level.sig.length : '—'}
+              tone="gold"
+              note="Z kolika písmen se skládá slovo tohohle patra. Každé patro má o jedno víc než to pod ním a všechna se musí použít."
+            />
             {level?.added && (
-              <div className="stat">
+              <button
+                type="button"
+                className="stat stat-tap"
+                title="Písmeno, které v tomhle patře přibylo"
+                onClick={() =>
+                  explain.note(
+                    'Nové písmeno',
+                    'Písmeno, které v tomhle patře přibylo k těm z patra pod ním. Pořadí se mění, ale sada písmen se jen rozrůstá.',
+                  )
+                }
+              >
                 <div className="label">Nové písmeno</div>
                 <span className="new-letter" key={levelIndex}>
                   {level.added}
                 </span>
-              </div>
+              </button>
             )}
           </div>
         </div>

@@ -22,6 +22,7 @@ import { scoreChain } from '../game/scoring'
 import type { RoundResult } from '../game/types'
 import { CZECH_LETTERS } from '../lib/czech'
 import { Confirm } from './Confirm'
+import { StatTile } from './Explain'
 import { inkPrice } from '../game/economy'
 import { HintHead, HintPrice } from './HintPanel'
 import { Keyboard } from './Keyboard'
@@ -305,27 +306,35 @@ export function ChainGame({
       <aside className="rail rail-left">
         <div className="hud">
           <div className="stat-row">
-            <div className="stat">
-              <div className="label">Tahy</div>
-              <div className={`value num ${moves > budget ? 'warn' : ''}`}>{moves}</div>
-            </div>
-            <div className="stat">
-              {/* Na tři sloupce se celý popisek na řádek nevejde a zalomil by
-                  se, což ukrojí z hrací plochy. Na úzkém displeji stačí
-                  zkrácený. */}
-              <div className="label">
-                <span className="wide-only">Nejkratší cesta</span>
-                <span className="narrow-only">Nejkratší</span>
-              </div>
-              <div className="value num gold">{puzzle.par}</div>
-            </div>
-            <div className="stat">
-              <div className="label">Zbývá nejméně</div>
-              <div className={`value num ${remaining === -1 ? 'warn' : 'accent'}`}>
-                {solved ? 0 : remaining === -1 ? '—' : remaining}
-              </div>
+            <StatTile
+              label="Tahy"
+              value={moves}
+              tone={moves > budget ? 'warn' : undefined}
+              note={`Kolik slov už v řetězu je. Rozpočet je ${budget} tahů; za každý nad něj se odečítají body, ale kolo se tím neukončí.`}
+            />
+            {/* Na tři sloupce se celý popisek na řádek nevejde a zalomil by
+                se, což ukrojí z hrací plochy. Na úzkém displeji stačí
+                zkrácený. */}
+            <StatTile
+              label={
+                <>
+                  <span className="wide-only">Nejkratší cesta</span>
+                  <span className="narrow-only">Nejkratší</span>
+                </>
+              }
+              value={puzzle.par}
+              title="Nejkratší cesta"
+              tone="gold"
+              note={'Na kolik tahů se dá tahle dvojice slov spojit nejrychleji. Dojít na tenhle počet bez nápovědy je „čistý řetěz".'}
+            />
+            <StatTile
+              label="Zbývá nejméně"
+              value={solved ? 0 : remaining === -1 ? '—' : remaining}
+              tone={remaining === -1 ? 'warn' : 'accent'}
+              note="Kolik tahů je odsud nejméně potřeba k cíli. Pomlčka znamená, že se z téhle pozice k cíli dojít nedá — vrať se o krok zpět."
+            >
               <div className="stat-note faint">rozpočet {budget} tahů</div>
-            </div>
+            </StatTile>
           </div>
         </div>
 

@@ -9,11 +9,22 @@
 
 import { inkPrice } from '../game/economy'
 import { InkMark } from './art/InkMark'
+import { Explain } from './Explain'
 
-/** Popisek nad tlačítky: kolik nápověd padlo a co zbývá v kalamáři. */
+/**
+ * Popisek nad tlačítky: kolik nápověd padlo a co zbývá v kalamáři.
+ *
+ * Je klikací. Hráč se právě rozhoduje, jestli nápovědu vzít, a tohle je jediné
+ * místo v celé hře, kde tu otázku řeší — takže je to i jediné místo, kde se
+ * vyplatí mít výklad ekonomiky na dosah ruky.
+ */
 export function HintHead({ used, ink }: { used: number; ink: number }) {
   return (
-    <div className="label">
+    <Explain
+      term="napoveda"
+      className="label hint-head"
+      label={`Nápovědy: ${used} použito, ${ink} inkoustu. Jak fungují`}
+    >
       Nápovědy · {used} použito
       {ink > 0 && (
         <span className="free-left">
@@ -21,7 +32,7 @@ export function HintHead({ used, ink }: { used: number; ink: number }) {
           <InkMark size={10} /> {ink}
         </span>
       )}
-    </div>
+    </Explain>
   )
 }
 

@@ -23,6 +23,7 @@ import type { RoundResult } from '../game/types'
 import { CZECH_LETTERS, fold } from '../lib/czech'
 import { inkPrice } from '../game/economy'
 import { Confirm } from './Confirm'
+import { Explain, StatTile } from './Explain'
 import { HintPrice } from './HintPanel'
 import { FoundWords } from './FoundWords'
 import { ResultOverlay } from './ResultOverlay'
@@ -223,12 +224,12 @@ export function HiveGame({
       <aside className="rail rail-left">
         <div className="hud">
         <div className="panel">
-          <div className="rank-line">
+          <Explain term="plastev" className="rank-line">
             <span className="rank">{rank.name}</span>
             <span className="num muted">
               {points} / {max}
             </span>
-          </div>
+          </Explain>
           <div className="progress-track">
             <div
               className="progress-fill"
@@ -243,29 +244,25 @@ export function HiveGame({
         </div>
 
         <div className="stat-row">
-          <div className="stat">
-            <div className="label">Slov</div>
-            <div className="value num accent">{state.found.length}</div>
-          </div>
-          <div className="stat">
-            <div className="label">Z celku</div>
-            <div className="value num">{puzzle.solutions.length}</div>
-          </div>
+          <StatTile
+            label="Slov"
+            value={state.found.length}
+            tone="accent"
+            note="Kolik slov už z plástve máš. Kolo se dá ukončit kdykoli — plástev do posledního slova je meta sama pro sebe."
+          />
+          <StatTile
+            label="Z celku"
+            value={puzzle.solutions.length}
+            note="Kolik slov v téhle plástvi vůbec je. Posledních pár bývá těžších než celý zbytek dohromady."
+          />
           {/* Návod se dá přeskočit a pak je „Pangramy" jen záhadné číslo.
               Ťuknutím se vysvětlí tam, kde na něj hráč kouká. */}
-          <button
-            type="button"
-            className="stat stat-tap"
-            onClick={() =>
-              showFlash('Pangram = slovo ze všech sedmi písmen · +7 bodů', 'info')
-            }
-          >
-            <div className="label">Pangramy</div>
-            <div className="value num gold">
-              {state.found.filter((w) => puzzle.pangrams.includes(w)).length}/
-              {puzzle.pangrams.length}
-            </div>
-          </button>
+          <StatTile
+            label="Pangramy"
+            value={`${state.found.filter((w) => puzzle.pangrams.includes(w)).length}/${puzzle.pangrams.length}`}
+            tone="gold"
+            term="pangram"
+          />
         </div>
 
         </div>

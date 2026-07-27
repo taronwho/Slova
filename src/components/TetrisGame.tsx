@@ -28,6 +28,7 @@ import {
 } from '../game/tetris'
 import type { RoundResult } from '../game/types'
 import { Confirm } from './Confirm'
+import { StatTile } from './Explain'
 import { HintHead, HintPrice } from './HintPanel'
 import { ResultOverlay } from './ResultOverlay'
 
@@ -248,18 +249,23 @@ export function TetrisGame({
       <aside className="rail rail-left">
         <div className="hud">
           <div className="stat-row">
-            <div className="stat">
-              <div className="label">Slov</div>
-              <div className="value num accent">{state.cleared.length}</div>
-            </div>
-            <div className="stat">
-              <div className="label">Řetěz</div>
-              <div className="value num gold">{state.bestChain}</div>
-            </div>
-            <div className="stat">
-              <div className="label">Úroveň</div>
-              <div className="value num">{level(state)}</div>
-            </div>
+            <StatTile
+              label="Slov"
+              value={state.cleared.length}
+              tone="accent"
+              note="Kolik slov už jsi z padajících slabik složil. Za tucet slov v jednom kole bez nápovědy je meta."
+            />
+            <StatTile
+              label="Řetěz"
+              value={state.bestChain}
+              tone="gold"
+              note="Nejdelší řetěz z jednoho dopadu. Když se po odebrání slova slabiky sesypou a složí další, počítá se to jako řetěz — a je za něj prémie."
+            />
+            <StatTile
+              label="Úroveň"
+              value={level(state)}
+              note="Roste s počtem složených slov a s ní i rychlost padání. Za každou dosaženou úroveň jsou body navíc."
+            />
           </div>
         </div>
 

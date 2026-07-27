@@ -365,8 +365,9 @@ na obou místech.
 ## Hodnosti a ocenění
 
 Postup drží dvě věci: **padesát hodností** (`src/game/ranks.ts`) a
-**sedmatřicet ocenění** (`src/game/awards.ts`). Hodnost roste s **věhlasem** —
-tak se jmenuje součet bodů ze všech šesti her —, ocenění jsou jednotlivé mety.
+**sto čtyřiašedesát ocenění** (`src/game/awards.ts`). Hodnost roste
+s **věhlasem** — tak se jmenuje součet bodů ze všech šesti her —, ocenění jsou
+jednotlivé mety.
 
 Prahy hodností jsou nerovnoměrné schválně. První tři odsýpají, ať má nový hráč
 co slavit hned první večer: druhá padne po jednom kole, třetí po druhém, čtvrtá
@@ -375,12 +376,35 @@ stupni, takže dvacátá hodnost je na dvě stě kol a padesátá na dobrých je
 tisíc. Hlídá to test: od čtvrté hodnosti musí být každý další stupeň dražší než
 ten předchozí a poslední přes deset milionů věhlasu.
 
-Mety jsou schválně **za dovednost, ne za vysedění**. Nejpočetnější skupina je
-„Bez nápovědy" (devět met, od jednoho čistého kola po padesát a po pět čistých
-v řadě), hned za ní „Body" (osm met za skóre v jednom kole a za nasbíraný věhlas).
-„Odehraj sto kol" tu není — takovou metu splní každý, kdo vydrží klikat.
-Hlídá to i test „většina met stojí na dovednosti nebo bodech": skupiny `clean`
-a `score` musí dohromady tvořit víc než polovinu.
+### Žebříčky, ne seznam
+
+Čtyřicet met se vyčerpá za pár večerů a pak už není za čím jít. Slova se ale
+mají hrát roky, takže je většina met postavená jako **žebříček**: jedna rodina,
+tři až pět stupňů, poslední tak daleko, že se na něj hraje sezónu. Rodin je
+jednačtyřicet a nese je `ladder()` — dostane jedno číslo z profilu a seznam
+prahů, zbytek (klíče, stupně, ukazatel postupu) dopočítá.
+
+Ve vitríně se žebříček **nerozbaluje celý**. Ukazují se získané stupně a hned
+následující, tedy ten, na který se zrovna hraje; sto šedesát dlaždic naráz
+nikoho nemotivuje, jeden další stupeň ano. Kdo chce vidět celou cestu až
+k Legendě, přepne se v hlavičce na „Všech 164".
+
+Mety zůstávají schválně **za dovednost, ne za vysedění**. Nejpočetnější skupina
+je „Mistrovské kousky" (47 met) a hned za ní „Mistrovství her" — šest žebříčků
+po pěti stupních, od Učně po Legendu, a všechny počítají jen kola dohraná
+**bez nápovědy**. „Odehraj sto kol" má jedinou skromnou rodinu ve Vytrvalosti;
+takovou metu splní každý, kdo vydrží klikat. Hlídá to test „většina met stojí
+na dovednosti nebo bodech": skupiny `clean`, `score`, `mastery` a `feat` musí
+dohromady tvořit víc než polovinu.
+
+Jediná skupina, kterou nejde dohnat jedním večerem, je „Návyk": dny v řadě, dny
+celkem a denní várky. Den se počítá jednou, ať se odehraje kolo nebo dvacet.
+
+**Klíče ocenění jsou navěky.** Podle nich se v uloženém profilu pozná, co hráč
+má; přejmenovat klíč znamená udělit metu — a inkoust za ni — podruhé. Proto tu
+zůstávají i klíče, které se s dnešním nadpisem míjejí (`xp-50k` pro věhlas,
+`skore-1500` pro pět set bodů). Nadpis i práh se přepsat smí, klíč ne; hlídá to
+test na duplicity.
 
 **Čisté kolo je až to, které hráč dotáhl.** Viselec v Šibenici ani plástev
 ukončená po třech slovech se nepočítají, i když v nich nebyla ani jedna
@@ -410,7 +434,7 @@ Kresby jsou vlastní, ne emoji ani ikony odjinud:
   (každé má o písmeno víc). Odstupňované mety sdílejí kresbu a liší se
   krokvemi, stejnou řečí jako hodnosti.
 
-Domovská obrazovka zůstává, jaká byla — přibylo na ní tlačítko „Ocenění n/37"
+Domovská obrazovka zůstává, jaká byla — přibylo na ní tlačítko „Ocenění n/164"
 a pruh denní výzvy. Všechno ostatní žije na vlastní obrazovce (`Awards.tsx`),
 kde je i celý žebříček padesáti hodností. Zamčené mety se neschovávají a
 u met na počet se pod dlaždicí táhne proužek postupu; schovaná meta
@@ -434,12 +458,13 @@ v inkoustu je desetina bodové ceny téže nápovědy**. Malá vyjde na pět, od
 celého slova na dvacet — za totéž, co dřív koupilo čtyři celá slova, je dnes
 jedno. Nová nápověda si tak cenu přinese sama a nedá se splést.
 
-Příjem je držený nízko: deset za ocenění (dvacet pět za nejvyšší stupeň
-rodiny), za hodnost osm až dvaašedesát podle toho, jak je vysoká, a osm za
-**kompletní** denní várku. Za celou hru se nasbírá kolem dvou tisíc — tedy
-zhruba sto odhalených slov na jedenáct tisíc kol. Denní odměna padá až za všech
-pět výzev dne; šest režimů krát odměna denně by kalamář zaplavilo rychleji než
-všechno ostatní dohromady.
+Příjem je držený nízko a **roste se stupněm žebříčku, ne s počtem met**: šest
+za první stupeň, čtyřicet za pátý. Ocenění je sto čtyřiašedesát, ale drtivá
+většina jich je nízko, takže za všechna dohromady padne kolem 2 500 inkoustu —
+zhruba sto dvacet odhalených slov za celých pět let hraní. K tomu hodnost
+(osm až dvaašedesát podle toho, jak je vysoká) a osm za **kompletní** denní
+várku. Denní odměna padá až za všech šest výzev dne; šest režimů krát odměna
+denně by kalamář zaplavilo rychleji než všechno ostatní dohromady.
 
 Nápověda zaplacená inkoustem **nestojí body, ale pořád se počítá jako
 nápověda**. Do `hintsUsed` se započítá stejně jako placená, jen do `freeHints`

@@ -1,8 +1,18 @@
-/** Přehled statistik a historie kol. */
+/**
+ * Přehled statistik a historie kol.
+ *
+ * Každá dlaždice je klikací. Buď má pojem ve slovníčku (věhlas, série, denní
+ * výzva) a otevře jeho výklad, nebo si nese vlastní jednu větu, která se pod ní
+ * rozbalí — číslo bez vysvětlení je k ničemu, když si hráč není jistý, co se do
+ * něj počítá.
+ */
+
+import { useState } from 'react'
 
 import { rankFor } from '../game/ranks'
 import { MODE_LABEL, type ModeId } from '../game/types'
 import type { Profile } from '../lib/storage'
+import { Explain, useExplain } from './Explain'
 
 interface Props {
   profile: Profile
@@ -10,7 +20,9 @@ interface Props {
   onReset: () => void
 }
 
-const MODES: ModeId[] = ['chain', 'hive', 'tower', 'gallows', 'detective']
+// Všech šest her, ne pět. Slabiky ve výpisu chyběly, takže hráč o svých
+// číslech z jedné celé hry nevěděl.
+const MODES: ModeId[] = ['chain', 'hive', 'tower', 'gallows', 'detective', 'tetris']
 
 /** Popisky detailů kola — v historii je čte hráč, ne vývojář. */
 const DETAIL_LABEL: Record<string, string> = {
@@ -21,6 +33,17 @@ const DETAIL_LABEL: Record<string, string> = {
   rank: 'hodnost',
   floors: 'pater',
   top: 'nejvyšší patro',
+  words: 'slov',
+  chain: 'nejdelší řetěz',
+  level: 'úroveň',
+  solved: 'uhodnuto',
+  wrong: 'chyb',
+  lives: 'zbylo životů',
+  guessed: 'tipnuto',
+  extra: 'navíc',
+  full: 'dostavěno',
+  pangrams: 'pangramů',
+  rankTop: 'nejvyšší hodnost',
 }
 
 const EXTRA_LABEL: Record<ModeId, string> = {
@@ -32,8 +55,55 @@ const EXTRA_LABEL: Record<ModeId, string> = {
   tetris: 'Průměr složených slov',
 }
 
+/** Co znamená „perfektní" — v každé hře něco jiného. */
+const PERFECT_NOTE: Record<ModeId, string> = {
+  chain: 'Kola dohraná na počet tahů nejkratší cesty a bez nápovědy.',
+  hive: 'Kola, ve kterých jsi vysbíral celou plástev bez nápovědy.',
+  tower: 'Věže dostavěné až nahoru bez nápovědy.',
+  gallows: 'Slova uhodnutá bez jediné chyby a bez nápovědy.',
+  detective: 'Případy rozluštěné bez chybného písmene a bez nápovědy.',
+  tetris: 'Kola aspoň s tuctem slov a bez nápovědy.',
+}
+
+/**
+ * Jedna dlaždice statistiky.
+ *
+ * `term` ji pověsí na slovníček, `note` na vlastní větu, která se rozbalí
+ * pod číslem. Bez jednoho i druhého by se na dlaždici nedalo kliknout a to je
+ * ve Slovech porušení pravidla, ne úspora práce.
+ */
+function Stat({
+  label,
+  value,
+  tone,
+  note,
+  term,
+}: {
+  label: string
+  value: string | number
+  tone?: 'accent' | 'gold'
+  note?: string
+  term?: string
+}) {
+  const { show } = useExplain()
+  const [open, setOpen] = useState(false)
+
+  return (
+    <button
+      type="button"
+      className={`stat ${open ? 'open' : ''}`}
+      onClick={() => (term ? show(term) : setOpen((was) => !was))}
+    >
+      <div className="label">{label}</div>
+      <div className={`value num ${tone ?? ''}`}>{value}</div>
+      {open && note && <div className="stat-explain">{note}</div>}
+    </button>
+  )
+}
+
 export function Stats({ profile, onBack, onReset }: Props) {
   const progress = rankFor(profile.fame)
+  const played = MODES.reduce((sum, mode) => sum + profile.stats[mode].played, 0)
 
   return (
     <>
@@ -46,14 +116,14 @@ export function Stats({ profile, onBack, onReset }: Props) {
       </div>
 
       <div className="panel" style={{ marginBottom: 'var(--sp-5)' }}>
-        <div className="rank-line">
+        <Explain term="hodnost" className="rank-line">
           <span className="rank">
             {progress.rank.name} · hodnost {progress.rank.index}
           </span>
           <span className="num muted">
             {profile.fame.toLocaleString('cs-CZ')} věhlasu
           </span>
-        </div>
+        </Explain>
         <div className="fame-bar">
           <span
             style={{ width: `${progress.span ? (progress.into / progress.span) * 100 : 100}%` }}
@@ -69,34 +139,56 @@ export function Stats({ profile, onBack, onReset }: Props) {
       </div>
 
       <div className="stats-grid" style={{ marginBottom: 'var(--sp-5)' }}>
-        <div className="stat">
-          <div className="label">Kol bez nápovědy</div>
-          <div className="value num accent">{profile.counters.noHint}</div>
-        </div>
-        <div className="stat">
-          <div className="label">Nejdelší čistá řada</div>
-          <div className="value num accent">{profile.counters.bestNoHintStreak}</div>
-        </div>
-        <div className="stat">
-          <div className="label">Pangramů</div>
-          <div className="value num gold">{profile.counters.pangrams}</div>
-        </div>
-        <div className="stat">
-          <div className="label">Celých pláství</div>
-          <div className="value num">{profile.counters.hiveFull}</div>
-        </div>
-        <div className="stat">
-          <div className="label">Nejkratších cest</div>
-          <div className="value num">{profile.counters.chainPar}</div>
-        </div>
-        <div className="stat">
-          <div className="label">Dostavěných věží</div>
-          <div className="value num">{profile.counters.towerFull}</div>
-        </div>
-        <div className="stat">
-          <div className="label">Denních výzev</div>
-          <div className="value num">{profile.counters.dailies}</div>
-        </div>
+        <Stat label="Odehráno kol" value={played} term="odehrano" />
+        <Stat
+          label="Kol bez nápovědy"
+          value={profile.counters.noHint}
+          tone="accent"
+          term="serie"
+        />
+        <Stat
+          label="Nejdelší čistá řada"
+          value={profile.bestStreak}
+          tone="accent"
+          term="serie"
+        />
+        <Stat label="Dní v řadě" value={profile.dayStreak} term="dny" />
+        <Stat label="Nejvíc dní v řadě" value={profile.bestDayStreak} term="dny" />
+        <Stat label="Dnů celkem" value={profile.daysPlayed} term="dny" />
+        <Stat
+          label="Pangramů"
+          value={profile.counters.pangrams}
+          tone="gold"
+          term="pangram"
+        />
+        <Stat
+          label="Celých pláství"
+          value={profile.counters.hiveFull}
+          note="Kolikrát jsi ve Voštině našel úplně všechna slova, do posledního."
+        />
+        <Stat
+          label="Nejkratších cest"
+          value={profile.counters.chainPar}
+          note="Kolikrát jsi Řetěz dohrál na tolik tahů, kolik jich má nejkratší možná cesta."
+        />
+        <Stat
+          label="Dostavěných věží"
+          value={profile.counters.towerFull}
+          note="Kolikrát jsi Věž postavil až do posledního patra."
+        />
+        <Stat
+          label="Slov ze slabik"
+          value={profile.counters.tetrisWords}
+          note="Kolik slov jsi celkem složil z padajících slabik."
+        />
+        <Stat label="Denních výzev" value={profile.counters.dailies} term="denni" />
+        <Stat label="Celých denních várek" value={profile.counters.dailySets} term="denni" />
+        <Stat
+          label="Nejlepší kolo"
+          value={profile.counters.bestScore.toLocaleString('cs-CZ')}
+          tone="gold"
+          term="body"
+        />
       </div>
 
       {MODES.map((mode) => {
@@ -110,28 +202,39 @@ export function Stats({ profile, onBack, onReset }: Props) {
               <span className="rule" />
             </div>
             <div className="stats-grid">
-              <div className="stat">
-                <div className="label">Odehráno</div>
-                <div className="value num">{stats.played}</div>
-              </div>
-              <div className="stat">
-                <div className="label">Nejlepší skóre</div>
-                <div className="value num accent">{stats.bestScore.toLocaleString('cs-CZ')}</div>
-              </div>
-              <div className="stat">
-                <div className="label">Průměr</div>
-                <div className="value num">{Math.round(average).toLocaleString('cs-CZ')}</div>
-              </div>
-              <div className="stat">
-                <div className="label">Perfektních</div>
-                <div className="value num gold">{stats.perfect}</div>
-              </div>
-              <div className="stat">
-                <div className="label">{EXTRA_LABEL[mode]}</div>
-                <div className="value num">
-                  {stats.played > 0 ? extra.toFixed(1).replace('.', ',') : '—'}
-                </div>
-              </div>
+              <Stat
+                label="Odehráno"
+                value={stats.played}
+                note={`Kolik kol hry ${MODE_LABEL[mode]} máš za sebou, včetně nepovedených.`}
+              />
+              <Stat
+                label="Bez nápovědy"
+                value={stats.clean}
+                tone="accent"
+                note="Kola dotažená do konce bez jediné nápovědy. Na tomhle čísle stojí žebříček mistrovství téhle hry."
+              />
+              <Stat
+                label="Nejlepší skóre"
+                value={stats.bestScore.toLocaleString('cs-CZ')}
+                tone="accent"
+                term="body"
+              />
+              <Stat
+                label="Průměr"
+                value={Math.round(average).toLocaleString('cs-CZ')}
+                note="Průměrné skóre za kolo v téhle hře."
+              />
+              <Stat
+                label="Perfektních"
+                value={stats.perfect}
+                tone="gold"
+                note={PERFECT_NOTE[mode]}
+              />
+              <Stat
+                label={EXTRA_LABEL[mode]}
+                value={stats.played > 0 ? extra.toFixed(1).replace('.', ',') : '—'}
+                note="Průměr za jedno odehrané kolo."
+              />
             </div>
           </section>
         )

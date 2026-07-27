@@ -133,8 +133,8 @@ export function submitLevel(
 export type TowerHintKind = 'letter' | 'word'
 
 export const TOWER_HINT_COST: Record<TowerHintKind, number> = {
-  letter: 60,
-  word: 200,
+  letter: 20,
+  word: 66,
 }
 
 export interface TowerHintResult {

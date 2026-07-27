@@ -36,9 +36,9 @@ export const GALLOWS_KEYS = 'abcdefghijklmnopqrstuvwxyz'.split('')
 
 export const GALLOWS_HINT_COST = {
   /** Odhalí jedno dosud neuhodnuté písmeno. */
-  letter: 150,
+  letter: 50,
   /** Vyškrtne z klávesnice pět písmen, která ve slově nejsou. */
-  strike: 100,
+  strike: 35,
 } as const
 
 export type GallowsHintKind = keyof typeof GALLOWS_HINT_COST

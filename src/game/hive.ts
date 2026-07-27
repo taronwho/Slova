@@ -164,7 +164,7 @@ export function submitWord(
 }
 
 /** Bodová cena nápovědy „další slovo". Odsud si ji bere i skóre. */
-export const HIVE_HINT_COST = 80
+export const HIVE_HINT_COST = 26
 
 /** Nápověda: odhalí nejkratší dosud nenalezené slovo. */
 export function takeHiveHint(

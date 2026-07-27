@@ -19,20 +19,30 @@
 
 import type { Award } from './awards'
 
-/** Cena nápovědy v inkoustu podle její bodové ceny. */
+/**
+ * Cena nápovědy v inkoustu podle její bodové ceny.
+ *
+ * Dělitel není deset, ale 3,3 — bodové ceny nápověd šly spolu se skóre na
+ * třetinu a inkoustové ceny měly zůstat, kde byly. Malá nápověda tak pořád
+ * stojí pět, odhalení celého slova dvacet.
+ */
 export function inkPrice(points: number): number {
-  return Math.max(1, Math.round(points / 10))
+  return Math.max(1, Math.round(points / 3.3))
 }
 
 /**
  * Kolik inkoustu padne za ocenění.
  *
- * Nejvyšší stupeň rodiny za dva a půl, ostatní za deset. Přes všech
- * sedmatřicet ocenění se nasbírá kolem 450 inkoustu — tedy zhruba dvacet
- * odhalených slov za celou hru, ne dvacet za večer.
+ * Odměna roste se stupněm žebříčku, ne s počtem met. Ocenění je přes sto
+ * šedesát, ale drtivá většina jich je na nižších stupních a dá jen šest —
+ * teprve pátý stupeň, na který se hraje sezónu, dá čtyřicet. Kdo posbírá
+ * úplně všechno za celých pět let, nastřádá kolem tisíce inkoustu, tedy
+ * zhruba padesát odhalených slov. Za večer ani za měsíc se kalamář nepřeleje.
  */
+export const INK_BY_TIER = [10, 6, 10, 16, 26, 40]
+
 export function awardInk(award: Award): number {
-  return award.tier === 3 ? 25 : 10
+  return INK_BY_TIER[award.tier ?? 0] ?? 10
 }
 
 /**
