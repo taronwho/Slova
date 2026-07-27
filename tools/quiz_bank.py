@@ -2168,3 +2168,1037 @@ BANK["spolecnost"] += [
         "Krajní zbraní v něm bývá stávka.",
     )),
 ]
+
+# ==========================================================================
+# Třetí dávka
+# ==========================================================================
+
+BANK["osobnost"] += [
+    ("Poznej známou osobnost.", "Ema Destinnová", ["Destinnová"], (
+        "Za války jí Rakousko zabavilo pas a musela zůstat na svém jihočeském zámku ve Stráži nad Nežárkou.",
+        "Umělecké jméno si vzala po své učitelce zpěvu Marii Loewe-Destinn.",
+        "Byla to světoznámá sopranistka a její podobizna byla na dvoutisícové bankovce.",
+    )),
+    ("Poznej známou osobnost.", "Ernest Hemingway", ["Hemingway"], (
+        "Přežil dvě letecké havárie během dvou dnů a noviny mezitím otiskly jeho nekrology.",
+        "Byl to americký spisovatel, který pracoval jako novinář ve Španělsku i na Kubě.",
+        "Napsal Stařec a moře a Komu zvoní hrana.",
+    )),
+    ("Poznej známou osobnost.", "Otto Wichterle", ["Wichterle"], (
+        "Za války ho zavřelo gestapo a po roce 1968 ho vyhodili z ústavu, který sám vybudoval.",
+        "Byl to český chemik, který vynalezl silon a stál u zrodu makromolekulární chemie u nás.",
+        "Nejznámější vynález mu vznikl doma na dětské stavebnici Merkur — měkké kontaktní čočky.",
+    )),
+    ("Poznej známou osobnost.", "Steve Jobs", ["Jobs"], (
+        "Chodil na kurz kaligrafie, který podle vlastních slov rozhodl o tom, jak budou vypadat počítačová písma.",
+        "Z firmy, kterou spoluzaložil, ho roku 1985 vyhodili a po jedenácti letech se vrátil.",
+        "Uvedl na trh iPod, iPhone a iPad a nosil černý rolák.",
+    )),
+    ("Poznej známou osobnost.", "Ludvík Svoboda", ["Svoboda"], (
+        "Za první světové války bojoval v československých legiích v Rusku a po druhé velel armádnímu sboru.",
+        "Byl to generál, kterého v padesátých letech odsunuli do JZD v Kroměříži jako účetního.",
+        "V letech 1968 až 1975 byl československým prezidentem.",
+    )),
+    ("Poznej známou osobnost.", "Marie Antoinetta", ["Marie Antoinette"], (
+        "Byla nejmladší dcerou rakouské císařovny a do Francie ji provdali ve čtrnácti letech.",
+        "Nechala si v zahradě Versailles postavit selskou vesničku, kde si hrála na pastýřku.",
+        "Skončila pod gilotinou a připisuje se jí věta o koláčích, kterou nikdy neřekla.",
+    )),
+    ("Poznej známou osobnost.", "Jan Neruda", ["Neruda"], (
+        "Bydlel na Malé Straně v domě U dvou slunců a živil se hlavně novinařinou.",
+        "Byl to český básník a fejetonista, po kterém si vzal jméno chilský nositel Nobelovy ceny.",
+        "Napsal Povídky malostranské a báseň Romance o Karlu IV.",
+    )),
+    ("Poznej známou osobnost.", "Albert Einstein", ["Einstein"], (
+        "Pracoval jako úředník patentového úřadu v Bernu, když vydal čtyři práce, které převrátily fyziku.",
+        "Nabídli mu roku 1952 funkci izraelského prezidenta a on ji odmítl.",
+        "Nobelovu cenu dostal za fotoelektrický jev a nejznámější je jeho vzorec o hmotě a energii.",
+    )),
+    ("Poznej známou osobnost.", "Matka Tereza", ["Tereza z Kalkaty"], (
+        "Narodila se v dnešní Severní Makedonii v albánské rodině a do Indie odjela v osmnácti.",
+        "Založila kongregaci Misionářek lásky a roku 1979 dostala Nobelovu cenu míru.",
+        "Starala se o umírající v indickém velkoměstě na Ganze a papež ji roku 2016 prohlásil za svatou.",
+    )),
+    ("Poznej známou osobnost.", "Jaroslav Heyrovský", ["Heyrovský"], (
+        "Za války musel z fakulty odejít, protože byly české vysoké školy zavřené, a bádal v soukromí.",
+        "Byl to český fyzikální chemik, který svou metodu objevil roku 1922 při práci s rtuťovou kapkou.",
+        "Za polarografii dostal roku 1959 jako první Čech Nobelovu cenu za chemii.",
+    )),
+    ("Poznej známou osobnost.", "Cleopatra", ["Kleopatra", "Kleopatra VII."], (
+        "Byla řeckého původu a z celé své dynastie prý jako jediná uměla egyptsky.",
+        "Vládla v Alexandrii a měla děti s Caesarem i s Marcem Antoniem.",
+        "Podle tradice se zabila kousnutím hada a byla poslední egyptskou vládkyní.",
+    )),
+    ("Poznej známou osobnost.", "Josef Čapek", ["Čapek"], (
+        "Zemřel roku 1945 v Bergen-Belsenu a jeho hrob se nikdy nenašel.",
+        "Byl to malíř a spisovatel, který svému mladšímu bratrovi poradil slovo robot.",
+        "Napsal a ilustroval Povídání o pejskovi a kočičce.",
+    )),
+    ("Poznej známou osobnost.", "Alexandr Veliký", ["Alexandr Makedonský", "Alexandr Veliký"], (
+        "Jeho učitelem byl Aristoteles a svého koně Bukefala prý zkrotil jako chlapec.",
+        "Do třiatřiceti let dobyl říši od Řecka po Indii a zakládal města nesoucí jeho jméno.",
+        "Podle pověsti rozťal gordický uzel mečem, místo aby ho rozvazoval.",
+    )),
+    ("Poznej známou osobnost.", "Zdeněk Svěrák", ["Svěrák"], (
+        "Původním povoláním byl učitel češtiny a ruštiny na základní škole v Měcholupech.",
+        "Spoluzaložil divadlo, které uvádí hry o fiktivním českém géniovi.",
+        "Napsal scénář ke Kolji, za který získal Oscara, a zpívá s Jaroslavem Uhlířem.",
+    )),
+    ("Poznej známou osobnost.", "Vladimír Remek", ["Remek"], (
+        "Vystudoval leteckou akademii v Košicích a později byl poslancem Evropského parlamentu i velvyslancem v Moskvě.",
+        "Letěl roku 1978 na palubě Sojuzu 28 a strávil ve vesmíru necelých osm dní.",
+        "Byl prvním člověkem ve vesmíru, který nepocházel ze Sovětského svazu ani z USA.",
+    )),
+    ("Poznej známou osobnost.", "Coco Chanel", ["Chanel", "Gabrielle Chanel"], (
+        "Vyrůstala v sirotčinci u jeptišek a přezdívku prý získala podle písničky, kterou zpívala v kabaretu.",
+        "Osvobodila ženy od korzetu a prosadila kalhoty i jednoduché černé šaty.",
+        "Nese její jméno parfém s číslem pět.",
+    )),
+    ("Poznej známou osobnost.", "Jiří Voskovec", ["Voskovec"], (
+        "V Americe si zkrátil jméno na George a hrál v porotě filmu Dvanáct rozhněvaných mužů.",
+        "Po roce 1948 zůstal v emigraci a jedenáct měsíců ho drželi na Ellis Islandu.",
+        "Tvořil s Janem Werichem slavnou dvojici prvorepublikového Osvobozeného divadla.",
+    )),
+    ("Poznej známou osobnost.", "Tycho Brahe", ["Brahe"], (
+        "V souboji přišel o kus nosu a nosil protézu ze slitiny kovů; rozbor jeho vousů vyloučil otravu.",
+        "Byl to dánský astronom, který svá nejlepší měření pořídil ještě před vynálezem dalekohledu.",
+        "Zemřel roku 1601 v Praze a jeho data použil Johannes Kepler.",
+    )),
+    ("Poznej známou osobnost.", "Emil Škoda", ["Škoda"], (
+        "Roku 1869 koupil strojírnu v Plzni, kde do té doby působil jako vrchní inženýr.",
+        "Jeho podnik vyráběl ocelové odlitky, cukrovary a později děla pro rakouskou armádu.",
+        "Nese jeho jméno automobilka i plzeňský průmyslový podnik.",
+    )),
+    ("Poznej známou osobnost.", "Rosalind Franklinová", ["Rosalind Franklin", "Franklinová"], (
+        "Zemřela roku 1958 ve věku sedmatřiceti let na rakovinu vaječníků, patrně od rentgenového záření.",
+        "Její rentgenový snímek číslo 51 rozhodl o rozluštění struktury dědičné informace.",
+        "Nobelovu cenu za to dostali Watson, Crick a Wilkins — ona ne, protože se uděluje jen žijícím.",
+    )),
+]
+
+BANK["zemepis"] += [
+    ("Poznej stát.", "Norsko", [], (
+        "Jeho svrchovaný fond, plněný z ropných příjmů, vlastní zhruba procento a půl všech akcií na světě.",
+        "Táhne se podél pobřeží s tisíci zálivy a k jeho území patří i Špicberky.",
+        "Jeho hlavním městem je Oslo a proslulo fjordy a lososem.",
+    )),
+    ("Poznej město.", "Jeruzalém", [], (
+        "Klíč od Chrámu Božího hrobu drží po staletí dvě muslimské rodiny, aby se křesťanské církve nehádaly.",
+        "Je posvátným městem pro tři náboženství a jeho staré město dělí čtyři čtvrti.",
+        "Stojí tu Zeď nářků a Skalní dóm se zlatou kupolí.",
+    )),
+    ("Poznej stát.", "Nizozemsko", ["Holandsko"], (
+        "Čtvrtina jeho území leží pod hladinou moře a nejnižší bod je skoro sedm metrů pod ní.",
+        "Po povodni roku 1953 postavilo obří systém hrází a vrat zvaný Deltaplán.",
+        "Jeho symbolem jsou tulipány, větrné mlýny a kola.",
+    )),
+    ("Poznej pohoří.", "Alpy", [], (
+        "Roku 1991 v jejich ledovci našli mumii muže, který tam zemřel před více než pěti tisíci lety.",
+        "Rozkládají se přes osm států a nejvyšší vrchol Mont Blanc měří 4 808 metrů.",
+        "Jezdí se v nich na lyžích a vede jimi průsmyk Brenner.",
+    )),
+    ("Poznej řeku.", "Mississippi", [], (
+        "Její jméno pochází z jazyka Odžibvejů a znamená velká řeka.",
+        "Ústí do Mexického zálivu rozsáhlou deltou a její tok stabilizuje soustava hrází.",
+        "Plují po ní kolesové parníky a psal o ní Mark Twain.",
+    )),
+    ("Poznej stát.", "Irsko", [], (
+        "Nežijí tu žádní hadi a legenda to připisuje svatému Patrikovi; ve skutečnosti se sem po době ledové nedostali.",
+        "Jeho úředními jazyky jsou angličtina a irština a hlavním městem Dublin.",
+        "Jeho symbolem je trojlístek a zelená barva.",
+    )),
+    ("Poznej jezero.", "Ženevské jezero", ["Lac Léman", "Léman"], (
+        "Vede jeho středem státní hranice a jeho fontána stříká vodu do výšky 140 metrů.",
+        "Leží mezi Švýcarskem a Francií a protéká jím Rhôna.",
+        "Na jeho břehu sídlí OSN a Mezinárodní olympijský výbor.",
+    )),
+    ("Poznej stát.", "Peru", [], (
+        "Nazca linie na jeho pobřežní poušti jsou vidět jen ze vzduchu a jejich smysl se dohaduje.",
+        "Leží v něm část Amazonie i vysoké Andy a mluví se tu i kečuánsky.",
+        "Stojí tu Machu Picchu a byla to říše Inků.",
+    )),
+    ("Poznej české pohoří.", "Šumava", [], (
+        "Její jezera vznikla v ledovcových karech a největší z nich, Černé, je nejrozsáhlejší v Česku.",
+        "Je to největší český národní park a spory se v ní vedou o to, jak nakládat s kůrovcem.",
+        "Pramení tu Vltava a leží tu Boubín s pralesem.",
+    )),
+    ("Poznej ostrov.", "Kuba", [], (
+        "Její dva hlavní vývozní artikly, cukr a doutníky, stály na plantážích s otrockou prací až do roku 1886.",
+        "Leží devadesát mil od Floridy a od roku 1959 tu vládl jeden režim šest desetiletí.",
+        "Jejím hlavním městem je Havana a proslula rumem a starými americkými auty.",
+    )),
+    ("Poznej stát.", "Rakousko", [], (
+        "Jeho stálou neutralitu zakotvil zákon z roku 1955, kdy odsud odešly okupační armády.",
+        "Devět spolkových zemí, hlavní město na Dunaji a hranice s osmi státy.",
+        "Leží v něm Alpy, Vídeň a Salcburk, kde se narodil Mozart.",
+    )),
+    ("Poznej horu.", "Matterhorn", ["Cervino"], (
+        "Při prvním výstupu roku 1865 se cestou dolů přetrhlo lano a čtyři z nich zahynuli.",
+        "Stojí na hranici Švýcarska a Itálie nad městečkem Zermatt.",
+        "Má nezaměnitelný jehlanovitý tvar a je na obalu čokolády Toblerone.",
+    )),
+    ("Poznej město.", "Vídeň", [], (
+        "Její obyvatelé pijí vodu přivedenou samospádem z hor přes sto kilometrů dlouhými vodovody z 19. století.",
+        "Leží na Dunaji a v žebříčcích kvality života se pravidelně umísťuje na prvních místech.",
+        "Sídlil tu císařský dvůr, stojí tu Schönbrunn a hraje se tu novoroční koncert.",
+    )),
+    ("Poznej stát.", "Jihoafrická republika", ["JAR"], (
+        "Má tři hlavní města — každé pro jinou moc ve státě — a jedenáct úředních jazyků.",
+        "Leží na jižním cípu Afriky a její vlajka má šest barev.",
+        "Skončil tu apartheid a prvním černošským prezidentem byl Nelson Mandela.",
+    )),
+    ("Poznej řeku.", "Labe", [], (
+        "V Hřensku, kde opouští Česko, je nejnižší bod země — 115 metrů nad mořem.",
+        "Pramení v Krkonoších a v Německu se jmenuje Elbe.",
+        "Je to hlavní česká řeka a ústí do Severního moře u Hamburku.",
+    )),
+    ("Poznej město.", "Dubaj", ["Dubai"], (
+        "Ropa dnes tvoří jen několik procent jeho hospodářství; zbytek jsou obchod, doprava a turistika.",
+        "Leží ve Spojených arabských emirátech a jeho letiště patří k nejvytíženějším na světě.",
+        "Stojí tu Burdž Chalífa, nejvyšší budova světa, a umělé ostrovy ve tvaru palmy.",
+    )),
+    ("Poznej stát.", "Řecko", [], (
+        "Má přes šest tisíc ostrovů, ale trvale obydleno je jich jen kolem dvou set.",
+        "Jeho vlajka má devět pruhů podle slabik hesla o svobodě nebo smrti.",
+        "Odsud pochází demokracie a olympijské hry a hlavním městem jsou Atény.",
+    )),
+    ("Poznej pouštní oblast.", "Antarktida", [], (
+        "Formálně je to poušť — na většině území spadne méně srážek než na Sahaře.",
+        "Nemá stálé obyvatele a mezinárodní smlouva z roku 1959 tu zakazuje vojenskou činnost i těžbu.",
+        "Je to nejjižnější světadíl a žijí tu tučňáci.",
+    )),
+    ("Poznej město.", "Krakov", ["Kraków"], (
+        "Z věže mariánského kostela zaznívá každou hodinu signál, který se láme uprostřed na památku zabitého trubače.",
+        "Bylo to dřívější hlavní město Polska a jeho univerzita je jedna z nejstarších v Evropě.",
+        "Nedaleko leží Osvětim a solný důl ve Věličce.",
+    )),
+    ("Poznej stát.", "Vietnam", [], (
+        "Je největším vývozcem kávy robusta na světě, ačkoli sám je zemí čaje.",
+        "Táhne se v úzkém pásu podél pobřeží a jeho tvar bývá přirovnáván k rameni s nůší.",
+        "V Česku tu žije početná komunita a hlavním městem je Hanoj.",
+    )),
+]
+
+BANK["veda"] += [
+    ("Poznej chemický prvek.", "Kyslík", ["O"], (
+        "Objevili ho nezávisle na sobě dva badatelé a jeho jméno, znamenající „tvořící kyseliny“, vzniklo z omylu.",
+        "Tvoří pětinu vzduchu a v zemské kůře je vůbec nejrozšířenějším prvkem.",
+        "Bez něj se nedýchá a s vodíkem dává vodu.",
+    )),
+    ("Poznej vesmírné těleso.", "Mars", [], (
+        "Jeho dva měsíce se jmenují Hrůza a Děs a ten větší se pomalu blíží k planetě, až se jednou rozpadne.",
+        "Stojí na něm sopka Olympus Mons, nejvyšší v celé sluneční soustavě.",
+        "Barví ho oxidy železa do červena a jezdí po něm americká vozítka.",
+    )),
+    ("Poznej jednotku.", "Kelvin", ["K"], (
+        "Jako jediná ze základních jednotek SI se od roku 1968 píše bez slova stupeň.",
+        "Její nula leží na úplném dně teplotní škály, kde ustává tepelný pohyb.",
+        "Přepočítá se na Celsia odečtením 273,15.",
+    )),
+    ("Poznej vědce.", "Archimédés", ["Archimedes"], (
+        "Podle vyprávění ho zabil římský voják při dobývání Syrakus, když počítal obrazce v písku.",
+        "Sestrojil válec, kterým se dodnes čerpá voda, a údajně pomáhal bránit město stroji.",
+        "Do vany a ven z ní; nese jeho jméno zákon o vztlaku a volání „heuréka“.",
+    )),
+    ("Poznej jev.", "Gravitace", ["tíže", "gravitační síla"], (
+        "Je zdaleka nejslabší ze čtyř základních sil — magnet na ledničce ji přebije celou planetou.",
+        "Ohýbá i světlo, což potvrdilo pozorování zatmění roku 1919.",
+        "Kvůli ní padají jablka a Země obíhá kolem Slunce.",
+    )),
+    ("Poznej lidský orgán.", "Ledviny", ["ledvina"], (
+        "Denně přefiltrují kolem 180 litrů tekutiny, ale skoro všechno vrátí zpět do těla.",
+        "Vyrábějí hormon, který nutí kostní dřeň tvořit červené krvinky.",
+        "Když selžou, chodí pacient na dialýzu; člověk vystačí i s jednou.",
+    )),
+    ("Poznej živočicha.", "Krokodýl", ["krokodýli"], (
+        "Nedokáže žvýkat, proto potravu trhá otáčením kolem osy, kterému se říká smrtící váleček.",
+        "Pohlaví mláďat určuje teplota, při které se vejce ve hnízdě zahřívá.",
+        "Má nejsilnější skus ze všech zvířat a plave v Nilu i v Austrálii.",
+    )),
+    ("Poznej materiál.", "Guma", ["kaučuk"], (
+        "Přírodní podobu se podařilo zbavit lepivosti roku 1839, když Charles Goodyear omylem upustil směs se sírou na kamna.",
+        "Ten proces se jmenuje vulkanizace a získává se z mléčné šťávy tropického stromu.",
+        "Jsou z ní pneumatiky a gumičky do vlasů.",
+    )),
+    ("Poznej jev.", "Statická elektřina", ["statická elektřina", "elektrostatika"], (
+        "Její pořadí popisuje takzvaná triboelektrická řada, která říká, který materiál se nabije kladně a který záporně.",
+        "Vzniká třením a je příčinou blesku ve velkém měřítku.",
+        "Kvůli ní se vlasy postaví po přejetí nafouknutým balonkem.",
+    )),
+    ("Poznej vědce.", "Dmitrij Mendělejev", ["Mendělejev"], (
+        "Byl nejmladší ze čtrnácti dětí a matka s ním kvůli studiu přejela půl Ruska.",
+        "Ve své tabulce nechal prázdná místa a předpověděl vlastnosti prvků, které ještě nikdo neznal.",
+        "Nese jeho jméno periodická soustava prvků i prvek s číslem 101.",
+    )),
+    ("Poznej lidskou soustavu.", "Nervová soustava", ["nervy"], (
+        "Signál se v ní šíří po myelinizovaném vlákně rychlostí přes sto metrů za sekundu, ale jinde jen v jednotkách.",
+        "Dělí se na centrální a obvodovou a její základní jednotkou je neuron.",
+        "Patří do ní mozek a mícha.",
+    )),
+    ("Poznej chemický prvek.", "Křemík", ["Si"], (
+        "Po kyslíku je druhým nejrozšířenějším prvkem zemské kůry, ale v čisté podobě se v přírodě nevyskytuje.",
+        "Pro elektroniku se musí vyčistit tak, že na miliardu atomů připadá méně než jeden cizí.",
+        "Jsou z něj čipy a je po něm pojmenováno kalifornské údolí.",
+    )),
+    ("Poznej jev.", "Skleníkový efekt", [], (
+        "Bez něj by průměrná teplota Země byla kolem minus osmnácti stupňů a planeta by byla neobyvatelná.",
+        "Popsal ho už v 19. století Svante Arrhenius a spočítal i vliv spalování uhlí.",
+        "Zesiluje ho oxid uhličitý a metan a způsobuje oteplování.",
+    )),
+    ("Poznej vesmírný objekt.", "Černá díra", [], (
+        "První snímek jedné z nich zveřejnili roku 2019 a vznikl propojením osmi radioteleskopů po celé planetě.",
+        "Její hranicí je horizont událostí a v jejím okolí plyne čas pomaleji.",
+        "Nic z ní neunikne, ani světlo, a vzniká zhroucením hmotné hvězdy.",
+    )),
+    ("Poznej léčivo.", "Inzulin", [], (
+        "Objevitelé prodali patent univerzitě za symbolický jeden dolar, aby byl lék dostupný.",
+        "Poprvé ho podali roku 1922 čtrnáctiletému chlapci a dřív se získával ze slinivek prasat.",
+        "Píchají si ho diabetici a snižuje hladinu cukru v krvi.",
+    )),
+    ("Poznej chemickou sloučeninu.", "Oxid uhličitý", ["CO2"], (
+        "V pevné podobě se nazývá suchý led a sublimuje při minus osmasedmdesáti stupních.",
+        "Rostliny ho spotřebovávají při fotosyntéze a člověk ho vydechuje.",
+        "Bublinkuje v limonádě a jeho vzorec je CO₂.",
+    )),
+    ("Poznej jev.", "Magnetické pole Země", ["magnetické pole Země"], (
+        "Během posledních pěti milionů let se jeho póly převrátily zhruba dvacetkrát a záznam o tom nesou horniny na dně oceánů.",
+        "Vzniká prouděním roztaveného železa v zemském jádru a chrání planetu před slunečním větrem.",
+        "Podle něj se natáčí střelka kompasu.",
+    )),
+    ("Poznej vědce.", "Stephen Hawking", ["Hawking"], (
+        "Diagnózu, která mu dávala dva roky života, dostal ve svých jednadvaceti a žil ještě půl století.",
+        "Zabýval se kosmologií a předpověděl, že černé díry vyzařují a postupně se vypařují.",
+        "Napsal Stručnou historii času a mluvil počítačovým hlasem z vozíku.",
+    )),
+    ("Poznej živočicha.", "Blecha", ["blechy"], (
+        "Odraz jí nedávají svaly, ale bílkovina resilin, která funguje jako natažená pružina.",
+        "Přenášela ve středověku mor, protože žila na krysách.",
+        "Skáče do výšky mnohonásobku svého těla a saje krev.",
+    )),
+    ("Poznej lidskou tkáň.", "Kost", ["kosti", "kostní tkáň"], (
+        "Novorozenec jich má kolem tří set, dospělý dvě stě šest — část jich během růstu sroste.",
+        "Uvnitř je dřeň, která vyrábí krvinky, a její vnitřní stavba se přizpůsobuje zátěži.",
+        "Zlomí se a pak se dává do sádry.",
+    )),
+]
+
+BANK["kultura"] += [
+    ("Poznej film.", "Ostře sledované vlaky", [], (
+        "Získal roku 1968 druhého československého Oscara za cizojazyčný film.",
+        "Režíroval ho Jiří Menzel podle Bohumila Hrabala a hlavní roli hrál Václav Neckář.",
+        "Odehrává se na nádraží za protektorátu a hrdina Miloš Hrma řeší svou nezkušenost.",
+    )),
+    ("Poznej hudební skupinu.", "The Beatles", ["Beatles"], (
+        "Nahrávací zkoušku u Decca Records neprošli — firma jim řekla, že kytarové skupiny jsou na ústupu.",
+        "Pocházeli z Liverpoolu a jejich producentem byl George Martin.",
+        "Zpívají Yesterday a Let It Be a jejich členy byli Lennon a McCartney.",
+    )),
+    ("Poznej knihu.", "1984", ["Devatenáct set osmdesát čtyři"], (
+        "Autor ji dopsal na skotském ostrově Jura, kde umíral na tuberkulózu, a název vznikl prohozením číslic roku dopsání.",
+        "Zavedla pojmy jako newspeak, ministerstvo pravdy a policie myšlení.",
+        "Napsal ji George Orwell a Velký bratr v ní všechno vidí.",
+    )),
+    ("Poznej film.", "Titanic (film)", ["Titanic"], (
+        "Jeho natáčení stálo víc než stavba skutečné lodi, i po přepočtu na dnešní ceny.",
+        "Roku 1998 získal jedenáct Oscarů, což je dodnes rekord sdílený se dvěma jinými filmy.",
+        "Kate Winsletová a Leonardo DiCaprio v něm stojí na přídi a hraje k tomu píseň Céline Dion.",
+    )),
+    ("Poznej obraz.", "Hvězdná noc", ["Hvězdná noc (obraz)"], (
+        "Autor ho namaloval z okna pokoje v ústavu v Saint-Rémy, kde se dobrovolně léčil.",
+        "Krajina na něm neodpovídá skutečnosti — cypřiš i vesnice jsou domalované z paměti.",
+        "Je na něm vířící noční obloha nad vsí a namaloval ho Vincent van Gogh.",
+    )),
+    ("Poznej českou kapelu.", "Kabát", [], (
+        "Vznikla v Teplicích a její jméno bylo původně vtip o tom, že si ho členové mohou obléknout.",
+        "Reprezentovala Česko roku 2007 na Eurovizi a skončila poslední.",
+        "Zpívá Pohoda a Malá dáma a jejím frontmanem je Josef Vojtek.",
+    )),
+    ("Poznej film.", "Hvězdné války", ["Star Wars"], (
+        "Režisér se vzdal části honoráře výměnou za práva na merchandising, což se ukázalo jako geniální obchod.",
+        "První díl vyšel roku 1977 a byl označen jako Epizoda IV.",
+        "Vystupuje v nich Darth Vader a světelné meče.",
+    )),
+    ("Poznej hudební skladbu.", "Čtvero ročních dob", ["Čtvero ročních období"], (
+        "Ke každému koncertu autor připojil sonet, který popisuje, co hudba znázorňuje.",
+        "Napsal ji benátský kněz přezdívaný podle barvy vlasů Ryšavý páter.",
+        "Skládá se ze čtyř houslových koncertů a napsal ji Antonio Vivaldi.",
+    )),
+    ("Poznej seriál.", "Simpsonovi", ["The Simpsons"], (
+        "Postavy mají žlutou barvu, aby při přepínání kanálů zaujaly pohled diváka.",
+        "Jsou nejdéle běžícím animovaným seriálem a jejich autorem je Matt Groening.",
+        "Žijí ve Springfieldu a otec rodiny pracuje v jaderné elektrárně.",
+    )),
+    ("Poznej českou operu.", "Prodaná nevěsta", [], (
+        "Autor ji čtyřikrát přepracoval — z původní hry s mluveným slovem se stala opera s recitativy.",
+        "Napsal ji Bedřich Smetana a odehrává se na české vsi o pouti.",
+        "Vystupuje v ní Kecal a komediant s medvědem, tančí se v ní polka a furiant.",
+    )),
+    ("Poznej film.", "Vykoupení z věznice Shawshank", ["Shawshank", "The Shawshank Redemption"], (
+        "V kinech propadl a slávu získal až na videokazetách a v televizi.",
+        "Vychází z novely Stephena Kinga a natáčelo se v opuštěné trestnici v Ohiu.",
+        "Hrdina si dvacet let hloubí únikovou cestu a hraje ho Tim Robbins vedle Morgana Freemana.",
+    )),
+    ("Poznej hudebníka.", "Jaroslav Ježek", ["Ježek"], (
+        "Od dětství byl téměř slepý a jeho pracovna v Praze měla schválně modré stěny, protože modrou barvu vnímal nejlépe.",
+        "Psal hudbu pro Osvobozené divadlo a roku 1939 emigroval do New Yorku, kde brzy zemřel.",
+        "Složil Bugatti Step a Tmavomodrý svět.",
+    )),
+    ("Poznej stavbu.", "Sagrada Família", ["Sagrada Familia"], (
+        "Její stavitel je pod ní pohřben a dostavba se odhaduje na rok 2026, sto let po jeho smrti.",
+        "Stavba začala roku 1882 a financuje se výhradně z darů a vstupného.",
+        "Stojí v Barceloně a navrhl ji Antoni Gaudí.",
+    )),
+    ("Poznej film.", "Kolja", [], (
+        "Roli malého chlapce hrál ruský herec, který česky neuměl ani slovo a repliky se učil zpaměti.",
+        "Získal roku 1997 Oscara za cizojazyčný film a Zlatý glóbus.",
+        "Režíroval ho Jan Svěrák podle scénáře svého otce a hlavní roli hraje violoncellista.",
+    )),
+    ("Poznej knihu.", "Harry Potter", ["Harry Potter a Kámen mudrců"], (
+        "Rukopis odmítlo dvanáct nakladatelství a to třinácté ho vzalo na radu osmileté dcery ředitele.",
+        "Vyšel poprvé roku 1997 a autorka ho z velké části psala v edinburských kavárnách.",
+        "Vypráví o chlapci s jizvou na čele, který nastoupí do školy čar a kouzel v Bradavicích.",
+    )),
+    ("Poznej českou pohádku.", "Pyšná princezna", [], (
+        "Vznikla roku 1952 a byla to nejnavštěvovanější česká pohádka v kinech vůbec.",
+        "Hraje v ní Alena Vránová a Vladimír Ráž a král Miroslav se vydává na cesty v přestrojení.",
+        "Hlavní hrdinka zpychne a zkrotí ji zpívající kytka.",
+    )),
+    ("Poznej hudební styl.", "Reggae", [], (
+        "Vzniklo na Jamajce z předchozích stylů ska a rocksteady a rytmus klade důraz na slabé doby.",
+        "Je spjaté s hnutím rastafariánů a v roce 2018 ho UNESCO zapsalo mezi nehmotné dědictví.",
+        "Nejznámějším představitelem byl Bob Marley.",
+    )),
+    ("Poznej film.", "Rain Man", [], (
+        "Herec, který ztvárnil hlavní postavu, strávil rok pozorováním muže, jehož výjimečná paměť předlohu inspirovala.",
+        "Získal roku 1989 Oscara za nejlepší film i za mužský herecký výkon.",
+        "Dustin Hoffman v něm hraje autistu s mimořádnou pamětí vedle Toma Cruise.",
+    )),
+    ("Poznej malíře.", "Pablo Picasso", ["Picasso"], (
+        "Jeho plné křestní jméno má přes dvacet slov a nese jména příbuzných a svatých.",
+        "Prošel modrým a růžovým obdobím a spoluzaložil kubismus.",
+        "Namaloval Guernicu jako protest proti bombardování baskického městečka.",
+    )),
+    ("Poznej hudební nástroj.", "Housle", [], (
+        "Nástroje z italské Cremony ze 17. a 18. století se dodnes prodávají za miliony a jejich lak se marně zkoumá.",
+        "Mají čtyři struny laděné po kvintách a hraje se na ně smyčcem s žíněmi.",
+        "Nejslavnější výrobce se jmenoval Stradivari.",
+    )),
+]
+
+BANK["historie"] += [
+    ("Poznej událost.", "Pražská defenestrace", ["defenestrace", "třetí pražská defenestrace"], (
+        "Všichni tři vyhození pád z výšky kolem sedmnácti metrů přežili — katolíci to připisovali andělům, protestanti hnojišti.",
+        "Odehrálo se roku 1618 v Praze a bylo bezprostřední záminkou třicetileté války.",
+        "Šlo o vyhození dvou místodržících a písaře z okna České kanceláře na Hradě.",
+    )),
+    ("Poznej říši.", "Mongolská říše", ["Mongolové"], (
+        "Zavedla poštovní síť zvanou jam se stanicemi po čtyřiceti kilometrech; posel urazil za den i tři sta.",
+        "Ve své největší podobě to byla největší souvislá říše dějin, od Koreje po Uhry.",
+        "Založil ji Čingischán a jeho vnuk Kublaj vládl Číně.",
+    )),
+    ("Poznej událost.", "Pearl Harbor", ["Pearl Harbour"], (
+        "Americké letadlové lodě, hlavní cíl, byly toho rána náhodou na moři a útok je minul.",
+        "Odehrálo se 7. prosince 1941 na Havaji a prezident to nazval dnem hanby.",
+        "Japonský nálet na námořní základnu přivedl USA do druhé světové války.",
+    )),
+    ("Poznej panovníka.", "Jindřich VIII.", ["Jindřich Osmý"], (
+        "Byl mladší syn a na trůn se dostal až po smrti staršího bratra, s jehož vdovou se pak oženil.",
+        "Kvůli rozvodu se odtrhl od Říma a stal se hlavou vlastní církve.",
+        "Měl šest manželek a dvě z nich nechal popravit.",
+    )),
+    ("Poznej událost.", "Bitva u Slavkova", ["Slavkov", "bitva tří císařů"], (
+        "Odehrála se přesně v den prvního výročí korunovace vítěze a on ji pak nazýval svou nejkrásnější.",
+        "Rozhodl ji útok na Pratecký kopec, který soupeři opustili, aby obešli křídlo.",
+        "Roku 1805 v ní na Moravě zvítězil Napoleon nad Rakouskem a Ruskem.",
+    )),
+    ("Poznej období.", "Renesance", [], (
+        "Rozšířila se z italských městských států, kde na ni měli peníze bankéřské rody jako Medicejští.",
+        "Slovo znamená znovuzrození a myslel se jím návrat k antickému vzoru.",
+        "Patří do ní Leonardo, Michelangelo a objev perspektivy v malbě.",
+    )),
+    ("Poznej událost.", "Bitva u Hastingsu", ["Hastings"], (
+        "Zachytila ji vyšívaná tapiserie dlouhá skoro sedmdesát metrů, která je dnes v Bayeux.",
+        "Odehrála se roku 1066 a anglický král v ní podle tradice padl zasažen šípem do oka.",
+        "Zvítězil v ní Vilém Dobyvatel z Normandie a začala tím normanská vláda v Anglii.",
+    )),
+    ("Poznej dokument.", "Charta 77", ["Charta"], (
+        "Vznikla mimo jiné jako reakce na proces s hudební skupinou The Plastic People of the Universe.",
+        "Opírala se o mezinárodní pakty, které Československo samo podepsalo a vyhlásilo ve sbírce zákonů.",
+        "Jejími prvními mluvčími byli Václav Havel, Jan Patočka a Jiří Hájek.",
+    )),
+    ("Poznej stavbu.", "Machu Picchu", [], (
+        "Kameny jsou skládané nasucho tak přesně, že mezi ně nelze vsunout list papíru — což pomáhá při zemětřesení.",
+        "Ukázal ho světu roku 1911 americký badatel Hiram Bingham, ačkoli místní o něm věděli.",
+        "Je to horské město Inků v peruánských Andách.",
+    )),
+    ("Poznej událost.", "Vznik Československa", ["vznik ČSR", "28. říjen"], (
+        "Rozhodující zprávou byla nóta ministra Andrássyho, kterou lidé v Praze pochopili jako kapitulaci.",
+        "Ve stejný den vydal Národní výbor první zákon o zřízení samostatného státu.",
+        "Stalo se to 28. října 1918 a prvním prezidentem se stal Masaryk.",
+    )),
+    ("Poznej civilizaci.", "Starověký Egypt", ["Egypt"], (
+        "Písaři patřili k nejvyšší vrstvě, protože ovládat tři tisíce znaků uměl málokdo.",
+        "Trvala přes tři tisíce let a rozdělovala se na Starou, Střední a Novou říši.",
+        "Stavěli pyramidy a psali hieroglyfy; jejich vládcům se říká faraoni.",
+    )),
+    ("Poznej událost.", "Nástup Hitlera k moci", ["Hitler", "Adolf Hitler"], (
+        "Roku 1923 se pokusil o převrat v mnichovské pivnici, skončil ve vězení a tam napsal svou knihu.",
+        "Kancléřem se stal roku 1933 a po požáru Říšského sněmu si nechal odhlasovat zmocňovací zákon.",
+        "Rozpoutal druhou světovou válku a spáchal roku 1945 sebevraždu v bunkru.",
+    )),
+    ("Poznej událost.", "Zrušení nevolnictví", ["nevolnictví"], (
+        "Vydal ho roku 1781 syn Marie Terezie, který v témže roce vydal i toleranční patent.",
+        "Neznamenalo to konec roboty — ta padla až o šedesát let později.",
+        "Poddaní se od té chvíle mohli stěhovat, ženit a posílat děti na studia bez svolení vrchnosti.",
+    )),
+    ("Poznej stavbu.", "Pyramidy v Gíze", ["Cheopsova pyramida", "pyramidy"], (
+        "Nejvyšší z nich byla přes tři tisíce sedm set let nejvyšší stavbou světa.",
+        "Postavili je ve 3. tisíciletí před naším letopočtem jako hrobky panovníků.",
+        "Stojí u nich Velká sfinga a jsou jediným dochovaným ze sedmi divů světa.",
+    )),
+    ("Poznej válku.", "Třicetiletá válka", [], (
+        "Švédský král Gustav II. Adolf v ní padl v bitvě u Lützenu, kterou jeho vojsko přesto vyhrálo.",
+        "Začala v Čechách stavovským povstáním a skončila roku 1648 vestfálským mírem.",
+        "Za ni přišly české země podle odhadů o třetinu obyvatel a vypálil je Švéd.",
+    )),
+    ("Poznej událost.", "Rozdělení Československa", ["rozdělení ČSFR"], (
+        "Rozhodli o něm politici bez referenda, ačkoli si ho většina lidí v obou částech přála.",
+        "Proběhlo v noci na 1. ledna 1993 a označuje se jako sametový rozvod.",
+        "Vznikly tím Česká republika a Slovensko.",
+    )),
+    ("Poznej období.", "Doba kamenná", [], (
+        "Její poslední úsek přinesl zemědělství, což se označuje za největší proměnu způsobu života v dějinách.",
+        "Dělí se na starší, střední a mladší a končí objevem zpracování kovů.",
+        "Lidé v ní používali pěstní klín a malovali v jeskyních.",
+    )),
+    ("Poznej událost.", "Kolonizace Ameriky", ["kolonizace"], (
+        "S Evropany přišly nemoci, na které původní obyvatelé neměli odolnost, a zemřela většina z nich.",
+        "Španělé a Portugalci si území rozdělili smlouvou z Tordesillas roku 1494 čárou na mapě.",
+        "Zničila říše Aztéků a Inků a Cortés s Pizarrem u toho byli.",
+    )),
+    ("Poznej dopravní stavbu.", "Transsibiřská magistrála", ["transsibiřská magistrála"], (
+        "Cesta z jednoho konce na druhý trvá zhruba sedm dní a překročí osm časových pásem.",
+        "Stavěla se v letech 1891 až 1916 a přes jedno jezero se zpočátku vozily vagony trajektem.",
+        "Je to nejdelší železnice světa, z Moskvy do Vladivostoku.",
+    )),
+    ("Poznej událost.", "Vypálení Lidic", ["Lidice"], (
+        "Obec vybrali na základě dopisu, který s atentátem neměl nic společného.",
+        "Muže postříleli u zdi Horákova statku, ženy odvezli do Ravensbrücku a většinu dětí zavraždili.",
+        "Stalo se to v červnu 1942 jako odveta za atentát na Heydricha.",
+    )),
+]
+
+BANK["priroda"] += [
+    ("Poznej živočicha.", "Delfín", ["delfíni"], (
+        "Spí tak, že odpočívá vždy jen jedna polovina mozku — jinak by se utopil.",
+        "Dorozumívá se hvizdy, které fungují jako jména, a používá echolokaci.",
+        "Je to mořský savec, který skáče u lodí a vystupuje ve výcvikových nádržích u moře.",
+    )),
+    ("Poznej rostlinu.", "Kávovník", ["káva"], (
+        "Podle legendy si jeho účinku všiml etiopský pastýř, jehož kozy po ochutnání plodů nespaly.",
+        "Pěstuje se ve dvou hlavních druzích, arabica a robusta, a plodům se říká třešně.",
+        "Ze semen se praží a mele nápoj, který se pije ráno.",
+    )),
+    ("Poznej živočicha.", "Žralok bílý", ["žralok"], (
+        "Zuby mu dorůstají v několika řadách a za život jich vystřídá desetitisíce.",
+        "Nemá plynový měchýř, proto se musí neustále pohybovat, aby se nepotopil.",
+        "Proslavil ho film Čelisti a loví tuleně u pobřeží Jižní Afriky.",
+    )),
+    ("Poznej strom.", "Dub", ["dub letní"], (
+        "Jeho dřevo obsahuje třísloviny, které z něj dělají nejlepší materiál na sudy pro víno a whisky.",
+        "Roste stovky let a v Česku je z něj nejstarší památný strom.",
+        "Jeho plodem je žalud a listy má laločnaté.",
+    )),
+    ("Poznej živočicha.", "Kukačka", ["kukačka obecná"], (
+        "Vejce klade během několika vteřin a barvou i vzorem je přizpůsobí hostiteli.",
+        "Mládě po vylíhnutí vyhází z hnízda ostatní vejce a nechá se krmit cizími rodiči.",
+        "Ozývá se dvěma slabikami a její jméno nesou hodiny.",
+    )),
+    ("Poznej rostlinu.", "Pšenice", [], (
+        "Dnešní odrůdy vznikly zkřížením několika druhů trav a mají šestinásobnou sadu chromozomů.",
+        "Je to nejpěstovanější obilnina mírného pásu a její lepek dělá těsto pružným.",
+        "Mele se z ní mouka na chleba.",
+    )),
+    ("Poznej živočicha.", "Mravkolev", ["mravkolev obecný"], (
+        "Dospělec připomíná vážku a žije jen pár týdnů; dravá je pouze larva.",
+        "Larva si v písku hloubí trychtýř a čeká vespod schovaná s otevřenými kusadly.",
+        "Do jámy spadne mravenec a už se nevyhrabe.",
+    )),
+    ("Poznej jev.", "Bouřka", [], (
+        "Vzdálenost blesku se odhadne tak, že se sekundy do zahřmění vydělí třemi — dá to kilometry.",
+        "Vzniká ve vysokém oblaku, kterému se říká cumulonimbus, při silném stoupavém proudu.",
+        "Blýská se a hřmí a lidé se schovávají před deštěm.",
+    )),
+    ("Poznej živočicha.", "Sob", ["sob polární"], (
+        "Jako jediný savec vidí i v ultrafialovém světle, takže rozezná lišejník na sněhu.",
+        "Paroží mají u něj i samice a jeho oči v zimě mění barvu.",
+        "Táhne saně a v Laponsku ho chovají Sámové.",
+    )),
+    ("Poznej rostlinu.", "Konvalinka", ["konvalinka vonná"], (
+        "Celá rostlina včetně vody ve váze je jedovatá a její látky působí na srdce.",
+        "Ve Francii se prvního května dává jako dárek pro štěstí.",
+        "Roste v lese, má bílé zvonečky a silně voní.",
+    )),
+    ("Poznej živočicha.", "Bobr", ["bobr evropský"], (
+        "Řezáky mu neustále dorůstají a oranžová barva na nich je od železa, které je zpevňuje.",
+        "Staví hráze, aby si zvýšil hladinu, a vchod do obydlí má vždy pod vodou.",
+        "Kácí stromy zuby a plácá plochým ocasem.",
+    )),
+    ("Poznej rostlinu.", "Orchidej", ["orchideje", "vstavačovité"], (
+        "Semínka nemají zásobu živin, takže bez spolupráce s houbou vůbec nevyklíčí.",
+        "Je to nejpočetnější čeleď rostlin s víc než dvaceti tisíci druhy a v Česku patří k chráněným.",
+        "Vanilka je její plod a její květy se prodávají v květináči do bytu.",
+    )),
+    ("Poznej živočicha.", "Rejsek", ["rejsek obecný"], (
+        "Musí jíst každé dvě až tři hodiny, jinak zemře hlady; přes zimu mu i zmenšuje lebka.",
+        "Není to hlodavec, ale hmyzožravec, a má jedovaté sliny.",
+        "Je to jeden z nejmenších savců a má protaženou čenichovou trubičku.",
+    )),
+    ("Poznej rostlinu.", "Len", ["len setý"], (
+        "Ze stonků se získává vlákno máčením, kterému se říká rosení, a ze semen olej.",
+        "V Česku se z něj tkalo plátno a jeho pěstování patřilo k tradičním řemeslům Podkrkonoší.",
+        "Má modré kvítky a dělá se z něj lněné plátno a lněný olej.",
+    )),
+    ("Poznej živočicha.", "Kachna divoká", ["kachna", "divoká kachna"], (
+        "Peří jí neprosákne, protože si ho maže tukem z žlázy nad kořenem ocasu.",
+        "Samec má zelenou hlavu, samice hnědou, a v létě přepeřuje do nenápadného šatu.",
+        "Plave na rybníce a lidé jí házejí rohlík, ačkoli by neměli.",
+    )),
+    ("Poznej horninu.", "Žula", ["granit"], (
+        "Vznikla pomalým tuhnutím magmatu hluboko pod povrchem, proto má velká zrna.",
+        "Tvoří ji křemen, živec a slída a v Česku se láme hlavně na Českomoravské vrchovině.",
+        "Dlaždí se z ní chodníky a dělají se z ní pomníky.",
+    )),
+    ("Poznej živočicha.", "Vážka", ["vážky"], (
+        "Larva žije ve vodě i několik let a loví vystřelovací spodní čelistí zvanou maska.",
+        "Dospělec má dva páry křídel, která ovládá nezávisle, takže umí letět i pozpátku.",
+        "Poletuje nad rybníkem a má obrovské složené oči.",
+    )),
+    ("Poznej rostlinu.", "Vinná réva", ["réva", "réva vinná"], (
+        "V 19. století zničila evropské vinice mšička révokaz a zachránilo je roubování na americké podnože.",
+        "Pěstuje se na jižní Moravě a její odrůdy nesou jména jako Ryzlink nebo Veltlínské.",
+        "Rostou na ní hrozny a dělá se z nich víno.",
+    )),
+    ("Poznej živočicha.", "Sýkora koňadra", ["sýkora"], (
+        "V Británii se naučila propichovat víčka lahví s mlékem a dovednost se mezi ptáky rozšířila učením.",
+        "Je to nejběžnější návštěvník krmítka a černý pruh na bříšku má samec širší než samice.",
+        "Má žluté bříško, černou hlavu a bílé tváře.",
+    )),
+    ("Poznej jev.", "Sopečná erupce", ["sopka", "vulkanismus"], (
+        "Její sílu měří index VEI a stupnice je logaritmická jako u zemětřesení.",
+        "Nejvíc obětí nemívá lávový proud, ale žhavé mračno popela a plynů, které se řítí ze svahu.",
+        "Vytéká při ní láva a vyvrhuje se popel.",
+    )),
+]
+
+BANK["technika"] += [
+    ("Poznej vynález.", "Kolo bicyklu", ["jízdní kolo", "bicykl", "kolo"], (
+        "Jeho první podoba z roku 1817 neměla šlapky — jezdec se odrážel nohama od země a říkalo se jí drezína.",
+        "Šlapky na předním kole přinesly vysoké modely s obřím kolem, které vystřídal řetězový převod.",
+        "Má dvě kola, řídítka a pedály a jezdí se na něm po cyklostezce.",
+    )),
+    ("Poznej stavbu.", "Akvadukt", ["akvadukty"], (
+        "Nejznámější zachovaný ve Španělsku stojí bez malty — kameny drží jen vlastní vahou.",
+        "Římané jich postavili stovky a voda v nich tekla samospádem, obloukové mosty jsou jen viditelná část.",
+        "Vede vodu přes údolí a nejslavnější je Pont du Gard ve Francii.",
+    )),
+    ("Poznej vynález.", "Termoska", ["Dewarova nádoba"], (
+        "Vynalezl ji roku 1892 skotský fyzik při pokusech se zkapalňováním plynů a nenechal si ji patentovat.",
+        "Funguje díky vakuu mezi dvěma stěnami a odrazivé vrstvě, která brání vyzařování tepla.",
+        "Udrží čaj horký a limonádu studenou.",
+    )),
+    ("Poznej techniku.", "Radar", [], (
+        "Britové jeho existenci za války tajili a nálezy připisovali tomu, že jejich piloti jedí hodně mrkve.",
+        "Vysílá radiové vlny a měří čas jejich návratu; jméno je zkratka anglického popisu činnosti.",
+        "Používá ho letecký provoz, meteorologové i policie u silnice.",
+    )),
+    ("Poznej stroj.", "Traktor", [], (
+        "První úspěšné modely nahradily parní stroj spalovacím a zásadní byl vynález hydraulického závěsu Harryho Fergusona.",
+        "Jeho zadní kola bývají výrazně větší než přední kvůli tahu a přenosu síly.",
+        "Táhne pluh po poli a jezdí s ním zemědělci.",
+    )),
+    ("Poznej vynález.", "Konzerva", [], (
+        "Metodu vymyslel Nicolas Appert roku 1809 na vypsanou odměnu francouzské vlády pro armádu.",
+        "Otvírák na ni vznikl až o desítky let později; do té doby se otevírala dlátem a kladivem.",
+        "Uchová jídlo léta a otevírá se plechovka.",
+    )),
+    ("Poznej dopravní stavbu.", "Eurotunel", ["tunel pod Lamanšským průlivem"], (
+        "Ražba postupovala z obou stran a obě čela se setkala s odchylkou jen pár desítek centimetrů.",
+        "Otevřel se roku 1994, měří pod mořem přes třicet kilometrů a auta jezdí na vlaku.",
+        "Spojuje Anglii s Francií pod kanálem La Manche.",
+    )),
+    ("Poznej vynález.", "Šicí stroj", [], (
+        "Rozhodujícím nápadem bylo dát ouško jehly ke špičce, ne k tupému konci.",
+        "Isaac Singer z něj udělal masový výrobek a zavedl prodej na splátky.",
+        "Šije látku a šlape se u něj nohou.",
+    )),
+    ("Poznej techniku.", "Solární panel", ["fotovoltaika", "solární panely"], (
+        "Jev, na kterém stojí, vysvětlil Albert Einstein a dostal za to Nobelovu cenu.",
+        "Účinnost běžných křemíkových desek se dnes pohybuje kolem dvaceti procent.",
+        "Dává se na střechu a vyrábí elektřinu ze slunce.",
+    )),
+    ("Poznej stroj.", "Výtah", [], (
+        "Rozšířil se teprve poté, co Elisha Otis roku 1854 veřejně předvedl pojistku a nechal si přeseknout lano.",
+        "Bez něj by nemělo smysl stavět mrakodrapy, protože nahoru by nikdo nechodil.",
+        "Vozí lidi mezi patry a má tlačítka s čísly.",
+    )),
+    ("Poznej vynález.", "Gramofon", ["fonograf"], (
+        "První přístroj zaznamenával zvuk na staniolem potažený válec a jeho vynálezce ho zamýšlel hlavně na diktování dopisů.",
+        "Deska nahradila válec, protože se dala lisovat ve velkém, a rychlost se ustálila na 33 otáčkách.",
+        "Jehla jede v drážce a hraje z desky.",
+    )),
+    ("Poznej vozidlo.", "Trolejbus", [], (
+        "Potřebuje dvě troleje, ne jednu jako tramvaj, protože proud se nemá kudy vrátit kolejnicemi.",
+        "V Česku jezdí například v Plzni, Brně a v Českých Budějovicích a v Ústí nad Labem.",
+        "Vypadá jako autobus, ale jede na elektřinu z drátů nad silnicí.",
+    )),
+    ("Poznej techniku.", "Optické vlákno", ["optická vlákna"], (
+        "Světlo se v něm drží úplným odrazem na rozhraní, takže se za rohem neztratí.",
+        "Jedno takové tenčí než vlas přenese data pro celé město a neruší ho elektromagnetické pole.",
+        "Vede jím rychlý internet místo měděného kabelu.",
+    )),
+    ("Poznej vynález.", "Brýle", [], (
+        "Objevily se v Itálii kolem roku 1290 a první podobu tvořily dvě lupy spojené nýtem, které se držely v ruce.",
+        "Nožičky za uši přišly až o čtyři sta let později, v 18. století v Anglii.",
+        "Nosí se na nose a opravují krátkozrakost.",
+    )),
+    ("Poznej stavbu.", "Rozhledna", [], (
+        "V Česku jich stojí přes tři sta a řada z nich vznikla v 19. století zásluhou turistických spolků.",
+        "Bývá na kopci a její jediný účel je dostat oko výš, než dosáhnou stromy.",
+        "Vyleze se po schodech nahoru a je z ní vidět do kraje.",
+    )),
+    ("Poznej techniku.", "Termovize", ["termokamera", "infrakamera"], (
+        "Pracuje ve vlnových délkách kolem deseti mikrometrů, kde vyzařují tělesa o pokojové teplotě.",
+        "Používá ji hasič v zakouřeném domě i stavař, který hledá, kudy z budovy uniká teplo.",
+        "Ukáže obraz v barvách podle teploty — teplé části svítí.",
+    )),
+    ("Poznej vynález.", "Rozhlas", ["rozhlasový přijímač"], (
+        "Pravidelné vysílání začalo v Československu roku 1923 z plátěného stanu v Kbelích.",
+        "Vlny přenášejí zvuk modulací amplitudy nebo frekvence a první československá stanice se jmenovala Radiojournal.",
+        "Naladí se na frekvenci a hraje hudbu a zprávy.",
+    )),
+    ("Poznej materiál.", "Papír", [], (
+        "Recept se z Číny dostal na Západ podle tradice přes zajaté řemeslníky po bitvě u Talasu roku 751.",
+        "Vyrábí se z buničiny a jeho gramáž se udává v gramech na metr čtvereční.",
+        "Píše se na něj a formát A4 měří 210 na 297 milimetrů.",
+    )),
+    ("Poznej techniku.", "Kryogenika", ["kryogenní technika"], (
+        "Kapalné helium umožnilo objevit supravodivost, protože pod čtyřmi kelviny odpor rtuti zmizel.",
+        "Zabývá se teplotami blízkými absolutní nule a kapalný dusík má minus 196 stupňů.",
+        "Díky ní se vozí zemní plyn v tankerech ve zkapalněné podobě a mrazí se biologické vzorky.",
+    )),
+    ("Poznej vynález.", "Fén", ["vysoušeč vlasů"], (
+        "Jméno má po teplém padavém větru, který fouká z hor do údolí.",
+        "První modely z počátku 20. století vážily přes dvě kila a vyráběly se z těžkého kovu.",
+        "Fouká horký vzduch a používá se po ranní sprše na hlavu.",
+    )),
+]
+
+BANK["sport"] += [
+    ("Poznej sport.", "Skoky na lyžích", ["skok na lyžích"], (
+        "Bodují se dvě věci — délka a styl —, a k tomu se přepočítává vítr a délka nájezdu.",
+        "Technika do V se prosadila až koncem osmdesátých let a rozhodčí ji zpočátku strhávali.",
+        "Skáče se z můstku a v Česku ho proslavil Jiří Raška.",
+    )),
+    ("Poznej sportovce.", "Nikola Karabatič", ["Karabatič"], (
+        "Jeho otec i bratr byli reprezentanti a on sám hrál za kluby ve třech zemích.",
+        "Je to francouzský házenkář, trojnásobný olympijský vítěz.",
+        "Patří k nejlepším hráčům házené všech dob a hrál za Barcelonu i PSG.",
+    )),
+    ("Poznej sport.", "Vodní slalom", [], (
+        "Branky se počítají tak, že se za dotek přičítají dvě sekundy a za minutí padesát.",
+        "Jezdí se proti proudu i po proudu a v Praze je pro něj kanál v Troji.",
+        "Česko v něm má olympijská zlata a jezdí se v kajaku nebo kanoi.",
+    )),
+    ("Poznej klub.", "Manchester United", ["Manchester Utd"], (
+        "Roku 1958 zahynula část jeho týmu při letecké havárii v Mnichově.",
+        "Vedl ho šestadvacet let Alex Ferguson a hraje na Old Trafford.",
+        "Je to jeden z nejbohatších fotbalových klubů světa a hrál za něj David Beckham.",
+    )),
+    ("Poznej sport.", "Triatlon", [], (
+        "Vznikl v sedmdesátých letech na Havaji ze sázky, který sport je nejnáročnější — tak je spojili.",
+        "Nejdelší podoba nese jméno podle toho ostrova a měří 226 kilometrů.",
+        "Skládá se z plavání, jízdy na kole a běhu.",
+    )),
+    ("Poznej sportovce.", "Ondřej Synek", ["Synek"], (
+        "Startoval na pěti olympiádách a ze čtyř si přivezl medaili, ale nikdy zlatou.",
+        "Byl to český veslař, pětinásobný mistr světa na skifu.",
+        "Trénoval na Labi u Nymburka a měřil přes dva metry.",
+    )),
+    ("Poznej sport.", "Stolní tenis", ["ping pong", "pingpong"], (
+        "Vznikl v Anglii jako salonní zábava a jako síť sloužila řada knih přes stůl.",
+        "Míček má průměr čtyřicet milimetrů a povinně se hraje do jedenácti bodů.",
+        "Hraje se na zeleném stole s pálkou a Čína v něm dominuje.",
+    )),
+    ("Poznej sportovkyni.", "Šárka Kašpárková", ["Kašpárková"], (
+        "Před přechodem k jedné disciplíně skákala do výšky a startovala i v dálce.",
+        "Roku 1997 se v Athénách stala mistryní světa a v Atlantě získala bronz.",
+        "Je to česká trojskokanka a drží dodnes český rekord.",
+    )),
+    ("Poznej sport.", "Box", ["boxování"], (
+        "Pravidla, podle kterých se dnes hraje, sepsal roku 1867 John Chambers a nesou jméno markýze z Queensberry.",
+        "Rukavice se zavedly právě tehdy a boj se rozdělil na kola po třech minutách.",
+        "Vyhrává se knokautem nebo na body a hmotnostní kategorie jsou od muší po těžkou.",
+    )),
+    ("Poznej trofej.", "Davisův pohár", ["Davis Cup"], (
+        "Věnoval ji roku 1900 americký student, který zaplatil stříbrnou mísu ze svého.",
+        "Hraje se v ní na domácí a venkovní zápasy mezi státy a Česko ji vyhrálo v letech 1980 a 2012.",
+        "Je to nejprestižnější tenisová soutěž družstev mužů.",
+    )),
+    ("Poznej sport.", "Sportovní gymnastika", ["gymnastika"], (
+        "Bodování bez horní hranice zavedli až roku 2006; do té doby byla nejvyšší známka desítka.",
+        "Muži soutěží na šesti nářadích, ženy na čtyřech, a prvky se pojmenovávají po objevitelích.",
+        "Cvičí se na bradlech, kladině a v prostných.",
+    )),
+    ("Poznej sportovce.", "Dominik Hašek", [], (
+        "Vystudoval pedagogickou fakultu a v mládí hrával za Pardubice, kam se ve čtyřiceti letech vracel.",
+        "Získal šestkrát Vezinovu trofej pro nejlepšího brankáře NHL a dvakrát Hart Trophy.",
+        "Chytal v Naganu a jeho lapačce se říkalo nejrychlejší ruka ligy.",
+    )),
+    ("Poznej sport.", "Kanoistika", ["rychlostní kanoistika"], (
+        "Rozlišuje se sed s pádlem o dvou listech a klek s pádlem o jednom.",
+        "Závodí se na klidné vodě na tratích 200, 500 a 1000 metrů.",
+        "Česko v ní má olympijská zlata a jezdí se v kajaku a kánoi.",
+    )),
+    ("Poznej sportovní akci.", "Wimbledon", [], (
+        "Jako jediný z velkých turnajů má dodnes přísný předpis, že hráči musí být oblečeni téměř celí v bílém.",
+        "Hraje se od roku 1877 a na trávě, což mění odskok míče.",
+        "Je to nejstarší tenisový turnaj a vítězi se podává jahodový dezert.",
+    )),
+    ("Poznej sport.", "Šachy", [], (
+        "Počet možných partií je vyšší než počet atomů v pozorovatelném vesmíru.",
+        "Vznikly v Indii jako čaturanga a přes Persii se dostaly do Evropy.",
+        "Hraje se na 64 polích a cílem je dát mat králi.",
+    )),
+    ("Poznej sportovce.", "Lionel Messi", ["Messi"], (
+        "Jako dítě mu v Argentině diagnostikovali nedostatek růstového hormonu a klub ve Španělsku mu zaplatil léčbu.",
+        "Získal osm Zlatých míčů, víc než kdokoli jiný.",
+        "Hrál za Barcelonu a s Argentinou vyhrál roku 2022 mistrovství světa.",
+    )),
+    ("Poznej sport.", "Hokej", ["lední hokej"], (
+        "Puk se před zápasem mrazí, aby na ledě zbytečně neskákal.",
+        "Hraje se třikrát dvacet minut čistého času a střídá se za běhu.",
+        "Česko v něm má zlato z Nagana a nejslavnější soutěž je NHL.",
+    )),
+    ("Poznej sportovce.", "Jan Kodeš", ["Kodeš"], (
+        "Po kariéře vedl český tenisový svaz a byl ředitelem pražského turnaje.",
+        "Vyhrál dvakrát Roland Garros, v letech 1970 a 1971.",
+        "Roku 1973 zvítězil ve Wimbledonu jako dosud jediný Čech ve dvouhře mužů.",
+    )),
+    ("Poznej sport.", "Atletika", [], (
+        "Označuje se za královnu sportů a její disciplíny se dělí na běhy, skoky, vrhy a víceboje.",
+        "Na dráze se běží proti směru hodinových ručiček a okruh měří 400 metrů.",
+        "Patří sem sprint, maraton, skok do dálky i hod oštěpem.",
+    )),
+    ("Poznej klub.", "Slavia Praha", ["SK Slavia Praha", "Slavia"], (
+        "Vznikla roku 1892 jako literární a řečnický spolek studentů, teprve pak z ní byl sportovní klub.",
+        "Hraje v červenobílém a jejím znakem je pěticípá hvězda.",
+        "Její stadion je v Edenu a rivalem je pražská Sparta.",
+    )),
+]
+
+BANK["jazyk"] += [
+    ("Poznej jazyk.", "Němčina", ["německy"], (
+        "Podstatná jména se v ní píší s velkým písmenem, což jinde v Evropě prakticky neexistuje.",
+        "Skládá slova do dlouhých celků a její sloveso se v podřadné větě posouvá až na konec.",
+        "Mluví se jí v Rakousku, částečně ve Švýcarsku a hlavně v zemi, jejíž hlavní město je Berlín.",
+    )),
+    ("Poznej slovo podle původu.", "Bakterie", [], (
+        "Pochází z řeckého slova pro hůlku, protože první pozorované měly tvar tyčinky.",
+        "Poprvé je uviděl Antoni van Leeuwenhoek svým vlastnoručně broušeným mikroskopem.",
+        "Jsou to jednobuněčné organismy a proti některým zabírá penicilin.",
+    )),
+    ("Poznej termín.", "Aliterace", [], (
+        "Ve staré germánské poezii nahrazovala rým jako hlavní organizační princip verše.",
+        "V češtině se jí říká náslovný rým a hojně ji používají reklamní slogany.",
+        "Je to opakování stejné hlásky na začátku slov — třeba „plyne peníz po penízku“.",
+    )),
+    ("Poznej jazyk.", "Ruština", ["ruský jazyk"], (
+        "V její abecedě jsou dvě písmena, která se sama nevyslovují a jen mění tvrdost té předchozí hlásky.",
+        "Přízvuk v ní není pevný a mění se podle tvaru slova, což dělá cizincům největší potíže.",
+        "Píše se azbukou a je úředním jazykem největšího státu světa.",
+    )),
+    ("Poznej slovo.", "Robota", [], (
+        "V češtině ještě v 19. století označovalo povinnou práci poddaného na panském.",
+        "Ve slovenštině dodnes znamená prostě práci a v ruštině je základem slovesa pracovat.",
+        "Z jeho zkráceného tvaru vzniklo označení pro stroj, který pracuje místo člověka.",
+    )),
+    ("Poznej jev.", "Vokalizace", ["vokalizace předložky"], (
+        "Řídí se výslovnostní snadností — vkládá se, když by jinak vznikl těžko vyslovitelný shluk.",
+        "Proto se říká „ve válce“, ale „v lese“, a „ke stolu“, ale „k oknu“.",
+        "Je to přidání samohlásky k jednohláskovému slůvku před podstatným jménem.",
+    )),
+    ("Poznej termín.", "Archaismus", ["archaismy"], (
+        "Liší se od historismu tím, že označovaná věc existuje dál, jen se pro ni používá nové slovo.",
+        "Ve školní četbě z 19. století jich je plno a čtenář jim rozumí jen z kontextu.",
+        "Patří sem „šat“ místo oblečení nebo „kterak“ místo jak.",
+    )),
+    ("Poznej jazyk.", "Italština", ["italsky"], (
+        "Ustálila se na základě toskánského nářečí, protože v něm psali Dante, Petrarca a Boccaccio.",
+        "Skoro každé její slovo končí samohláskou, což jí dává zpěvný ráz.",
+        "Je jazykem opery a hudebních pokynů jako allegro nebo forte.",
+    )),
+    ("Poznej slovo podle původu.", "Karanténa", [], (
+        "Číslovka v základu slova říká, kolik dní musely lodě čekat před přístavem — bylo jich čtyřicet.",
+        "Zavedly ji Benátky a Dubrovník ve 14. století proti moru.",
+        "Dnes tak říkáme izolaci člověka, který mohl přijít do styku s nákazou.",
+    )),
+    ("Poznej jev.", "Sufix", ["sufixy"], (
+        "Rozlišuje se od koncovky tím, že se při skloňování nemění a patří ke kmeni slova.",
+        "Češtině umožňuje tvořit řady jako učit — učitel — učitelka — učitelství.",
+        "Je to část připojená za kořen slova; česky se mu říká přípona.",
+    )),
+    ("Poznej písmo.", "Hieroglyfy", ["hieroglyfické písmo"], (
+        "Rozluštil je roku 1822 Jean-François Champollion a klíčem mu byl kámen nalezený u města Rašíd.",
+        "Kombinují znaky pro hlásky, slabiky i celé pojmy a jméno panovníka se psalo do oválu.",
+        "Psali jimi ve starém Egyptě na papyrus i na stěny chrámů.",
+    )),
+    ("Poznej termín.", "Ironie", [], (
+        "Sokratovská podoba spočívala v předstírané nevědomosti, kterou filozof vedl soupeře k rozporu.",
+        "Její vyostřená forma s úmyslem ranit se jmenuje sarkasmus.",
+        "Řekne se opak toho, co se myslí — třeba „to se ti povedlo“ nad rozbitým hrnkem.",
+    )),
+    ("Poznej jazyk.", "Polština", ["polsky"], (
+        "Má hlásky zapisované spřežkami jako sz, cz nebo rz a přízvuk vždy na předposlední slabice.",
+        "Je češtině blízká, ale plno slov znamená něco jiného — „szukać“ rozhodně neznamená hledat na veřejnosti.",
+        "Mluví se jí v zemi, jejímž hlavním městem je Varšava.",
+    )),
+    ("Poznej slovo podle původu.", "Salám", [], (
+        "Kořen slova je v latinském sal, tedy sůl, kterou se maso konzervovalo.",
+        "Do češtiny se dostalo z italštiny a jeho výroba stojí na sušení a zrání.",
+        "Krájí se na chleba a jeho uherská odrůda se u nás jmenuje po sousední zemi.",
+    )),
+    ("Poznej jev.", "Nářečí", ["dialekt"], (
+        "V Česku se tradičně rozdělují do čtyř skupin a jejich hranice sledují staré správní celky.",
+        "Na Moravě se drží víc než v Čechách a na Chodsku či Valašsku jsou dodnes slyšet.",
+        "Je to místní obměna jazyka — Pražák řekne jinak než Ostravák.",
+    )),
+    ("Poznej termín.", "Akronym", [], (
+        "Liší se od obyčejné zkratky tím, že se čte jako slovo, ne po písmenech.",
+        "Některé už jako zkratky ani nevnímáme — třeba laser nebo radar.",
+        "Patří sem NATO nebo UNESCO.",
+    )),
+    ("Poznej jazyk.", "Japonština", ["japonsky"], (
+        "Používá tři písemné soustavy najednou a v jedné větě se běžně střídají všechny.",
+        "Nemá množné číslo ani budoucí čas a míra zdvořilosti mění tvar slovesa.",
+        "Mluví se jí v zemi vycházejícího slunce a její znaky přejala z Číny.",
+    )),
+    ("Poznej slovo podle původu.", "Šek", [], (
+        "Podle jednoho výkladu souvisí s perským slovem pro krále, odtud i pojem ze šachu.",
+        "Je to písemný příkaz bance, aby vyplatila uvedenou částku.",
+        "Cestovní podoba se dřív brávala na dovolenou místo hotovosti.",
+    )),
+    ("Poznej jev.", "Kalk", ["kalky"], (
+        "Slovo samo pochází z francouzského výrazu pro průsvitný papír na obkreslování.",
+        "Vzniká doslovným přeložením cizí složeniny po částech, ne převzetím celku.",
+        "Patří sem „mrakodrap“ z anglického skyscraper nebo „zeměpis“ z geografie.",
+    )),
+    ("Poznej termín.", "Ortoepie", ["ortoepie", "spisovná výslovnost"], (
+        "Její pravidla řeší i to, kde se v souvislé řeči smí a nesmí spodobovat znělost.",
+        "Je protějškem pravopisu, jenže pro mluvené slovo, a používají ji hlasatelé.",
+        "Určuje, jak se má správně vyslovovat — třeba že „shoda“ zní na Moravě jinak než v Čechách.",
+    )),
+]
+
+BANK["spolecnost"] += [
+    ("Poznej pojem.", "Minimální mzda", [], (
+        "V některých zemích neexistuje vůbec a její výši tam určuje jen dohoda odborů se zaměstnavateli.",
+        "V Česku ji stanovuje vláda nařízením a od ní se odvozují i zaručené mzdy podle náročnosti práce.",
+        "Je to nejnižší částka, kterou zaměstnavatel smí za měsíc práce vyplatit.",
+    )),
+    ("Poznej instituci.", "Veřejný ochránce práv", ["ombudsman"], (
+        "Úřad má původ ve Švédsku, kde vznikl už roku 1809, a jeho švédské jméno se ujalo po celém světě.",
+        "V Česku sídlí v Brně, volí ho sněmovna a nemůže rozhodovat, jen doporučovat.",
+        "Občan se na něj obrací, když se s ním úřad chová špatně.",
+    )),
+    ("Poznej pojem.", "Sociální stát", ["welfare"], (
+        "Jeho zárodkem bylo nemocenské a důchodové pojištění, které zavedl Bismarck, aby oslabil své odpůrce zleva.",
+        "Skandinávský model stojí na vysokých daních a širokých veřejných službách.",
+        "Znamená, že veřejná moc zajišťuje důchody, zdravotní péči a podporu v nezaměstnanosti.",
+    )),
+    ("Poznej svátek.", "Dušičky", ["Památka zesnulých", "Svátek zesnulých"], (
+        "Zavedl je opat Odilo z Cluny v 11. století a položil je na den po svátku všech svatých.",
+        "V Mexiku má jejich obdoba veselý ráz s barevnými lebkami a průvody.",
+        "V Česku se při nich chodí na hřbitov se svíčkou a chryzantémami.",
+    )),
+    ("Poznej pojem.", "Korupce", [], (
+        "Nevládní organizace Transparency International o ní vydává každoroční žebříček vnímání.",
+        "Rozlišuje se malá, s níž se občan setká u přepážky, a velká, která ovlivňuje zákony.",
+        "Je to úplatek za rozhodnutí, které mělo být nestranné.",
+    )),
+    ("Poznej organizaci.", "Greenpeace", [], (
+        "Vznikla roku 1971 z výpravy lodi, která měla zabránit jaderné zkoušce na aljašském ostrově.",
+        "Její loď Rainbow Warrior potopila roku 1985 francouzská tajná služba v Aucklandu.",
+        "Zabývá se ochranou životního prostředí a proslula přímými akcemi.",
+    )),
+    ("Poznej pojem.", "Rozpočtový deficit", ["deficit", "schodek rozpočtu"], (
+        "Pravidla Evropské unie ho doporučují držet pod třemi procenty hrubého domácího produktu.",
+        "Kryje se vydáním dluhopisů a jeho součet za všechny roky tvoří státní dluh.",
+        "Nastane, když stát utratí víc, než vybere.",
+    )),
+    ("Poznej pojem.", "Občanství", [], (
+        "Získává se buď podle původu rodičů, nebo podle místa narození, a některé státy uznávají obojí.",
+        "V Česku je od roku 2014 možné mít ho víc než jedno naráz.",
+        "Opravňuje volit a mít pas dané země.",
+    )),
+    ("Poznej instituci.", "Univerzita Karlova", ["Karlova univerzita", "UK"], (
+        "Její zakládací listinu vydal panovník roku 1348 a je to nejstarší vysoké učení ve střední Evropě.",
+        "Roku 1882 se rozdělila na českou a německou část a znovu se spojila po druhé světové válce.",
+        "Sídlí v Praze v Karolinu a má sedmnáct fakult.",
+    )),
+    ("Poznej pojem.", "Předsudek", [], (
+        "Sociální psychologie ukázala, že se dá zmírnit prostým kontaktem — pokud jsou obě strany rovnocenné.",
+        "Liší se od diskriminace tím, že jde o postoj, ne o jednání.",
+        "Je to úsudek o člověku předem, jen podle skupiny, ke které patří.",
+    )),
+    ("Poznej svátek.", "Silvestr", ["Nový rok", "Silvestr a Nový rok"], (
+        "Jméno má po papeži, který zemřel poslední den roku 335.",
+        "V Česku se k němu tradičně podává čočka a pouští se ohňostroj.",
+        "Slaví se na přelomu let a o půlnoci se připíjí.",
+    )),
+    ("Poznej pojem.", "Dělba moci", ["trojdělba moci"], (
+        "Její dnešní podobu popsal Montesquieu ve spise O duchu zákonů roku 1748.",
+        "Jde o to, aby žádná složka nemohla rozhodovat sama a navzájem se brzdily.",
+        "Ty složky jsou zákonodárná, výkonná a soudní.",
+    )),
+    ("Poznej organizaci.", "Lékaři bez hranic", ["Médecins Sans Frontières"], (
+        "Vznikli roku 1971 ve Francii po zkušenosti z války v Biafře, kde zdravotníci nesměli mluvit o tom, co viděli.",
+        "Nobelovu cenu míru dostali roku 1999 a peníze použili na kampaň za dostupné léky.",
+        "Vyjíždějí ošetřovat raněné do válek a katastrof, kam se nikdo jiný nedostane.",
+    )),
+    ("Poznej pojem.", "Urbanizace", [], (
+        "Od roku 2007 poprvé v dějinách žije ve městech víc lidí než na venkově.",
+        "Její důsledkem je i vznik takzvaných tepelných ostrovů, kde je o několik stupňů tepleji.",
+        "Je to stěhování lidí z vesnic do měst.",
+    )),
+    ("Poznej instituci.", "Poslanecká sněmovna", ["sněmovna"], (
+        "Aby se do ní strana dostala, musí získat aspoň pět procent hlasů; koalice mají práh vyšší.",
+        "Má dvě stě členů volených na čtyři roky poměrným systémem ve čtrnácti krajích.",
+        "Je to dolní komora českého parlamentu a schvaluje rozpočet.",
+    )),
+    ("Poznej pojem.", "Stárnutí populace", ["demografické stárnutí"], (
+        "Vzniká ze dvou příčin naráz — lidé se dožívají víc a rodí se méně dětí.",
+        "Ukazuje se na věkové pyramidě, která přestává být pyramidou a mění se v urnu.",
+        "Kvůli němu se zvyšuje věk odchodu do důchodu.",
+    )),
+    ("Poznej pojem.", "Svoboda projevu", ["svoboda slova"], (
+        "Podle českých soudů nekryje výroky, které podněcují k nenávisti vůči skupině obyvatel.",
+        "Zaručuje ji Listina základních práv a k ní patří i právo informace přijímat a rozšiřovat.",
+        "Znamená, že člověk smí říct svůj názor bez trestu.",
+    )),
+    ("Poznej tradici.", "Vinobraní", ["burčákové slavnosti"], (
+        "Vrcholí, když cukernatost hroznů dosáhne potřebné hodnoty; termín se proto rok od roku posouvá.",
+        "Slaví se na jižní Moravě a v Praze na Grébovce a nalévá se při něm zkvašený mošt.",
+        "Je to podzimní veselice na oslavu sklizně hroznů.",
+    )),
+    ("Poznej pojem.", "Exekuce", [], (
+        "V Česku byla dlouho výjimečná v tom, že si věřitel mohl vybrat úředníka, který ji povede, kdekoli v zemi.",
+        "Provádí se srážkami ze mzdy, blokací účtu nebo prodejem majetku.",
+        "Nastane, když dlužník nesplácí a soud nařídí vymáhání.",
+    )),
+    ("Poznej pojem.", "Dobrovolnictví", [], (
+        "Odhaduje se, že jeho hodnota by v ekonomikách vyspělých zemí odpovídala několika procentům HDP.",
+        "V Česku ho upravuje zákon a organizace může mít akreditaci ministerstva vnitra.",
+        "Je to práce zdarma pro druhé — třeba hasič v obci nebo pomoc v útulku.",
+    )),
+]

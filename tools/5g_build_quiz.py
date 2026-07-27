@@ -108,9 +108,13 @@ def leaks(answer: str, clue: str) -> str | None:
         for w in re.split(r"[^a-z0-9]+", fold(answer))
         if len(w) >= 4 and w not in GENERIC
     ]
-    hay = fold(clue)
+    # Porovnává se po slovech, ne přes celý řetězec. Podřetězec hlásil plané
+    # poplachy — „Vídeň" se schová uvnitř slova „pravidelně" a taková hláška
+    # kontrolu jen znevěrohodní.
+    hay = [w for w in re.split(r"[^a-z0-9]+", fold(clue)) if w]
     for word in words:
-        if stem(word) and stem(word) in hay:
+        root = stem(word)
+        if root and any(w.startswith(root) for w in hay):
             return word
     return None
 
@@ -158,6 +162,12 @@ def main() -> int:
             ask, answer, alt, clues = row
             qid = f"{topic}-{i + 1:04d}"
             where = f"{topic} #{i + 1} ({answer})"
+
+            # Rozepsaná poznámka v poli odpovědi. Stalo se to při psaní ve
+            # velkém dvakrát a nic jiného to nechytilo — odpověď vypadala
+            # věrohodně a s indiciemi se nekřížila.
+            if "…" in answer or " tedy " in answer:
+                problems.append(f"{where}: odpověď vypadá jako nedopsaná poznámka")
 
             if len(clues) != 3:
                 problems.append(f"{where}: indicií není přesně tři")
