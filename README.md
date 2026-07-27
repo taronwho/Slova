@@ -41,6 +41,14 @@ body** — text má být vodítko, se kterým se dá pracovat, ne past. A kdo na
 přijde dřív, může ho tipnout celé; čím víc písmen je ještě skrytých, tím vyšší
 prémie.
 
+Text je z Wikislovníku tak, jak ho tam někdo napsal — jen se z něj vyhodí to,
+co v hádance nedává smysl. Odkazovací ocas („Srovnej např. stožár, stehno,
+stěžeň") je ve slovníku užitečný, hráči ale podstrčí jmenný seznam, který
+o hledaném slově neříká nic. A useknout indicii uprostřed souvětí je ještě
+horší, takže se krátí jen po celých větách. Kde by text slovo prozradil, je
+místo něj **okénko s otazníkem** — schválně ne výpustka, ta se v etymologiích
+vyskytuje sama o sobě.
+
 ### Věž — anagramová věž
 Od tří písmen nahoru. V každém patře přibude jedno písmeno a hráč ze **všech**
 dostupných písmen složí nové slovo v libovolném pořadí.
@@ -60,7 +68,7 @@ nemůže zablokovat cestu nahoru. Řetěz podpisů je ověřený už při genero
 | Voština | plástve odvozené od pangramů | 2 400 hádanek |
 | Věž | ověřené řetězy přesmyček 3→6/7/8 | 1 962 hádanek |
 | Šibenice | nejčastější základní tvary po délkách | 2 100 slov |
-| Detektiv | etymologie z české sekce Wikislovníku | 636 hádanek |
+| Detektiv | etymologie z české sekce Wikislovníku | 584 hádanek |
 
 ### Jen 1. pád a infinitiv
 
@@ -175,7 +183,9 @@ hráči, a ověří:
   uhodne dvěma tahy a hádanka to není).
 - **Detektiv** — hádané slovo je v ověřeném seznamu základních tvarů a **text
   o původu ho nikde neprozradí**; kontroluje se to na hotových datech, ne jen
-  ve generátoru.
+  ve generátoru. Prozradit ho umí i pravopisná varianta („spósob" vedle
+  „způsob"), takže se porovnávají i souhláskové kostry. Navíc se hlídá, že
+  indicie je celá věta a že v ní nezůstal slovníkový odkaz.
 
 A protože testy čtou vygenerované soubory, jde `npm run play:verify` opačnou
 cestou: v Chromiu **odehraje deset kol od každého z pěti režimů** a každé slovo, které

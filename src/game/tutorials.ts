@@ -281,7 +281,7 @@ export const TUTORIALS: Record<ModeId, TutorialStep[]> = {
         'Dostaneš text o tom, odkud slovo přišlo — z jakého jazyka, z jakého kořene, co původně znamenalo.',
         'Slovo samo je schované za prázdnými políčky. Víš jen, kolik má písmen.',
       ],
-      key: 'Texty pocházejí z Wikislovníku. Kde by hledané slovo prozradily, jsou zakryté třemi tečkami.',
+      key: 'Texty pocházejí z Wikislovníku. Kde by hledané slovo prozradily, je místo něj okénko s otazníkem.',
     },
     {
       title: 'Tady se nevěší',

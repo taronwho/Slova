@@ -42,6 +42,23 @@ interface Props {
 
 const ROWS = ['qwertzuiop', 'asdfghjkl', 'yxcvbnm'].map((row) => row.split(''))
 
+/** Značka zakrytého slova ve stopě — v datech je to obyčejné „[?]". */
+const GAP = '[?]'
+
+/** Vysází text stopy a z každé díry udělá viditelné okénko. */
+function clueParts(clue: string) {
+  return clue.split(GAP).flatMap((piece, i) =>
+    i === 0
+      ? [<span key={`t${i}`}>{piece}</span>]
+      : [
+          <mark className="clue-gap" key={`g${i}`} aria-label="zakryté slovo">
+            ?
+          </mark>,
+          <span key={`t${i}`}>{piece}</span>,
+        ],
+  )
+}
+
 export function DetectiveGame({
   puzzle,
   streak,
@@ -247,7 +264,7 @@ export function DetectiveGame({
           <span className="clue-mark" aria-hidden="true">
             ❝
           </span>
-          <p>{puzzle.clue}</p>
+          <p>{clueParts(puzzle.clue)}</p>
         </blockquote>
 
         <div className={`word-slots ${shakeKey ? 'animate-shake' : ''}`} key={shakeKey}

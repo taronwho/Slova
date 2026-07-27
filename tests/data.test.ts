@@ -335,6 +335,29 @@ describe('detektiv — data', () => {
     }
     expect(problems.slice(0, 5)).toEqual([])
   })
+
+  // Hráč si stěžoval, že indicii nerozumí: text končil uprostřed souvětí
+  // („…, způsobem metafory a odvození pak i kardinální") a předtím vypočítával
+  // příbuzná slova („Srovnej např. stožár, stehno"), což je ve slovníku na
+  // místě, ale v hádance to jenom mate.
+  it('indicie je celá věta bez slovníkových odkazů', () => {
+    const problems: string[] = []
+    for (const puzzle of puzzles) {
+      if (!/[.!?]$/.test(puzzle.clue.trim())) problems.push(`${puzzle.word}: bez tečky`)
+      if (/\b(srovnej|srov\.|porovnej|viz)\b/i.test(puzzle.clue)) {
+        problems.push(`${puzzle.word}: odkaz`)
+      }
+    }
+    expect(problems.slice(0, 5)).toEqual([])
+  })
+
+  // Zakryté místo je „[?]", ne výpustka — ta se v etymologických textech
+  // vyskytuje sama o sobě a hráč by nepoznal, kde je díra k hádání.
+  it('zakryté místo se pozná od běžné výpustky', () => {
+    const gaps = puzzles.filter((p) => p.clue.includes('[?]'))
+    expect(gaps.length).toBeGreaterThan(100)
+    expect(puzzles.filter((p) => p.clue.includes('…'))).toEqual([])
+  })
 })
 
 describe('slovník — jen základní tvary', () => {

@@ -288,6 +288,28 @@ function Visual({ visual }: { visual: TutorialVisual }) {
         </div>
       )
 
+    // Ukázka na skutečném hesle: text o původu, v něm okénko po zakrytém
+    // slově a pod ním prázdná políčka. Přesně to, co hráč uvidí v kole.
+    case 'detective':
+      return (
+        <div className="tut-visual">
+          <blockquote className="clue-card" style={{ width: '100%' }}>
+            <p style={{ fontSize: '0.9rem' }}>
+              Z latinského <mark className="clue-gap">?</mark> — „hlídač lože“, složeného
+              z „postel“ a kořene slovesa „mít, držet“.
+            </p>
+          </blockquote>
+          <div className="word-slots" style={{ ['--slots' as string]: 6 }}>
+            {['e', null, null, null, null, null].map((letter, i) => (
+              <span className={`slot ${letter ? 'filled' : ''}`} key={i}>
+                {letter ?? ''}
+              </span>
+            ))}
+          </div>
+          <p className="tut-caption">Okénko s otazníkem je slovo, které hádáš.</p>
+        </div>
+      )
+
     case 'gallows-fold':
       return (
         <div className="tut-visual">
