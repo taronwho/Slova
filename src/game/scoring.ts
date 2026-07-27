@@ -280,6 +280,22 @@ export function scoreDetective(
 }
 
 /**
+ * Slabiky mají skóre na **desetině** ostatních her.
+ *
+ * Ostatní režimy mají kolo ohraničené — řetěz dojde do cíle, věž se dostaví,
+ * slovo se uhodne. Slabiky ne: padá se, dokud si hráč desku nezablokuje,
+ * takže vytrvalý hráč nasbírá násobky toho, co jde získat kdekoli jinde.
+ * Věhlas ze Slabik pak přerostl všechno ostatní. Poměry uvnitř hry zůstávají
+ * beze změny, jen se celá stupnice dělí deseti.
+ */
+const TETRIS_SCALE = 10
+
+/** Bodová řádka Slabik na správné stupnici. */
+function tetrisPoints(raw: number): number {
+  return Math.round(raw / TETRIS_SCALE)
+}
+
+/**
  * Slabikový tetris.
  *
  * Body nesou slova, ne položené kostky — dvojice sama o sobě nedává nic.
@@ -296,17 +312,17 @@ export function scoreTetris(state: TetrisState, streak: number): ScoreBreakdown 
   if (state.cleared.length > 0) {
     lines.push({
       label: `Složená slova (${state.cleared.length})`,
-      value: 35 * state.cleared.length + 13 * letters,
+      value: tetrisPoints(35 * state.cleared.length + 13 * letters),
     })
   }
   if (state.bestChain >= 2) {
     lines.push({
       label: `Nejdelší řetěz (${state.bestChain})`,
-      value: 50 * (state.bestChain - 1) * state.bestChain,
+      value: tetrisPoints(50 * (state.bestChain - 1) * state.bestChain),
     })
   }
   if (reached > 1) {
-    lines.push({ label: `Úroveň ${reached}`, value: 40 * (reached - 1) })
+    lines.push({ label: `Úroveň ${reached}`, value: tetrisPoints(40 * (reached - 1)) })
   }
   if (state.hintCost > 0) {
     const paid = Math.max(0, state.hintsUsed - (state.freeHints ?? 0))

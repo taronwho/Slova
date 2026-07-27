@@ -36,9 +36,23 @@ export function HintHead({ used, ink }: { used: number; ink: number }) {
   )
 }
 
-/** Cenovka jedné nápovědy. `points` je její cena ve skóre. */
-export function HintPrice({ points, ink }: { points: number; ink: number }) {
-  const price = inkPrice(points)
+/**
+ * Cenovka jedné nápovědy. `points` je její cena ve skóre.
+ *
+ * `price` přebíjí odvozenou cenu v inkoustu. Potřebují ho režimy s vlastní
+ * bodovou stupnicí — ve Slabikách jsou body na desetině ostatních her, takže
+ * by z nich vyšla cena jedné kapky, i když je ta pomoc stejně velká jako jinde.
+ */
+export function HintPrice({
+  points,
+  ink,
+  price: given,
+}: {
+  points: number
+  ink: number
+  price?: number
+}) {
+  const price = given ?? inkPrice(points)
   if (ink >= price) {
     return (
       <small className="price-ink">

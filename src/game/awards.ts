@@ -211,7 +211,8 @@ const MODE_INFO: ModeInfo[] = [
   { id: 'tower', name: 'Věž', of: 'Věže', tone: 'tower', art: 'blocks', score: [660, 950, 1300] },
   { id: 'gallows', name: 'Šibenice', of: 'Šibenice', tone: 'gallows', art: 'noose', score: [380, 520, 700] },
   { id: 'detective', name: 'Detektiv', of: 'Detektiva', tone: 'detective', art: 'glass', score: [380, 520, 700] },
-  { id: 'tetris', name: 'Slabiky', of: 'Slabik', tone: 'tetris', art: 'deck', score: [450, 800, 1400] },
+  // Slabiky mají bodovou stupnici na desetině ostatních her, viz scoreTetris.
+  { id: 'tetris', name: 'Slabiky', of: 'Slabik', tone: 'tetris', art: 'deck', score: [45, 80, 140] },
 ]
 
 /** Stupně mistrovství. Cechovní řeč — pasuje ke hře o slovech a řemesle. */

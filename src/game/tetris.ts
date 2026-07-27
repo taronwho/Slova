@@ -91,11 +91,30 @@ export const TETRIS_MAX_RUN = 3
 /** Kolik dvojic dopředu hráč vidí. */
 export const TETRIS_PREVIEW = 2
 
+/**
+ * Bodová cena nápověd.
+ *
+ * Skóre Slabik jde na desetinu ostatních her (viz `scoreTetris`), takže
+ * s ním musí jít i ceny nápověd — jinak by jedna nápověda spolkla celé kolo.
+ */
 export const TETRIS_HINT_COST = {
   /** Ukáže polohu, ve které padající dvojice něco složí. */
-  spot: 35,
+  spot: 4,
   /** Vymění padající dvojici za tu následující. */
-  swap: 20,
+  swap: 2,
+} as const
+
+/**
+ * Cena nápověd v inkoustu.
+ *
+ * Jinde se odvozuje z bodové ceny (`inkPrice`), tady ne: čtyři body by daly
+ * jedinou kapku a nápověda by přestala být rozhodnutí. Inkoust se platí za
+ * **velikost pomoci**, a ta je ve Slabikách stejná jako kdekoli jinde, ať se
+ * bodová stupnice režimu jmenuje jakkoli.
+ */
+export const TETRIS_INK_COST = {
+  spot: 11,
+  swap: 6,
 } as const
 
 export type TetrisHintKind = keyof typeof TETRIS_HINT_COST

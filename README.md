@@ -64,6 +64,17 @@ vzniknout další slovo — řetěz. Deska se plní, tempo zrychluje a kolo kon�
 až se nová dvojice nemá kam vejít. Dohrát se nedá; hraje se, dokud se hráč
 sám nezablokuje.
 
+**Body ze Slabik jsou na desetině ostatních her.** Ostatní režimy mají kolo
+ohraničené — řetěz dojde do cíle, věž se dostaví, slovo se uhodne. Tady se
+padá, dokud se hráč nezablokuje, takže vytrvalý hráč nasbírá násobky toho, co
+jde získat kdekoli jinde, a věhlas ze Slabik brzo přerostl všechno ostatní.
+Poměry uvnitř hry zůstávají, dělí se celá stupnice včetně bodových cen
+nápověd. Jejich cena **v inkoustu** se ale nedělí: odvozovat ji z bodů by dalo
+jedinou kapku, a inkoust se platí za velikost pomoci, ne za měřítko režimu —
+proto si ji Slabiky říkají samy (`TETRIS_INK_COST`). Už nasbíraný věhlas se
+přepočte zpětně: profil vede součet bodů za každou hru zvlášť, takže migrace
+na verzi 3 z věhlasu ubere přesně devět desetin toho, co Slabiky nasypaly.
+
 Otáčení je to hlavní, co se hraje. Dvojice má čtyři polohy a v každé se čte
 jinak — vodorovně zleva doprava, svisle **zdola nahoru** (tím směrem, kterým
 sloupec roste, stejně jako se čte Věž). „ko" a „lo" tedy dá KOLO ve dvou

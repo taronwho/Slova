@@ -57,7 +57,13 @@ import { mulberry32, shuffled } from '../src/lib/rng'
 // věci se stejným jménem — v testu se proto rozlišují předponou.
 import { RANKS as PROFILE_RANKS, rankFor as profileRankFor } from '../src/game/ranks'
 import { AWARDS, AWARD_GROUPS, visibleAwards } from '../src/game/awards'
-import { scoreChain, scoreDetective, scoreGallows, streakMultiplier } from '../src/game/scoring'
+import {
+  scoreChain,
+  scoreDetective,
+  scoreGallows,
+  scoreTetris,
+  streakMultiplier,
+} from '../src/game/scoring'
 import {
   cells,
   createTetrisState,
@@ -79,8 +85,10 @@ import {
 import type { RoundResult } from '../src/game/types'
 import { awardInk, DAILY_INK, inkPrice, rankInk } from '../src/game/economy'
 import {
+  emptyCounters,
   emptyProfile,
   grantAwards,
+  migrate as migrateProfile,
   recordRound,
   spendInk,
   type Profile,
@@ -907,6 +915,50 @@ describe('nápovědy zdarma', () => {
     }
     // Nejvyšší hodnost je běh na roky, ne na měsíc.
     expect(PROFILE_RANKS[PROFILE_RANKS.length - 1]!.at).toBeGreaterThan(3_000_000)
+  })
+
+  // Kolo Slabik nemá konec — padá se, dokud se deska nezablokuje — takže
+  // vytrvalý hráč z nich vytěžil násobky toho, co jde získat jinde. Bodování
+  // šlo na desetinu a s ním i to, co za ně hráč nasbíral.
+  it('Slabiky dávají desetinu toho co dřív a profil se přepočítá zpětně', () => {
+    const state = {
+      cleared: Array.from({ length: 9 }, () => 'slabi'),
+      bestChain: 1,
+      hintCost: 0,
+      hintsUsed: 0,
+      freeHints: 0,
+      setup: { perLevel: 100 },
+    } as unknown as TetrisState
+    const before = scoreTetris(state, 0).total
+    // Devět slov po pěti písmenech: 35*9 + 13*45 = 900 na staré stupnici.
+    expect(before).toBe(90)
+
+    // Uložený profil: ze 4 000 věhlasu jich 3 000 přinesly Slabiky.
+    const stored = {
+      version: 2,
+      fame: 4000,
+      stats: {
+        tetris: { played: 5, bestScore: 900, totalScore: 3000, extra: 0, perfect: 0, clean: 0 },
+      },
+      counters: { ...emptyCounters(), bestScore: 900 },
+      history: [
+        { mode: 'tetris', score: 900, difficulty: 'normal', puzzleId: 't', perfect: false, success: true, elapsedMs: 0, hintsUsed: 0, detail: {} },
+        { mode: 'chain', score: 400, difficulty: 'normal', puzzleId: 'c', perfect: false, success: true, elapsedMs: 0, hintsUsed: 0, detail: {} },
+      ],
+    }
+    const after = migrateProfile(stored)
+    // Devět desetin toho, co Slabiky nasypaly, se z věhlasu ubere.
+    expect(after.fame).toBe(1300)
+    expect(after.stats.tetris.totalScore).toBe(300)
+    expect(after.stats.tetris.bestScore).toBe(90)
+    expect(after.counters.bestScore).toBe(90)
+    expect(after.history[0]!.score).toBe(90)
+    // Ostatní hry se nedotkne.
+    expect(after.history[1]!.score).toBe(400)
+    expect(after.stats.chain.totalScore).toBe(0)
+
+    // Podruhé už se nic neděje.
+    expect(migrateProfile(after).fame).toBe(1300)
   })
 
   // Šest režimů krát odměna denně by peněženku zaplavilo rychleji než všechno

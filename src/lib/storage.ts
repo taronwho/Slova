@@ -164,7 +164,7 @@ export function emptyCounters(): Counters {
 }
 
 /** Aktuální verze profilu. Zvýšit, kdykoli je potřeba data přepočítat. */
-const PROFILE_VERSION = 2
+const PROFILE_VERSION = 3
 
 export function emptyProfile(): Profile {
   return {
@@ -229,6 +229,53 @@ interface LegacyProfile {
  */
 const SCORE_RESCALE = 3
 
+/** O kolik se zlevnily Slabiky ve verzi 3. Musí sedět s `scoreTetris`. */
+const TETRIS_RESCALE = 10
+
+/**
+ * Slabiky šly na desetinu — a s nimi i to, co za ně hráč nasbíral.
+ *
+ * Kolo v Slabikách nemá konec, hraje se, dokud se deska nezablokuje, takže
+ * vytrvalý hráč z nich vytěžil násobky toho, co jde získat kdekoli jinde.
+ * Kdyby se přepočítalo jen budoucí bodování, zůstal by v profilu navždy hrb
+ * z doby, kdy hra platila víc.
+ *
+ * Odečíst se dá **přesně**: profil vede součet bodů za každou hru zvlášť,
+ * takže se z věhlasu ubere devět desetin toho, co Slabiky nasypaly, a totéž
+ * se udělá s jejich rekordem i součtem. Ostatní hry se nedotknou.
+ */
+function rescaleTetris(profile: Profile): Profile {
+  const tetris = profile.stats.tetris
+  const overpaid = tetris.totalScore - Math.round(tetris.totalScore / TETRIS_RESCALE)
+  return {
+    ...profile,
+    version: 3,
+    fame: Math.max(0, profile.fame - overpaid),
+    stats: {
+      ...profile.stats,
+      tetris: {
+        ...tetris,
+        bestScore: Math.round(tetris.bestScore / TETRIS_RESCALE),
+        totalScore: Math.round(tetris.totalScore / TETRIS_RESCALE),
+      },
+    },
+    counters: {
+      ...profile.counters,
+      // Nejlepší kolo napříč režimy se z historie spolehlivě dopočítat nedá,
+      // ale když ho drželo právě kolo Slabik, sedne mu nová stupnice taky.
+      bestScore:
+        profile.counters.bestScore === tetris.bestScore
+          ? Math.round(tetris.bestScore / TETRIS_RESCALE)
+          : profile.counters.bestScore,
+    },
+    history: profile.history.map((round) =>
+      round.mode === 'tetris'
+        ? { ...round, score: Math.round(round.score / TETRIS_RESCALE) }
+        : round,
+    ),
+  }
+}
+
 function rescale(profile: Profile): Profile {
   const stats = { ...profile.stats }
   for (const mode of MODES) {
@@ -241,7 +288,7 @@ function rescale(profile: Profile): Profile {
   }
   return {
     ...profile,
-    version: PROFILE_VERSION,
+    version: 2,
     fame: Math.round(profile.fame / SCORE_RESCALE),
     stats,
     counters: {
@@ -264,8 +311,12 @@ function mergeStats(
   return stats
 }
 
-/** Doplní chybějící klíče, aby starší uložený profil nikdy nespadl. */
-function migrate(raw: unknown): Profile {
+/**
+ * Doplní chybějící klíče, aby starší uložený profil nikdy nespadl, a prožene
+ * ho přepočty, které ještě neviděl. Exportuje se kvůli testům — jinak by se
+ * dalo ověřit jen přes localStorage.
+ */
+export function migrate(raw: unknown): Profile {
   const base = emptyProfile()
   if (!raw || typeof raw !== 'object') return base
   const saved = raw as Partial<Profile>
@@ -293,7 +344,12 @@ function migrate(raw: unknown): Profile {
     tutorialSeen: { ...base.tutorialSeen, ...(saved.tutorialSeen ?? {}) },
     history: saved.history ?? [],
   }
-  return merged.version >= PROFILE_VERSION ? merged : rescale(merged)
+  // Přepočty se řetězí: starý profil projde všemi, novější jen těmi, které
+  // ještě neviděl.
+  let out = merged
+  if (out.version < 2) out = rescale(out)
+  if (out.version < 3) out = rescaleTetris(out)
+  return out
 }
 
 /**

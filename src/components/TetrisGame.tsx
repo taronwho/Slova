@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { inkPrice } from '../game/economy'
 import { scoreTetris } from '../game/scoring'
 import {
   cells,
@@ -20,6 +19,7 @@ import {
   step,
   takeTetrisHint,
   TETRIS_HINT_COST,
+  TETRIS_INK_COST,
   togglePause,
   type Spot,
   type TetrisDeck,
@@ -204,7 +204,7 @@ export function TetrisGame({
   }, [drop, soft])
 
   function hint(kind: 'spot' | 'swap') {
-    const price = inkPrice(TETRIS_HINT_COST[kind])
+    const price = TETRIS_INK_COST[kind]
     const free = ink >= price
     const result = takeTetrisHint(state, kind, free)
     if (!result) {
@@ -279,7 +279,7 @@ export function TetrisGame({
               onClick={() => hint('spot')}
             >
               <span>Poradit</span>
-              <HintPrice points={TETRIS_HINT_COST.spot} ink={ink} />
+              <HintPrice points={TETRIS_HINT_COST.spot} price={TETRIS_INK_COST.spot} ink={ink} />
             </button>
             <button
               type="button"
@@ -288,7 +288,7 @@ export function TetrisGame({
               onClick={() => hint('swap')}
             >
               <span>Vyměnit</span>
-              <HintPrice points={TETRIS_HINT_COST.swap} ink={ink} />
+              <HintPrice points={TETRIS_HINT_COST.swap} price={TETRIS_INK_COST.swap} ink={ink} />
             </button>
           </div>
         </div>
