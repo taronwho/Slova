@@ -310,6 +310,71 @@ function Visual({ visual }: { visual: TutorialVisual }) {
         </div>
       )
 
+    // Deska se dvěma slabikami vedle sebe. Ukázka je statická, ale ukazuje
+    // přesně to, co hráč uvidí: sloupce, políčka a slovo, které z nich padne.
+    case 'tetris':
+      return (
+        <div className="tut-visual">
+          <div className="well" style={{ ['--cols' as string]: 4, width: 200 }}>
+            {[
+              [null, null],
+              ['ko', null],
+              ['lo', null],
+              [null, null],
+            ].map((column, col) => (
+              <div className="well-col" key={col}>
+                {[1, 0].map((row) => (
+                  <span
+                    className={`cell ${column[row] ? 'filled' : ''}`}
+                    key={row}
+                  >
+                    {column[row] ?? ''}
+                  </span>
+                ))}
+              </div>
+            ))}
+          </div>
+          <p className="tut-caption">KO + LO vedle sebe = kolo. Obojí zmizí.</p>
+        </div>
+      )
+
+    // Řetěz: po zmizelém slově spadne dolů něco, co složí další.
+    case 'tetris-chain':
+      return (
+        <div className="tut-visual">
+          <div
+            style={{ display: 'flex', gap: 'var(--sp-3)', alignItems: 'center' }}
+          >
+            <div className="well" style={{ ['--cols' as string]: 2, width: 96 }}>
+              {[
+                ['ko', 'vo'],
+                ['lo', 'da'],
+              ].map((column, col) => (
+                <div className="well-col" key={col}>
+                  {[1, 0].map((row) => (
+                    <span className="cell filled" key={row}>
+                      {column[row]}
+                    </span>
+                  ))}
+                </div>
+              ))}
+            </div>
+            <span className="tut-arrow" aria-hidden="true">
+              →
+            </span>
+            <div className="well" style={{ ['--cols' as string]: 2, width: 96 }}>
+              {[['vo'], ['da']].map((column, col) => (
+                <div className="well-col" key={col}>
+                  <span className="cell" />
+                  <span className="cell filled">{column[0]}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <p className="tut-caption">KOLO zmizí, VODA spadne dolů a jde hned po něm.</p>
+        </div>
+      )
+
     case 'gallows-fold':
       return (
         <div className="tut-visual">

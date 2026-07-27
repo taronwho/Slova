@@ -9,6 +9,7 @@ const MODE_ID = {
   'Věž': 'tower',
   'Šibenice': 'gallows',
   'Detektiv': 'detective',
+  'Slabiky': 'tetris',
 }
 
 const FILE = process.env.SURL ?? 'http://localhost:4180/slova-standalone.html'
@@ -49,6 +50,7 @@ for (const [mode, sel] of [
   ['Věž', '.tower'],
   ['Šibenice', '.gallows-art'],
   ['Detektiv', '.clue-card'],
+  ['Slabiky', '.well'],
 ]) {
   await page.goto(FILE, { waitUntil: 'networkidle' })
   await page.locator('.splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined)

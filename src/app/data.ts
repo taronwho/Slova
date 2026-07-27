@@ -4,6 +4,7 @@ import { buildChainGraph, type ChainGraph, type ChainPuzzle } from '../game/chai
 import type { HivePuzzle } from '../game/hive'
 import type { DetectivePuzzle } from '../game/detective'
 import type { GallowsPuzzle } from '../game/gallows'
+import type { TetrisPuzzle } from '../game/tetris'
 import type { TowerPuzzle } from '../game/tower'
 import type { Difficulty } from '../game/types'
 
@@ -138,6 +139,14 @@ export function loadGallows(): Promise<GallowsPuzzle[]> {
 /* Hádanek je pár set a nesou navíc jen krátký text, takže jeden soubor stačí. */
 export function loadDetective(): Promise<DetectivePuzzle[]> {
   return fetchJson<DetectivePuzzle[]>('detective/puzzles.json')
+}
+
+/* ---------- Slabikový tetris ---------- */
+
+/* Každá dávka veze i seznam slov, která z ní jdou složit, takže jeden soubor
+   je větší než u ostatních her — pořád ale jen pár set kilobajtů. */
+export function loadTetris(): Promise<TetrisPuzzle[]> {
+  return fetchJson<TetrisPuzzle[]>('tetris/puzzles.json')
 }
 
 /* ---------- Výběr hádanky ---------- */

@@ -168,6 +168,33 @@ async function playDetective() {
   return await result.isVisible().catch(() => false)
 }
 
+/**
+  * Slabikový tetris.
+  *
+  * Hraje se hloupě, ale úplně: pokládá se do prvního sloupce, kde se něco
+  * složí, jinak do nejnižšího. Kolo tak vždycky dojde k výsledku a projde
+  * i logika řetězů a gravitace.
+  */
+async function playTetris() {
+  await start('tetris')
+  for (let guard = 0; guard < 60; guard++) {
+    if (await page.locator('.result-card').isVisible().catch(() => false)) break
+    const helpful = page.locator('.well-col.helpful:not([disabled])')
+    const target = (await helpful.count())
+      ? helpful.first()
+      : page.locator('.well-col:not([disabled])').first()
+    if (!(await target.count())) break
+    await target.click()
+    await page.waitForTimeout(80)
+    // Každé složené slovo musí být povolený tvar — tohle je u téhle hry ta
+    // nejdůležitější kontrola, protože slova vznikají skládáním.
+    collect(await page.locator('.found-strip .chip').allTextContents(), 'slabiky')
+  }
+  const result = page.locator('.result-card')
+  await result.waitFor({ timeout: 5000 }).catch(() => undefined)
+  return await result.isVisible().catch(() => false)
+}
+
 function clean(texts) {
   return texts.map((t) => t.replace(/[\s\n▸·0-9]/g, ''))
 }
@@ -178,6 +205,7 @@ const MODES = [
   ['VĚŽ', playTower],
   ['ŠIBENICE', playGallows],
   ['DETEKTIV', playDetective],
+  ['SLABIKY', playTetris],
 ]
 
 for (const [name, play] of MODES) {
@@ -315,7 +343,7 @@ log('\nOVLÁDÁNÍ')
 /* ---------- Vejde se hra na jednu obrazovku ---------- */
 
 log('\nJEDNA OBRAZOVKA')
-for (const mode of ['chain', 'hive', 'tower', 'gallows', 'detective']) {
+for (const mode of ['chain', 'hive', 'tower', 'gallows', 'detective', 'tetris']) {
   await start(mode)
   const box = await page.evaluate(() => {
     const main = document.querySelector('.main')
@@ -389,7 +417,7 @@ log('\nDENNÍ VÝZVA A INKOUST')
 {
   await goHome(page)
   check(
-    (await page.locator('.daily-strip .daily-item').count()) === 5,
+    (await page.locator('.daily-strip .daily-item').count()) === 6,
     'denní výzva je vidět rovnou v menu, jedna dlaždice na hru',
   )
   const strip = await page.locator('.daily-strip').boundingBox()

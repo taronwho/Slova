@@ -55,6 +55,19 @@ horší, takže se krátí jen po celých větách. Kde by text slovo prozradil,
 místo něj **okénko s otazníkem** — schválně ne výpustka, ta se v etymologiích
 vyskytuje sama o sobě.
 
+### Slabikový tetris — skládej slabiky ve slova
+
+Ze zásobníku tří slabik si hráč vybere jednu a ťukne na sloupec. Slabika do něj
+spadne na to, co v něm už leží. Jakmile dvě nebo tři sousední slabiky dají
+platné české slovo, slovo zmizí a co bylo nad ním, spadne dolů — a může složit
+další slovo. **Vodorovně se čte zleva doprava, svisle zdola nahoru**, tedy tím
+směrem, kterým sloupec roste (stejně jako se čte Věž).
+
+Co je platné slovo, hra **nehádá**: ke každé dávce je předpočítaný seznam všech
+slov, která z jejích slabik jdou složit, a ten se staví z ověřených základních
+tvarů. Runtime tedy jen hledá v množině a nemůže uznat nic, co by ve slovníku
+nebylo.
+
 ### Věž — anagramová věž
 Od tří písmen nahoru. V každém patře přibude jedno písmeno a hráč ze **všech**
 dostupných písmen složí nové slovo v libovolném pořadí.
@@ -75,6 +88,7 @@ nemůže zablokovat cestu nahoru. Řetěz podpisů je ověřený už při genero
 | Věž | ověřené řetězy přesmyček 3→6/7/8 | 1 962 hádanek |
 | Šibenice | nejčastější základní tvary po délkách | 2 100 slov |
 | Detektiv | etymologie z české sekce Wikislovníku | 1 437 hádanek |
+| Slabiky | pravidlové dělení základních tvarů na slabiky | 38 917 slov, 660 dávek |
 
 ### Jen 1. pád a infinitiv
 
@@ -187,6 +201,9 @@ hráči, a ověří:
 - **Šibenice** — hádané slovo je v ověřeném seznamu základních tvarů, délka
   sedí na obtížnost a slovo má aspoň tři různá písmena (dvoupísmenné slovo se
   uhodne dvěma tahy a hádanka to není).
+- **Slabiky** — každé slovo, které jde na desce složit, je v ověřeném seznamu
+  základních tvarů, a každé slovo dávky jde z jejích slabik opravdu poskládat
+  (kontroluje se to zpětně na hotových datech, ne jen v generátoru).
 - **Detektiv** — hádané slovo je v ověřeném seznamu základních tvarů a **text
   o původu ho nikde neprozradí**; kontroluje se to na hotových datech, ne jen
   ve generátoru. Prozradit ho umí i pravopisná varianta („spósob" vedle
@@ -194,7 +211,7 @@ hráči, a ověří:
   indicie je celá věta a že v ní nezůstal slovníkový odkaz.
 
 A protože testy čtou vygenerované soubory, jde `npm run play:verify` opačnou
-cestou: v Chromiu **odehraje deset kol od každého z pěti režimů** a každé slovo, které
+cestou: v Chromiu **odehraje deset kol od každého z šesti režimů** a každé slovo, které
 se objevilo na obrazovce nebo ho hra přijala, porovná se seznamem povolených
 tvarů. Zároveň ověří, že se rozehrané kolo dá dohrát po návratu do menu
 i po zavření hry a že se na telefonu všechno vejde na jednu obrazovku.
@@ -277,7 +294,9 @@ Skripty v `tools/` běží po krocích:
 | `5b_build_gallows.py` | vybere nejčastější slova po délkách pro Šibenici |
 | `5c_fetch_etymology.py` | stáhne etymologie z Wikislovníku do cache |
 | `5d_build_detective.py` | vybere z nich hádanky a zamaskuje prozrazující slova |
-| `playthrough.mjs` | odehraje 10 kol od každého z pěti režimů a zkontroluje tvary slov |
+| `5e_syllables.py` | rozdělí základní tvary na slabiky, sporná dělení zahodí |
+| `5f_build_tetris.py` | poskládá dávky slabik a spočítá jejich slova |
+| `playthrough.mjs` | odehraje 10 kol od každého z šesti režimů a zkontroluje tvary slov |
 
 ## Struktura
 
@@ -339,7 +358,7 @@ na obou místech.
 
 Postup drží dvě věci: **padesát hodností** (`src/game/ranks.ts`) a
 **sedmatřicet ocenění** (`src/game/awards.ts`). Hodnost roste s **věhlasem** —
-tak se jmenuje součet bodů ze všech pěti her —, ocenění jsou jednotlivé mety.
+tak se jmenuje součet bodů ze všech šesti her —, ocenění jsou jednotlivé mety.
 
 Prahy hodností jsou nerovnoměrné schválně. První tři odsýpají, ať má nový hráč
 co slavit hned první večer: druhá padne po jednom kole, třetí po druhém, čtvrtá
@@ -402,7 +421,7 @@ si nápovědu vzít.
 Dřív se sypaly nápovědy zdarma přímo a bylo jedno, jestli si za ně hráč nechal
 odhalit jedno písmeno, nebo rovnou celé slovo. Peněženka se plnila rychleji,
 než se stíhala utrácet, a nápověda přestala být rozhodnutí. Teď má každá
-nápověda cenu a platí pro ni jedno pravidlo přes všech pět her: **cena
+nápověda cenu a platí pro ni jedno pravidlo přes všech šest her: **cena
 v inkoustu je desetina bodové ceny téže nápovědy**. Malá vyjde na pět, odhalení
 celého slova na dvacet — za totéž, co dřív koupilo čtyři celá slova, je dnes
 jedno. Nová nápověda si tak cenu přinese sama a nedá se splést.
@@ -411,7 +430,7 @@ Příjem je držený nízko: deset za ocenění (dvacet pět za nejvyšší stup
 rodiny), za hodnost osm až dvaašedesát podle toho, jak je vysoká, a osm za
 **kompletní** denní várku. Za celou hru se nasbírá kolem dvou tisíc — tedy
 zhruba sto odhalených slov na jedenáct tisíc kol. Denní odměna padá až za všech
-pět výzev dne; pět režimů krát odměna denně by kalamář zaplavilo rychleji než
+pět výzev dne; šest režimů krát odměna denně by kalamář zaplavilo rychleji než
 všechno ostatní dohromady.
 
 Nápověda zaplacená inkoustem **nestojí body, ale pořád se počítá jako

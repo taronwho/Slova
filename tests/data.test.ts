@@ -360,6 +360,78 @@ describe('detektiv — data', () => {
   })
 })
 
+describe('slabikový tetris — data', () => {
+  interface Pack {
+    id: string
+    difficulty: string
+    cols: number
+    rows: number
+    queue: string[]
+    words: string[]
+    seed: string[]
+  }
+  const packs = readJson<Pack[]>('tetris', 'puzzles.json')
+
+  it('má dost dávek a jedinečná id', () => {
+    expect(packs.length).toBeGreaterThan(400)
+    expect(new Set(packs.map((p) => p.id)).size).toBe(packs.length)
+  })
+
+  it('dávka se vejde na desku a má z čeho skládat', () => {
+    const problems: string[] = []
+    for (const pack of packs) {
+      if (pack.queue.length > pack.cols * pack.rows) problems.push(`${pack.id}: dávka je větší než deska`)
+      if (pack.words.length < 3) problems.push(`${pack.id}: skoro nic se z ní nesloží`)
+      if (pack.queue.some((syllable) => syllable.length > 4)) {
+        problems.push(`${pack.id}: dlouhá slabika`)
+      }
+    }
+    expect(problems.slice(0, 5)).toEqual([])
+  })
+
+  // Jádro celé hry: seznam slov dávky se staví z ověřených základních tvarů,
+  // takže hra nemůže uznat nic, co by ve slovníku nebylo.
+  it('každé slovo dávky jde složit z jejích slabik', () => {
+    const problems: string[] = []
+    for (const pack of packs) {
+      const stock = new Map<string, number>()
+      for (const syllable of pack.queue) stock.set(syllable, (stock.get(syllable) ?? 0) + 1)
+      for (const word of pack.words) {
+        if (!buildable(word, stock, 3)) problems.push(`${pack.id}: ${word}`)
+      }
+    }
+    expect(problems.slice(0, 5)).toEqual([])
+  })
+
+  it('slova, ze kterých dávka vznikla, jsou mezi řešeními', () => {
+    const problems: string[] = []
+    for (const pack of packs) {
+      for (const word of pack.seed) {
+        if (!pack.words.includes(word)) problems.push(`${pack.id}: ${word}`)
+      }
+    }
+    expect(problems.slice(0, 5)).toEqual([])
+  })
+})
+
+/** Jde slovo poskládat z nejvýš `limit` slabik, které jsou na skladě? */
+function buildable(word: string, stock: Map<string, number>, limit: number): boolean {
+  const used = new Map<string, number>()
+  const walk = (rest: string, depth: number): boolean => {
+    if (rest === '') return depth >= 2
+    if (depth >= limit) return false
+    for (const [syllable, count] of stock) {
+      if ((used.get(syllable) ?? 0) >= count) continue
+      if (!rest.startsWith(syllable)) continue
+      used.set(syllable, (used.get(syllable) ?? 0) + 1)
+      if (walk(rest.slice(syllable.length), depth + 1)) return true
+      used.set(syllable, used.get(syllable)! - 1)
+    }
+    return false
+  }
+  return walk(word, 0)
+}
+
 describe('slovník — jen základní tvary', () => {
   // Seznam povolených slov vzniká v tools/2b_base_forms.py: hunspell musí
   // slovo přečíst bez jediné přípony a předpony (je to tedy přímo heslo
@@ -388,6 +460,16 @@ describe('slovník — jen základní tvary', () => {
     const problems: string[] = []
     for (const puzzle of readJson<{ word: string }[]>('gallows', 'puzzles.json')) {
       if (!allowed.has(puzzle.word)) problems.push(puzzle.word)
+    }
+    expect(problems.slice(0, 10)).toEqual([])
+  })
+
+  it('slabikový tetris uznává jen povolené tvary', () => {
+    const problems: string[] = []
+    for (const pack of readJson<{ words: string[] }[]>('tetris', 'puzzles.json')) {
+      for (const word of pack.words) {
+        if (!allowed.has(word)) problems.push(word)
+      }
     }
     expect(problems.slice(0, 10)).toEqual([])
   })

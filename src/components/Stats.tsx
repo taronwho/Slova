@@ -29,6 +29,7 @@ const EXTRA_LABEL: Record<ModeId, string> = {
   tower: 'Průměr postavených pater',
   gallows: 'Průměr zbylých životů',
   detective: 'Průměr nevyužitých pokusů',
+  tetris: 'Průměr složených slov',
 }
 
 export function Stats({ profile, onBack, onReset }: Props) {

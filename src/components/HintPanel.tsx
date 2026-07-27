@@ -3,8 +3,8 @@
  *
  * Cena se hlásí dvěma způsoby podle toho, čím se zrovna platí: dokud má hráč
  * dost inkoustu, vidí u tlačítka kapku a číslo, jinak bodovou srážku. Je to
- * na jednom místě, protože tohle pravidlo platí ve všech pěti hrách stejně
- * a rozepsané pětkrát by se rozešlo.
+ * na jednom místě, protože tohle pravidlo platí ve všech šesti hrách stejně
+ * a rozepsané šestkrát by se rozešlo.
  */
 
 import { inkPrice } from '../game/economy'

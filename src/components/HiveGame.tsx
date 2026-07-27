@@ -277,19 +277,23 @@ export function HiveGame({
             type="button"
             className="btn btn-sm found-toggle"
             onClick={() => setShowFound(true)}
-            disabled={state.found.length === 0}
           >
             <span>Nalezená slova</span>
             <small>{state.found.length}</small>
           </button>
-          <div className="label">Kolik slov ještě zbývá</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--sp-2)' }}>
-            {[...remaining.entries()].map(([length, count]) => (
-              <span className="chip" key={length}>
-                {length} písmen · {count}
-              </span>
-            ))}
-            {remaining.size === 0 && <span className="faint">Máš všechna slova!</span>}
+          {/* Na monitoru zůstává v pravém sloupci; na telefonu se schová
+              do panelu s nalezenými slovy, protože jinak se pod ním plástev
+              nevejde na obrazovku. */}
+          <div className="hive-remaining">
+            <div className="label">Kolik slov ještě zbývá</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--sp-2)' }}>
+              {[...remaining.entries()].map(([length, count]) => (
+                <span className="chip" key={length}>
+                  {length} písmen · {count}
+                </span>
+              ))}
+              {remaining.size === 0 && <span className="faint">Máš všechna slova!</span>}
+            </div>
           </div>
         </div>
       </aside>
@@ -415,6 +419,7 @@ export function HiveGame({
           pangrams={puzzle.pangrams}
           total={puzzle.solutions.length}
           score={(word) => wordScore(puzzle, word)}
+          remaining={remaining}
           onClose={() => setShowFound(false)}
         />
       )}

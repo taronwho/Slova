@@ -10,6 +10,11 @@ import {
 } from './detective'
 import { HIVE_HINT_COST } from './hive'
 import {
+  isSwept as tetrisSwept,
+  placed as tetrisPlaced,
+  type TetrisState,
+} from './tetris'
+import {
   GALLOWS_LIVES,
   isWon,
   neededLetters,
@@ -265,6 +270,62 @@ export function scoreDetective(
 
   const labels: string[] = []
   if (perfect) labels.push('BEZ ŠKOBRTNUTÍ ×1,5')
+  if (streakMul > 1) labels.push(`Série ×${streakMul.toFixed(2).replace('.', ',')}`)
+
+  return finish(lines, multiplier, labels.join('  ·  ') || null, perfect, 0)
+}
+
+/**
+ * Slabikový tetris.
+ *
+ * Body nesou slova, ne umístěné kameny — položit slabiku samo o sobě nic
+ * nedává. Řetěz (několik slov z jednoho tahu) je to, na co se hraje: druhé
+ * slovo v řetězu už má dvojnásobek, třetí trojnásobek. Za slabiky, které na
+ * desce zůstaly ležet, se odečítá, takže hrát „hlavně to někam narvat" se
+ * nevyplácí.
+ */
+export function scoreTetris(
+  state: TetrisState,
+  streak: number,
+  now = Date.now(),
+): ScoreBreakdown {
+  const elapsed = (state.finishedAt ?? now) - state.startedAt
+  const letters = state.cleared.reduce((sum, word) => sum + word.length, 0)
+  const left = tetrisPlaced(state)
+
+  const lines: { label: string; value: number }[] = []
+  if (state.cleared.length > 0) {
+    lines.push({
+      label: `Složená slova (${state.cleared.length})`,
+      value: 120 * state.cleared.length + 40 * letters,
+    })
+  }
+  if (state.bestChain >= 2) {
+    // Prémie roste s druhou mocninou — čtyřslovný řetěz je čtyřikrát
+    // cennější než dva dvouslovné.
+    lines.push({
+      label: `Nejdelší řetěz (${state.bestChain})`,
+      value: 150 * (state.bestChain - 1) * state.bestChain,
+    })
+  }
+  if (left > 0) lines.push({ label: `Zbylé slabiky (${left})`, value: -60 * left })
+  if (state.hintCost > 0) {
+    const paid = Math.max(0, state.hintsUsed - (state.freeHints ?? 0))
+    lines.push({ label: `Nápovědy (${paid})`, value: -state.hintCost })
+  }
+
+  const swept = tetrisSwept(state)
+  if (swept) lines.push({ label: 'Deska čistá', value: 500 })
+
+  const bonus = swept ? speedBonus(elapsed, 60_000, 240_000, 200) : 0
+  if (bonus > 0) lines.push({ label: 'Rychlost', value: bonus })
+
+  const perfect = swept && state.hintsUsed === 0
+  const streakMul = streakMultiplier(streak)
+  const multiplier = (perfect ? 1.5 : 1) * streakMul
+
+  const labels: string[] = []
+  if (perfect) labels.push('BEZE ZBYTKU ×1,5')
   if (streakMul > 1) labels.push(`Série ×${streakMul.toFixed(2).replace('.', ',')}`)
 
   return finish(lines, multiplier, labels.join('  ·  ') || null, perfect, 0)

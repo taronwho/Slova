@@ -1667,6 +1667,77 @@
     height: 8px;
   }
 
+  /* Voština má nad pláství dva ukazatele — hodnost s proužkem a tři čísla.
+     Na telefonu se oba stáhnou do proužků, protože plástev pod nimi musí
+     zůstat na obrazovce celá; jinak se do ní musí rolovat. */
+  .shell.playing[data-mode='hive'] .panel {
+    padding: 4px var(--sp-3) 6px;
+  }
+
+  .shell.playing[data-mode='hive'] .rank-line {
+    font-size: 0.88rem;
+  }
+
+  .shell.playing[data-mode='hive'] .progress-track {
+    height: 4px;
+  }
+
+  .shell.playing[data-mode='hive'] .stat {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: var(--sp-2);
+    padding: 3px var(--sp-2);
+    min-width: 0;
+    flex: 1 1 0;
+  }
+
+  .shell.playing[data-mode='hive'] .stat .label {
+    font-size: 0.56rem;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .shell.playing[data-mode='hive'] .stat .value {
+    font-size: 1rem;
+  }
+
+  /* Rozpis zbývajících délek je na telefonu v panelu s nalezenými slovy.
+     V proužku pod pláství zabíral dva řádky čipů — skoro sto pixelů —
+     a plástev se pak nevešla na obrazovku bez rolování. */
+  .shell.playing .hive-remaining {
+    display: none;
+  }
+
+  /* Slabikový tetris: deska se počítá z volného místa, ne z pevné velikosti
+     buňky. Sedmiřádková deska by jinak na telefonu přetekla o dvě stě pixelů
+     a hráč by musel rolovat uprostřed tahu. Dotykový cíl je celý sloupec,
+     takže buňka smí být malá — sloupec zůstává vysoký. */
+  .shell.playing .well {
+    --gap: 4px;
+    /* 112 px si nechává zásobník se slabikami a proužek s hlášením o složeném
+       slově — obojí leží nad deskou uvnitř téže plochy a proužek naskočí až
+       během hry, takže s ním musí být počítáno předem. */
+    --fit-h: calc((100cqh - 112px - (var(--rows, 6) - 1) * var(--gap)) / var(--rows, 6));
+    --fit-w: calc((100cqw - (var(--cols, 5) - 1) * var(--gap)) / var(--cols, 5));
+    /* Spodní hranice je kvůli prstu: pod dvaatřicet pixelů se sloupec
+       trefuje mizerně. Radši ať se na nejmenších displejích roluje. */
+    --cell: clamp(32px, min(var(--fit-w), calc(var(--fit-h) / 0.86)), 60px);
+    gap: var(--gap);
+    width: calc(var(--cols, 5) * var(--cell) + (var(--cols, 5) - 1) * var(--gap));
+  }
+
+  .shell.playing .well-col {
+    gap: var(--gap);
+  }
+
+  .shell.playing .cell {
+    aspect-ratio: auto;
+    height: calc(var(--cell) * 0.86);
+    font-size: calc(var(--cell) * 0.34);
+  }
+
   /* Voština dostane celou zbylou výšku a šířku si dopočítá z poměru stran,
      takže se vejde i s řádkem „piš slovo". */
   .shell.playing .hive-wrap {
@@ -1684,6 +1755,23 @@
     min-height: 190px;
     width: auto;
     max-width: min(300px, 84vw);
+  }
+
+  /* Na nízkém displeji smí plástev o kousek dolů: 172 px dá buňku kolem
+     48 px, což je pořád nad hranicí pohodlného dotyku, a právě o tenhle
+     kousek se na běžném telefonu vejde celá bez rolování. */
+  @media (max-height: 700px) {
+    .shell.playing .hive {
+      min-height: 172px;
+    }
+
+    .shell.playing .hive-wrap {
+      gap: 4px;
+    }
+
+    .shell.playing[data-mode='hive'] .banner {
+      padding-block: 4px;
+    }
   }
 
   /* Nápovědy: popisek a cena pod sebou, jinak text přeteče z tlačítka ven. */
@@ -2191,6 +2279,20 @@ button.stat-tap:hover {
   }
 }
 
+/* Rozpis zbývajících délek v panelu s nalezenými slovy. */
+.remaining-strip {
+  padding-bottom: var(--sp-3);
+  margin-bottom: var(--sp-1);
+  border-bottom: 1px solid var(--border);
+}
+
+.remaining-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+
 /* ---------- Potvrzení a nalezená slova ---------- */
 
 .sheet.confirm {
@@ -2330,6 +2432,7 @@ button.rank-card:hover {
 .award[data-tone='tower'] { --tone: var(--mode-tower); }
 .award[data-tone='gallows'] { --tone: var(--mode-gallows); }
 .award[data-tone='detective'] { --tone: var(--mode-detective); }
+.award[data-tone='tetris'] { --tone: var(--mode-tetris); }
 .award[data-tone='ok'] { --tone: var(--ok); }
 .award[data-tone='gold'] { --tone: var(--gold); }
 .award[data-tone='warn'] { --tone: var(--warn); }
@@ -2875,6 +2978,156 @@ button.rank-card:hover {
    takže se nemá o co opřít. */
 .tut-visual .gallows-art {
   height: 110px;
+}
+
+/* ---------- Slabikový tetris ---------- */
+
+/* Zásobník: tři slabiky na výběr, za nimi náznak toho, co přijde. Vybraná
+   slabika je zvýrazněná — hráč musí vidět, co pokládá. */
+.syl-queue {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+}
+
+.syl-now {
+  display: grid;
+  place-items: center;
+  min-width: 2.8em;
+  /* Zásobník se ťuká prstem, takže drží pohodlnou výšku i na malém displeji. */
+  min-height: 40px;
+  padding: 0.15em 0.45em;
+  border-radius: var(--r-md);
+  border: 2px solid transparent;
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(0.95rem, 4.2vw, 1.35rem);
+  letter-spacing: 0.01em;
+  box-shadow: var(--shadow-1);
+  cursor: pointer;
+}
+
+.syl-now.picked {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--band-ink);
+}
+
+.syl-now:disabled {
+  cursor: default;
+}
+
+.syl-next-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.syl-next {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.syl-chip {
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.86rem;
+}
+
+/* Deska. Sloupec je celý jedno tlačítko — na telefonu se trefuje palcem
+   a mířit na jednotlivé buňky by byla otrava. */
+.well {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 5), 1fr);
+  gap: clamp(3px, 1vw, 6px);
+  width: min(420px, 100%);
+  margin-inline: auto;
+}
+
+.well-col {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(3px, 1vw, 6px);
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.well-col:disabled {
+  cursor: default;
+}
+
+/* Sloupec, kde by vybraná slabika něco složila. Není to nápověda zadarmo —
+   hráč pořád musí vědět co, jen vidí, že tam něco jde. */
+.well-col.helpful .cell.landing {
+  border-color: color-mix(in oklab, var(--accent) 70%, transparent);
+  background: color-mix(in oklab, var(--accent) 10%, transparent);
+}
+
+/* Nápovědou doporučený sloupec — ten svítí naplno. */
+.well-col.tip .cell.landing {
+  border-style: solid;
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.cell {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1 / 0.86;
+  border-radius: var(--r-sm);
+  border: 1px dashed color-mix(in oklab, var(--border) 70%, transparent);
+  background: color-mix(in oklab, var(--surface) 40%, transparent);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(0.7rem, 2.9vw, 1rem);
+  color: var(--text);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.cell.filled {
+  border-style: solid;
+  border-color: transparent;
+  background: color-mix(in oklab, var(--accent) 18%, var(--surface));
+  border-bottom: 3px solid color-mix(in oklab, var(--accent) 45%, var(--border));
+  animation: pop var(--t-base) var(--ease-back) both;
+}
+
+/* Políčko, do kterého slabika spadne. Musí být poznat na první pohled —
+   je to jediné místo ve sloupci, kam tah opravdu půjde. */
+.cell.landing {
+  border-color: color-mix(in oklab, var(--text-faint) 70%, transparent);
+  box-shadow: inset 0 -2px 0 color-mix(in oklab, var(--text-faint) 40%, transparent);
+}
+
+/* Poslední složená slova pod deskou. Hráč po nich pozná, co se mu povedlo,
+   aniž by musel otevírat panel. */
+.found-strip {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  justify-content: center;
+  min-height: 1.6rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cell.filled {
+    animation: none;
+  }
 }
 
 /* ---------- Etymologický detektiv ---------- */

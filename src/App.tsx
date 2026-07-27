@@ -6,6 +6,7 @@ import {
   loadChain,
   loadHive,
   loadDetective,
+  loadTetris,
   loadGallows,
   loadHiveIndex,
   loadTower,
@@ -25,12 +26,14 @@ import { Home } from './components/Home'
 import { Splash } from './components/Splash'
 import { Stats } from './components/Stats'
 import { Tutorial } from './components/Tutorial'
+import { TetrisGame } from './components/TetrisGame'
 import { TowerGame } from './components/TowerGame'
 import type { ChainPuzzle, ChainState } from './game/chain'
 import type { DetectivePuzzle, DetectiveState } from './game/detective'
 import type { GallowsPuzzle, GallowsState } from './game/gallows'
 import type { HivePuzzle, HiveState } from './game/hive'
 import { RANKS, rankFor } from './game/ranks'
+import type { TetrisPuzzle, TetrisState } from './game/tetris'
 import type { TowerPuzzle, TowerState } from './game/tower'
 import { MODE_LABEL, type Difficulty, type ModeId, type RoundResult } from './game/types'
 import { useBackGuard } from './lib/back'
@@ -61,6 +64,7 @@ interface Loaded {
   tower?: TowerPuzzle
   gallows?: GallowsPuzzle
   detective?: DetectivePuzzle
+  tetris?: TetrisPuzzle
 }
 
 export default function App() {
@@ -162,6 +166,14 @@ export default function App() {
             ? entries[Math.floor(random() * entries.length)]!
             : pickUnseen(entries, (e) => e.id, profile.seen.detective, random)
           setLoaded({ detective: entry })
+        } else if (mode === 'tetris') {
+          const packs = await loadTetris()
+          const pool = packs.filter((p) => p.difficulty === difficulty)
+          const entries = pool.length > 0 ? pool : packs
+          const entry = daily
+            ? entries[Math.floor(random() * entries.length)]!
+            : pickUnseen(entries, (e) => e.id, profile.seen.tetris, random)
+          setLoaded({ tetris: entry })
         } else if (mode === 'gallows') {
           const words = await loadGallows()
           const pool = words.filter((w) => w.difficulty === difficulty)
@@ -215,6 +227,8 @@ export default function App() {
           setLoaded({ hive: (round.state as HiveState).puzzle })
         } else if (round.mode === 'detective') {
           setLoaded({ detective: (round.state as DetectiveState).puzzle })
+        } else if (round.mode === 'tetris') {
+          setLoaded({ tetris: (round.state as TetrisState).puzzle })
         } else if (round.mode === 'gallows') {
           setLoaded({ gallows: (round.state as GallowsState).puzzle })
         } else {
@@ -557,6 +571,24 @@ export default function App() {
             onSpendInk={spendInkOn}
             onProgress={(state, finished) =>
               keepProgress('gallows', state.puzzle.id, state.puzzle.difficulty, state, finished)
+            }
+          />
+        )}
+
+        {!loading && view.kind === 'game' && view.mode === 'tetris' && loaded.tetris && (
+          <TetrisGame
+            key={`${loaded.tetris.id}-${view.nonce}`}
+            puzzle={loaded.tetris}
+            streak={profile.streak}
+            dayLabel={view.daily ? dayLabel : ''}
+            onFinish={finishRound}
+            onNext={() => startRound('tetris', false)}
+            onHome={goHome}
+            resume={resume as TetrisState | null}
+            ink={profile.ink}
+            onSpendInk={spendInkOn}
+            onProgress={(state, finished) =>
+              keepProgress('tetris', state.puzzle.id, state.puzzle.difficulty, state, finished)
             }
           />
         )}

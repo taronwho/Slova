@@ -7,7 +7,7 @@
  * než se stíhala utrácet, a nápověda přestala být rozhodnutí.
  *
  * Teď se sbírá inkoust a nápovědy mají cenu. **Cena v inkoustu je desetina
- * bodové ceny téže nápovědy** — jedno pravidlo pro všech pět her, takže se
+ * bodové ceny téže nápovědy** — jedno pravidlo pro všech šest her, takže se
  * nedá splést a nová nápověda si cenu přinese sama. Prakticky to znamená, že
  * malá nápověda stojí 5 a odhalení celého slova 20; za totéž, co dřív koupilo
  * čtyři celá slova, je dnes jedno.
@@ -47,7 +47,7 @@ export function rankInk(index: number): number {
 }
 
 /**
- * Za kompletní denní várku ve všech pěti hrách.
+ * Za kompletní denní várku ve všech šesti hrách.
  *
  * Ne za každou výzvu zvlášť — jinak by denní várka sama zaplavila kalamář
  * víc než všechno ostatní dohromady.

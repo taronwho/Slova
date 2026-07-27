@@ -18,7 +18,7 @@
 import type { Profile } from '../lib/storage'
 import type { ModeId } from './types'
 
-const MODES: ModeId[] = ['chain', 'hive', 'tower', 'gallows', 'detective']
+const MODES: ModeId[] = ['chain', 'hive', 'tower', 'gallows', 'detective', 'tetris']
 
 export type AwardGroup = 'start' | 'clean' | 'score' | 'feat' | 'grit'
 
@@ -30,6 +30,7 @@ export type AwardTone =
   | 'tower'
   | 'gallows'
   | 'detective'
+  | 'tetris'
   | 'ok'
   | 'gold'
   | 'warn'
@@ -108,12 +109,14 @@ export const AWARDS: Award[] = [
     'noose', 1, (p) => p.counters.gallowsSolved),
   count('prvni-pripad', 'start', 'detective', 'První případ',
     'Rozlušti slovo podle jeho původu', 'glass', 1, (p) => p.counters.detectiveSolved),
+  count('prvni-davka', 'start', 'tetris', 'První dávka', 'Slož slovo ze slabik',
+    'blocks', 1, (p) => p.counters.tetrisWords),
   {
     id: 'petiboj',
     group: 'start',
     tone: 'brand',
-    title: 'Pětiboj',
-    goal: 'Dohraj kolo ve všech pěti hrách',
+    title: 'Šestiboj',
+    goal: 'Dohraj kolo ve všech šesti hrách',
     art: 'triad',
     done: (p) => MODES.every((mode) => p.stats[mode].played > 0),
     progress: (p) => ratio(MODES.filter((mode) => p.stats[mode].played > 0).length, MODES.length),
@@ -154,6 +157,12 @@ export const AWARDS: Award[] = [
   count('detektiv-cisty-10', 'clean', 'detective', 'Deset bez škobrtnutí',
     'Rozlušti deset případů bez chyby a bez nápovědy', 'glass', 10,
     (p) => p.stats.detective.perfect, 3),
+  count('slabiky-ciste', 'clean', 'tetris', 'Beze zbytku',
+    'Rozpusť celou dávku slabik bez nápovědy', 'deck', 1,
+    (p) => p.stats.tetris.perfect, 1),
+  count('slabiky-ciste-10', 'clean', 'tetris', 'Deset beze zbytku',
+    'Rozpusť deset dávek bez nápovědy', 'deck', 10,
+    (p) => p.stats.tetris.perfect, 3),
 
   // --- Body -------------------------------------------------------------
   count('skore-1500', 'score', 'gold', 'Patnáct set', 'Nasbírej v jednom kole 1 500 bodů',
@@ -190,6 +199,11 @@ export const AWARDS: Award[] = [
   count('detektiv-tip', 'feat', 'detective', 'Z první ruky',
     'Tipni slovo, když je ještě víc než půlka písmen skrytá', 'glass', 1,
     (p) => p.counters.detectiveGuessed),
+  count('slabiky-retez', 'feat', 'tetris', 'Domino',
+    'Slož jedním tahem řetěz čtyř slov', 'chain3', 4,
+    (p) => p.counters.tetrisChain),
+  count('slabiky-100', 'feat', 'tetris', 'Sto slov ze slabik',
+    'Slož ze slabik sto slov celkem', 'list', 100, (p) => p.counters.tetrisWords, 3),
   {
     id: 'retez-rychlik',
     group: 'feat',

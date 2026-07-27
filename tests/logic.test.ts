@@ -58,6 +58,18 @@ import { mulberry32, shuffled } from '../src/lib/rng'
 import { RANKS as PROFILE_RANKS, rankFor as profileRankFor } from '../src/game/ranks'
 import { AWARDS, AWARD_GROUPS } from '../src/game/awards'
 import { scoreChain, scoreDetective, scoreGallows, streakMultiplier } from '../src/game/scoring'
+import {
+  canDrop,
+  createTetrisState,
+  dropSyllable,
+  isOver as tetrisOver,
+  placed as tetrisPlaced,
+  scoringColumns,
+  tray,
+  takeTetrisHint,
+  TETRIS_HINT_COST,
+  type TetrisPuzzle,
+} from '../src/game/tetris'
 import type { RoundResult } from '../src/game/types'
 import { awardInk, DAILY_INK, inkPrice, rankInk } from '../src/game/economy'
 import {
@@ -601,6 +613,105 @@ describe('ocenění', () => {
   })
 })
 
+describe('slabikový tetris', () => {
+  const puzzle: TetrisPuzzle = {
+    id: 't-test',
+    difficulty: 'normal',
+    cols: 4,
+    rows: 4,
+    queue: ['ko', 'lo', 'vo', 'da'],
+    words: ['kolo', 'voda', 'kova'],
+    seed: ['kolo', 'voda'],
+  }
+
+  it('dvě slabiky vedle sebe složí slovo a zmizí', () => {
+    let state = createTetrisState(puzzle)
+    state = dropSyllable(state, 0)!.state
+    const hit = dropSyllable(state, 1)!
+    expect(hit.words).toEqual(['kolo'])
+    expect(tetrisPlaced(hit.state)).toBe(0)
+  })
+
+  it('svisle se čte zdola nahoru — tím směrem sloupec roste', () => {
+    let state = createTetrisState(puzzle)
+    state = dropSyllable(state, 0)!.state
+    // „lo" do vzdáleného sloupce, aby nevzniklo vodorovné „kolo".
+    state = dropSyllable(state, 2)!.state
+    // Teď „vo" nad „ko": zdola nahoru je to „kovo", což slovo není.
+    const miss = dropSyllable(state, 0)!
+    expect(miss.words).toEqual([])
+  })
+
+  // Zásobník je to, co dělá hru hrou: bez volby by slabika, která se zrovna
+  // nehodí, zůstala ležet navždycky.
+  it('hráč si vybírá ze tří slabik v zásobníku', () => {
+    const state = createTetrisState(puzzle)
+    expect(tray(state)).toEqual(['ko', 'lo', 'vo'])
+    // Druhá slabika ze zásobníku; první zůstává ve frontě.
+    const after = dropSyllable(state, 0, 1)!.state
+    expect(tray(after)).toEqual(['ko', 'vo', 'da'])
+    expect(after.queue.length).toBe(3)
+  })
+
+  it('do zásobníku se sahá jen na první tři slabiky', () => {
+    const state = createTetrisState(puzzle)
+    expect(dropSyllable(state, 0, 3)).toBeNull()
+  })
+
+  it('slabika, která nic nesloží, prostě zůstane ležet', () => {
+    const state = createTetrisState(puzzle)
+    const result = dropSyllable(state, 0)!
+    expect(result.words).toEqual([])
+    expect(tetrisPlaced(result.state)).toBe(1)
+  })
+
+  // Zásadní pojistka: co hra uzná, musí být v předpočítaném seznamu dávky.
+  // Runtime nemá jak vymyslet slovo, které by ve slovníku nebylo.
+  it('uzná jen slovo ze seznamu dávky', () => {
+    const strict: TetrisPuzzle = { ...puzzle, words: ['voda'] }
+    let state = createTetrisState(strict)
+    state = dropSyllable(state, 0)!.state
+    const result = dropSyllable(state, 1)!
+    expect(result.words).toEqual([])
+    expect(tetrisPlaced(result.state)).toBe(2)
+  })
+
+  it('plný sloupec už nepřijme', () => {
+    const narrow: TetrisPuzzle = {
+      ...puzzle,
+      cols: 1,
+      rows: 2,
+      queue: ['ko', 'ko', 'ko'],
+      words: [],
+    }
+    let state = createTetrisState(narrow)
+    state = dropSyllable(state, 0)!.state
+    state = dropSyllable(state, 0)!.state
+    expect(canDrop(state, 0)).toBe(false)
+    expect(dropSyllable(state, 0)).toBeNull()
+    expect(tetrisOver(state)).toBe(true)
+  })
+
+  it('nápověda ukáže sloupec, kde se něco složí', () => {
+    let state = createTetrisState(puzzle)
+    state = dropSyllable(state, 0)!.state
+    // Po „ko" ve sloupci 0 složí „lo" slovo hned dvakrát: vedle (vodorovně)
+    // i na něj (svisle zdola nahoru).
+    expect(scoringColumns(state)).toEqual([0, 1])
+    const hint = takeTetrisHint(state, 'column', false)!
+    expect(scoringColumns(state)).toContain(hint.column)
+    expect(hint.state.hintCost).toBe(TETRIS_HINT_COST.column)
+  })
+
+  it('nápověda zaplacená inkoustem nestojí body, ale pořád je to nápověda', () => {
+    const state = createTetrisState(puzzle)
+    const hint = takeTetrisHint(state, 'swap', true)!
+    expect(hint.state.hintCost).toBe(0)
+    expect(hint.state.hintsUsed).toBe(1)
+    expect(hint.state.freeHints).toBe(1)
+  })
+})
+
 describe('nápovědy zdarma', () => {
   const puzzle: ChainPuzzle = {
     id: 'test',
@@ -707,7 +818,7 @@ describe('nápovědy zdarma', () => {
     expect(PROFILE_RANKS[PROFILE_RANKS.length - 1]!.at).toBeGreaterThan(10_000_000)
   })
 
-  // Pět režimů krát odměna denně by peněženku zaplavilo rychleji než všechno
+  // Šest režimů krát odměna denně by peněženku zaplavilo rychleji než všechno
   // ostatní; padne proto až za kompletní denní várku.
   it('inkoust padne až za všechny denní výzvy dne', () => {
     const day = '2026-01-01'
@@ -725,6 +836,7 @@ describe('nápovědy zdarma', () => {
         [`${day}:tower`]: 1,
         [`${day}:gallows`]: 1,
         [`${day}:detective`]: 1,
+        [`${day}:tetris`]: 1,
       },
     }
     expect(

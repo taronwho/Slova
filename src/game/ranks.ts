@@ -2,7 +2,7 @@
  * Hodnosti profilu.
  *
  * Padesát stupňů od Nováčka po Vládce slov. Hodnost roste s **věhlasem** —
- * jediným číslem, do kterého se sčítají body ze všech pěti her. Hráč tak
+ * jediným číslem, do kterého se sčítají body ze všech šesti her. Hráč tak
  * vidí, že se mu počítá všechno, ať si zrovna zahrál cokoli.
  *
  * Prahy jsou naschvál nerovnoměrné. První tři hodnosti odsýpají, ať má nový

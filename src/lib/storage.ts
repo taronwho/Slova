@@ -6,6 +6,9 @@ import { rankFor } from '../game/ranks'
 import type { Difficulty, ModeId, RoundResult } from '../game/types'
 
 const KEY = 'slova.profile.v1'
+
+/** Všechny hry v pořadí, ve kterém se ukazují. Jediný seznam pro celý soubor. */
+const MODES: ModeId[] = ['chain', 'hive', 'tower', 'gallows', 'detective', 'tetris']
 const ROUNDS_KEY = 'slova.rounds.v1'
 
 export interface ModeStats {
@@ -59,6 +62,10 @@ export interface Counters {
   detectiveSolved: number
   /** Detektiv: kolikrát tipl slovo, když byla víc než půlka písmen skrytá. */
   detectiveGuessed: number
+  /** Slabiky: kolik slov celkem složil. */
+  tetrisWords: number
+  /** Slabiky: nejdelší řetěz z jednoho tahu. */
+  tetrisChain: number
   /** Kolik denních výzev dohrál. */
   dailies: number
   /** Nejlepší skóre v jednom kole napříč režimy. */
@@ -120,6 +127,8 @@ export function emptyCounters(): Counters {
     gallowsClean: 0,
     detectiveSolved: 0,
     detectiveGuessed: 0,
+    tetrisWords: 0,
+    tetrisChain: 0,
     dailies: 0,
     bestScore: 0,
   }
@@ -131,13 +140,14 @@ export function emptyProfile(): Profile {
     streak: 0,
     bestStreak: 0,
     lastPlayedDay: null,
-    seen: { chain: [], hive: [], tower: [], gallows: [], detective: [] },
+    seen: { chain: [], hive: [], tower: [], gallows: [], detective: [], tetris: [] },
     stats: {
       chain: emptyStats(),
       hive: emptyStats(),
       tower: emptyStats(),
       gallows: emptyStats(),
       detective: emptyStats(),
+      tetris: emptyStats(),
     },
     counters: emptyCounters(),
     ink: START_INK,
@@ -150,6 +160,7 @@ export function emptyProfile(): Profile {
       tower: 'normal',
       gallows: 'normal',
       detective: 'normal',
+      tetris: 'normal',
     },
     theme: 'system',
     dailyDone: {},
@@ -159,6 +170,7 @@ export function emptyProfile(): Profile {
       tower: false,
       gallows: false,
       detective: false,
+      tetris: false,
     },
   }
 }
@@ -277,7 +289,7 @@ export function loadRounds(): SavedRounds {
     const saved = JSON.parse(raw) as SavedRounds
     if (!saved || typeof saved !== 'object') return {}
     const rounds: SavedRounds = {}
-    for (const mode of ['chain', 'hive', 'tower', 'gallows', 'detective'] as ModeId[]) {
+    for (const mode of MODES) {
       const round = saved[mode]
       if (round && round.mode === mode && round.state) rounds[mode] = round
     }
@@ -353,6 +365,9 @@ function updateCounters(profile: Profile, result: RoundResult, daily: boolean): 
         c.detectiveGuessed += 1
       }
     }
+  } else if (result.mode === 'tetris') {
+    c.tetrisWords += num(result, 'words')
+    c.tetrisChain = Math.max(c.tetrisChain, num(result, 'chain'))
   } else if (result.mode === 'gallows') {
     if (num(result, 'solved') === 1) {
       c.gallowsSolved += 1
@@ -379,8 +394,7 @@ function allDailiesDone(
   daily: boolean,
 ): boolean {
   if (!daily) return false
-  const modes: ModeId[] = ['chain', 'hive', 'tower', 'gallows', 'detective']
-  return modes.every(
+  return MODES.every(
     (mode) => mode === result.mode || profile.dailyDone[`${day}:${mode}`] !== undefined,
   )
 }
@@ -404,7 +418,7 @@ export function recordRound(
   return grantAwards({
     ...profile,
     // Denní várka je jediná věc, za kterou padá inkoust jen za účast — je to
-    // důvod se vrátit zítra. Padne až za všech pět her.
+    // důvod se vrátit zítra. Padne až za všech šest her.
     ink: profile.ink + (allDailiesDone(profile, result, day, daily) ? DAILY_INK : 0),
     fame: profile.fame + result.score,
     streak,

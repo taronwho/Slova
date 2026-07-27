@@ -13,6 +13,7 @@ const MODE_ID = {
   'Věž': 'tower',
   'Šibenice': 'gallows',
   'Detektiv': 'detective',
+  'Slabiky': 'tetris',
 }
 
 const APP_URL = process.env.URL ?? 'http://localhost:4173/'
@@ -34,6 +35,7 @@ const MODES = [
   ['Věž', '.tower'],
   ['Šibenice', '.gallows-art'],
   ['Detektiv', '.clue-card'],
+  ['Slabiky', '.well'],
 ]
 
 // Běžné ovládací prvky: 44px podle doporučení pro dotyk.
@@ -117,11 +119,13 @@ for (const size of SIZES) {
       const rect = board?.getBoundingClientRect()
       const small = []
       for (const el of document.querySelectorAll(
-        '.board button, .keyboard button, .hex, .tray-tile',
+        '.board button, .keyboard button, .hex, .tray-tile, .well-col',
       )) {
         const r = el.getBoundingClientRect()
         if (r.width === 0 || r.height === 0) continue
-        const isKey = Boolean(el.closest('.keyboard'))
+        // Klávesa i sloupec desky jsou úzké a vysoké — plochu mají velkou,
+        // jen jinak tvarovanou než běžné tlačítko. Měří se proto jako klávesy.
+        const isKey = Boolean(el.closest('.keyboard')) || el.classList.contains('well-col')
         // Na šířku je svislého místa málo a nižší klávesy jsou i na nativních
         // klávesnicích běžné; na výšku se drží plná velikost.
         const landscape = window.innerWidth > window.innerHeight

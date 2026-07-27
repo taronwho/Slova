@@ -37,6 +37,7 @@ const MODES: { id: ModeId; glyph: string; color: string }[] = [
   { id: 'tower', glyph: '↑', color: 'var(--mode-tower)' },
   { id: 'gallows', glyph: '?', color: 'var(--mode-gallows)' },
   { id: 'detective', glyph: '§', color: 'var(--mode-detective)' },
+  { id: 'tetris', glyph: '▚', color: 'var(--mode-tetris)' },
 ]
 
 const DIFFICULTIES: Difficulty[] = ['easy', 'normal', 'hard']
@@ -67,6 +68,11 @@ const DIFFICULTY_NOTE: Record<ModeId, Record<Difficulty, string>> = {
     normal: '6–7 písmen',
     hard: 'dlouhá slova a spletitější původ',
   },
+  tetris: {
+    easy: '5 sloupců, samé dvojslabičné',
+    normal: '5 sloupců, delší dávka',
+    hard: '6 sloupců, nejdelší dávka',
+  },
 }
 
 /** Česká čísla: 1 tah, 2–4 tahy, 5 a víc tahů. */
@@ -81,16 +87,26 @@ function progressNote(saved: SavedRound): string {
     path?: string[]
     found?: string[]
     built?: string[]
+    tried?: string[]
+    at?: number
+    queue?: string[]
     puzzle?: { solutions?: string[]; levels?: unknown[] }
   }
-  if (saved.mode === 'chain') {
-    return plural((state.path?.length ?? 1) - 1, 'tah', 'tahy', 'tahů')
+  switch (saved.mode) {
+    case 'chain':
+      return plural((state.path?.length ?? 1) - 1, 'tah', 'tahy', 'tahů')
+    case 'hive':
+      return `${state.found?.length ?? 0} z ${state.puzzle?.solutions?.length ?? 0} slov`
+    case 'gallows':
+    case 'detective':
+      return plural(state.tried?.length ?? 0, 'písmeno', 'písmena', 'písmen')
+    case 'tetris':
+      return `${state.at ?? 0} z ${state.queue?.length ?? 0} slabik`
+    default: {
+      const built = (state.built?.length ?? 1) - 1
+      return `${built} z ${(state.puzzle?.levels?.length ?? 1) - 1} pater`
+    }
   }
-  if (saved.mode === 'hive') {
-    return `${state.found?.length ?? 0} z ${state.puzzle?.solutions?.length ?? 0} slov`
-  }
-  const built = (state.built?.length ?? 1) - 1
-  return `${built} z ${(state.puzzle?.levels?.length ?? 1) - 1} pater`
 }
 
 export function Home({
@@ -113,7 +129,7 @@ export function Home({
   const [openRules, setOpenRules] = useState<ModeId | null>(null)
   /** Otevřená dlaždice — volba obtížnosti a spuštění se dějí až v ní. */
   const [picked, setPicked] = useState<ModeId | null>(null)
-  // Všech pět her, ne jen ty tři původní — jinak by „Odehráno" hlásilo míň,
+  // Všech šest her, ne jen ty tři původní — jinak by „Odehráno" hlásilo míň,
   // než kolik má hráč doopravdy za sebou.
   const played = MODES.reduce((sum, mode) => sum + profile.stats[mode.id].played, 0)
 

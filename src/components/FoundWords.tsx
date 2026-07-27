@@ -13,10 +13,12 @@ interface Props {
   pangrams: string[]
   total: number
   score: (word: string) => number
+  /** Kolik slov které délky ještě zbývá — délka -> počet. */
+  remaining: Map<number, number>
   onClose: () => void
 }
 
-export function FoundWords({ words, pangrams, total, score, onClose }: Props) {
+export function FoundWords({ words, pangrams, total, score, remaining, onClose }: Props) {
   useBackGuard(true, onClose)
 
   // Nejdelší nahoře — tam je nejvíc bodů a hráč si je pamatuje nejhůř.
@@ -45,6 +47,23 @@ export function FoundWords({ words, pangrams, total, score, onClose }: Props) {
             Zavřít
           </button>
         </div>
+
+        {/* Přehled zbývajících délek. Na telefonu je jen tady: v panelu
+            pod pláství zabíral dva řádky čipů a plástev se pak nevešla na
+            obrazovku. Sem patří i významem — je to referenční údaj, ne
+            ovládání. */}
+        {remaining.size > 0 && (
+          <div className="remaining-strip">
+            <div className="label">Kolik slov ještě zbývá</div>
+            <div className="remaining-chips">
+              {[...remaining.entries()].map(([length, count]) => (
+                <span className="chip" key={length}>
+                  {length} písmen · {count}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="found-groups">
           {lengths.map((length) => (
