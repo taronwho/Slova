@@ -505,6 +505,25 @@ export const AWARDS: Award[] = [
     { need: 365, title: 'Rok výzev', goal: 'Dohraj tři sta pětašedesát denních výzev' },
     { need: 1000, title: 'Tisíc výzev', goal: 'Dohraj tisíc denních výzev' },
   ]),
+  // Otázka dne se dá zahrát jen jednou denně, takže i její mety běží v čase
+  // a ne v počtu odehraných kol — dohnat se nedají.
+  ...ladder('otazka', 'habit', 'gold', 'glass', (p) => p.quiz.solved, [
+    { need: 1, title: 'První trefa', goal: 'Uhodni Otázku dne' },
+    { need: 10, title: 'Deset otázek', goal: 'Uhodni deset Otázek dne' },
+    { need: 50, title: 'Padesát otázek', goal: 'Uhodni padesát Otázek dne' },
+    { need: 200, title: 'Dvě stě otázek', goal: 'Uhodni dvě stě Otázek dne' },
+    { need: 700, title: 'Sedm set otázek', goal: 'Uhodni sedm set Otázek dne' },
+  ]),
+  ...ladder('otazka-serie', 'habit', 'warn', 'flame', (p) => p.quiz.bestStreak, [
+    { need: 5, title: 'Pět otázek v řadě', goal: 'Uhodni Otázku dne pět dní po sobě' },
+    { need: 20, title: 'Dvacet otázek v řadě', goal: 'Uhodni Otázku dne dvacet dní po sobě' },
+    { need: 60, title: 'Šedesát otázek v řadě', goal: 'Uhodni Otázku dne šedesát dní po sobě' },
+  ]),
+  ...ladder('otazka-znalec', 'feat', 'gold', 'peak', (p) => p.quiz.expert, [
+    { need: 1, title: 'Na jedinou indicii', goal: 'Uhodni Otázku dne jen z první, nejtěžší indicie' },
+    { need: 10, title: 'Desetkrát na jedinou', goal: 'Uhodni deset Otázek dne z jediné indicie' },
+    { need: 50, title: 'Padesátkrát na jedinou', goal: 'Uhodni padesát Otázek dne z jediné indicie' },
+  ]),
   ...ladder('varka', 'habit', 'gold', 'triad', (p) => p.counters.dailySets, [
     { need: 1, title: 'Celá várka', goal: 'Dohraj v jeden den denní výzvu v každé hře' },
     { need: 10, title: 'Deset várek', goal: 'Zvládni celou denní várku desetkrát' },

@@ -75,6 +75,42 @@ proto si ji Slabiky říkají samy (`TETRIS_INK_COST`). Už nasbíraný věhlas 
 přepočte zpětně: profil vede součet bodů za každou hru zvlášť, takže migrace
 na verzi 3 z věhlasu ubere přesně devět desetin toho, co Slabiky nasypaly.
 
+### Otázka dne — jednou denně, a ne o češtině
+
+Sedmá hra stojí mimo šestici a hraje se **jednou za den**. Ptá se na cokoli:
+osobnosti, zeměpis, vědu, kulturu, historii, přírodu, techniku, sport, jazyk
+a společnost. Inspirací jsou papírové kvízové karty se třemi odstupňovanými
+indiciemi.
+
+Celá hra stojí na jednom rozhodnutí. Hráč vidí **jen nadpis** („Poznej známou
+osobnost.“) a předem sází, kolik indicií bude potřebovat. Za jednu je odměna
+trojnásobná oproti třem — sázka se dělá naslepo, a proto se vyplácí. Kdyby byla
+odměna stejná, vezme si každý všechny tři a není co řešit.
+
+**Indicie jdou od nejtěžší po nejnávodnější** a na tom pořadí všechno závisí.
+První je pro člověka, který se v oboru pohybuje, a většině lidí neřekne skoro
+nic; třetí odpověď skoro prozradí. Odstupňovat se strojově nedá a
+`5g_build_quiz.py` se o to ani nepokouší — zkoušel to přes délku vět a hlásil
+jen plané poplachy. Co kontroluje, je **únik odpovědi**: indicie nesmí obsahovat
+odpověď ani její alternativní tvar, ani ohnutý, ani bez diakritiky. Při první
+kontrole to našlo pětadvacet skutečných úniků.
+
+Odměnou jsou **kapky inkoustu, ne body**. Hra nemá se slovní zásobou nic
+společného, takže nehýbe věhlasem ani hodností; zato je to nejštědřejší zdroj
+inkoustu, a proto se hraje jen jednou denně. Za uhodnutí padne 30 kapek na
+jednu indicii, 20 na dvě a 10 na tři, na odpověď jsou tři pokusy a za
+neuhodnutou otázku není nic — jen jedno z patnácti povzbuzení na zítřek.
+
+Obory se **střídají kolečkem, ne náhodou**: v každých deseti dnech padne
+z každého oboru právě jedna otázka, takže pětkrát sport za týden nejde vyrobit
+ani náhodou, protože v tom žádná náhoda není. Uvnitř oboru se jde po zamíchaném
+pořadí, aby sousední dny nedostávaly otázky, které spolu v datech sousedí.
+První opakování přijde po `počet oborů × nejmenší obor` dnech; kolik to je,
+hlásí build.
+
+Banka otázek je v `tools/quiz_bank.py` jako čitelná data a roste ručně —
+templatovaná otázka z databáze umí být faktická, ale odstupňovat se nenaučí.
+
 Otáčení je to hlavní, co se hraje. Dvojice má čtyři polohy a v každé se čte
 jinak — vodorovně zleva doprava, svisle **zdola nahoru** (tím směrem, kterým
 sloupec roste, stejně jako se čte Věž). „ko" a „lo" tedy dá KOLO ve dvou

@@ -58,6 +58,22 @@ import { mulberry32, shuffled } from '../src/lib/rng'
 import { RANKS as PROFILE_RANKS, rankFor as profileRankFor } from '../src/game/ranks'
 import { AWARDS, AWARD_GROUPS, visibleAwards } from '../src/game/awards'
 import {
+  buyClues,
+  createQuizState,
+  guess as quizGuess,
+  matches as quizMatches,
+  QUIZ_CONSOLATIONS,
+  QUIZ_REWARD,
+  QUIZ_TOPICS,
+  QUIZ_TRIES,
+  quizCycle,
+  quizFor,
+  quizReward,
+  revealClue,
+  type QuizDeck,
+  type QuizQuestion,
+} from '../src/game/quiz'
+import {
   scoreChain,
   scoreDetective,
   scoreGallows,
@@ -89,6 +105,7 @@ import {
   emptyProfile,
   grantAwards,
   migrate as migrateProfile,
+  recordQuiz,
   recordRound,
   spendInk,
   type Profile,
@@ -1209,5 +1226,138 @@ describe('detektiv', () => {
     const plodding = scoreDetective(slow, 1, slow.startedAt + 10_000)
     expect(fast.total).toBeGreaterThan(plodding.total)
     expect(fast.perfect).toBe(true)
+  })
+})
+
+
+describe('otázka dne', () => {
+  function question(topic: (typeof QUIZ_TOPICS)[number], n: number): QuizQuestion {
+    return {
+      id: `${topic}-${n}`,
+      topic,
+      ask: 'Poznej něco.',
+      clues: ['těžká', 'střední', 'návodná'],
+      answer: `odpověď ${n}`,
+    }
+  }
+
+  const deck = Object.fromEntries(
+    QUIZ_TOPICS.map((topic) => [topic, [0, 1, 2].map((n) => question(topic, n))]),
+  ) as QuizDeck
+
+  // Přesně to, co hráč nechce: pětkrát sport za týden. Obory se proto
+  // střídají kolečkem a žádná náhoda v tom není.
+  it('obory se střídají kolečkem, jeden den jeden obor', () => {
+    const week = Array.from({ length: QUIZ_TOPICS.length }, (_, day) =>
+      quizFor(deck, day)!.topic,
+    )
+    expect(new Set(week).size).toBe(QUIZ_TOPICS.length)
+  })
+
+  it('otázka se nezopakuje dřív, než projdou všechny', () => {
+    const cycle = quizCycle(deck)
+    expect(cycle).toBe(3 * QUIZ_TOPICS.length)
+    const ids = Array.from({ length: cycle }, (_, day) => quizFor(deck, day)!.id)
+    expect(new Set(ids).size).toBe(cycle)
+    // Po celém kole se první otázka vrátí — a to je v pořádku.
+    expect(quizFor(deck, cycle)!.id).toBe(ids[0])
+  })
+
+  it('týž den dá všem hráčům tutéž otázku', () => {
+    expect(quizFor(deck, 412)!.id).toBe(quizFor(deck, 412)!.id)
+    expect(quizFor(deck, 412)!.id).not.toBe(quizFor(deck, 413)!.id)
+  })
+
+  // Sázka se dělá naslepo, proto je za jednu indicii trojnásobek. Kdyby to
+  // bylo naopak nebo nastejno, nikdo by si nevzal míň než tři.
+  it('míň indicií znamená větší odměnu', () => {
+    expect(QUIZ_REWARD[1]).toBeGreaterThan(QUIZ_REWARD[2])
+    expect(QUIZ_REWARD[2]).toBeGreaterThan(QUIZ_REWARD[3])
+    expect(QUIZ_REWARD[1]).toBe(3 * QUIZ_REWARD[3])
+  })
+
+  it('koupí se jen tolik indicií, kolik si hráč vybral', () => {
+    let state = buyClues(createQuizState(question('veda', 1)), 2)
+    expect(state.bought).toBe(2)
+    expect(state.shown).toBe(1)
+    state = revealClue(state)
+    expect(state.shown).toBe(2)
+    // Třetí si nekoupil, tak ji nedostane.
+    expect(revealClue(state).shown).toBe(2)
+  })
+
+  it('rozhodnutí o počtu indicií se nedá vzít zpět', () => {
+    const state = buyClues(buyClues(createQuizState(question('veda', 1)), 1), 3)
+    expect(state.bought).toBe(1)
+  })
+
+  it('odpověď se porovnává bez diakritiky, velikosti písmen i mezer', () => {
+    const q: QuizQuestion = {
+      id: 'x',
+      topic: 'osobnost',
+      ask: 'Kdo?',
+      clues: ['a', 'b', 'c'],
+      answer: 'Édith Piaf',
+      alt: ['Piaf'],
+    }
+    expect(quizMatches(q, 'edith piaf')).toBe(true)
+    expect(quizMatches(q, 'Edith-Piaf')).toBe(true)
+    expect(quizMatches(q, '  PIAF ')).toBe(true)
+    expect(quizMatches(q, 'Piaff')).toBe(false)
+  })
+
+  it('po třech chybách kolo končí a odměna je nulová', () => {
+    let state = buyClues(createQuizState(question('sport', 1)), 1)
+    for (let i = 0; i < QUIZ_TRIES; i += 1) {
+      state = quizGuess(state, `vedle ${i}`).state
+    }
+    expect(state.finishedAt).not.toBeNull()
+    expect(state.solved).toBe(false)
+    expect(quizReward(state)).toBe(0)
+  })
+
+  it('trefa na jednu indicii platí nejvíc', () => {
+    const q = question('sport', 1)
+    const one = quizGuess(buyClues(createQuizState(q), 1), q.answer).state
+    const three = quizGuess(buyClues(createQuizState(q), 3), q.answer).state
+    expect(quizReward(one)).toBe(QUIZ_REWARD[1])
+    expect(quizReward(three)).toBe(QUIZ_REWARD[3])
+  })
+
+  // Po čtvrté prohře by jedna věta zněla jako automat.
+  it('povzbuzení má patnáct obměn a střídá se po dnech', () => {
+    expect(QUIZ_CONSOLATIONS.length).toBe(15)
+    expect(new Set(QUIZ_CONSOLATIONS).size).toBe(15)
+  })
+
+  it('zápis do profilu zamkne dnešek a vede řadu úspěšných dnů', () => {
+    const start = emptyProfile()
+    const first = recordQuiz(start, '2026-03-01', { solved: true, clues: 1, ink: 30 })
+    expect(first.quiz.lastDay).toBe('2026-03-01')
+    expect(first.quiz.solved).toBe(1)
+    expect(first.quiz.expert).toBe(1)
+    expect(first.quiz.streak).toBe(1)
+    // Kromě odměny padne ještě inkoust za mety, které tím kolem padly.
+    expect(first.ink).toBeGreaterThanOrEqual(start.ink + 30)
+
+    const second = recordQuiz(first, '2026-03-02', { solved: true, clues: 3, ink: 10 })
+    expect(second.quiz.streak).toBe(2)
+    expect(second.quiz.expert).toBe(1)
+
+    // Vynechaný den řadu utne stejně jako špatná odpověď.
+    const gap = recordQuiz(second, '2026-03-05', { solved: true, clues: 2, ink: 20 })
+    expect(gap.quiz.streak).toBe(1)
+    const missed = recordQuiz(gap, '2026-03-06', { solved: false, clues: 1, ink: 0 })
+    expect(missed.quiz.streak).toBe(0)
+    expect(missed.quiz.played).toBe(4)
+    expect(missed.quiz.bestStreak).toBe(2)
+  })
+
+  // Otázka dne není o češtině, takže nesmí hýbat věhlasem ani sérií kol.
+  it('nedává body ani nehýbe sérií čistých kol', () => {
+    const start: Profile = { ...emptyProfile(), fame: 1234, streak: 7 }
+    const after = recordQuiz(start, '2026-03-01', { solved: true, clues: 1, ink: 30 })
+    expect(after.fame).toBe(1234)
+    expect(after.streak).toBe(7)
   })
 })

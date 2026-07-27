@@ -82,6 +82,42 @@ export interface Counters {
   bestScore: number
 }
 
+/**
+ * Otázka dne — jediná hra mimo šestici slovních, a proto i jediná, která má
+ * v profilu vlastní přihrádku místo `stats[mode]`.
+ *
+ * Nemá obtížnost, nedá se hrát vícekrát denně a nesype body, takže by se do
+ * statistik režimů vešla jen násilím. Její čísla jsou vlastní: kolikrát se
+ * hráč trefil, na kolik indicií a kolik dní v řadě.
+ */
+export interface QuizRecord {
+  /** Poslední den, ve kterém hráč otázku dohrál. Podle něj se zamyká další. */
+  lastDay: string | null
+  /** Kolik otázek hráč dohrál celkem, i těch neuhodnutých. */
+  played: number
+  /** Kolik jich uhodl. */
+  solved: number
+  /** Kolik uhodl na jedinou indicii — to je ta nejtěžší cesta. */
+  expert: number
+  /** Kolik dní po sobě se trefil. Neúspěch i vynechaný den řadu utne. */
+  streak: number
+  bestStreak: number
+  /** Kolik inkoustu si z Otázky dne za celou dobu odnesl. */
+  ink: number
+}
+
+export function emptyQuiz(): QuizRecord {
+  return {
+    lastDay: null,
+    played: 0,
+    solved: 0,
+    expert: 0,
+    streak: 0,
+    bestStreak: 0,
+    ink: 0,
+  }
+}
+
 export interface Profile {
   /** Verze uloženého profilu — podle ní se pozná, co je potřeba přepočítat. */
   version: number
@@ -130,6 +166,8 @@ export interface Profile {
    * potom už jen na vyžádání z domovské obrazovky.
    */
   guideSeen: boolean
+  /** Otázka dne — vlastní přihrádka, protože se do statistik režimů nevejde. */
+  quiz: QuizRecord
 }
 
 function emptyStats(): ModeStats {
@@ -209,6 +247,7 @@ export function emptyProfile(): Profile {
       tetris: false,
     },
     guideSeen: false,
+    quiz: emptyQuiz(),
   }
 }
 
@@ -342,6 +381,7 @@ export function migrate(raw: unknown): Profile {
     difficulty: { ...base.difficulty, ...(saved.difficulty ?? {}) },
     dailyDone: { ...base.dailyDone, ...(saved.dailyDone ?? {}) },
     tutorialSeen: { ...base.tutorialSeen, ...(saved.tutorialSeen ?? {}) },
+    quiz: { ...base.quiz, ...(saved.quiz ?? {}) },
     history: saved.history ?? [],
   }
   // Přepočty se řetězí: starý profil projde všemi, novější jen těmi, které
@@ -589,6 +629,44 @@ export function recordRound(
     stats: { ...profile.stats, [result.mode]: stats },
     counters: updateCounters(profile, result, day, daily),
     history: [result, ...profile.history].slice(0, 50),
+  })
+}
+
+/**
+ * Zapíše dohranou Otázku dne.
+ *
+ * Nemíchá se do `recordRound`: nedává body, nemá obtížnost, nepatří do
+ * historie kol a nesmí hnout sérií čistých kol ani věhlasem. Jediné, co
+ * z ní teče do zbytku hry, je inkoust — a ten je tu nejštědřejší v celé hře,
+ * protože se dá vzít právě jednou denně.
+ *
+ * `day` zamyká další otázku do zítřka. Zapisuje se i neúspěch, jinak by po
+ * neuhodnuté otázce šlo obnovit stránku a zkusit to znovu.
+ */
+export function recordQuiz(
+  profile: Profile,
+  day: string,
+  outcome: { solved: boolean; clues: number; ink: number },
+): Profile {
+  const quiz = profile.quiz
+  // Řada dní se počítá jen za trefu a jen za den, který navazuje na ten
+  // minulý. Vynechaný den ji utne stejně jako špatná odpověď — je to řada
+  // správných odpovědí, ne řada návštěv.
+  const follows = quiz.lastDay !== null && quiz.lastDay === shiftDay(day, -1)
+  const streak = outcome.solved ? (follows ? quiz.streak + 1 : 1) : 0
+
+  return grantAwards({
+    ...profile,
+    ink: profile.ink + outcome.ink,
+    quiz: {
+      lastDay: day,
+      played: quiz.played + 1,
+      solved: quiz.solved + (outcome.solved ? 1 : 0),
+      expert: quiz.expert + (outcome.solved && outcome.clues === 1 ? 1 : 0),
+      streak,
+      bestStreak: Math.max(quiz.bestStreak, streak),
+      ink: quiz.ink + outcome.ink,
+    },
   })
 }
 

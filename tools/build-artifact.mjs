@@ -74,6 +74,7 @@ for (let i = 0; i < TOWER_PACKS; i++) {
 embedded['gallows/puzzles.json'] = readJson('gallows', 'puzzles.json')
 embedded['detective/puzzles.json'] = readJson('detective', 'puzzles.json')
 embedded['tetris/deck.json'] = readJson('tetris', 'deck.json')
+embedded['quiz/deck.json'] = readJson('quiz', 'deck.json')
 
 /* ---------- JS ---------- */
 
@@ -166,6 +167,7 @@ console.log(
     `, voština ${hiveIndex.hives.length}, věž ${towerIndex.towers.length}` +
     `, šibenice ${embedded['gallows/puzzles.json'].length}` +
     `, detektiv ${embedded['detective/puzzles.json'].length}` +
-    `, slabiky ${embedded['tetris/deck.json'].words.length} slov`,
+    `, slabiky ${embedded['tetris/deck.json'].words.length} slov` +
+    `, otázka dne ${Object.values(embedded['quiz/deck.json']).flat().length}`,
 )
 console.log(`\nCelkem   ${kb(page.length)}  ->  ${OUT}`)

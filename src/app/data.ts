@@ -4,6 +4,7 @@ import { buildChainGraph, type ChainGraph, type ChainPuzzle } from '../game/chai
 import type { HivePuzzle } from '../game/hive'
 import type { DetectivePuzzle } from '../game/detective'
 import type { GallowsPuzzle } from '../game/gallows'
+import type { QuizDeck } from '../game/quiz'
 import type { TetrisDeck } from '../game/tetris'
 import type { TowerPuzzle } from '../game/tower'
 import type { Difficulty } from '../game/types'
@@ -147,6 +148,16 @@ export function loadDetective(): Promise<DetectivePuzzle[]> {
    která z nich jdou složit. Hádanky tenhle režim nemá — padá náhodně. */
 export function loadTetris(): Promise<TetrisDeck> {
   return fetchJson<TetrisDeck>('tetris/deck.json')
+}
+
+/* ---------- Otázka dne ---------- */
+
+/**
+ * Balík otázek se načítá **až když na něj dojde**, tedy jednou denně.
+ * Je to největší datový soubor ve hře a v ostatních režimech není k ničemu.
+ */
+export function loadQuiz(): Promise<QuizDeck> {
+  return fetchJson<QuizDeck>('quiz/deck.json')
 }
 
 /* ---------- Výběr hádanky ---------- */

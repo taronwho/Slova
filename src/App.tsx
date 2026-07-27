@@ -9,6 +9,7 @@ import {
   loadTetris,
   loadGallows,
   loadHiveIndex,
+  loadQuiz,
   loadTower,
   loadTowerIndex,
   pickUnseen,
@@ -25,6 +26,7 @@ import { GallowsGame } from './components/GallowsGame'
 import { Guide } from './components/Guide'
 import { HiveGame } from './components/HiveGame'
 import { Home } from './components/Home'
+import { QuizGame } from './components/QuizGame'
 import { Splash } from './components/Splash'
 import { Stats } from './components/Stats'
 import { Tutorial } from './components/Tutorial'
@@ -35,6 +37,7 @@ import type { DetectivePuzzle, DetectiveState } from './game/detective'
 import type { ExplainTarget } from './game/glossary'
 import type { GallowsPuzzle, GallowsState } from './game/gallows'
 import type { HivePuzzle, HiveState } from './game/hive'
+import { quizFor, type QuizQuestion } from './game/quiz'
 import { RANKS, rankFor } from './game/ranks'
 import { tetrisSetup, type TetrisDeck, type TetrisSetup, type TetrisState } from './game/tetris'
 import type { TowerPuzzle, TowerState } from './game/tower'
@@ -46,6 +49,7 @@ import {
   emptyProfile,
   loadProfile,
   loadRounds,
+  recordQuiz,
   recordRound,
   saveProfile,
   saveRounds,
@@ -60,6 +64,9 @@ type View =
   | { kind: 'stats' }
   | { kind: 'awards' }
   | { kind: 'game'; mode: ModeId; daily: boolean; nonce: number }
+  // Otázka dne stojí mimo šestici — nemá obtížnost ani rozehrané kolo,
+  // takže se do `game` nevejde.
+  | { kind: 'quiz' }
 
 interface Loaded {
   chain?: { bundle: ChainBundle; puzzle: ChainPuzzle }
@@ -68,6 +75,7 @@ interface Loaded {
   gallows?: GallowsPuzzle
   detective?: DetectivePuzzle
   tetris?: { deck: TetrisDeck; setup: TetrisSetup }
+  quiz?: QuizQuestion
 }
 
 export default function App() {
@@ -335,6 +343,33 @@ export default function App() {
 
   const goHome = useCallback(() => setView({ kind: 'home' }), [])
 
+  /**
+   * Otázka dne. Balík otázek je největší datový soubor ve hře a v ostatních
+   * režimech není k ničemu, takže se stahuje až tady.
+   */
+  const startQuiz = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const deck = await loadQuiz()
+      const question = quizFor(deck, dayNumber())
+      if (!question) throw new Error('Otázka na dnešek chybí')
+      setLoaded({ quiz: question })
+      setView({ kind: 'quiz' })
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Otázku se nepodařilo načíst')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  const finishQuiz = useCallback(
+    (outcome: { solved: boolean; clues: number; ink: number }) => {
+      updateProfile((previous) => recordQuiz(previous, dayKey, outcome))
+    },
+    [dayKey, updateProfile],
+  )
+
   const closeGuide = useCallback(() => {
     setGuide(false)
     updateProfile((previous) =>
@@ -536,6 +571,7 @@ export default function App() {
             onAwards={() => setView({ kind: 'awards' })}
             onRules={(mode) => setTutorial({ mode, pending: false })}
             onGuide={() => setGuide(true)}
+            onQuiz={() => void startQuiz()}
             saved={saved}
             onResume={(mode) => {
               const round = saved[mode]
@@ -553,6 +589,17 @@ export default function App() {
         )}
 
         {!loading && view.kind === 'awards' && <Awards profile={profile} onBack={goHome} />}
+
+        {!loading && view.kind === 'quiz' && loaded.quiz && (
+          <QuizGame
+            key={loaded.quiz.id}
+            question={loaded.quiz}
+            day={dayNumber()}
+            dayLabel={dayLabel}
+            onFinish={finishQuiz}
+            onHome={goHome}
+          />
+        )}
 
         {!loading && view.kind === 'game' && view.mode === 'chain' && loaded.chain && (
           <ChainGame

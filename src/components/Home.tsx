@@ -3,6 +3,7 @@
 import { useState } from 'react'
 
 import { AWARDS } from '../game/awards'
+import { QUIZ_REWARD } from '../game/quiz'
 import { rankFor } from '../game/ranks'
 import { MODE_SUMMARY, TUTORIALS } from '../game/tutorials'
 import {
@@ -29,6 +30,8 @@ interface Props {
   onRules: (mode: ModeId) => void
   /** Průvodce celou hrou — společná pravidla, body, inkoust, hodnosti. */
   onGuide: () => void
+  /** Otázka dne — jednou denně, mimo šestici slovních her. */
+  onQuiz: () => void
   /** Kola přerušená odchodem do menu nebo zavřením hry, po jednom od režimu. */
   saved: SavedRounds
   onResume: (mode: ModeId) => void
@@ -121,6 +124,7 @@ export function Home({
   onAwards,
   onRules,
   onGuide,
+  onQuiz,
   saved,
   onResume,
 }: Props) {
@@ -135,6 +139,10 @@ export function Home({
   // Všech šest her, ne jen ty tři původní — jinak by „Odehráno" hlásilo míň,
   // než kolik má hráč doopravdy za sebou.
   const played = MODES.reduce((sum, mode) => sum + profile.stats[mode.id].played, 0)
+
+  // Otázka dne se hraje jednou za den; podle zápisu v profilu se pozná,
+  // že je dnešek hotový.
+  const quizDone = profile.quiz.lastDay === dayKey
 
   const pickedMode = picked ? MODES.find((m) => m.id === picked)! : null
   const pickedSaved = picked ? saved[picked] : undefined
@@ -216,6 +224,36 @@ export function Home({
           })}
         </div>
       </div>
+
+      {/* Otázka dne stojí zvlášť. Není to sedmá slovní hra, je to jiný druh
+          zábavy na jednou denně — a hlavně jediné místo, kde se dá vydělat
+          pořádná zásoba inkoustu. */}
+      <button
+        type="button"
+        className={`panel quiz-strip ${quizDone ? 'done' : ''}`}
+        onClick={onQuiz}
+        disabled={quizDone}
+      >
+        <span className="quiz-strip-mark" aria-hidden="true">
+          ?
+        </span>
+        <span className="quiz-strip-body">
+          <span className="label">Otázka dne {dayLabel}</span>
+          <span className="quiz-strip-title">
+            {quizDone ? 'Dneska hotovo — další zítra' : 'Poznáš to podle indicií?'}
+          </span>
+          <span className="faint">
+            {quizDone
+              ? `Zatím uhodnuto ${profile.quiz.solved} z ${profile.quiz.played}`
+              : `Čím míň indicií si vezmeš, tím víc inkoustu — až ${QUIZ_REWARD[1]} kapek`}
+          </span>
+        </span>
+        {!quizDone && (
+          <span className="chip chip-ink">
+            <InkMark size={12} /> <span className="num">{QUIZ_REWARD[1]}</span>
+          </span>
+        )}
+      </button>
 
       {pickedMode && (
         <div

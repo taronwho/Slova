@@ -443,6 +443,15 @@ export const GUIDE: GuideSection[] = [
     term: 'denni',
   },
   {
+    title: 'Otázka dne',
+    body: [
+      'Mimo slovní hry je tu ještě jedna, která se hraje **jednou za den** a neptá se na češtinu, ale na cokoli: osobnosti, zeměpis, vědu, kulturu, historii, přírodu, techniku, sport, jazyk i společnost.',
+      'Uvidíš jen nadpis a předem se rozhodneš, kolik indicií si vezmeš. První je pro znalce oboru, třetí skoro prozradí — a čím míň jich vezmeš, tím větší odměna v inkoustu.',
+      'Body ani věhlas nedává, zato je to nejštědřejší zdroj inkoustu ve hře. Za neuhodnutou otázku není nic, jen povzbuzení na zítřek.',
+    ],
+    term: 'otazka',
+  },
+  {
     title: 'Když si nejsi jistý',
     body: [
       'Ve Slovech jde kliknout na všechno. Každé číslo v liště, každý čip v profilu i každá dlaždice ocenění ti po ťuknutí řekne, co znamená, nebo tě rovnou přepne tam, kde se to dá vyřešit.',

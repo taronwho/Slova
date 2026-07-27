@@ -1,0 +1,191 @@
+#!/usr/bin/env python3
+"""
+Postaví balík otázek pro Otázku dne z `quiz_bank.py`.
+
+Kromě převodu do JSON dělá hlavně **kontroly**, protože u téhle hry se chyba
+v datech nedá zahrát do autu — hráč dostane jednu otázku denně a když je
+špatná, má zkažený celý den:
+
+* **Únik odpovědi.** Indicie nesmí obsahovat odpověď ani žádný její alternativní
+  tvar, ani ohnutý, ani bez diakritiky. Kdyby ano, hra by se dala vyhrát
+  přečtením.
+* **Odstupňování** se strojově zkontrolovat nedá a tenhle skript se o to ani
+  nepokouší. Zkoušel to přes délku vět a hlásil jen plané poplachy — dlouhá
+  věta není těžká indicie. Jestli je první pro znalce a třetí skoro prozradí,
+  se pozná jedině přečtením, a je to ta část práce, kterou nejde odbýt.
+  Hlídá se jen to, že indicie nejsou útržky o dvou slovech.
+* **Vyváženost oborů.** Otázky se hráči podávají kolečkem přes obory, takže
+  délka nejmenšího oboru určuje, za kolik dní se první otázka zopakuje.
+  Když se obory rozejdou, cyklus se zkrátí — a to je přesně ta věc, kterou by
+  si nikdo nevšiml, dokud by na ni nenarazil hráč.
+"""
+
+import json
+import re
+import sys
+import unicodedata
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
+from quiz_bank import BANK  # noqa: E402
+
+OUT = Path("public/data/quiz/deck.json")
+
+# Musí sedět s QUIZ_TOPICS v src/game/quiz.ts.
+TOPICS = [
+    "osobnost",
+    "zemepis",
+    "veda",
+    "kultura",
+    "historie",
+    "priroda",
+    "technika",
+    "sport",
+    "jazyk",
+    "spolecnost",
+]
+
+
+def fold(text: str) -> str:
+    """Bez diakritiky a bez velkých písmen — tak, jak se odpověď porovnává."""
+    stripped = unicodedata.normalize("NFD", text.lower())
+    return "".join(c for c in stripped if unicodedata.category(c) != "Mn")
+
+
+def stem(word: str) -> str:
+    """
+    Hrubý kmen českého slova.
+
+    Únik se nejčastěji schová v ohnutém tvaru — „Dvořák“ v indicii jako
+    „Dvořákova“. Useknutí konce slova to odhalí, aniž by bylo potřeba tahat
+    do buildu celý morfologický analyzátor.
+    """
+    return word[:-2] if len(word) > 6 else word[:-1] if len(word) > 4 else word
+
+
+# Druhová slova, která odpověď jen zařazují do kategorie.
+#
+# „Bajkalské **jezero**" nebo „baskický **jazyk**" jsou uznávané tvary
+# odpovědi, ale samo slovo nic neprozrazuje — nadpis otázky ho stejně říká
+# nahlas. Kdyby se hlídala i tahle slova, kontrola by křičela u poloviny
+# otázek a přestala by se číst, což je horší než ji nemít.
+GENERIC = {
+    "jazyk", "jazyka", "kniha", "knihy", "film", "filmu", "jezero", "hora",
+    "stat", "statu", "spor", "sporu", "pruplav", "vodopad", "vodopady",
+    "stupnice", "system", "vyroba", "pismo", "slovo", "slova", "svatek",
+    "ustava", "stadium", "metr", "metru", "metru", "presmycka", "podzemni",
+    "aditivni", "cocka", "cocky", "sifra", "mesto", "mesta", "reka", "reky",
+    "ostrov", "sopka", "more", "prvek", "slouceniny", "sloucenina", "kyselina",
+    "zvire", "strom", "rostlina", "ptak", "ryba", "hmyz", "savec", "houba",
+    "hornina", "planeta", "hvezda", "kometa", "organizace", "instituce",
+    "dokument", "deklarace", "pojem", "cena", "mena", "tradice", "zvyk",
+    "sport", "klub", "trofej", "turnaj", "akce", "disciplina", "obecna",
+    "obecny", "obrovsky", "velika", "velky", "velka", "cesky", "ceska",
+    "ceske", "narodni", "mezinarodni", "svetovy", "svetova", "prava",
+    "pravo", "praci", "prace", "republiky", "republika", "menšina",
+    "mensina", "beh", "vynalez", "stroj", "technika", "termin", "jev",
+    "abeceda", "rceni", "obdobi", "udalost", "bitva", "valka", "civilizace",
+    "panovnik", "vladce", "moreplavec", "stavba", "album", "skupina",
+    "kapela", "socha", "obraz", "hra", "serial", "muzikal", "nastroj",
+    "malir", "spisovatel", "osobnost", "sportovec", "sportovkyne",
+    "fotbalista", "videohra", "letadlo", "auto", "znacka", "lecivo",
+    "jednotka", "teorie", "objev", "organ", "teleso", "poust", "vrchol",
+    "pisma", "konference", "listina", "listiny", "svobod",
+}
+
+
+def leaks(answer: str, clue: str) -> str | None:
+    """
+    Vrátí uniklé slovo, pokud se odpověď dá z indicie vyčíst.
+
+    Porovnává se přes hrubý kmen a bez diakritiky, aby prošel i ohnutý tvar
+    („Dvořákova“ prozrazuje Dvořáka stejně jako „Dvořák“).
+    """
+    words = [
+        w
+        for w in re.split(r"[^a-z0-9]+", fold(answer))
+        if len(w) >= 4 and w not in GENERIC
+    ]
+    hay = fold(clue)
+    for word in words:
+        if stem(word) and stem(word) in hay:
+            return word
+    return None
+
+
+def main() -> int:
+    problems: list[str] = []
+    deck: dict[str, list] = {}
+    ids: set[str] = set()
+
+    for topic in TOPICS:
+        rows = BANK.get(topic)
+        if not rows:
+            problems.append(f"obor {topic} je prázdný")
+            deck[topic] = []
+            continue
+
+        out = []
+        for i, row in enumerate(rows):
+            ask, answer, alt, clues = row
+            qid = f"{topic}-{i + 1:04d}"
+            where = f"{topic} #{i + 1} ({answer})"
+
+            if len(clues) != 3:
+                problems.append(f"{where}: indicií není přesně tři")
+                continue
+            if qid in ids:
+                problems.append(f"{where}: klíč {qid} je dvakrát")
+            ids.add(qid)
+
+            for n, clue in enumerate(clues, start=1):
+                if len(clue.split()) < 4:
+                    problems.append(f"{where}: {n}. indicie je příliš krátká")
+                for candidate in [answer, *alt]:
+                    hit = leaks(candidate, clue)
+                    if hit:
+                        problems.append(
+                            f"{where}: {n}. indicie prozrazuje odpověď („{hit}“)"
+                        )
+                        break
+
+            entry = {
+                "id": qid,
+                "topic": topic,
+                "ask": ask,
+                "clues": list(clues),
+                "answer": answer,
+            }
+            if alt:
+                entry["alt"] = list(alt)
+            out.append(entry)
+
+        deck[topic] = out
+
+    sizes = {topic: len(deck[topic]) for topic in TOPICS}
+    smallest = min(sizes.values())
+    cycle = smallest * len(TOPICS)
+
+    print("otázky po oborech:")
+    for topic in TOPICS:
+        print(f"  {topic:12s} {sizes[topic]:4d}")
+    print(f"\ncelkem      {sum(sizes.values())}")
+    print(f"bez opakování {cycle} dní ({cycle / 365:.1f} roku)")
+
+    if problems:
+        print(f"\nNÁLEZY ({len(problems)}):")
+        for p in problems:
+            print(f"  • {p}")
+        return 1
+
+    OUT.parent.mkdir(parents=True, exist_ok=True)
+    OUT.write_text(
+        json.dumps(deck, ensure_ascii=False, separators=(",", ":")),
+        encoding="utf-8",
+    )
+    print(f"\n-> {OUT} ({OUT.stat().st_size / 1024:.0f} kB)")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

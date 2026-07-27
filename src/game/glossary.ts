@@ -16,6 +16,7 @@
  */
 
 import { DAILY_INK, INK_BY_TIER, inkPrice, rankInk } from './economy'
+import { QUIZ_REWARD, QUIZ_TRIES } from './quiz'
 import { RANKS } from './ranks'
 import type { ModeId } from './types'
 
@@ -179,6 +180,17 @@ export const TERMS: Record<string, Term> = {
     body: [
       'Přepíná mezi světlým a tmavým vzhledem. Třetí poloha „podle systému" se řídí nastavením telefonu, včetně nočního přepínání.',
     ],
+  },
+
+  otazka: {
+    title: 'Otázka dne',
+    body: [
+      'Jediná hra, která není o češtině — a jediná, kterou si zahraješ **jednou za den**. Ptá se na cokoli: osobnosti, zeměpis, vědu, kulturu, historii, přírodu, techniku, sport, jazyk i společnost.',
+      'Nejdřív uvidíš jen nadpis a **předem se rozhodneš, kolik indicií si vezmeš**. První je pro znalce oboru, druhá zúží pole, třetí skoro prozradí — a čím méně jich vezmeš, tím větší odměna.',
+      `Za uhodnutí padne ${QUIZ_REWARD[1]} kapek inkoustu na jednu indicii, ${QUIZ_REWARD[2]} na dvě a ${QUIZ_REWARD[3]} na tři. Na odpověď máš ${QUIZ_TRIES} pokusy; za neuhodnutou otázku není nic, jen povzbuzení na zítřek.`,
+      'Body ani věhlas nedává — ty se pořád získávají hraním her o slovech. Zato je to nejštědřejší zdroj inkoustu ve hře, a proto je jednou denně.',
+    ],
+    links: [{ label: 'Co je inkoust', to: 'term:inkoust' }],
   },
 
   plastev: {
