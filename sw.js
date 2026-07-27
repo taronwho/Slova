@@ -48,11 +48,18 @@ self.addEventListener('fetch', (event) => {
 
   // Navigace: nejdřív síť (kvůli aktualizacím), při výpadku uložená skořápka.
   if (request.mode === 'navigate') {
+    // Jako skořápku se ukládá **jen samotná hra**. Na stejné adrese můžou
+    // ležet i jiné stránky (třeba kontrolní build otázek) a kdyby se uložily
+    // pod index.html, dostal by hráč offline místo hry něco úplně jiného.
+    const isApp =
+      url.pathname.endsWith('/') || url.pathname.endsWith('/index.html')
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const copy = response.clone()
-          caches.open(SHELL).then((cache) => cache.put('./index.html', copy))
+          if (isApp) {
+            const copy = response.clone()
+            caches.open(SHELL).then((cache) => cache.put('./index.html', copy))
+          }
           return response
         })
         .catch(() =>
