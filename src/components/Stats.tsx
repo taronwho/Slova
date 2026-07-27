@@ -32,7 +32,7 @@ const EXTRA_LABEL: Record<ModeId, string> = {
 }
 
 export function Stats({ profile, onBack, onReset }: Props) {
-  const progress = rankFor(profile.xp)
+  const progress = rankFor(profile.fame)
 
   return (
     <>
@@ -49,9 +49,11 @@ export function Stats({ profile, onBack, onReset }: Props) {
           <span className="rank">
             {progress.rank.name} · hodnost {progress.rank.index}
           </span>
-          <span className="num muted">{profile.xp.toLocaleString('cs-CZ')} XP</span>
+          <span className="num muted">
+            {profile.fame.toLocaleString('cs-CZ')} věhlasu
+          </span>
         </div>
-        <div className="xp-bar">
+        <div className="fame-bar">
           <span
             style={{ width: `${progress.span ? (progress.into / progress.span) * 100 : 100}%` }}
           />
@@ -60,7 +62,7 @@ export function Stats({ profile, onBack, onReset }: Props) {
           {progress.next
             ? `Do hodnosti ${progress.next.name} zbývá ${(
                 progress.span - progress.into
-              ).toLocaleString('cs-CZ')} XP`
+              ).toLocaleString('cs-CZ')} věhlasu`
             : 'Nejvyšší hodnost — dál už se nešplhá'}
         </p>
       </div>

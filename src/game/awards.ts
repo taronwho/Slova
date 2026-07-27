@@ -168,10 +168,13 @@ export const AWARDS: Award[] = [
     'medal', 4000, (p) => p.stats.hive.bestScore),
   count('vez-skore', 'score', 'tower', 'Vysoké skóre věže', 'Dohraj Věž za 2 000 bodů',
     'medal', 2000, (p) => p.stats.tower.bestScore),
-  count('xp-50k', 'score', 'gold', 'Padesát tisíc', 'Nasbírej 50 000 XP', 'deck', 50_000,
-    (p) => p.xp, 1),
-  count('xp-250k', 'score', 'gold', 'Čtvrt milionu', 'Nasbírej 250 000 XP', 'deck', 250_000,
-    (p) => p.xp, 3),
+  // Klíče zůstávají `xp-…`, i když se veličina jmenuje věhlas: podle nich se
+  // v uloženém profilu poznává, co už hráč má, a přejmenovat je by znamenalo
+  // udělit ocenění (a inkoust za ně) podruhé.
+  count('xp-50k', 'score', 'gold', 'Padesát tisíc', 'Nasbírej 50 000 věhlasu', 'deck', 50_000,
+    (p) => p.fame, 1),
+  count('xp-250k', 'score', 'gold', 'Čtvrt milionu', 'Nasbírej 250 000 věhlasu', 'deck',
+    250_000, (p) => p.fame, 3),
 
   // --- Mistrovské kousky ------------------------------------------------
   count('pangram-1', 'feat', 'hive', 'Pangram', 'Najdi slovo ze všech sedmi písmen',
@@ -205,17 +208,6 @@ export const AWARDS: Award[] = [
   count('denni-7', 'grit', 'warn', 'Týden výzev', 'Dohraj sedm denních výzev', 'day', 7,
     (p) => p.counters.dailies),
 ]
-
-/**
- * Kolik nápověd zdarma padne za ocenění.
- *
- * Držené schválně nízko: nápověda má být něco, s čím hráč šetří, ne zásoba,
- * kterou nestíhá utrácet. Nejvyšší stupeň rodiny dá dvě, všechno ostatní
- * jednu — a i tak se za celou hru nasbírá přes čtyřicet.
- */
-export function AWARD_HINTS(award: Award): number {
-  return award.tier === 3 ? 2 : 1
-}
 
 export const AWARD_GROUPS: AwardGroup[] = ['start', 'clean', 'score', 'feat', 'grit']
 

@@ -1,7 +1,8 @@
 /** Perzistence profilu, statistik a rozehraných kol v localStorage. */
 
-import { AWARD_HINTS, AWARDS } from '../game/awards'
-import { RANK_HINTS, rankFor } from '../game/ranks'
+import { AWARDS } from '../game/awards'
+import { awardInk, DAILY_INK, LEGACY_HINT_INK, rankInk, START_INK } from '../game/economy'
+import { rankFor } from '../game/ranks'
 import type { Difficulty, ModeId, RoundResult } from '../game/types'
 
 const KEY = 'slova.profile.v1'
@@ -65,7 +66,11 @@ export interface Counters {
 }
 
 export interface Profile {
-  xp: number
+  /**
+   * Věhlas — součet bodů ze všech dohraných kol. Jediné číslo, které žene
+   * hodnost nahoru. Dřív se jmenoval `xp`; migrace to přejmenuje.
+   */
+  fame: number
   streak: number
   bestStreak: number
   lastPlayedDay: string | null
@@ -74,13 +79,14 @@ export interface Profile {
   stats: Record<ModeId, ModeStats>
   counters: Counters
   /**
-   * Nápovědy zdarma. Utratí se místo bodů — kolo se tím pořád počítá jako
-   * „s nápovědou", takže se jimi nedají získat mety za hru bez nápovědy, ale
-   * skóre neutrpí. Sype je nová hodnost, každé ocenění a denní výzva.
+   * Inkoust — měna za nápovědy. Utratí se místo bodů, takže kolo se pořád
+   * počítá jako „s nápovědou" a mety za hru bez nápovědy se za něj koupit
+   * nedají; šetří jen skóre. Sype ho nová hodnost, každé ocenění a kompletní
+   * denní várka. Kolik která nápověda stojí, říká `inkPrice` v economy.ts.
    */
-  hints: number
-  /** Nejvyšší hodnost, za kterou už nápovědy padly — aby nepadly dvakrát. */
-  hintRankPaid: number
+  ink: number
+  /** Nejvyšší hodnost, za kterou už inkoust padl — aby nepadl dvakrát. */
+  inkRankPaid: number
   /** ID získaného ocenění -> kdy padlo (ms). */
   awards: Record<string, number>
   history: RoundResult[]
@@ -121,7 +127,7 @@ export function emptyCounters(): Counters {
 
 export function emptyProfile(): Profile {
   return {
-    xp: 0,
+    fame: 0,
     streak: 0,
     bestStreak: 0,
     lastPlayedDay: null,
@@ -134,9 +140,8 @@ export function emptyProfile(): Profile {
       detective: emptyStats(),
     },
     counters: emptyCounters(),
-    // Tři na uvítanou, ať si hráč nápovědu zkusí, než začne řešit, co ho stojí.
-    hints: 3,
-    hintRankPaid: 1,
+    ink: START_INK,
+    inkRankPaid: 1,
     awards: {},
     history: [],
     difficulty: {
@@ -158,14 +163,31 @@ export function emptyProfile(): Profile {
   }
 }
 
+/**
+ * Starý profil ještě nezná věhlas ani inkoust — měl `xp`, `hints`
+ * a `hintRankPaid`.
+ */
+interface LegacyProfile {
+  xp?: number
+  hints?: number
+  hintRankPaid?: number
+}
+
 /** Doplní chybějící klíče, aby starší uložený profil nikdy nespadl. */
 function migrate(raw: unknown): Profile {
   const base = emptyProfile()
   if (!raw || typeof raw !== 'object') return base
   const saved = raw as Partial<Profile>
+  const old = raw as LegacyProfile
   return {
     ...base,
     ...saved,
+    // Přejmenování veličin. Nasbírané body zůstávají tak jak byly, jen se
+    // teď jmenují věhlas; nápovědy zdarma se přepočtou na inkoust kurzem,
+    // který odpovídá střední nápovědě — nikdo tím nepřijde zkrátka.
+    fame: saved.fame ?? old.xp ?? 0,
+    ink: saved.ink ?? (old.hints ?? 0) * LEGACY_HINT_INK,
+    inkRankPaid: saved.inkRankPaid ?? old.hintRankPaid ?? 1,
     seen: { ...base.seen, ...(saved.seen ?? {}) },
     stats: { ...base.stats, ...(saved.stats ?? {}) },
     counters: { ...base.counters, ...(saved.counters ?? {}) },
@@ -189,22 +211,24 @@ function migrate(raw: unknown): Profile {
  */
 export function grantAwards(profile: Profile, now = Date.now()): Profile {
   let awards = profile.awards
-  let hints = profile.hints
+  let ink = profile.ink
 
   for (const award of AWARDS) {
     if (awards[award.id] !== undefined) continue
     if (!award.done(profile)) continue
     if (awards === profile.awards) awards = { ...awards }
     awards[award.id] = now
-    hints += AWARD_HINTS(award)
+    ink += awardInk(award)
   }
 
-  const rank = rankFor(profile.xp).rank.index
-  const paid = Math.max(profile.hintRankPaid, 1)
-  if (rank > paid) hints += (rank - paid) * RANK_HINTS
+  // Za každou hodnost, kterou hráč překročil od minule. Odměna roste
+  // s hodností, takže se sčítá po jedné, ne násobením.
+  const rank = rankFor(profile.fame).rank.index
+  const paid = Math.max(profile.inkRankPaid, 1)
+  for (let index = paid + 1; index <= rank; index += 1) ink += rankInk(index)
 
-  if (awards === profile.awards && hints === profile.hints && rank <= paid) return profile
-  return { ...profile, awards, hints, hintRankPaid: Math.max(paid, rank) }
+  if (awards === profile.awards && ink === profile.ink && rank <= paid) return profile
+  return { ...profile, awards, ink, inkRankPaid: Math.max(paid, rank) }
 }
 
 export function loadProfile(): Profile {
@@ -274,19 +298,10 @@ export function saveRounds(rounds: SavedRounds): void {
 /** Seznam dohraných hádanek držíme omezený, ať localStorage neroste bez konce. */
 const SEEN_LIMIT = 4000
 
-/**
- * Kolik nápověd zdarma padne za **kompletní** denní várku.
- *
- * Ne za každou výzvu zvlášť: čtyři režimy krát jedna nápověda denně by
- * peněženku zaplavily rychleji než všechno ostatní dohromady. Takhle je to
- * jedna denně a zároveň důvod dohrát i tu čtvrtou.
- */
-export const DAILY_HINTS = 1
-
-/** Utratí nápovědu zdarma, pokud nějakou má. */
-export function spendHint(profile: Profile): Profile {
-  if (profile.hints <= 0) return profile
-  return { ...profile, hints: profile.hints - 1 }
+/** Zaplatí nápovědu inkoustem, pokud na ni hráč má. */
+export function spendInk(profile: Profile, price: number): Profile {
+  if (price <= 0 || profile.ink < price) return profile
+  return { ...profile, ink: profile.ink - price }
 }
 
 /** Číslo z detailu kola; chybějící údaj se počítá jako nula. */
@@ -388,10 +403,10 @@ export function recordRound(
 
   return grantAwards({
     ...profile,
-    // Denní výzva je jediná věc, za kterou padá nápověda jen za účast —
-    // je to důvod se vrátit zítra. Padne až za všechny čtyři.
-    hints: profile.hints + (allDailiesDone(profile, result, day, daily) ? DAILY_HINTS : 0),
-    xp: profile.xp + result.score,
+    // Denní várka je jediná věc, za kterou padá inkoust jen za účast — je to
+    // důvod se vrátit zítra. Padne až za všech pět her.
+    ink: profile.ink + (allDailiesDone(profile, result, day, daily) ? DAILY_INK : 0),
+    fame: profile.fame + result.score,
     streak,
     bestStreak: Math.max(profile.bestStreak, streak),
     lastPlayedDay: day,

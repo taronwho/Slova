@@ -9,10 +9,12 @@
 
 import { useState } from 'react'
 
-import { AWARD_HINTS, awardById } from '../game/awards'
-import { RANK_HINTS, RANKS } from '../game/ranks'
+import { awardById } from '../game/awards'
+import { awardInk, rankInk } from '../game/economy'
+import { RANKS } from '../game/ranks'
 import { useBackGuard } from '../lib/back'
 import { AwardArt } from './art/AwardArt'
+import { InkMark } from './art/InkMark'
 import { RankBadge } from './art/RankBadge'
 
 export interface Gained {
@@ -43,7 +45,7 @@ export function AwardPopup({ gained, onClose }: Props) {
 
   const rank = item.kind === 'rank' ? RANKS[Number(item.id) - 1]! : null
   const award = item.kind === 'award' ? awardById(item.id) : undefined
-  const reward = rank ? RANK_HINTS : award ? AWARD_HINTS(award) : 0
+  const reward = rank ? rankInk(rank.index) : award ? awardInk(award) : 0
 
   return (
     <div className="gained" role="dialog" aria-modal="true" aria-label="Nové ocenění">
@@ -65,7 +67,7 @@ export function AwardPopup({ gained, onClose }: Props) {
 
         {/* Odměna je půlka radosti — bez ní by oznámení bylo jen pochvala. */}
         <span className="gained-reward">
-          +{reward} {reward === 1 ? 'nápověda' : reward <= 4 ? 'nápovědy' : 'nápověd'} zdarma
+          <InkMark size={14} /> +{reward} inkoustu
         </span>
 
         {items.length > 1 && (

@@ -53,7 +53,7 @@ export interface GallowsState {
   /** Písmena zhasnutá nápovědou — na klávesnici nejdou, ale život nestála. */
   struck: string[]
   hintsUsed: number
-  /** Kolik nápověd bylo z peněženky profilu — ty se do bodů nepočítají. */
+  /** Kolik nápověd bylo zaplaceno inkoustem — ty se do bodů nepočítají. */
   freeHints: number
   hintCost: number
   startedAt: number
@@ -155,7 +155,7 @@ export interface GallowsHintResult {
 export function takeGallowsHint(
   state: GallowsState,
   kind: GallowsHintKind,
-  /** Zaplacená z peněženky profilu — do bodů se pak nepromítne. */
+  /** Zaplacená inkoustem — do bodů se pak nepromítne. */
   free = false,
 ): GallowsHintResult | null {
   if (isOver(state)) return null

@@ -29,6 +29,17 @@
   flex-shrink: 0;
 }
 
+/* Ve hře veze lišta o tři prvky navíc (Menu, název režimu, Pravidla) a na
+   telefonu se do ní přestane vejít profil s hodností — přesně to, co hráč
+   hlásil. Ustoupí proto to, co se dá vyčíst odjinud: značka (domů vede
+   tlačítko Menu hned vedle) a název režimu (ten je vidět na desce). */
+@media (max-width: 700px) {
+  .shell.playing .topbar .brand,
+  .shell.playing .topbar .chip-mode {
+    display: none;
+  }
+}
+
 @media (max-width: 420px) {
   .topbar {
     gap: var(--sp-2);
@@ -45,14 +56,10 @@
     display: none;
   }
 
-  /* Na nejužších telefonech zbyde z profilu jen odznak — pořadí hodnosti si
-     hráč přečte v menu, ale poznat, jak daleko je, musí i tady. */
-  .profile-chip .profile-rank {
-    display: none;
-  }
-
+  /* Na nejužších telefonech se profil stáhne, ale číslo hodnosti zůstává —
+     bez něj by z odznaku nešlo poznat, jak daleko hráč je. */
   .profile-chip {
-    padding: 3px 5px;
+    padding: 2px 6px 2px 3px;
   }
 
   /* Tři tečky triády jsou ozdoba značky; na 320 px se místo hodí na profil
@@ -67,7 +74,24 @@
    bylo horší než pár pixelů natěsno. */
 @media (max-width: 360px) {
   .topbar {
-    gap: 6px;
+    gap: 5px;
+    padding-inline: 7px;
+  }
+
+  /* Značka je zároveň tlačítko „domů", takže zůstává — ale ustoupí jako
+     první. Bez tohohle vytlačí profil, kalamář a přepínač témat mimo
+     obrazovku a hráč přijde o hodnost i o zásobu inkoustu. */
+  .topbar .brand {
+    font-size: 0.92rem;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .topbar .chip {
+    padding-inline: 7px;
+  }
+
+  .topbar .btn-sm {
     padding-inline: 8px;
   }
 }
@@ -420,6 +444,10 @@
   display: grid;
   gap: var(--sp-3);
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  /* Všechny dlaždice stejně vysoké. Bez tohohle si každý řádek mřížky bere
+     výšku podle svého nejdelšího popisku a šachovnice je rozházená —
+     „Šibenice" s praporkem „Nové" je pak o kus vyšší než „Řetěz". */
+  grid-auto-rows: 1fr;
 }
 
 .mode-tile {
@@ -484,11 +512,15 @@
   font-size: 0.82rem;
   line-height: 1.35;
   opacity: 0.82;
+  margin-bottom: var(--sp-2);
 }
 
+/* Praporek visí u spodní hrany, ať dlaždice bez něj nevypadá useknutě
+   a ty s ním se navzájem srovnají. */
 .mode-flag {
   align-self: flex-start;
-  margin-top: var(--sp-2);
+  margin-top: auto;
+  padding-top: 0;
   padding: 0.15rem 0.5rem;
   border-radius: var(--r-full);
   background: color-mix(in oklab, currentColor 20%, transparent);
@@ -1305,7 +1337,7 @@
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
 }
 
-.xp-bar {
+.fame-bar {
   height: 8px;
   border-radius: var(--r-full);
   background: var(--surface-2);
@@ -1313,7 +1345,7 @@
   overflow: hidden;
 }
 
-.xp-bar span {
+.fame-bar span {
   display: block;
   height: 100%;
   background: linear-gradient(90deg, var(--accent), var(--gold));
@@ -2575,27 +2607,40 @@ button.rank-card:hover {
   font-weight: 700;
 }
 
-/* ---------- Nápovědy zdarma ---------- */
+/* ---------- Inkoust ---------- */
 
-/* V liště vedle série. Musí být vidět odkudkoli, protože je to zásoba,
-   se kterou hráč počítá při rozhodování, jestli si nápovědu vzít. */
-.chip-hints {
+/* Kalamář v liště vedle série. Musí být vidět odkudkoli, protože je to
+   zásoba, se kterou hráč počítá při rozhodování, jestli si nápovědu vzít. */
+.chip-ink {
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  flex-shrink: 0;
   background: var(--ok-soft);
   color: var(--ok-text);
   border-color: color-mix(in oklab, var(--ok) 35%, transparent);
 }
 
-.chip-hints .bulb {
-  width: 11px;
-  height: 11px;
+.ink-mark {
+  flex-shrink: 0;
+  vertical-align: -0.12em;
 }
 
 .free-left {
   color: var(--ok-text);
   font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Cenovka nápovědy placené inkoustem. Bodová cena zůstává obyčejným
+   `small`, ať je na první pohled poznat, čím se zrovna platí. */
+.price-ink {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--ok-text);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .gained-reward {
@@ -2611,15 +2656,17 @@ button.rank-card:hover {
   font-size: 0.86rem;
 }
 
-/* Profil v horní liště — odznak hodnosti, který je vidět na každé obrazovce.
-   Jméno hodnosti se vejde jen na širším displeji; na telefonu zbyde odznak
-   a číslo, což pořád stačí na „vidím, kde jsem". */
+/* Profil v horní liště — odznak a pořadí hodnosti, vidět na každé
+   obrazovce. Jméno hodnosti se vejde jen na širším displeji; číslo drží
+   vždycky, protože „vidím, kde jsem" je celý smysl toho čipu. */
 .profile-chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-  padding: 3px 10px 3px 5px;
+  gap: 5px;
+  /* Lišta se ve hře plní tlačítky. Profil se z ní nesmí vytlačit ven —
+     smrsknout se má název režimu, ne hodnost. */
+  flex: 0 0 auto;
+  padding: 2px 9px 2px 3px;
   border-radius: var(--r-full);
   border: 1px solid var(--border);
   background: var(--surface);
@@ -2631,14 +2678,31 @@ button.rank-card:hover {
   border-color: var(--accent);
 }
 
+/* Odznak sedí ve svém kroužku; `block` kvůli tomu, aby pod ním nezůstal
+   řádkový proklad, který ho vytlačí nahoru. */
 .profile-chip .rank-badge {
   display: block;
+  flex-shrink: 0;
 }
 
 .profile-rank {
   font-size: 0.78rem;
   font-weight: 700;
+  line-height: 1;
   white-space: nowrap;
+}
+
+.profile-rank.num {
+  color: var(--accent);
+}
+
+/* Jméno hodnosti je to první, co při nedostatku místa jde pryč — na telefon
+   se prostě nevejde. Číslo a odznak zůstávají vždycky a celé jméno je jedno
+   ťuknutí daleko ve vitríně. */
+@media (max-width: 640px) {
+  .profile-rank-name {
+    display: none;
+  }
 }
 
 /* ---------- Šibenice ---------- */
@@ -2699,13 +2763,17 @@ button.rank-card:hover {
    slovo vešlo na 320px displej stejně jako čtyřpísmenné. */
 .word-slots {
   display: flex;
+  /* Dlouhá slova se zalomí do druhé řady. Bez toho by se čtrnáctipísmenné
+     „nezaměstnanost" na 320px displeji smrsklo na třináctipixelová
+     políčka — technicky vidět, prakticky nečitelné. */
+  flex-wrap: wrap;
   gap: clamp(3px, 1.2vw, 8px);
   justify-content: center;
   width: 100%;
-  --slot: min(
-    calc((100cqw - (var(--slots, 5) - 1) * 8px) / var(--slots, 5)),
-    52px
-  );
+  /* Velikost políčka se počítá nejvýš z devíti v řadě; delší slovo si radši
+     přidá řádek, než aby zdrobnělo. */
+  --row: min(var(--slots, 5), 9);
+  --slot: min(calc((100cqw - (var(--row) - 1) * 8px) / var(--row)), 52px);
 }
 
 .slot {

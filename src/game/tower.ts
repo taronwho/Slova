@@ -151,7 +151,7 @@ export interface TowerHintResult {
 export function takeTowerHint(
   state: TowerState,
   kind: TowerHintKind,
-  /** Zaplacená z peněženky profilu — do bodů se pak nepromítne. */
+  /** Zaplacená inkoustem — do bodů se pak nepromítne. */
   free = false,
 ): TowerHintResult | null {
   const level = currentLevel(state)

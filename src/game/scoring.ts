@@ -8,6 +8,7 @@ import {
   neededLetters as detectiveLetters,
   type DetectiveState,
 } from './detective'
+import { HIVE_HINT_COST } from './hive'
 import {
   GALLOWS_LIVES,
   isWon,
@@ -67,7 +68,7 @@ export function scoreChain(
   if (moves > budget) {
     lines.push({ label: 'Překročený rozpočet', value: -200 })
   }
-  // Nápovědy zdarma z peněženky profilu nic nestojí, takže se z bonusu za
+  // Nápovědy zaplacené inkoustem nic nestojí, takže se z bonusu za
   // nevyužité nápovědy neodečítají a ani se nestrhávají body.
   const paidHints = Math.max(0, state.hintsUsed - (state.freeHints ?? 0))
   const unused = Math.max(0, 3 - paidHints)
@@ -136,11 +137,11 @@ export function scoreHive(state: HiveState, streak: number): ScoreBreakdown {
   if (foundPangrams > 0) {
     lines.push({ label: `Pangramy (${foundPangrams})`, value: 150 * foundPangrams })
   }
-  // Nápovědy zdarma z peněženky profilu se do bodů nepromítají. Do
+  // Nápovědy zaplacené inkoustem se do bodů nepromítají. Do
   // `hintsUsed` se ale počítají, takže kolo pořád není „bez nápovědy".
   const paidHints = Math.max(0, state.hintsUsed - (state.freeHints ?? 0))
   if (paidHints > 0) {
-    lines.push({ label: `Nápovědy (${paidHints})`, value: -80 * paidHints })
+    lines.push({ label: `Nápovědy (${paidHints})`, value: -HIVE_HINT_COST * paidHints })
   }
   const complete = found >= state.puzzle.solutions.length
   if (complete) lines.push({ label: 'Kompletní plástev', value: 500 })

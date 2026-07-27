@@ -21,7 +21,9 @@ import {
 } from '../game/detective'
 import { scoreDetective } from '../game/scoring'
 import type { RoundResult } from '../game/types'
+import { inkPrice } from '../game/economy'
 import { Confirm } from './Confirm'
+import { HintHead, HintPrice } from './HintPanel'
 import { ResultOverlay } from './ResultOverlay'
 
 interface Props {
@@ -34,9 +36,9 @@ interface Props {
   onGiveUp: () => void
   /** Uložený stav rozehraného kola, když se hráč vrací zpátky do hry. */
   resume?: DetectiveState | null
-  /** Nápovědy zdarma z profilu. Když nějaká je, nápověda nestojí body. */
-  freeHints: number
-  onSpendHint: () => void
+  /** Inkoust v profilu. Když na nápovědu stačí, zaplatí se jím místo bodů. */
+  ink: number
+  onSpendInk: (price: number) => void
   onProgress: (state: DetectiveState, finished: boolean) => void
 }
 
@@ -68,8 +70,8 @@ export function DetectiveGame({
   onHome,
   onGiveUp,
   resume,
-  freeHints,
-  onSpendHint,
+  ink,
+  onSpendInk,
   onProgress,
 }: Props) {
   const [state, setState] = useState<DetectiveState>(
@@ -191,13 +193,14 @@ export function DetectiveGame({
   }, [tryLetter, typing])
 
   function hint() {
-    const free = freeHints > 0
+    const price = inkPrice(DETECTIVE_COST.letter)
+    const free = ink >= price
     const result = takeDetectiveHint(state, free)
     if (!result) {
       showFlash('Tady už nápověda nepomůže.', 'warn')
       return
     }
-    if (free) onSpendHint()
+    if (free) onSpendInk(price)
     setState(result.state)
     showFlash(`Odhaleno písmeno ${result.letter.toUpperCase()}`, 'accent')
   }
@@ -238,14 +241,11 @@ export function DetectiveGame({
         </div>
 
         <div className="hints card">
-          <div className="label">
-            Nápovědy · {state.hintsUsed} použito
-            {freeHints > 0 && <span className="free-left"> · {freeHints} zdarma</span>}
-          </div>
+          <HintHead used={state.hintsUsed} ink={ink} />
           <div className="hint-buttons">
             <button type="button" className="btn btn-sm" disabled={over} onClick={hint}>
               <span>Odhal písmeno</span>
-              <small>{freeHints > 0 ? 'zdarma' : `−${DETECTIVE_COST.letter}`}</small>
+              <HintPrice points={DETECTIVE_COST.letter} ink={ink} />
             </button>
           </div>
         </div>

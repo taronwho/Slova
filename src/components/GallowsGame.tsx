@@ -20,6 +20,8 @@ import {
   type GallowsPuzzle,
   type GallowsState,
 } from '../game/gallows'
+import { inkPrice } from '../game/economy'
+import { HintHead, HintPrice } from './HintPanel'
 import { scoreGallows } from '../game/scoring'
 import type { RoundResult } from '../game/types'
 import { Confirm } from './Confirm'
@@ -36,9 +38,9 @@ interface Props {
   onGiveUp: () => void
   /** Uložený stav rozehraného kola, když se hráč vrací zpátky do hry. */
   resume?: GallowsState | null
-  /** Nápovědy zdarma z profilu. Když nějaká je, nápověda nestojí body. */
-  freeHints: number
-  onSpendHint: () => void
+  /** Inkoust v profilu. Když na nápovědu stačí, zaplatí se jím místo bodů. */
+  ink: number
+  onSpendInk: (price: number) => void
   onProgress: (state: GallowsState, finished: boolean) => void
 }
 
@@ -54,8 +56,8 @@ export function GallowsGame({
   onHome,
   onGiveUp,
   resume,
-  freeHints,
-  onSpendHint,
+  ink,
+  onSpendInk,
   onProgress,
 }: Props) {
   const [state, setState] = useState<GallowsState>(() => resume ?? createGallowsState(puzzle))
@@ -155,14 +157,15 @@ export function GallowsGame({
   }, [guess])
 
   function hint(kind: GallowsHintKind) {
-    // Nápověda z peněženky profilu nestojí body; utratí se, až když padne.
-    const free = freeHints > 0
+    // Nápověda zaplacená inkoustem nestojí body; utratí se, až když padne.
+    const price = inkPrice(GALLOWS_HINT_COST[kind])
+    const free = ink >= price
     const result = takeGallowsHint(state, kind, free)
     if (!result) {
       showFlash('Tady už nápověda nepomůže.', 'warn')
       return
     }
-    if (free) onSpendHint()
+    if (free) onSpendInk(price)
     setState(result.state)
     showFlash(
       kind === 'letter'
@@ -210,10 +213,7 @@ export function GallowsGame({
         </div>
 
         <div className="hints card">
-          <div className="label">
-            Nápovědy · {state.hintsUsed} použito
-            {freeHints > 0 && <span className="free-left"> · {freeHints} zdarma</span>}
-          </div>
+          <HintHead used={state.hintsUsed} ink={ink} />
           <div className="hint-buttons">
             <button
               type="button"
@@ -222,7 +222,7 @@ export function GallowsGame({
               onClick={() => hint('letter')}
             >
               <span>Odhal písmeno</span>
-              <small>{freeHints > 0 ? 'zdarma' : `−${GALLOWS_HINT_COST.letter}`}</small>
+              <HintPrice points={GALLOWS_HINT_COST.letter} ink={ink} />
             </button>
             <button
               type="button"
@@ -231,7 +231,7 @@ export function GallowsGame({
               onClick={() => hint('strike')}
             >
               <span>Vyškrtni pět</span>
-              <small>{freeHints > 0 ? 'zdarma' : `−${GALLOWS_HINT_COST.strike}`}</small>
+              <HintPrice points={GALLOWS_HINT_COST.strike} ink={ink} />
             </button>
           </div>
         </div>

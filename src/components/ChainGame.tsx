@@ -22,6 +22,8 @@ import { scoreChain } from '../game/scoring'
 import type { RoundResult } from '../game/types'
 import { CZECH_LETTERS } from '../lib/czech'
 import { Confirm } from './Confirm'
+import { inkPrice } from '../game/economy'
+import { HintHead, HintPrice } from './HintPanel'
 import { Keyboard } from './Keyboard'
 import { ResultOverlay } from './ResultOverlay'
 
@@ -36,9 +38,9 @@ interface Props {
   onGiveUp: () => void
   /** Uložený stav rozehraného kola, když se hráč vrací zpátky do hry. */
   resume?: ChainState | null
-  /** Nápovědy zdarma z profilu. Když nějaká je, nápověda nestojí body. */
-  freeHints: number
-  onSpendHint: () => void
+  /** Inkoust v profilu. Když na nápovědu stačí, zaplatí se jím místo bodů. */
+  ink: number
+  onSpendInk: (price: number) => void
   onProgress: (state: ChainState, finished: boolean) => void
 }
 
@@ -58,8 +60,8 @@ export function ChainGame({
   onHome,
   onGiveUp,
   resume,
-  freeHints,
-  onSpendHint,
+  ink,
+  onSpendInk,
   onProgress,
 }: Props) {
   const [state, setState] = useState<ChainState>(() => resume ?? createChainState(puzzle))
@@ -253,15 +255,16 @@ export function ChainGame({
   }, [backspace, current.length, submit, typeLetter])
 
   function useHint(kind: HintKind) {
-    // Nápověda z peněženky profilu nestojí body. Utratí se až tady, když se
+    // Nápověda zaplacená inkoustem nestojí body. Utratí se až tady, když se
     // opravdu povedla — za nápovědu, která nemá co poradit, se neplatí.
-    const free = freeHints > 0
+    const price = inkPrice(HINT_COST[kind])
+    const free = ink >= price
     const result = takeHint(graph, state, kind, free)
     if (!result) {
       showFlash('Odsud už nápověda nepomůže — vrať tah zpět.', 'warn')
       return
     }
-    if (free) onSpendHint()
+    if (free) onSpendInk(price)
     setState(result.state)
     if (kind === 'distance') {
       showFlash(`K cíli zbývá nejméně ${result.distance} tahů.`, 'accent')
@@ -327,10 +330,7 @@ export function ChainGame({
         </div>
 
         <div className="hints card">
-          <div className="label">
-            Nápovědy · {state.hintsUsed} použito
-            {freeHints > 0 && <span className="free-left"> · {freeHints} zdarma</span>}
-          </div>
+          <HintHead used={state.hintsUsed} ink={ink} />
           <div className="hint-buttons">
             <button
               type="button"
@@ -339,7 +339,7 @@ export function ChainGame({
               onClick={() => useHint('distance')}
             >
               <span>Vzdálenost</span>
-              <small>{freeHints > 0 ? 'zdarma' : `−${HINT_COST.distance}`}</small>
+              <HintPrice points={HINT_COST.distance} ink={ink} />
             </button>
             <button
               type="button"
@@ -348,7 +348,7 @@ export function ChainGame({
               onClick={() => useHint('position')}
             >
               <span>Písmeno</span>
-              <small>{freeHints > 0 ? 'zdarma' : `−${HINT_COST.position}`}</small>
+              <HintPrice points={HINT_COST.position} ink={ink} />
             </button>
             <button
               type="button"
@@ -357,7 +357,7 @@ export function ChainGame({
               onClick={() => useHint('word')}
             >
               <span>Celé slovo</span>
-              <small>{freeHints > 0 ? 'zdarma' : `−${HINT_COST.word}`}</small>
+              <HintPrice points={HINT_COST.word} ink={ink} />
             </button>
           </div>
         </div>

@@ -262,7 +262,7 @@ export const TUTORIALS: Record<ModeId, TutorialStep[]> = {
         '**Odhal písmeno** ukáže jedno z těch, která ti ještě chybí — vybere to, které je ve slově nejčastěji.',
         '**Vyškrtni pět** zhasne na klávesnici pět písmen, která ve slově nejsou. Život tě to nestojí, jen body.',
       ],
-      key: 'Nápověda zdarma z profilu body nestrhne. Kolo s ní ale pořád není kolo bez nápovědy.',
+      key: 'Nápověda zaplacená inkoustem body nestrhne. Kolo s ní ale pořád není kolo bez nápovědy.',
     },
     {
       title: 'Body',

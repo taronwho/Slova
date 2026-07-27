@@ -15,6 +15,7 @@ import {
 } from './app/data'
 import { AwardPopup, type Gained } from './components/AwardPopup'
 import { Awards } from './components/Awards'
+import { InkMark } from './components/art/InkMark'
 import { RankBadge } from './components/art/RankBadge'
 import { ChainGame } from './components/ChainGame'
 import { DetectiveGame } from './components/DetectiveGame'
@@ -42,7 +43,7 @@ import {
   recordRound,
   saveProfile,
   saveRounds,
-  spendHint,
+  spendInk,
   type Profile,
   type SavedRound,
   type SavedRounds,
@@ -81,7 +82,7 @@ export default function App() {
   /** Co hráči za poslední kolo přibylo — ukáže se nad výsledkem. */
   const [gained, setGained] = useState<Gained | null>(null)
 
-  const rank = rankFor(profile.xp)
+  const rank = rankFor(profile.fame)
   const dayKey = todayKey()
   const dayLabel = `#${dayNumber()}`
 
@@ -111,7 +112,7 @@ export default function App() {
   const seenAwards = useRef<Set<string> | null>(null)
   const seenRank = useRef(0)
   useEffect(() => {
-    const rank = rankFor(profile.xp).rank.index
+    const rank = rankFor(profile.fame).rank.index
     const ids = Object.keys(profile.awards)
     if (seenAwards.current === null) {
       seenAwards.current = new Set(ids)
@@ -125,7 +126,7 @@ export default function App() {
     if (fresh.length > 0 || promoted) {
       setGained({ rank: promoted ? rank : null, awards: fresh })
     }
-  }, [profile.awards, profile.xp])
+  }, [profile.awards, profile.fame])
 
   /** Načte hádanku pro daný režim. Denní výzva je deterministická podle data. */
   const startRound = useCallback(
@@ -303,7 +304,10 @@ export default function App() {
     setView({ kind: 'home' })
   }, [updateProfile, view])
 
-  const spendFreeHint = useCallback(() => updateProfile(spendHint), [updateProfile])
+  const spendInkOn = useCallback(
+    (price: number) => updateProfile((profile) => spendInk(profile, price)),
+    [updateProfile],
+  )
 
   const goHome = useCallback(() => setView({ kind: 'home' }), [])
 
@@ -381,21 +385,25 @@ export default function App() {
             >
               <span aria-hidden="true">←</span> Menu
             </button>
-            <span className="chip">{MODE_LABEL[view.mode]}</span>
+            <span className="chip chip-mode">{MODE_LABEL[view.mode]}</span>
             {view.daily && <span className="chip chip-gold">Denní {dayLabel}</span>}
             <button
               type="button"
               className="btn btn-sm btn-ghost"
               onClick={() => setTutorial({ mode: view.mode, pending: false })}
+              aria-label="Pravidla"
             >
-              Pravidla
+              <span className="wide-only">Pravidla</span>
+              <span className="narrow-only" aria-hidden="true">
+                ?
+              </span>
             </button>
           </>
         )}
         <span className="topbar-spacer" />
-        {/* Profil v liště: odznak hodnosti je vidět na každé obrazovce, i
-            uprostřed hry. Jméno hodnosti se vejde jen na širší displej,
-            odznak sám ale drží pořád — je to ta věc, která roste. */}
+        {/* Profil v liště: odznak a pořadí hodnosti jsou vidět na každé
+            obrazovce, i uprostřed hry. Jméno hodnosti se vejde jen na širší
+            displej, číslo drží vždycky — je to ta věc, která roste. */}
         <button
           type="button"
           className="profile-chip"
@@ -403,24 +411,16 @@ export default function App() {
           title={`${rank.rank.name} — ${rank.rank.index}. hodnost z ${RANKS.length}`}
           aria-label={`Profil: ${rank.rank.name}, hodnost ${rank.rank.index}`}
         >
-          <RankBadge rank={rank.rank.index} size={22} />
-          <span className="profile-rank wide-only">{rank.rank.name}</span>
-          <span className="profile-rank num narrow-only">{rank.rank.index}</span>
+          <RankBadge rank={rank.rank.index} size={20} compact />
+          <span className="profile-rank num">{rank.rank.index}</span>
+          <span className="profile-rank profile-rank-name">{rank.rank.name}</span>
         </button>
-        {/* Zásoba nápověd zdarma. Hráč se podle ní rozhoduje, jestli si
-            nápovědu vzít, takže musí být vidět i uprostřed hry. */}
-        {profile.hints > 0 && (
-          <span className="chip chip-hints" title={`${profile.hints} nápověd zdarma`}>
-            <svg className="bulb" viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                d="M12 2a7 7 0 0 1 4 12.7V17H8v-2.3A7 7 0 0 1 12 2Z"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.4"
-              />
-              <path d="M9 20h6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-            </svg>
-            <span className="num">{profile.hints}</span>
+        {/* Kalamář. Hráč se podle něj rozhoduje, jestli si nápovědu vzít,
+            takže musí být vidět i uprostřed hry. */}
+        {profile.ink > 0 && (
+          <span className="chip chip-ink" title={`${profile.ink} inkoustu na nápovědy`}>
+            <InkMark size={11} />
+            <span className="num">{profile.ink}</span>
           </span>
         )}
         <span className="chip chip-accent chip-streak">
@@ -494,8 +494,8 @@ export default function App() {
             onHome={goHome}
             onGiveUp={giveUp}
             resume={resume as ChainState | null}
-            freeHints={profile.hints}
-            onSpendHint={spendFreeHint}
+            ink={profile.ink}
+            onSpendInk={spendInkOn}
             onProgress={(state, finished) =>
               keepProgress('chain', state.puzzle.id, state.puzzle.difficulty, state, finished)
             }
@@ -512,8 +512,8 @@ export default function App() {
             onNext={() => startRound('hive', false)}
             onHome={goHome}
             resume={resume as HiveState | null}
-            freeHints={profile.hints}
-            onSpendHint={spendFreeHint}
+            ink={profile.ink}
+            onSpendInk={spendInkOn}
             onProgress={(state, finished) =>
               keepProgress('hive', state.puzzle.id, state.puzzle.difficulty, state, finished)
             }
@@ -531,8 +531,8 @@ export default function App() {
             onHome={goHome}
             onGiveUp={giveUp}
             resume={resume as TowerState | null}
-            freeHints={profile.hints}
-            onSpendHint={spendFreeHint}
+            ink={profile.ink}
+            onSpendInk={spendInkOn}
             onProgress={(state, finished) =>
               keepProgress('tower', state.puzzle.id, state.puzzle.difficulty, state, finished)
             }
@@ -553,8 +553,8 @@ export default function App() {
             onHome={goHome}
             onGiveUp={giveUp}
             resume={resume as GallowsState | null}
-            freeHints={profile.hints}
-            onSpendHint={spendFreeHint}
+            ink={profile.ink}
+            onSpendInk={spendInkOn}
             onProgress={(state, finished) =>
               keepProgress('gallows', state.puzzle.id, state.puzzle.difficulty, state, finished)
             }
@@ -572,8 +572,8 @@ export default function App() {
             onHome={goHome}
             onGiveUp={giveUp}
             resume={resume as DetectiveState | null}
-            freeHints={profile.hints}
-            onSpendHint={spendFreeHint}
+            ink={profile.ink}
+            onSpendInk={spendInkOn}
             onProgress={(state, finished) =>
               keepProgress('detective', state.puzzle.id, state.puzzle.difficulty, state, finished)
             }

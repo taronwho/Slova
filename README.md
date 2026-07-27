@@ -41,6 +41,12 @@ body** — text má být vodítko, se kterým se dá pracovat, ne past. A kdo na
 přijde dřív, může ho tipnout celé; čím víc písmen je ještě skrytých, tím vyšší
 prémie.
 
+Hádanek je **1 437** — tolik hesel má v české sekci Wikislovníku etymologii
+a zároveň jsou to ověřené základní tvary. Kvůli tomu sahá slovník až ke
+čtrnáctipísmenným slovům, i když se Řetěz, Voština a Věž drží do devíti: právě
+u dlouhých přejatých slov („aproximace", „konvergentní") mívá Wikislovník
+etymologii nejčastěji.
+
 Text je z Wikislovníku tak, jak ho tam někdo napsal — jen se z něj vyhodí to,
 co v hádance nedává smysl. Odkazovací ocas („Srovnej např. stožár, stehno,
 stěžeň") je ve slovníku užitečný, hráči ale podstrčí jmenný seznam, který
@@ -61,14 +67,14 @@ nemůže zablokovat cestu nahoru. Řetěz podpisů je ověřený už při genero
 
 | | zdroj | výsledek |
 |---|---|---|
-| Slovník | frekvenční seznam češtiny profiltrovaný přes hunspell `cs_CZ` | 248 181 ověřených slov |
-| Základní tvary | slova se skloňovacím/časovacím vzorem + lemmatizace | 39 220 slov |
-| 1. pád množného čísla | buňky deklinačních vzorů z `cs_CZ.aff` | + 8 265 slov |
+| Slovník | frekvenční seznam češtiny profiltrovaný přes hunspell `cs_CZ` | 378 417 ověřených slov |
+| Základní tvary | slova se skloňovacím/časovacím vzorem + lemmatizace | 55 585 slov |
+| 1. pád množného čísla | buňky deklinačních vzorů z `cs_CZ.aff` | + 10 264 slov |
 | Řetěz | grafy pro délky 4, 5 a 6 | 7 824 hádanek |
 | Voština | plástve odvozené od pangramů | 2 400 hádanek |
 | Věž | ověřené řetězy přesmyček 3→6/7/8 | 1 962 hádanek |
 | Šibenice | nejčastější základní tvary po délkách | 2 100 slov |
-| Detektiv | etymologie z české sekce Wikislovníku | 584 hádanek |
+| Detektiv | etymologie z české sekce Wikislovníku | 1 437 hádanek |
 
 ### Jen 1. pád a infinitiv
 
@@ -331,13 +337,20 @@ na obou místech.
 
 ## Hodnosti a ocenění
 
-Postup drží dvě věci: **dvacet hodností** (`src/game/ranks.ts`) a **třicet
-ocenění** (`src/game/awards.ts`). Hodnost roste s XP přes všechny režimy
-dohromady, ocenění jsou jednotlivé mety.
+Postup drží dvě věci: **padesát hodností** (`src/game/ranks.ts`) a
+**sedmatřicet ocenění** (`src/game/awards.ts`). Hodnost roste s **věhlasem** —
+tak se jmenuje součet bodů ze všech pěti her —, ocenění jsou jednotlivé mety.
+
+Prahy hodností jsou nerovnoměrné schválně. První tři odsýpají, ať má nový hráč
+co slavit hned první večer: druhá padne po jednom kole, třetí po druhém, čtvrtá
+po pátém. Od té chvíle se rozestupy natahují o patnáct procent na každém
+stupni, takže dvacátá hodnost je na dvě stě kol a padesátá na dobrých jedenáct
+tisíc. Hlídá to test: od čtvrté hodnosti musí být každý další stupeň dražší než
+ten předchozí a poslední přes deset milionů věhlasu.
 
 Mety jsou schválně **za dovednost, ne za vysedění**. Nejpočetnější skupina je
 „Bez nápovědy" (devět met, od jednoho čistého kola po padesát a po pět čistých
-v řadě), hned za ní „Body" (osm met za skóre v jednom kole a za nasbírané XP).
+v řadě), hned za ní „Body" (osm met za skóre v jednom kole a za nasbíraný věhlas).
 „Odehraj sto kol" tu není — takovou metu splní každý, kdo vydrží klikat.
 Hlídá to i test „většina met stojí na dovednosti nebo bodech": skupiny `clean`
 a `score` musí dohromady tvořit víc než polovinu.
@@ -364,13 +377,13 @@ Kresby jsou vlastní, ne emoji ani ikony odjinud:
   a v úvodní animaci — a krokve pod štítem říkají pořadí uvnitř pětice. Rozeta
   se počítá, nekreslí ručně: dvanáct stejných obloučků je přesně ta věc, u které
   se ruční `d` rozjede.
-- `src/components/art/AwardArt.tsx` — dvacet kreseb v poli 48×48, linka 2,6
+- `src/components/art/AwardArt.tsx` — dvaadvacet kreseb v poli 48×48, linka 2,6
   se zakulacenými konci a právě jedna plná plocha v barvě mety. Tvarosloví je
   ze hry: článek řetězu, buňka plástve, patra věže rozšiřující se nahoru
   (každé má o písmeno víc). Odstupňované mety sdílejí kresbu a liší se
   krokvemi, stejnou řečí jako hodnosti.
 
-Domovská obrazovka zůstává, jaká byla — přibylo na ní tlačítko „Ocenění n/30"
+Domovská obrazovka zůstává, jaká byla — přibylo na ní tlačítko „Ocenění n/37"
 a pruh denní výzvy. Všechno ostatní žije na vlastní obrazovce (`Awards.tsx`),
 kde je i celý žebříček padesáti hodností. Zamčené mety se neschovávají a
 u met na počet se pod dlaždicí táhne proužek postupu; schovaná meta
@@ -379,24 +392,36 @@ nemotivuje, protože o ní nikdo neví.
 Co v kole padlo, oznámí `AwardPopup.tsx` až **nad** výsledkem — nejdřív skóre,
 pak odměna za něj. Když padne víc věcí naráz, jdou po jedné.
 
-### Nápovědy zdarma
+### Inkoust
 
-Ocenění a hodnosti nejsou jen odznaky: za každou sypou **nápovědy zdarma** —
-jednu za hodnost, jednu (u nejvyššího stupně rodiny dvě) za ocenění a jednu za
-**kompletní** denní várku. Zásoba se veze v profilu a je vidět v horní liště,
-protože podle ní se hráč rozhoduje, jestli si nápovědu vzít.
+Ocenění a hodnosti nejsou jen odznaky: za každou padne **inkoust**
+(`src/game/economy.ts`) — měna, za kterou se kupují nápovědy. Kalamář se veze
+v profilu a je vidět v horní liště, protože podle něj se hráč rozhoduje, jestli
+si nápovědu vzít.
 
-Čísla jsou schválně nízká. Nápověda má být něco, s čím hráč šetří, ne zásoba,
-kterou nestíhá utrácet; za celou hru se jich nasbírá kolem stovky. Denní
-nápověda padá až za všechny čtyři výzvy dne — čtyři režimy krát jedna denně by
-peněženku zaplavily rychleji než všechno ostatní dohromady.
+Dřív se sypaly nápovědy zdarma přímo a bylo jedno, jestli si za ně hráč nechal
+odhalit jedno písmeno, nebo rovnou celé slovo. Peněženka se plnila rychleji,
+než se stíhala utrácet, a nápověda přestala být rozhodnutí. Teď má každá
+nápověda cenu a platí pro ni jedno pravidlo přes všech pět her: **cena
+v inkoustu je desetina bodové ceny téže nápovědy**. Malá vyjde na pět, odhalení
+celého slova na dvacet — za totéž, co dřív koupilo čtyři celá slova, je dnes
+jedno. Nová nápověda si tak cenu přinese sama a nedá se splést.
 
-Nápověda zdarma **nestojí body, ale pořád se počítá jako nápověda**. Do
-`hintsUsed` se započítá stejně jako placená, jen do `freeHints` navíc — a
-bodování odečítá jen rozdíl. Kolo s nápovědou zdarma tedy není „kolo bez
-nápovědy" a mety ze skupiny „Bez nápovědy" se za ni koupit nedají. Jinak by
-stačilo nasbírat nápovědy a odemknout si jimi právě ty mety, které mají
-dokazovat opak.
+Příjem je držený nízko: deset za ocenění (dvacet pět za nejvyšší stupeň
+rodiny), za hodnost osm až dvaašedesát podle toho, jak je vysoká, a osm za
+**kompletní** denní várku. Za celou hru se nasbírá kolem dvou tisíc — tedy
+zhruba sto odhalených slov na jedenáct tisíc kol. Denní odměna padá až za všech
+pět výzev dne; pět režimů krát odměna denně by kalamář zaplavilo rychleji než
+všechno ostatní dohromady.
+
+Nápověda zaplacená inkoustem **nestojí body, ale pořád se počítá jako
+nápověda**. Do `hintsUsed` se započítá stejně jako placená, jen do `freeHints`
+navíc — a bodování odečítá jen rozdíl. Kolo s ní tedy není „kolo bez nápovědy"
+a mety ze skupiny „Bez nápovědy" se za inkoust koupit nedají. Jinak by stačilo
+nasbírat si ho a odemknout si jím právě ty mety, které mají dokazovat opak.
+
+Starý profil se převede sám: `xp` se přejmenuje na `fame`, každá nasbíraná
+nápověda zdarma se přepočte na dvanáct inkoustu.
 
 ### Denní výzva v menu
 

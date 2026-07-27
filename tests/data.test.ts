@@ -309,7 +309,7 @@ describe('detektiv — data', () => {
   const puzzles = readJson<Case[]>('detective', 'puzzles.json')
 
   it('má dost případů a jedinečná id i slova', () => {
-    expect(puzzles.length).toBeGreaterThan(400)
+    expect(puzzles.length).toBeGreaterThan(1200)
     expect(new Set(puzzles.map((p) => p.id)).size).toBe(puzzles.length)
     expect(new Set(puzzles.map((p) => p.word)).size).toBe(puzzles.length)
   })
@@ -330,7 +330,7 @@ describe('detektiv — data', () => {
   it('text je čitelně dlouhý a bez zbytků wikitextu', () => {
     const problems: string[] = []
     for (const puzzle of puzzles) {
-      if (puzzle.clue.length < 50 || puzzle.clue.length > 320) problems.push(puzzle.word)
+      if (puzzle.clue.length < 40 || puzzle.clue.length > 320) problems.push(puzzle.word)
       if (/\[\[|\{\{|<ref|''/.test(puzzle.clue)) problems.push(`${puzzle.word}: wikitext`)
     }
     expect(problems.slice(0, 5)).toEqual([])

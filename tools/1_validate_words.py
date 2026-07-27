@@ -19,7 +19,11 @@ RAW = os.path.join(os.path.dirname(__file__), "raw")
 OUT = os.path.join(os.path.dirname(__file__), "out")
 
 MIN_LEN = 3
-MAX_LEN = 9
+# Řetěz, Voština a Věž si berou slova do devíti písmen — delší se na desku
+# nevejdou. Slovník ale sahá dál kvůli Šibenici a hlavně Detektivovi: právě
+# u dlouhých přejatých slov („demokracie", „gramofon") mívá Wikislovník
+# etymologii nejčastěji, a bez nich by hádanek bylo o třetinu míň.
+MAX_LEN = 14
 MIN_FREQ = 2
 
 _dict = None

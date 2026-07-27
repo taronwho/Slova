@@ -1,5 +1,5 @@
 /**
- * Vitrína — hodnost, žebříček dvaceti stupňů a mřížka třiceti ocenění.
+ * Vitrína — hodnost, žebříček padesáti stupňů a mřížka všech ocenění.
  *
  * Zamčené ocenění se neschovává. Hráč má vidět, co ho čeká, i jak daleko
  * k tomu má — u met na počet se pod dlaždicí táhne proužek postupu. Schované
@@ -13,6 +13,7 @@ import { RANKS, rankFor } from '../game/ranks'
 import { useBackGuard } from '../lib/back'
 import type { Profile } from '../lib/storage'
 import { AwardArt } from './art/AwardArt'
+import { InkMark } from './art/InkMark'
 import { RankBadge } from './art/RankBadge'
 
 interface Props {
@@ -46,7 +47,7 @@ function AwardTile({ award, profile }: { award: Award; profile: Profile }) {
 }
 
 export function Awards({ profile, onBack }: Props) {
-  const progress = rankFor(profile.xp)
+  const progress = rankFor(profile.fame)
   const [ladder, setLadder] = useState(false)
   const has = AWARDS.filter((award) => profile.awards[award.id] !== undefined).length
 
@@ -69,7 +70,7 @@ export function Awards({ profile, onBack }: Props) {
             Hodnost {progress.rank.index} / {RANKS.length}
           </span>
           <span className="rank-name">{progress.rank.name}</span>
-          <div className="xp-bar">
+          <div className="fame-bar">
             <span
               style={{ width: `${progress.span ? (progress.into / progress.span) * 100 : 100}%` }}
             />
@@ -78,7 +79,7 @@ export function Awards({ profile, onBack }: Props) {
             {progress.next
               ? `Do hodnosti ${progress.next.name} zbývá ${(
                   progress.span - progress.into
-                ).toLocaleString('cs-CZ')} XP`
+                ).toLocaleString('cs-CZ')} věhlasu`
               : 'Nejvyšší hodnost — dál už se nešplhá'}
           </span>
         </div>
@@ -88,10 +89,13 @@ export function Awards({ profile, onBack }: Props) {
         <span className="chip chip-accent">
           Ocenění {has} / {AWARDS.length}
         </span>
-        <span className="chip">{profile.xp.toLocaleString('cs-CZ')} XP</span>
+        <span className="chip">{profile.fame.toLocaleString('cs-CZ')} věhlasu</span>
+        <span className="chip chip-ink">
+          <InkMark size={11} /> <span className="num">{profile.ink}</span>
+        </span>
         <span className="chip">Nejlepší série {profile.bestStreak}</span>
         <button type="button" className="btn btn-sm" onClick={() => setLadder(true)}>
-          Všech 20 hodností
+          Všech {RANKS.length} hodností
         </button>
       </div>
 
@@ -128,6 +132,9 @@ export function Awards({ profile, onBack }: Props) {
           <div className="sheet" onClick={(event) => event.stopPropagation()}>
             <div className="sheet-head">
               <h2>Hodnosti</h2>
+              {/* Čísla v řádcích jsou věhlas; bez téhle hlavičky by u každého
+                  z padesáti řádků muselo stát „věhlasu" znovu. */}
+              <span className="label">věhlas</span>
               <button
                 type="button"
                 className="btn btn-sm btn-ghost"
@@ -138,14 +145,16 @@ export function Awards({ profile, onBack }: Props) {
             </div>
             <div className="ladder-list">
               {RANKS.map((rank) => {
-                const reached = profile.xp >= rank.at
+                const reached = profile.fame >= rank.at
                 return (
                   <div className={`ladder-row ${reached ? 'has' : ''}`} key={rank.index}>
                     <RankBadge rank={rank.index} size={38} locked={!reached} />
                     <span className="ladder-name">
                       {rank.index}. {rank.name}
                     </span>
-                    <span className="num faint">{rank.at.toLocaleString('cs-CZ')} XP</span>
+                    <span className="num faint ladder-at">
+                      {rank.at.toLocaleString('cs-CZ')}
+                    </span>
                   </div>
                 )
               })}

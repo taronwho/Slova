@@ -13,6 +13,7 @@ import {
   type ModeId,
 } from '../game/types'
 import { useBackGuard } from '../lib/back'
+import { InkMark } from './art/InkMark'
 import type { Profile, SavedRound, SavedRounds } from '../lib/storage'
 
 interface Props {
@@ -104,7 +105,7 @@ export function Home({
   saved,
   onResume,
 }: Props) {
-  const progress = rankFor(profile.xp)
+  const progress = rankFor(profile.fame)
   const awards = AWARDS.filter((award) => profile.awards[award.id] !== undefined).length
   const dailyLeft = MODES.filter(
     (mode) => profile.dailyDone[`${dayKey}:${mode.id}`] === undefined,
@@ -112,8 +113,9 @@ export function Home({
   const [openRules, setOpenRules] = useState<ModeId | null>(null)
   /** Otevřená dlaždice — volba obtížnosti a spuštění se dějí až v ní. */
   const [picked, setPicked] = useState<ModeId | null>(null)
-  const played =
-    profile.stats.chain.played + profile.stats.hive.played + profile.stats.tower.played
+  // Všech pět her, ne jen ty tři původní — jinak by „Odehráno" hlásilo míň,
+  // než kolik má hráč doopravdy za sebou.
+  const played = MODES.reduce((sum, mode) => sum + profile.stats[mode.id].played, 0)
 
   const pickedMode = picked ? MODES.find((m) => m.id === picked)! : null
   const pickedSaved = picked ? saved[picked] : undefined
@@ -295,9 +297,11 @@ export function Home({
           <span className="rank">
             {progress.rank.name} · hodnost {progress.rank.index}
           </span>
-          <span className="num muted">{profile.xp.toLocaleString('cs-CZ')} XP</span>
+          <span className="num muted">
+            {profile.fame.toLocaleString('cs-CZ')} věhlasu
+          </span>
         </div>
-        <div className="xp-bar">
+        <div className="fame-bar">
           <span
             style={{ width: `${progress.span ? (progress.into / progress.span) * 100 : 100}%` }}
           />
@@ -306,6 +310,9 @@ export function Home({
           <span className="chip chip-accent">Série {profile.streak}</span>
           <span className="chip">Nejlepší série {profile.bestStreak}</span>
           <span className="chip">Odehráno {played}</span>
+          <span className="chip chip-ink" title="Inkoust na nápovědy">
+            <InkMark size={11} /> <span className="num">{profile.ink}</span>
+          </span>
           <button type="button" className="btn btn-sm btn-ghost" onClick={onAwards}>
             Ocenění {awards}/{AWARDS.length}
           </button>

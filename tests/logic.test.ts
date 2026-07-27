@@ -59,12 +59,12 @@ import { RANKS as PROFILE_RANKS, rankFor as profileRankFor } from '../src/game/r
 import { AWARDS, AWARD_GROUPS } from '../src/game/awards'
 import { scoreChain, scoreDetective, scoreGallows, streakMultiplier } from '../src/game/scoring'
 import type { RoundResult } from '../src/game/types'
+import { awardInk, DAILY_INK, inkPrice, rankInk } from '../src/game/economy'
 import {
-  DAILY_HINTS,
   emptyProfile,
   grantAwards,
   recordRound,
-  spendHint,
+  spendInk,
   type Profile,
 } from '../src/lib/storage'
 
@@ -428,7 +428,7 @@ describe('hodnosti', () => {
     expect(profileRankFor(0).rank.index).toBe(1)
     expect(profileRankFor(PROFILE_RANKS[1]!.at).rank.index).toBe(2)
     expect(profileRankFor(PROFILE_RANKS[1]!.at - 1).rank.index).toBe(1)
-    expect(profileRankFor(10_000_000).rank.index).toBe(50)
+    expect(profileRankFor(99_000_000).rank.index).toBe(50)
   })
 
   it('jména hodností se neopakují', () => {
@@ -436,7 +436,7 @@ describe('hodnosti', () => {
   })
 
   it('na vrcholu žebříčku už nikam neukazuje', () => {
-    const top = profileRankFor(10_000_000)
+    const top = profileRankFor(99_000_000)
     expect(top.next).toBeNull()
     expect(top.span).toBe(0)
   })
@@ -624,11 +624,20 @@ describe('nápovědy zdarma', () => {
     ...over,
   })
 
-  it('nová hra začíná s pár nápovědami na uvítanou', () => {
-    expect(emptyProfile().hints).toBeGreaterThan(0)
+  it('nová hra začíná s trochou inkoustu na uvítanou', () => {
+    expect(emptyProfile().ink).toBeGreaterThan(0)
   })
 
-  it('nápověda zdarma nestojí body, ale pořád se počítá jako nápověda', () => {
+  // Kvůli tomuhle vznikla měna: dřív stálo odhalení celého slova stejně jako
+  // napovězení vzdálenosti, takže se peněženka utrácela nejdražší nápovědou
+  // a nic to nestálo.
+  it('velká nápověda stojí výrazně víc než malá', () => {
+    expect(inkPrice(HINT_COST.word)).toBeGreaterThanOrEqual(inkPrice(HINT_COST.distance) * 3)
+    expect(inkPrice(50)).toBe(5)
+    expect(inkPrice(200)).toBe(20)
+  })
+
+  it('nápověda za inkoust nestojí body, ale pořád se počítá jako nápověda', () => {
     const state = takeHint(graph, createChainState(puzzle), 'word', true)!.state
     expect(state.hintCost).toBe(0)
     expect(state.hintsUsed).toBe(1)
@@ -641,9 +650,9 @@ describe('nápovědy zdarma', () => {
     expect(state.freeHints).toBe(0)
   })
 
-  // Za nápovědu zdarma se nesmí dát koupit meta „bez nápovědy" — jinak by
-  // stačilo si nápovědy nasbírat a mety si jimi odemknout.
-  it('kolo s nápovědou zdarma není kolo bez nápovědy', () => {
+  // Za inkoust se nesmí dát koupit meta „bez nápovědy" — jinak by stačilo si
+  // ho nasbírat a mety si jím odemknout.
+  it('kolo s nápovědou za inkoust není kolo bez nápovědy', () => {
     const after = recordRound(emptyProfile(), round({ hintsUsed: 1 }), '2026-01-01')
     expect(after.counters.noHint).toBe(0)
     expect(after.awards['cisto-1']).toBeUndefined()
@@ -658,28 +667,55 @@ describe('nápovědy zdarma', () => {
   })
 
   it('utrácení nikdy nespadne pod nulu', () => {
-    const empty = { ...emptyProfile(), hints: 0 }
-    expect(spendHint(empty).hints).toBe(0)
-    expect(spendHint({ ...empty, hints: 2 }).hints).toBe(1)
+    const empty = { ...emptyProfile(), ink: 0 }
+    expect(spendInk(empty, 20).ink).toBe(0)
+    expect(spendInk({ ...empty, ink: 25 }, 20).ink).toBe(5)
+    // Na co hráč nemá, to se neutratí ani zčásti.
+    expect(spendInk({ ...empty, ink: 5 }, 20).ink).toBe(5)
   })
 
-  it('nová hodnost i ocenění sypou nápovědy, ale každé jen jednou', () => {
+  it('nová hodnost i ocenění sypou inkoust, ale každé jen jednou', () => {
     const start = emptyProfile()
     const after = recordRound(start, round({ score: 20_000 }), '2026-01-01')
-    expect(after.hints).toBeGreaterThan(start.hints)
+    expect(after.ink).toBeGreaterThan(start.ink)
     // Druhý průchod týchž podmínek už nic nepřipíše.
-    expect(grantAwards(after).hints).toBe(after.hints)
+    expect(grantAwards(after).ink).toBe(after.ink)
   })
 
-  // Čtyři režimy krát nápověda denně by peněženku zaplavily rychleji než
-  // všechno ostatní; padne proto až za kompletní denní várku.
-  it('nápověda padne až za všechny denní výzvy dne', () => {
+  // Skok přes několik hodností naráz musí zaplatit každou z nich, ne jen tu
+  // poslední — a každou její vlastní sazbou.
+  it('skok přes víc hodností zaplatí každou zvlášť', () => {
+    const start = emptyProfile()
+    const after = recordRound(start, round({ score: PROFILE_RANKS[3]!.at }), '2026-01-01')
+    const ranks = rankInk(2) + rankInk(3) + rankInk(4)
+    const awards = AWARDS.filter((award) => after.awards[award.id] !== undefined)
+      .reduce((sum, award) => sum + awardInk(award), 0)
+    expect(after.ink).toBe(start.ink + ranks + awards)
+  })
+
+  // Kvůli tomuhle se hodnosti přepracovaly: hráč hlásil, že mu naskakují
+  // jedna za druhou. První tři smí odsýpat, dál se musí výrazně natahovat.
+  it('hodnosti po třetí výrazně zpomalí', () => {
+    const gap = (i: number) => PROFILE_RANKS[i]!.at - PROFILE_RANKS[i - 1]!.at
+    // Prvních pár kol dá hned tři hodnosti.
+    expect(PROFILE_RANKS[3]!.at).toBeLessThanOrEqual(6_000)
+    // Od té chvíle každý další stupeň stojí víc než ten předchozí.
+    for (let i = 4; i < PROFILE_RANKS.length; i += 1) {
+      expect(gap(i)).toBeGreaterThan(gap(i - 1))
+    }
+    // Nejvyšší hodnost je běh na roky, ne na měsíc.
+    expect(PROFILE_RANKS[PROFILE_RANKS.length - 1]!.at).toBeGreaterThan(10_000_000)
+  })
+
+  // Pět režimů krát odměna denně by peněženku zaplavilo rychleji než všechno
+  // ostatní; padne proto až za kompletní denní várku.
+  it('inkoust padne až za všechny denní výzvy dne', () => {
     const day = '2026-01-01'
     // Porovnává se proti témuž kolu mimo denní výzvu — jinak by do rozdílu
-    // spadly i nápovědy za ocenění, která tím kolem shodou okolností padla.
+    // spadl i inkoust za ocenění, která tím kolem shodou okolností padla.
     const start = emptyProfile()
-    expect(recordRound(start, round(), day, true).hints).toBe(
-      recordRound(start, round(), day, false).hints,
+    expect(recordRound(start, round(), day, true).ink).toBe(
+      recordRound(start, round(), day, false).ink,
     )
 
     const almost: Profile = {
@@ -692,9 +728,9 @@ describe('nápovědy zdarma', () => {
       },
     }
     expect(
-      recordRound(almost, round(), day, true).hints -
-        recordRound(almost, round(), day, false).hints,
-    ).toBe(DAILY_HINTS)
+      recordRound(almost, round(), day, true).ink -
+        recordRound(almost, round(), day, false).ink,
+    ).toBe(DAILY_INK)
   })
 
   // Přesně to, co hráč nahlásil: dostal metu „bez nápovědy" za kolo, které

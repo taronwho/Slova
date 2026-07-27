@@ -54,6 +54,29 @@ const browser = await chromium.launch({
   executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
 })
 
+/**
+ * Co z toho, co má být vidět, leží mimo obrazovku.
+ *
+ * Vodorovné přetečení stránky tohle nechytí: prvek uříznutý předkem
+ * s `overflow: hidden` — třeba čip hodnosti vytlačený z horní lišty —
+ * dokument nerozšíří, jen tiše zmizí. Přesně to hráč nahlásil.
+ */
+function offscreen() {
+  const bad = []
+  const watched = document.querySelectorAll(
+    '.topbar > *, .mode-tile, .daily-item, .award, .ladder-row, .rank-card, .stat, .hints .btn',
+  )
+  for (const el of watched) {
+    const r = el.getBoundingClientRect()
+    if (r.width === 0 || r.height === 0) continue
+    if (r.right > window.innerWidth + 1 || r.left < -1) {
+      const what = `${el.className}`.split(' ')[0] || el.tagName.toLowerCase()
+      bad.push(`${what} "${(el.textContent || '').trim().slice(0, 14)}"`)
+    }
+  }
+  return [...new Set(bad)].slice(0, 6)
+}
+
 for (const size of SIZES) {
   console.log(`\n=== ${size.name} (${size.width}×${size.height}) ===`)
   const context = await browser.newContext({
@@ -154,6 +177,9 @@ for (const size of SIZES) {
       )
     }
 
+    const clipped = await page.evaluate(offscreen)
+    if (clipped.length > 0) note(label, `mimo obrazovku: ${clipped.join(', ')}`)
+
     await page.screenshot({
       path: `${SHOTS}${size.name}-${mode.toLowerCase()}.png`,
       fullPage: false,
@@ -162,6 +188,29 @@ for (const size of SIZES) {
 
   await page.goto(APP_URL, { waitUntil: 'networkidle' })
   await page.locator('.splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined)
+
+  // Vitrína a žebříček hodností. Odznaky, dlaždice ocenění a padesát řádků
+  // žebříčku jsou nejhustší obsah v celé hře, takže se na úzkém displeji
+  // rozbijí jako první.
+  for (const [name, open] of [
+    ['vitrína', async () => page.locator('.profile-chip').click()],
+    ['žebříček', async () => page.locator('.btn', { hasText: 'hodností' }).first().click()],
+  ]) {
+    await open()
+    await page.waitForTimeout(400)
+    const clipped = await page.evaluate(offscreen)
+    if (clipped.length > 0) note(`${size.name}/${name}`, `mimo obrazovku: ${clipped.join(', ')}`)
+    const wide = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    )
+    if (wide > 0) note(`${size.name}/${name}`, `přetéká vodorovně o ${wide}px`)
+  }
+
+  await page.goto(APP_URL, { waitUntil: 'networkidle' })
+  await page.locator('.splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined)
+  const homeClipped = await page.evaluate(offscreen)
+  if (homeClipped.length > 0) note(`${size.name}/domů`, `mimo obrazovku: ${homeClipped.join(', ')}`)
+
   await page.screenshot({ path: `${SHOTS}${size.name}-home.png`, fullPage: true })
   await context.close()
 }

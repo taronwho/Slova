@@ -34,10 +34,12 @@ AGENT = "SlovaWordGame/1.0 (https://github.com/taronwho/Slova; etymology collect
 BATCH = 50
 PAUSE = 0.4
 
-# Kandidáti: běžná slova rozumné délky. Krátká slova mají etymologii zřídka
-# a hodně dlouhá se ve hře špatně hádají.
-MIN_LEN, MAX_LEN = 4, 12
-CANDIDATES = 16000
+# Kandidáti: běžná slova rozumné délky. Krátká slova mají etymologii zřídka.
+# Horní hranice sahá až ke čtrnácti písmenům schválně — právě u dlouhých
+# přejatých slov („demokracie", „gramofon") mívá Wikislovník etymologii
+# nejčastěji, a bez nich by hádanek bylo o třetinu míň.
+MIN_LEN, MAX_LEN = 4, 14
+CANDIDATES = 100000
 
 
 def fetch(titles):

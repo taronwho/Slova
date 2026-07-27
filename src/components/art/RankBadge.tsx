@@ -26,6 +26,14 @@ interface Props {
   size?: number
   /** Nezískaná hodnost se kreslí v šedi. */
   locked?: boolean
+  /**
+   * Jen štít, bez krokví pod ním.
+   *
+   * V liště je odznak vysoký dvaadvacet pixelů — krokve v něm nejsou vidět,
+   * ale zabírají čtvrtinu výšky, takže štít vyjde nad optický střed a odznak
+   * v čipu „plave". Bez nich sedí přesně a je o čtvrtinu větší.
+   */
+  compact?: boolean
 }
 
 interface Metal {
@@ -102,7 +110,7 @@ const ARCS = [
   { color: 'var(--mode-tower)', angle: 150 },
 ]
 
-export function RankBadge({ rank, size = 56, locked = false }: Props) {
+export function RankBadge({ rank, size = 56, locked = false, compact = false }: Props) {
   const index = Math.max(1, Math.min(rank, 50)) - 1
   // Kov se mění po pěti hodnostech, tvar štítu po deseti.
   const tier = Math.floor(index / 5)
@@ -115,8 +123,8 @@ export function RankBadge({ rank, size = 56, locked = false }: Props) {
     <svg
       className={`rank-badge ${locked ? 'locked' : ''}`}
       width={size}
-      height={Math.round(size * 1.24)}
-      viewBox="0 0 100 124"
+      height={compact ? size : Math.round(size * 1.24)}
+      viewBox={compact ? '0 0 100 100' : '0 0 100 124'}
       role="img"
       aria-label={`Odznak hodnosti ${rank}`}
     >
@@ -160,7 +168,7 @@ export function RankBadge({ rank, size = 56, locked = false }: Props) {
 
       {/* Krokve = pořadí uvnitř kovu. Nula u první hodnosti každého kovu.
           Drží se těsně pod štítem, aby patřily k němu a neplavaly zvlášť. */}
-      {Array.from({ length: step }, (_, i) => (
+      {Array.from({ length: compact ? 0 : step }, (_, i) => (
         <path
           key={i}
           d={`M38 ${98 + i * 5.5} 50 ${103 + i * 5.5} 62 ${98 + i * 5.5}`}

@@ -383,9 +383,9 @@ log('\nVITRÍNA')
   await goHome(page)
 }
 
-/* ---------- Denní výzva a nápovědy zdarma ---------- */
+/* ---------- Denní výzva a inkoust ---------- */
 
-log('\nDENNÍ VÝZVA A NÁPOVĚDY')
+log('\nDENNÍ VÝZVA A INKOUST')
 {
   await goHome(page)
   check(
@@ -409,8 +409,9 @@ log('\nDENNÍ VÝZVA A NÁPOVĚDY')
   check(await page.locator('.profile-chip').isVisible(), 'hodnost je vidět i ve hře')
   await goHome(page)
 
-  // Peněženka se pro tuhle kontrolu nastaví do známého stavu. Po padesáti
-  // odehraných kolech je většinou prázdná a test by pak měřil náhodu.
+  // Kalamář se pro tuhle kontrolu nastaví do známého stavu. Po padesáti
+  // odehraných kolech je většinou prázdný a test by pak měřil náhodu.
+  // Pětadvacet stačí na jedno „Celé slovo" (20) a už ne na druhé.
   const wallet = await browser.newContext({
     viewport: { width: 390, height: 844 },
     locale: 'cs-CZ',
@@ -419,32 +420,39 @@ log('\nDENNÍ VÝZVA A NÁPOVĚDY')
   await shop.addInitScript(() => {
     const raw = localStorage.getItem('slova.profile.v1')
     const profile = raw ? JSON.parse(raw) : {}
-    profile.hints = 2
+    profile.ink = 25
     localStorage.setItem('slova.profile.v1', JSON.stringify(profile))
   })
   await shop.goto(APP_URL, { waitUntil: 'networkidle' })
   await waitReady(shop)
   await openGame(shop, 'chain')
 
-  const before = Number((await shop.locator('.chip-hints .num').innerText()).trim())
-  check(before === 2, `peněženka nese nápovědy zdarma (${before})`)
-  const label = await shop.locator('.hints .btn', { hasText: 'Celé slovo' }).innerText()
-  check(label.includes('zdarma'), 'nápověda se nabízí zdarma, dokud je z čeho brát')
+  const before = Number((await shop.locator('.chip-ink .num').innerText()).trim())
+  check(before === 25, `kalamář nese inkoust (${before})`)
+
+  // Cena musí odpovídat velikosti nápovědy — kvůli tomu měna vznikla.
+  const small = await shop.locator('.hints .btn', { hasText: 'Vzdálenost' }).innerText()
+  const big = await shop.locator('.hints .btn', { hasText: 'Celé slovo' }).innerText()
+  const price = (text) => Number(text.replace(/[^0-9]/g, ''))
+  check(price(big) >= price(small) * 3, `velká nápověda stojí víc než malá (${price(small)} vs ${price(big)})`)
+  check(
+    (await shop.locator('.hints .btn', { hasText: 'Celé slovo' }).locator('.price-ink').count()) === 1,
+    'nápověda se platí inkoustem, dokud je z čeho brát',
+  )
 
   await shop.locator('.hints .btn', { hasText: 'Celé slovo' }).click()
   await shop.waitForTimeout(300)
-  const after = Number((await shop.locator('.chip-hints .num').innerText()).trim())
-  check(after === before - 1, `nápověda zdarma ubrala z peněženky (${before} → ${after})`)
+  const after = Number((await shop.locator('.chip-ink .num').innerText()).trim())
+  check(after === before - price(big), `nápověda ubrala z kalamáře (${before} → ${after})`)
 
-  await shop.locator('.hints .btn', { hasText: 'Písmeno' }).click()
-  await shop.waitForTimeout(300)
-  // Poslední utracená nápověda ukazatel z lišty schová — není co ukazovat.
-  check(
-    !(await shop.locator('.chip-hints').isVisible().catch(() => false)),
-    'prázdná peněženka se v liště neukazuje',
-  )
+  // Na druhé „Celé slovo" už zbytek nestačí, takže se zase platí body.
   const paid = await shop.locator('.hints .btn', { hasText: 'Celé slovo' }).innerText()
-  check(paid.includes('\u2212'), 'po vyčerpání peněženky se nápověda zase platí body')
+  check(paid.includes('\u2212'), 'na co inkoust nestačí, se zase platí body')
+  // Menší nápověda ale z toho zbytku pořád jde.
+  check(
+    (await shop.locator('.hints .btn', { hasText: 'Vzdálenost' }).locator('.price-ink').count()) === 1,
+    'na malou nápovědu zbytek inkoustu pořád stačí',
+  )
   await wallet.close()
 }
 

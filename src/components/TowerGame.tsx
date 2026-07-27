@@ -18,7 +18,9 @@ import {
 import { createTowerState } from '../game/tower'
 import type { RoundResult } from '../game/types'
 import { CZECH_LETTERS } from '../lib/czech'
+import { inkPrice } from '../game/economy'
 import { Confirm } from './Confirm'
+import { HintHead, HintPrice } from './HintPanel'
 import { ResultOverlay } from './ResultOverlay'
 
 interface Props {
@@ -31,9 +33,9 @@ interface Props {
   onGiveUp: () => void
   /** Uložený stav rozehraného kola, když se hráč vrací zpátky do hry. */
   resume?: TowerState | null
-  /** Nápovědy zdarma z profilu. Když nějaká je, nápověda nestojí body. */
-  freeHints: number
-  onSpendHint: () => void
+  /** Inkoust v profilu. Když na nápovědu stačí, zaplatí se jím místo bodů. */
+  ink: number
+  onSpendInk: (price: number) => void
   onProgress: (state: TowerState, finished: boolean) => void
 }
 
@@ -46,8 +48,8 @@ export function TowerGame({
   onHome,
   onGiveUp,
   resume,
-  freeHints,
-  onSpendHint,
+  ink,
+  onSpendInk,
   onProgress,
 }: Props) {
   const [state, setState] = useState<TowerState>(() => resume ?? createTowerState(puzzle))
@@ -190,11 +192,12 @@ export function TowerGame({
   }, [submit, typeLetter])
 
   function hint(kind: 'letter' | 'word') {
-    // Nápověda z peněženky profilu nestojí body; utratí se, až když padne.
-    const free = freeHints > 0
+    // Nápověda zaplacená inkoustem nestojí body; utratí se, až když padne.
+    const price = inkPrice(TOWER_HINT_COST[kind])
+    const free = ink >= price
     const result = takeTowerHint(state, kind, free)
     if (!result) return
-    if (free) onSpendHint()
+    if (free) onSpendInk(price)
     setState(result.state)
     setDraft(result.text)
     showFlash(
@@ -241,10 +244,7 @@ export function TowerGame({
         </div>
 
         <div className="hints card">
-          <div className="label">
-            Nápovědy · {state.hintsUsed} použito
-            {freeHints > 0 && <span className="free-left"> · {freeHints} zdarma</span>}
-          </div>
+          <HintHead used={state.hintsUsed} ink={ink} />
           <div className="hint-buttons">
             <button
               type="button"
@@ -253,7 +253,7 @@ export function TowerGame({
               onClick={() => hint('letter')}
             >
               <span>Písmeno</span>
-              <small>{freeHints > 0 ? 'zdarma' : `−${TOWER_HINT_COST.letter}`}</small>
+              <HintPrice points={TOWER_HINT_COST.letter} ink={ink} />
             </button>
             <button
               type="button"
@@ -262,7 +262,7 @@ export function TowerGame({
               onClick={() => hint('word')}
             >
               <span>Celé slovo</span>
-              <small>{freeHints > 0 ? 'zdarma' : `−${TOWER_HINT_COST.word}`}</small>
+              <HintPrice points={TOWER_HINT_COST.word} ink={ink} />
             </button>
           </div>
         </div>

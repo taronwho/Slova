@@ -56,7 +56,7 @@ export interface DetectiveState {
   guesses: string[]
   solved: boolean
   hintsUsed: number
-  /** Kolik nápověd bylo z peněženky profilu. */
+  /** Kolik nápověd bylo zaplaceno inkoustem. */
   freeHints: number
   hintCost: number
   startedAt: number
@@ -175,7 +175,7 @@ export interface DetectiveHintResult {
 
 export function takeDetectiveHint(
   state: DetectiveState,
-  /** Zaplacená z peněženky profilu — do bodů se pak nepromítne. */
+  /** Zaplacená inkoustem — do bodů se pak nepromítne. */
   free = false,
 ): DetectiveHintResult | null {
   if (isOver(state)) return null

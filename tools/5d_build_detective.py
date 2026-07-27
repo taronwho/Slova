@@ -10,10 +10,16 @@ Vyhazuje se:
    „Ze spojení jest-li" u hesla *jestli* nebo „Složením slov tak a hle"
    u *takhle*. Kontroluje se shoda podle základu slova bez diakritiky, obojím
    směrem, plus úvodní formulky složenin.
-2. **Příliš krátký text.** „Z praslovanského *dobrъ." je pravda, ale hráči
-   neřekne nic, z čeho by se dalo vyjít.
+2. **Příliš krátký text.** „Z praslovanského *dobrъ." je pravda, ale po
+   zakrytí rekonstrukce z něj nezbyde nic, z čeho by se dalo vyjít. Hranice
+   je čtyřicet dva znaků a drží se schválně tam: pod ní jsou skoro samé
+   slovotvorné rozbory („Utvořeno předponou pře- od slovesa žít"), které
+   odpověď vlastně prozradí.
 3. **Slovní druhy, které se nehádají.** Spojky a částice; zůstávají podstatná
    a přídavná jména, slovesa a příslovce.
+4. **Odkazovací ocas.** „Srovnej např. stožár, stehno, stěžeň" je ve slovníku
+   užitečné, v hádance je to jmenný seznam, který o hledaném slově neříká nic.
+   Krátí se navíc jen po celých větách — useknuté souvětí čtenáře jen zmate.
 
 Výstup: public/data/detective/puzzles.json
 """
@@ -28,13 +34,16 @@ OUT = os.path.join(HERE, "out")
 RAW = os.path.join(HERE, "raw")
 DATA = os.path.join(HERE, "..", "public", "data", "detective")
 
-MIN_TEXT, MAX_TEXT = 55, 300
+# Spodní hranice je nízko schválně. „Z předpokládaného praslovanského *zvǫkъ."
+# je jen čtyřicet znaků, ale hádat se z toho dá — a takových stručných hesel
+# má Wikislovník stovky, o které by hra jinak přišla.
+MIN_TEXT, MAX_TEXT = 42, 300
 # Kolik zamaskovaných míst text ještě unese, než přestane dávat smysl.
 MAX_MASKS = 2
 # Značka zakrytého slova. Schválně to není výpustka — ta se v etymologických
 # textech vyskytuje sama o sobě a hráč by pak nepoznal, kde je díra k hádání.
 MASK = "[?]"
-MIN_WORD, MAX_WORD = 4, 12
+MIN_WORD, MAX_WORD = 4, 14
 KEEP_POS = {"noun", "adj", "verb", "adv"}
 
 # Odkazovací ocas hesla. Wikislovník za výklad rád přidá řadu příbuzných či
@@ -145,6 +154,10 @@ def mask(word: str, text: str):
             out.append(piece)
     masked = re.sub(r"\s+", " ", "".join(out)).strip()
     masked = re.sub(r"\s+([,.;])", r"\1", masked)
+    # Přepisy výslovnosti stojí v hranatých závorkách („[kybernétikos]"),
+    # takže po zakrytí zbude „[[?]]" — což vypadá jako wikitext. Závorka
+    # kolem samotné značky nemá co držet.
+    masked = re.sub(r"\[\s*" + re.escape(MASK) + r"\s*\]", MASK, masked)
 
     if masks > MAX_MASKS:
         return masked, False
@@ -203,7 +216,7 @@ def shorten(text: str) -> str:
 def difficulty(word: str) -> str:
     if len(word) <= 5:
         return "easy"
-    return "normal" if len(word) <= 7 else "hard"
+    return "normal" if len(word) <= 8 else "hard"
 
 
 def main():

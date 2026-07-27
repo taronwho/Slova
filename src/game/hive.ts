@@ -163,10 +163,13 @@ export function submitWord(
   }
 }
 
+/** Bodová cena nápovědy „další slovo". Odsud si ji bere i skóre. */
+export const HIVE_HINT_COST = 80
+
 /** Nápověda: odhalí nejkratší dosud nenalezené slovo. */
 export function takeHiveHint(
   state: HiveState,
-  /** Zaplacená z peněženky profilu — do bodů se pak nepromítne. */
+  /** Zaplacená inkoustem — do bodů se pak nepromítne. */
   free = false,
 ): { state: HiveState; word: string } | null {
   const remaining = state.puzzle.solutions
