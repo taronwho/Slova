@@ -33,7 +33,7 @@ import type { DetectivePuzzle, DetectiveState } from './game/detective'
 import type { GallowsPuzzle, GallowsState } from './game/gallows'
 import type { HivePuzzle, HiveState } from './game/hive'
 import { RANKS, rankFor } from './game/ranks'
-import type { TetrisPuzzle, TetrisState } from './game/tetris'
+import { tetrisSetup, type TetrisDeck, type TetrisSetup, type TetrisState } from './game/tetris'
 import type { TowerPuzzle, TowerState } from './game/tower'
 import { MODE_LABEL, type Difficulty, type ModeId, type RoundResult } from './game/types'
 import { useBackGuard } from './lib/back'
@@ -64,7 +64,7 @@ interface Loaded {
   tower?: TowerPuzzle
   gallows?: GallowsPuzzle
   detective?: DetectivePuzzle
-  tetris?: TetrisPuzzle
+  tetris?: { deck: TetrisDeck; setup: TetrisSetup }
 }
 
 export default function App() {
@@ -167,13 +167,14 @@ export default function App() {
             : pickUnseen(entries, (e) => e.id, profile.seen.detective, random)
           setLoaded({ detective: entry })
         } else if (mode === 'tetris') {
-          const packs = await loadTetris()
-          const pool = packs.filter((p) => p.difficulty === difficulty)
-          const entries = pool.length > 0 ? pool : packs
-          const entry = daily
-            ? entries[Math.floor(random() * entries.length)]!
-            : pickUnseen(entries, (e) => e.id, profile.seen.tetris, random)
-          setLoaded({ tetris: entry })
+          // Tenhle režim nemá připravené hádanky — rozdává se náhodně, takže
+          // stačí zrnko. Denní výzva ho má odvozené ze dne, takže všem padá
+          // stejná řada dvojic.
+          const deck = await loadTetris()
+          const seed = daily
+            ? hashSeed(`${dayKey}:tetris`)
+            : (Math.random() * 2 ** 32) >>> 0
+          setLoaded({ tetris: { deck, setup: tetrisSetup(difficulty, seed) } })
         } else if (mode === 'gallows') {
           const words = await loadGallows()
           const pool = words.filter((w) => w.difficulty === difficulty)
@@ -228,7 +229,8 @@ export default function App() {
         } else if (round.mode === 'detective') {
           setLoaded({ detective: (round.state as DetectiveState).puzzle })
         } else if (round.mode === 'tetris') {
-          setLoaded({ tetris: (round.state as TetrisState).puzzle })
+          const saved = round.state as TetrisState
+          setLoaded({ tetris: { deck: saved.deck, setup: saved.setup } })
         } else if (round.mode === 'gallows') {
           setLoaded({ gallows: (round.state as GallowsState).puzzle })
         } else {
@@ -577,8 +579,9 @@ export default function App() {
 
         {!loading && view.kind === 'game' && view.mode === 'tetris' && loaded.tetris && (
           <TetrisGame
-            key={`${loaded.tetris.id}-${view.nonce}`}
-            puzzle={loaded.tetris}
+            key={`${loaded.tetris.setup.seed}-${view.nonce}`}
+            deck={loaded.tetris.deck}
+            setup={loaded.tetris.setup}
             streak={profile.streak}
             dayLabel={view.daily ? dayLabel : ''}
             onFinish={finishRound}
@@ -588,7 +591,13 @@ export default function App() {
             ink={profile.ink}
             onSpendInk={spendInkOn}
             onProgress={(state, finished) =>
-              keepProgress('tetris', state.puzzle.id, state.puzzle.difficulty, state, finished)
+              keepProgress(
+                'tetris',
+                `t-${state.setup.seed}`,
+                state.setup.difficulty,
+                state,
+                finished,
+              )
             }
           />
         )}

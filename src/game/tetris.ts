@@ -1,159 +1,264 @@
 /**
  * SLABIKOVÝ TETRIS — logika.
  *
- * Slabiky padají do sloupců a hráč z nich skládá slova. Vodorovně se čte
- * **zleva doprava**, svisle **zdola nahoru** — tedy směrem, kterým sloupec
- * roste, stejně jako se čte Věž. Jakmile dvě nebo tři sousední slabiky dají
- * platné slovo, zmizí a co bylo nad nimi, spadne dolů; z toho můžou vzniknout
- * další slova a řetěz pokračuje.
+ * Padá dvojice slabik. Hráč s ní posouvá doleva a doprava, **otáčí ji** a
+ * může ji nechat spadnout naráz. Když dvě nebo tři sousední slabiky dají
+ * platné české slovo, slovo zmizí, co bylo nad ním spadne dolů a z toho může
+ * vzniknout další slovo — řetěz. Deska se plní, tempo zrychluje, kolo končí,
+ * až se nová dvojice nemá kam vejít.
  *
- * Co je platné slovo, hra **nehádá**. Ke každé dávce je předpočítaný seznam
- * všech slov, která z jejích slabik jdou složit (`tools/5f_build_tetris.py`),
- * a ten se staví z ověřených základních tvarů. Runtime tedy jen hledá
- * v množině — nemůže uznat tvar, který by ve slovníku nebyl.
+ * Otáčení je to hlavní, co se hraje. Dvojice `a`+`b` má čtyři polohy a v nich
+ * se čte obojím pořadím:
+ *
+ *     0  a b        vodorovně, zleva doprava   -> „ab"
+ *     1  b/a        svisle, zdola nahoru       -> „ab"
+ *     2  b a        vodorovně                  -> „ba"
+ *     3  a/b        svisle                     -> „ba"
+ *
+ * Padá tedy „ko"+„lo" a je jen na hráči, jestli z toho udělá KOLO hned, nebo
+ * si každou půlku uloží k něčemu, co na desce leží.
+ *
+ * Co je platné slovo, hra **nehádá**: `deck.words` je předpočítaný seznam
+ * všech slov, která z rozdávaných slabik jdou složit, a staví se z ověřených
+ * základních tvarů (`tools/5f_build_tetris.py`).
  *
  * Deska se drží jako **husté pole zdola**: `grid[sloupec][patro]`, patro 0 je
  * dole. Gravitace pak není samostatný krok — smazáním prvku z pole se všechno
  * nad ním samo posune dolů.
  */
 
+import { mulberry32 } from '../lib/rng'
 import type { Difficulty } from './types'
 
-export interface TetrisPuzzle {
-  id: string
+export interface TetrisDeck {
+  /** Slabika a její váha při rozdávání. */
+  syllables: [string, number][]
+  /** Dvojslabičná slova rozdělená na dvě slabiky. */
+  pairs: [string, string][]
+  /** Všechna slova, která z balíčku jdou složit. */
+  words: string[]
+}
+
+export interface TetrisSetup {
   difficulty: Difficulty
   cols: number
   rows: number
-  /** Slabiky v pořadí, v jakém přijdou. */
-  queue: string[]
-  /** Všechna slova, která z dávky jdou složit. */
-  words: string[]
-  /** Slova, ze kterých dávka vznikla — ukážou se až po kole. */
-  seed: string[]
+  /** Jak dlouho trvá pád o jedno patro na začátku (ms). */
+  startMs: number
+  /** Kolik slov se musí složit, než tempo přidá. */
+  perLevel: number
+  /** Zrnko pro rozdávání — denní výzva má u všech hráčů stejné. */
+  seed: number
+}
+
+/** Dvojice, která právě padá. */
+export interface Piece {
+  a: string
+  b: string
+  /** Sloupec, ve kterém je `a`. */
+  col: number
+  /** Patro, ve kterém je `a` (0 = dole). */
+  row: number
+  /** 0 = b vpravo, 1 = b nahoře, 2 = b vlevo, 3 = b dole. */
+  turn: number
 }
 
 export interface TetrisState {
-  puzzle: TetrisPuzzle
+  deck: TetrisDeck
+  setup: TetrisSetup
   /** grid[sloupec] = slabiky zdola nahoru. */
   grid: string[][]
-  /**
-   * Slabiky, které ještě čekají. První tři jsou v zásobníku a hráč si mezi
-   * nimi vybírá — bez té volby je hra loterie: jedna slabika, která se zrovna
-   * nehodí, zůstane na desce ležet navždycky.
-   */
-  queue: string[]
-  /** Složená slova v pořadí, jak padla. */
+  piece: Piece | null
+  /** Co přijde po ní. */
+  queue: [string, string][]
+  /** Kolik dvojic už bylo rozdáno — z toho se odvozuje stav generátoru. */
+  dealt: number
   cleared: string[]
-  /** Nejdelší řetěz slov z jednoho tahu. */
   bestChain: number
   hintsUsed: number
   /** Kolik nápověd bylo zaplaceno inkoustem — ty se do bodů nepočítají. */
   freeHints: number
   hintCost: number
+  paused: boolean
+  over: boolean
   startedAt: number
   finishedAt: number | null
-  /** Hráč kolo ukončil sám. */
-  gaveUp: boolean
 }
 
 /** Nejvíc slabik vedle sebe, které se ještě čtou jako jedno slovo. */
 export const TETRIS_MAX_RUN = 3
 
-/** Kolik slabik má hráč v zásobníku na výběr. */
-export const TETRIS_TRAY = 3
+/** Kolik dvojic dopředu hráč vidí. */
+export const TETRIS_PREVIEW = 2
 
 export const TETRIS_HINT_COST = {
-  /** Ukáže tah, který právě teď něco složí. */
-  column: 100,
-  /** Pošle slabiku ze zásobníku na konec fronty. */
+  /** Ukáže polohu, ve které padající dvojice něco složí. */
+  spot: 100,
+  /** Vymění padající dvojici za tu následující. */
   swap: 60,
 } as const
 
 export type TetrisHintKind = keyof typeof TETRIS_HINT_COST
 
-export function createTetrisState(puzzle: TetrisPuzzle, now = Date.now()): TetrisState {
+export const TETRIS_LEVELS: Record<Difficulty, Omit<TetrisSetup, 'seed' | 'difficulty'>> = {
+  easy: { cols: 6, rows: 11, startMs: 1500, perLevel: 8 },
+  normal: { cols: 6, rows: 12, startMs: 1100, perLevel: 8 },
+  hard: { cols: 7, rows: 13, startMs: 800, perLevel: 6 },
+}
+
+/** Pod tuhle hranici tempo neklesne — jinak by se nedalo číst. */
+const MIN_MS = 380
+
+export function tetrisSetup(difficulty: Difficulty, seed: number): TetrisSetup {
+  return { difficulty, seed, ...TETRIS_LEVELS[difficulty] }
+}
+
+/**
+ * Rozdá dvojici.
+ *
+ * Zhruba každá třetí je **rozdělené slovo** — jde složit hned, ale jen když ji
+ * hráč otočí do správné polohy. Zbytek se losuje po slabikách podle váhy, aby
+ * deska nebyla samé „po" a „ná".
+ */
+function deal(deck: TetrisDeck, seed: number, index: number): [string, string] {
+  const random = mulberry32((seed + index * 0x9e3779b1) >>> 0)
+  if (deck.pairs.length > 0 && random() < 0.34) {
+    const pair = deck.pairs[Math.floor(random() * deck.pairs.length)]!
+    // Pořadí se prohodí, ať se nedá spoléhat, že „první je vždycky první".
+    return random() < 0.5 ? [pair[0], pair[1]] : [pair[1], pair[0]]
+  }
+  return [pick(deck, random()), pick(deck, random())]
+}
+
+/** Vybere slabiku podle váhy. */
+function pick(deck: TetrisDeck, roll: number): string {
+  const total = deck.syllables.reduce((sum, [, weight]) => sum + weight, 0)
+  let at = roll * total
+  for (const [syllable, weight] of deck.syllables) {
+    at -= weight
+    if (at <= 0) return syllable
+  }
+  return deck.syllables[0]![0]
+}
+
+function spawn(state: TetrisState, pair: [string, string]): Piece {
   return {
-    puzzle,
-    grid: Array.from({ length: puzzle.cols }, () => []),
-    queue: [...puzzle.queue],
+    a: pair[0],
+    b: pair[1],
+    col: Math.floor((state.setup.cols - 1) / 2),
+    row: state.setup.rows - 1,
+    turn: 0,
+  }
+}
+
+export function createTetrisState(
+  deck: TetrisDeck,
+  setup: TetrisSetup,
+  now = Date.now(),
+): TetrisState {
+  const base: TetrisState = {
+    deck,
+    setup,
+    grid: Array.from({ length: setup.cols }, () => []),
+    piece: null,
+    queue: [],
+    dealt: 0,
     cleared: [],
     bestChain: 0,
     hintsUsed: 0,
     freeHints: 0,
     hintCost: 0,
+    paused: false,
+    over: false,
     startedAt: now,
     finishedAt: null,
-    gaveUp: false,
   }
+  const queue: [string, string][] = []
+  for (let i = 0; i <= TETRIS_PREVIEW; i += 1) queue.push(deal(deck, setup.seed, i))
+  const [first, ...rest] = queue
+  base.dealt = TETRIS_PREVIEW + 1
+  base.queue = rest
+  base.piece = spawn(base, first!)
+  return base
 }
 
-/** Slabiky v zásobníku — z těch si hráč vybírá. */
-export function tray(state: TetrisState): string[] {
-  return state.queue.slice(0, TETRIS_TRAY)
+/** Kde leží druhá polovina dvojice. */
+export function partnerCell(piece: Piece): { col: number; row: number } {
+  if (piece.turn === 0) return { col: piece.col + 1, row: piece.row }
+  if (piece.turn === 1) return { col: piece.col, row: piece.row + 1 }
+  if (piece.turn === 2) return { col: piece.col - 1, row: piece.row }
+  return { col: piece.col, row: piece.row - 1 }
 }
 
-/** Co čeká za zásobníkem. Jen náznak, ať se dá plánovat dopředu. */
-export function upcoming(state: TetrisState, count = 3): string[] {
-  return state.queue.slice(TETRIS_TRAY, TETRIS_TRAY + count)
+/** Obě políčka dvojice — první je vždycky `a`. */
+export function cells(piece: Piece): { col: number; row: number; text: string }[] {
+  const other = partnerCell(piece)
+  return [
+    { col: piece.col, row: piece.row, text: piece.a },
+    { col: other.col, row: other.row, text: piece.b },
+  ]
 }
 
-export function placed(state: TetrisState): number {
-  return state.grid.reduce((sum, column) => sum + column.length, 0)
+function free(state: TetrisState, col: number, row: number): boolean {
+  if (col < 0 || col >= state.setup.cols) return false
+  if (row < 0) return false
+  // Nad deskou je volno — dvojice se tam smí rodit i otáčet.
+  if (row >= state.setup.rows) return true
+  return state.grid[col]!.length <= row
 }
 
-/** Do sloupce se vejde další slabika? */
-export function canDrop(state: TetrisState, col: number): boolean {
-  const column = state.grid[col]
-  return column !== undefined && column.length < state.puzzle.rows
+function fits(state: TetrisState, piece: Piece): boolean {
+  return cells(piece).every((cell) => free(state, cell.col, cell.row))
 }
 
-export function isFull(state: TetrisState): boolean {
-  return state.grid.every((column) => column.length >= state.puzzle.rows)
+/** Level roste se složenými slovy; s ním roste tempo. */
+export function level(state: TetrisState): number {
+  return Math.floor(state.cleared.length / state.setup.perLevel) + 1
 }
 
-/** Fronta došla — hráč umístil všechno, co dostal. */
-export function isDone(state: TetrisState): boolean {
-  return state.queue.length === 0
+/** Jak dlouho teď trvá pád o jedno patro. */
+export function dropMs(state: TetrisState): number {
+  const step = level(state) - 1
+  return Math.max(MIN_MS, Math.round(state.setup.startMs * Math.pow(0.9, step)))
 }
 
-export function isOver(state: TetrisState): boolean {
-  return state.gaveUp || isDone(state) || isFull(state)
+export function move(state: TetrisState, dx: number): TetrisState {
+  if (!state.piece || state.over || state.paused) return state
+  const next = { ...state.piece, col: state.piece.col + dx }
+  return fits(state, next) ? { ...state, piece: next } : state
 }
 
 /**
- * Dotáhl hráč kolo?
+ * Otočí dvojici o čtvrt otáčky.
  *
- * Ne „vyčistil desku", ale „rozmístil celou dávku". Zbytek na desce stojí
- * body, ale kolo je dohrané — stejně jako plástev, ze které hráč nevysbírá
- * všechno.
+ * Když se otočená poloha nevejde (dvojice stojí u kraje), zkusí se ještě
+ * posun o jedno políčko dovnitř — klasický „kop od stěny", bez kterého se
+ * u kraje otáčet nedá.
  */
-export function isWon(state: TetrisState): boolean {
-  return isDone(state) && !state.gaveUp
-}
-
-/** Deska je po kole prázdná — celá dávka se rozpustila ve slovech. */
-export function isSwept(state: TetrisState): boolean {
-  return isDone(state) && placed(state) === 0
+export function rotate(state: TetrisState, by = 1): TetrisState {
+  if (!state.piece || state.over || state.paused) return state
+  const turn = (state.piece.turn + by + 4) % 4
+  for (const dx of [0, 1, -1]) {
+    const next = { ...state.piece, turn, col: state.piece.col + dx }
+    if (fits(state, next)) return { ...state, piece: next }
+  }
+  return state
 }
 
 interface Match {
   word: string
-  /** Buňky ke smazání jako [sloupec, patro]. */
   cells: [number, number][]
 }
 
-/** Najde nejdelší slovo, které na desce právě leží. */
 function findMatch(grid: string[][], words: Set<string>): Match | null {
   const cols = grid.length
   const rows = Math.max(0, ...grid.map((column) => column.length))
 
-  // Delší slovo má přednost: „žra-lok" se nemá rozpadnout na kratší kousek,
-  // který náhodou taky existuje.
+  // Delší slovo má přednost: ze „žra-lok" se nemá stát „lok".
   for (let len = TETRIS_MAX_RUN; len >= 2; len -= 1) {
-    // Vodorovně, zleva doprava.
     for (let row = 0; row < rows; row += 1) {
       for (let col = 0; col + len <= cols; col += 1) {
-        const cells: [number, number][] = []
+        const list: [number, number][] = []
         let text = ''
         let ok = true
         for (let i = 0; i < len; i += 1) {
@@ -163,32 +268,31 @@ function findMatch(grid: string[][], words: Set<string>): Match | null {
             break
           }
           text += syllable
-          cells.push([col + i, row])
+          list.push([col + i, row])
         }
-        if (ok && words.has(text)) return { word: text, cells }
+        if (ok && words.has(text)) return { word: text, cells: list }
       }
     }
-    // Svisle, zdola nahoru — tím směrem sloupec roste.
     for (let col = 0; col < cols; col += 1) {
       const column = grid[col]!
       for (let row = 0; row + len <= column.length; row += 1) {
         let text = ''
-        const cells: [number, number][] = []
+        const list: [number, number][] = []
         for (let i = 0; i < len; i += 1) {
           text += column[row + i]!
-          cells.push([col, row + i])
+          list.push([col, row + i])
         }
-        if (words.has(text)) return { word: text, cells }
+        if (words.has(text)) return { word: text, cells: list }
       }
     }
   }
   return null
 }
 
-/** Smaže buňky. Husté pole se tím samo srovná — to je gravitace. */
-function removeCells(grid: string[][], cells: [number, number][]): string[][] {
+/** Smaže políčka. Husté pole se tím samo srovná — to je gravitace. */
+function removeCells(grid: string[][], list: [number, number][]): string[][] {
   const drop = new Map<number, Set<number>>()
-  for (const [col, row] of cells) {
+  for (const [col, row] of list) {
     if (!drop.has(col)) drop.set(col, new Set())
     drop.get(col)!.add(row)
   }
@@ -199,23 +303,66 @@ function removeCells(grid: string[][], cells: [number, number][]): string[][] {
   })
 }
 
-export interface DropResult {
+/** Položí dvojici do mřížky. Obě půlky padnou do svého sloupce zvlášť. */
+function place(grid: string[][], piece: Piece): string[][] {
+  const next = grid.map((column) => [...column])
+  // Odspodu, aby si dvě půlky v jednom sloupci nepřehodily pořadí.
+  for (const cell of cells(piece).sort((x, y) => x.row - y.row)) {
+    next[cell.col]!.push(cell.text)
+  }
+  return next
+}
+
+export interface StepResult {
   state: TetrisState
-  /** Slova, která tah složil — v pořadí řetězu. */
+  /** Dvojice právě dosedla. */
+  locked: boolean
+  /** Slova, která z toho spadla — v pořadí řetězu. */
   words: string[]
 }
 
-/**
- * Položí vybranou slabiku ze zásobníku do sloupce a vyhodnotí, co z toho
- * spadlo. `slot` je pozice v zásobníku (0–2).
- */
-export function dropSyllable(state: TetrisState, col: number, slot = 0): DropResult | null {
-  const syllable = state.queue[slot]
-  if (syllable === undefined || slot >= TETRIS_TRAY) return null
-  if (isOver(state) || !canDrop(state, col)) return null
+/** Posun o jedno patro dolů. Když už to nejde, dvojice dosedne. */
+export function step(state: TetrisState): StepResult {
+  if (!state.piece || state.over || state.paused) {
+    return { state, locked: false, words: [] }
+  }
+  const down = { ...state.piece, row: state.piece.row - 1 }
+  if (fits(state, down)) {
+    return { state: { ...state, piece: down }, locked: false, words: [] }
+  }
+  return lock(state)
+}
 
-  let grid = state.grid.map((column, i) => (i === col ? [...column, syllable] : column))
-  const words = new Set(state.puzzle.words)
+/** Kam by dvojice dosedla, kdyby teď spadla — stín pod padající dvojicí. */
+export function landing(state: TetrisState): { col: number; row: number; text: string }[] {
+  if (!state.piece) return []
+  let piece = state.piece
+  for (;;) {
+    const down = { ...piece, row: piece.row - 1 }
+    if (!fits(state, down)) break
+    piece = down
+  }
+  return cells(piece)
+}
+
+/** Nechá dvojici spadnout až dolů. */
+export function hardDrop(state: TetrisState): StepResult {
+  if (!state.piece || state.over || state.paused) {
+    return { state, locked: false, words: [] }
+  }
+  let piece = state.piece
+  for (;;) {
+    const down = { ...piece, row: piece.row - 1 }
+    if (!fits(state, down)) break
+    piece = down
+  }
+  return lock({ ...state, piece })
+}
+
+function lock(state: TetrisState): StepResult {
+  const piece = state.piece!
+  let grid = place(state.grid, piece)
+  const words = new Set(state.deck.words)
   const made: string[] = []
   for (;;) {
     const match = findMatch(grid, words)
@@ -224,75 +371,129 @@ export function dropSyllable(state: TetrisState, col: number, slot = 0): DropRes
     grid = removeCells(grid, match.cells)
   }
 
-  const next: TetrisState = {
+  // Co přeteče nad okraj desky, se zahodí — jinak by sloupec rostl donekonečna.
+  grid = grid.map((column) => column.slice(0, state.setup.rows))
+
+  const [nextPair, ...rest] = state.queue
+  const queue = [...rest, deal(state.deck, state.setup.seed, state.dealt)]
+  const base: TetrisState = {
     ...state,
     grid,
-    queue: state.queue.filter((_, i) => i !== slot),
+    queue,
+    dealt: state.dealt + 1,
+    piece: null,
     cleared: [...state.cleared, ...made],
     bestChain: Math.max(state.bestChain, made.length),
   }
-  // Kolo končí, až když je fronta pryč nebo se nikam nedá položit.
-  if (isOver(next)) next.finishedAt = Date.now()
-  return { state: next, words: made }
+  const fresh = spawn(base, nextPair!)
+  if (!fits(base, fresh)) {
+    return {
+      state: { ...base, over: true, finishedAt: Date.now() },
+      locked: true,
+      words: made,
+    }
+  }
+  return { state: { ...base, piece: fresh }, locked: true, words: made }
 }
 
-/** Sloupce, kde by slabika ze zásobníku něco složila. */
-export function scoringColumns(state: TetrisState, slot = 0): number[] {
-  const out: number[] = []
-  for (let col = 0; col < state.puzzle.cols; col += 1) {
-    if (!canDrop(state, col)) continue
-    const result = dropSyllable(state, col, slot)
-    if (result && result.words.length > 0) out.push(col)
+export function togglePause(state: TetrisState): TetrisState {
+  if (state.over) return state
+  return { ...state, paused: !state.paused }
+}
+
+export function endRound(state: TetrisState): TetrisState {
+  if (state.over) return state
+  return { ...state, over: true, finishedAt: Date.now() }
+}
+
+export function placed(state: TetrisState): number {
+  return state.grid.reduce((sum, column) => sum + column.length, 0)
+}
+
+/** Jak plná je deska (0–1). Podle toho se barví ukazatel. */
+export function fill(state: TetrisState): number {
+  return placed(state) / (state.setup.cols * state.setup.rows)
+}
+
+export function isOver(state: TetrisState): boolean {
+  return state.over
+}
+
+/**
+ * Kolo se počítá za dohrané, když v něm hráč něco složil.
+ *
+ * Tenhle režim se nedá „vyhrát" — hraje se, dokud deska nepřeteče. Metou tedy
+ * není dojít do cíle, ale vůbec něco poskládat; prázdný odchod se nepočítá,
+ * aby se čisté kolo nedalo získat okamžitým ukončením.
+ */
+export function isWon(state: TetrisState): boolean {
+  return state.cleared.length > 0
+}
+
+export interface Spot {
+  turn: number
+  col: number
+  words: string[]
+}
+
+/** Polohy, ve kterých by padající dvojice po dopadu něco složila. */
+export function scoringSpots(state: TetrisState): Spot[] {
+  if (!state.piece || state.over) return []
+  const out: Spot[] = []
+  for (let turn = 0; turn < 4; turn += 1) {
+    for (let col = 0; col < state.setup.cols; col += 1) {
+      const trial: TetrisState = {
+        ...state,
+        paused: false,
+        piece: { ...state.piece, turn, col, row: state.setup.rows },
+      }
+      if (!fits(trial, trial.piece!)) continue
+      const result = hardDrop(trial)
+      if (result.words.length > 0) out.push({ turn, col, words: result.words })
+    }
   }
   return out
-}
-
-/** Tah, který právě teď něco složí: [zásobník, sloupec]. */
-export function scoringMove(state: TetrisState): [number, number] | null {
-  for (let slot = 0; slot < Math.min(TETRIS_TRAY, state.queue.length); slot += 1) {
-    const columns = scoringColumns(state, slot)
-    if (columns.length > 0) return [slot, columns[0]!]
-  }
-  return null
 }
 
 export interface TetrisHintResult {
   kind: TetrisHintKind
   state: TetrisState
-  /** U nápovědy „tah" doporučený sloupec a slabika ze zásobníku. */
-  column?: number
-  slot?: number
-  /** U nápovědy „odložit" slabika, která šla dozadu. */
-  syllable?: string
+  spot?: Spot
 }
 
 export function takeTetrisHint(
   state: TetrisState,
   kind: TetrisHintKind,
   /** Zaplacená inkoustem — do bodů se pak nepromítne. */
-  free = false,
+  free_ = false,
 ): TetrisHintResult | null {
-  if (isOver(state)) return null
+  if (state.over || !state.piece) return null
   const paid = {
     hintsUsed: state.hintsUsed + 1,
-    freeHints: state.freeHints + (free ? 1 : 0),
-    hintCost: state.hintCost + (free ? 0 : TETRIS_HINT_COST[kind]),
+    freeHints: state.freeHints + (free_ ? 1 : 0),
+    hintCost: state.hintCost + (free_ ? 0 : TETRIS_HINT_COST[kind]),
   }
 
-  if (kind === 'column') {
-    const move = scoringMove(state)
-    if (!move) return null
-    return { kind, state: { ...state, ...paid }, slot: move[0], column: move[1] }
+  if (kind === 'spot') {
+    const spots = scoringSpots(state)
+    if (spots.length === 0) return null
+    // Nejvýnosnější poloha, ne první nalezená.
+    const best = spots.reduce((top, spot) => (spot.words.length > top.words.length ? spot : top))
+    return { kind, state: { ...state, ...paid }, spot: best }
   }
 
-  // Odložit: první slabika ze zásobníku jde na konec fronty. Zbaví hráče
-  // kamene, který se zrovna nehodí, ale nezmizí — jen počká.
-  if (state.queue.length <= TETRIS_TRAY) return null
-  const [first, ...rest] = state.queue
-  const queue = [...rest, first!]
-  return { kind, state: { ...state, ...paid, queue }, syllable: first! }
-}
-
-export function giveUp(state: TetrisState): TetrisState {
-  return { ...state, gaveUp: true, finishedAt: Date.now() }
+  // Výměna za následující dvojici. Padající se zařadí zpátky do fronty.
+  const [next, ...rest] = state.queue
+  if (!next) return null
+  const piece = { ...state.piece, a: next[0], b: next[1] }
+  if (!fits(state, piece)) return null
+  return {
+    kind,
+    state: {
+      ...state,
+      ...paid,
+      piece,
+      queue: [...rest, [state.piece.a, state.piece.b]],
+    },
+  }
 }

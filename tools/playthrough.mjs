@@ -169,28 +169,27 @@ async function playDetective() {
 }
 
 /**
-  * Slabikový tetris.
-  *
-  * Hraje se hloupě, ale úplně: pokládá se do prvního sloupce, kde se něco
-  * složí, jinak do nejnižšího. Kolo tak vždycky dojde k výsledku a projde
-  * i logika řetězů a gravitace.
-  */
+ * Slabikový tetris.
+ *
+ * Hraje se hloupě, ale úplně: otoč, posuň, polož — a tak pořád dokola,
+ * dokud deska nepřeteče. Kolo se nedá „dohrát", končí až zablokováním,
+ * takže se tím zároveň ověří, že konec vůbec nastane.
+ */
 async function playTetris() {
   await start('tetris')
-  for (let guard = 0; guard < 60; guard++) {
-    if (await page.locator('.result-card').isVisible().catch(() => false)) break
-    const helpful = page.locator('.well-col.helpful:not([disabled])')
-    const target = (await helpful.count())
-      ? helpful.first()
-      : page.locator('.well-col:not([disabled])').first()
-    if (!(await target.count())) break
-    await target.click()
-    await page.waitForTimeout(80)
-    // Každé složené slovo musí být povolený tvar — tohle je u téhle hry ta
-    // nejdůležitější kontrola, protože slova vznikají skládáním.
-    collect(await page.locator('.found-strip .chip').allTextContents(), 'slabiky')
-  }
   const result = page.locator('.result-card')
+  for (let guard = 0; guard < 400; guard++) {
+    if (await result.isVisible().catch(() => false)) break
+    // Občas otočit a posunout, ať se testuje i to, ne jen volný pád.
+    if (guard % 3 === 0) await page.locator('.pad-turn').click().catch(() => undefined)
+    if (guard % 2 === 0) {
+      const dir = guard % 4 === 0 ? 'Doleva' : 'Doprava'
+      await page.locator(`.pad-key[aria-label="${dir}"]`).click().catch(() => undefined)
+    }
+    await page.locator('.pad-drop').click().catch(() => undefined)
+    await page.waitForTimeout(30)
+    collect(await page.locator('.rail-right .found-word').allTextContents(), 'slabiky')
+  }
   await result.waitFor({ timeout: 5000 }).catch(() => undefined)
   return await result.isVisible().catch(() => false)
 }

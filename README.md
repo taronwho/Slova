@@ -55,20 +55,28 @@ horší, takže se krátí jen po celých větách. Kde by text slovo prozradil,
 místo něj **okénko s otazníkem** — schválně ne výpustka, ta se v etymologiích
 vyskytuje sama o sobě.
 
-### Slabikový tetris — skládej slabiky ve slova
+### Slabikový tetris — padají slabiky, ty z nich skládáš slova
 
-Ze zásobníku tří slabik si hráč vybere jednu a ťukne na sloupec. Slabika do něj
-spadne na to, co v něm už leží. Jakmile dvě nebo tři sousední slabiky dají
-platné české slovo, slovo zmizí a co bylo nad ním, spadne dolů — a může složit
-další slovo. **Vodorovně se čte zleva doprava, svisle zdola nahoru**, tedy tím
-směrem, kterým sloupec roste (stejně jako se čte Věž).
+Shora padá **dvojice slabik**. Hráč s ní posouvá doleva a doprava, otáčí ji
+a může ji nechat spadnout naráz. Jakmile dvě nebo tři sousední slabiky dají
+platné české slovo, slovo zmizí, co bylo nad ním spadne dolů a z toho může
+vzniknout další slovo — řetěz. Deska se plní, tempo zrychluje a kolo končí,
+až se nová dvojice nemá kam vejít. Dohrát se nedá; hraje se, dokud se hráč
+sám nezablokuje.
 
-Co je platné slovo, hra **nehádá**: ke každé dávce je předpočítaný seznam všech
-slov, která z jejích slabik jdou složit, a ten se staví z ověřených základních
-tvarů. Runtime tedy jen hledá v množině a nemůže uznat nic, co by ve slovníku
-nebylo.
+Otáčení je to hlavní, co se hraje. Dvojice má čtyři polohy a v každé se čte
+jinak — vodorovně zleva doprava, svisle **zdola nahoru** (tím směrem, kterým
+sloupec roste, stejně jako se čte Věž). „ko" a „lo" tedy dá KOLO ve dvou
+různých polohách a v dalších dvou nedá nic.
 
-### Věž — anagramová věž
+Rozdává se z **balíčku tří set padesáti slabik**, ne z připravené dávky —
+dvě kola po sobě proto nevypadají stejně. Zhruba každá třetí dvojice je
+rozdělené slovo, které jde složit hned, jen ho správně otočit; zbytek se musí
+doplnit tím, co na desce leží. Co je platné slovo, hra **nehádá**: seznam
+devíti tisíc slov, která z balíčku jdou složit, je předpočítaný a staví se
+z ověřených základních tvarů.
+
+### Věž — anagramová věž### Věž — anagramová věž
 Od tří písmen nahoru. V každém patře přibude jedno písmeno a hráč ze **všech**
 dostupných písmen složí nové slovo v libovolném pořadí.
 
@@ -88,7 +96,7 @@ nemůže zablokovat cestu nahoru. Řetěz podpisů je ověřený už při genero
 | Věž | ověřené řetězy přesmyček 3→6/7/8 | 1 962 hádanek |
 | Šibenice | nejčastější základní tvary po délkách | 2 100 slov |
 | Detektiv | etymologie z české sekce Wikislovníku | 1 437 hádanek |
-| Slabiky | pravidlové dělení základních tvarů na slabiky | 38 917 slov, 660 dávek |
+| Slabiky | pravidlové dělení základních tvarů na slabiky | 38 917 slov; balíček 350 slabik a 9 037 slov |
 
 ### Jen 1. pád a infinitiv
 
@@ -202,8 +210,8 @@ hráči, a ověří:
   sedí na obtížnost a slovo má aspoň tři různá písmena (dvoupísmenné slovo se
   uhodne dvěma tahy a hádanka to není).
 - **Slabiky** — každé slovo, které jde na desce složit, je v ověřeném seznamu
-  základních tvarů, a každé slovo dávky jde z jejích slabik opravdu poskládat
-  (kontroluje se to zpětně na hotových datech, ne jen v generátoru).
+  základních tvarů, a každé slovo balíčku jde z rozdávaných slabik opravdu
+  poskládat (kontroluje se to zpětně na hotových datech, ne jen v generátoru).
 - **Detektiv** — hádané slovo je v ověřeném seznamu základních tvarů a **text
   o původu ho nikde neprozradí**; kontroluje se to na hotových datech, ne jen
   ve generátoru. Prozradit ho umí i pravopisná varianta („spósob" vedle
@@ -295,7 +303,7 @@ Skripty v `tools/` běží po krocích:
 | `5c_fetch_etymology.py` | stáhne etymologie z Wikislovníku do cache |
 | `5d_build_detective.py` | vybere z nich hádanky a zamaskuje prozrazující slova |
 | `5e_syllables.py` | rozdělí základní tvary na slabiky, sporná dělení zahodí |
-| `5f_build_tetris.py` | poskládá dávky slabik a spočítá jejich slova |
+| `5f_build_tetris.py` | vybere slabiky k rozdávání a spočítá všechna jejich slova |
 | `playthrough.mjs` | odehraje 10 kol od každého z šesti režimů a zkontroluje tvary slov |
 
 ## Struktura

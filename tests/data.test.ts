@@ -361,71 +361,58 @@ describe('detektiv — data', () => {
 })
 
 describe('slabikový tetris — data', () => {
-  interface Pack {
-    id: string
-    difficulty: string
-    cols: number
-    rows: number
-    queue: string[]
+  interface Deck {
+    syllables: [string, number][]
+    pairs: [string, string][]
     words: string[]
-    seed: string[]
   }
-  const packs = readJson<Pack[]>('tetris', 'puzzles.json')
+  const deck = readJson<Deck>('tetris', 'deck.json')
+  const pool = new Set(deck.syllables.map(([syllable]) => syllable))
 
-  it('má dost dávek a jedinečná id', () => {
-    expect(packs.length).toBeGreaterThan(400)
-    expect(new Set(packs.map((p) => p.id)).size).toBe(packs.length)
+  it('balíček je dost bohatý, aby se dvě kola neopakovala', () => {
+    expect(deck.syllables.length).toBeGreaterThan(200)
+    expect(deck.words.length).toBeGreaterThan(5000)
+    expect(deck.pairs.length).toBeGreaterThan(500)
   })
 
-  it('dávka se vejde na desku a má z čeho skládat', () => {
+  it('slabiky jsou krátké a mají váhu', () => {
     const problems: string[] = []
-    for (const pack of packs) {
-      if (pack.queue.length > pack.cols * pack.rows) problems.push(`${pack.id}: dávka je větší než deska`)
-      if (pack.words.length < 3) problems.push(`${pack.id}: skoro nic se z ní nesloží`)
-      if (pack.queue.some((syllable) => syllable.length > 4)) {
-        problems.push(`${pack.id}: dlouhá slabika`)
-      }
+    for (const [syllable, weight] of deck.syllables) {
+      if (syllable.length > 4) problems.push(`${syllable}: dlouhá`)
+      if (weight <= 0) problems.push(`${syllable}: nulová váha`)
     }
     expect(problems.slice(0, 5)).toEqual([])
   })
 
-  // Jádro celé hry: seznam slov dávky se staví z ověřených základních tvarů,
-  // takže hra nemůže uznat nic, co by ve slovníku nebylo.
-  it('každé slovo dávky jde složit z jejích slabik', () => {
+  // Jádro celé hry: co hra uzná, musí jít z rozdávaných slabik opravdu
+  // poskládat — jinak by na desce viselo slovo, které se nedá dosáhnout.
+  it('každé slovo balíčku jde složit z 2–3 rozdávaných slabik', () => {
     const problems: string[] = []
-    for (const pack of packs) {
-      const stock = new Map<string, number>()
-      for (const syllable of pack.queue) stock.set(syllable, (stock.get(syllable) ?? 0) + 1)
-      for (const word of pack.words) {
-        if (!buildable(word, stock, 3)) problems.push(`${pack.id}: ${word}`)
-      }
+    for (const word of deck.words) {
+      if (!buildable(word, pool, 3)) problems.push(word)
     }
     expect(problems.slice(0, 5)).toEqual([])
   })
 
-  it('slova, ze kterých dávka vznikla, jsou mezi řešeními', () => {
+  it('rozdělené dvojice dávají slovo a obě půlky se rozdávají', () => {
+    const words = new Set(deck.words)
     const problems: string[] = []
-    for (const pack of packs) {
-      for (const word of pack.seed) {
-        if (!pack.words.includes(word)) problems.push(`${pack.id}: ${word}`)
-      }
+    for (const [a, b] of deck.pairs) {
+      if (!words.has(a + b)) problems.push(`${a}+${b}`)
+      if (!pool.has(a) || !pool.has(b)) problems.push(`${a}+${b}: mimo balíček`)
     }
     expect(problems.slice(0, 5)).toEqual([])
   })
 })
 
-/** Jde slovo poskládat z nejvýš `limit` slabik, které jsou na skladě? */
-function buildable(word: string, stock: Map<string, number>, limit: number): boolean {
-  const used = new Map<string, number>()
+/** Jde slovo poskládat z nejvýš `limit` slabik z poolu? */
+function buildable(word: string, pool: Set<string>, limit: number): boolean {
   const walk = (rest: string, depth: number): boolean => {
     if (rest === '') return depth >= 2
     if (depth >= limit) return false
-    for (const [syllable, count] of stock) {
-      if ((used.get(syllable) ?? 0) >= count) continue
-      if (!rest.startsWith(syllable)) continue
-      used.set(syllable, (used.get(syllable) ?? 0) + 1)
-      if (walk(rest.slice(syllable.length), depth + 1)) return true
-      used.set(syllable, used.get(syllable)! - 1)
+    for (let size = 1; size <= 4; size += 1) {
+      const head = rest.slice(0, size)
+      if (pool.has(head) && walk(rest.slice(size), depth + 1)) return true
     }
     return false
   }
@@ -465,12 +452,8 @@ describe('slovník — jen základní tvary', () => {
   })
 
   it('slabikový tetris uznává jen povolené tvary', () => {
-    const problems: string[] = []
-    for (const pack of readJson<{ words: string[] }[]>('tetris', 'puzzles.json')) {
-      for (const word of pack.words) {
-        if (!allowed.has(word)) problems.push(word)
-      }
-    }
+    const deck = readJson<{ words: string[] }>('tetris', 'deck.json')
+    const problems = deck.words.filter((word) => !allowed.has(word))
     expect(problems.slice(0, 10)).toEqual([])
   })
 

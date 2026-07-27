@@ -1711,31 +1711,73 @@
   }
 
   /* Slabikový tetris: deska se počítá z volného místa, ne z pevné velikosti
-     buňky. Sedmiřádková deska by jinak na telefonu přetekla o dvě stě pixelů
-     a hráč by musel rolovat uprostřed tahu. Dotykový cíl je celý sloupec,
-     takže buňka smí být malá — sloupec zůstává vysoký. */
+     buňky. Třináctiřádková deska by jinak na telefonu přetekla o dvě stě
+     pixelů a hráč by musel rolovat uprostřed pádu. Se slabikou se nemíří —
+     ovládá se tlačítky pod deskou — takže buňka smí být drobná. */
+  /* Šířka a výška políčka se počítají **zvlášť**. Kdyby zůstalo čtvercové,
+     svislý nedostatek místa by ho srazil na dvacetipixelovou tečku a deska
+     by zabírala dvě třetiny šířky displeje naprázdno. Slabika je širší než
+     vyšší, takže široké a nízké políčko je i čitelnější. */
   .shell.playing .well {
-    --gap: 4px;
-    /* 112 px si nechává zásobník se slabikami a proužek s hlášením o složeném
-       slově — obojí leží nad deskou uvnitř téže plochy a proužek naskočí až
-       během hry, takže s ním musí být počítáno předem. */
-    --fit-h: calc((100cqh - 112px - (var(--rows, 6) - 1) * var(--gap)) / var(--rows, 6));
-    --fit-w: calc((100cqw - (var(--cols, 5) - 1) * var(--gap)) / var(--cols, 5));
-    /* Spodní hranice je kvůli prstu: pod dvaatřicet pixelů se sloupec
-       trefuje mizerně. Radši ať se na nejmenších displejích roluje. */
-    --cell: clamp(32px, min(var(--fit-w), calc(var(--fit-h) / 0.86)), 60px);
+    --gap: 3px;
+    /* Nad deskou jsou dva proužky: náhled se zaplněním a pauzou, a řádek
+       pro hlášení o složeném slově. Oba mají pevnou výšku, takže deska pod
+       nimi nikdy neposkočí. */
+    --fit-h: calc((100cqh - 106px - (var(--rows, 12) - 1) * var(--gap)) / var(--rows, 12));
+    --fit-w: calc((100cqw - (var(--cols, 6) - 1) * var(--gap)) / var(--cols, 6));
+    --cell: clamp(28px, var(--fit-w), 64px);
+    --cell-h: clamp(15px, min(var(--fit-h), calc(var(--cell) * 0.9)), 52px);
     gap: var(--gap);
-    width: calc(var(--cols, 5) * var(--cell) + (var(--cols, 5) - 1) * var(--gap));
-  }
-
-  .shell.playing .well-col {
-    gap: var(--gap);
+    width: calc(var(--cols, 6) * var(--cell) + (var(--cols, 6) - 1) * var(--gap));
   }
 
   .shell.playing .cell {
     aspect-ratio: auto;
-    height: calc(var(--cell) * 0.86);
-    font-size: calc(var(--cell) * 0.34);
+    height: var(--cell-h);
+    font-size: min(calc(var(--cell) * 0.32), calc(var(--cell-h) * 0.62));
+  }
+
+  /* Nad deskou je na telefonu jen to nejnutnější. */
+  .shell.playing .well-head {
+    width: calc(var(--cols, 6) * var(--cell) + (var(--cols, 6) - 1) * var(--gap));
+    gap: 6px;
+  }
+
+  /* Nápovědy do jednoho proužku — místo pod deskou patří ovládání. */
+  .shell.playing[data-mode='tetris'] .hints {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-2) var(--sp-3);
+  }
+
+  .shell.playing[data-mode='tetris'] .hints .label {
+    margin: 0;
+    flex: 0 1 auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .shell.playing[data-mode='tetris'] .hint-buttons {
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+  }
+
+  .shell.playing[data-mode='tetris'] .hint-buttons .btn {
+    flex-direction: row;
+    gap: var(--sp-2);
+    padding-block: 5px;
+  }
+
+  .shell.playing[data-mode='tetris'] .pad-key {
+    min-height: 46px;
+  }
+
+  @media (max-width: 380px) {
+    .shell.playing[data-mode='tetris'] .hints .label {
+      display: none;
+    }
   }
 
   /* Voština dostane celou zbylou výšku a šířku si dopočítá z poměru stran,
@@ -2982,106 +3024,112 @@ button.rank-card:hover {
 
 /* ---------- Slabikový tetris ---------- */
 
-/* Zásobník: tři slabiky na výběr, za nimi náznak toho, co přijde. Vybraná
-   slabika je zvýrazněná — hráč musí vidět, co pokládá. */
-.syl-queue {
+/* Proužek nad deskou: co přijde, jak je deska plná, pauza. */
+.well-head {
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
-  flex-wrap: wrap;
-  justify-content: center;
-  width: 100%;
+  gap: var(--sp-2);
+  width: min(440px, 100%);
+  margin-inline: auto;
 }
 
-.syl-now {
-  display: grid;
-  place-items: center;
-  min-width: 2.8em;
-  /* Zásobník se ťuká prstem, takže drží pohodlnou výšku i na malém displeji. */
-  min-height: 40px;
-  padding: 0.15em 0.45em;
-  border-radius: var(--r-md);
-  border: 2px solid transparent;
-  background: var(--surface);
-  color: var(--text);
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: clamp(0.95rem, 4.2vw, 1.35rem);
-  letter-spacing: 0.01em;
-  box-shadow: var(--shadow-1);
-  cursor: pointer;
-}
-
-.syl-now.picked {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--band-ink);
-}
-
-.syl-now:disabled {
-  cursor: default;
-}
-
-.syl-next-label {
+.well-next-label {
   font-size: 0.6rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--text-faint);
 }
 
-.syl-next {
+.well-next {
   display: flex;
   gap: var(--sp-2);
-  flex-wrap: wrap;
+}
+
+/* Dvojice v náhledu drží u sebe, ať je poznat, co spolu padá. */
+.syl-pair {
+  display: flex;
+  gap: 2px;
 }
 
 .syl-chip {
-  padding: 0.15rem 0.5rem;
+  padding: 0.1rem 0.34rem;
   border-radius: var(--r-sm);
   background: var(--surface-2);
   border: 1px solid var(--border);
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 0.86rem;
+  font-size: 0.78rem;
 }
 
-/* Deska. Sloupec je celý jedno tlačítko — na telefonu se trefuje palcem
-   a mířit na jednotlivé buňky by byla otrava. */
-.well {
-  display: grid;
-  grid-template-columns: repeat(var(--cols, 5), 1fr);
-  gap: clamp(3px, 1vw, 6px);
-  width: min(420px, 100%);
+/* Zaplnění desky. Hráč potřebuje vidět, kdy se blíží konec, aniž by počítal
+   patra. */
+.well-fill {
+  flex: 1 1 auto;
+  height: 5px;
+  min-width: 24px;
+  border-radius: var(--r-full);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.well-fill i {
+  display: block;
+  height: 100%;
+  border-radius: var(--r-full);
+  background: linear-gradient(90deg, var(--accent), var(--warn) 70%, var(--error));
+  transition: width var(--t-base) var(--ease);
+}
+
+/* Řádek pro hlášení o složeném slově. Výška je pevná, i když je prázdný —
+   jinak by deska po každém dopadu poskočila. */
+.well-msg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  width: min(440px, 100%);
   margin-inline: auto;
 }
 
-.well-col {
+.well-msg .banner {
+  margin: 0;
+  padding: 3px var(--sp-3);
+  font-size: 0.88rem;
+}
+
+.well-stage {
+  width: 100%;
   display: flex;
-  flex-direction: column;
-  gap: clamp(3px, 1vw, 6px);
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
-  min-width: 0;
+  justify-content: center;
 }
 
-.well-col:disabled {
-  cursor: default;
+/* Deska. Je to pevná mřížka sloupec × patro — padající dvojice se do ní
+   kreslí jako obyčejná políčka, takže není potřeba žádné absolutní
+   pozicování ani druhá vrstva. */
+.well {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 6), 1fr);
+  gap: clamp(2px, 0.8vw, 5px);
+  width: min(440px, 100%);
+  margin-inline: auto;
 }
 
-/* Sloupec, kde by vybraná slabika něco složila. Není to nápověda zadarmo —
-   hráč pořád musí vědět co, jen vidí, že tam něco jde. */
-.well-col.helpful .cell.landing {
-  border-color: color-mix(in oklab, var(--accent) 70%, transparent);
-  background: color-mix(in oklab, var(--accent) 10%, transparent);
+.well.paused .cell {
+  opacity: 0.35;
 }
 
-/* Nápovědou doporučený sloupec — ten svítí naplno. */
-.well-col.tip .cell.landing {
-  border-style: solid;
-  border-color: var(--accent);
-  background: var(--accent-soft);
+.well-pause {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.4rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
 }
 
 .cell {
@@ -3089,45 +3137,70 @@ button.rank-card:hover {
   place-items: center;
   aspect-ratio: 1 / 0.86;
   border-radius: var(--r-sm);
-  border: 1px dashed color-mix(in oklab, var(--border) 70%, transparent);
-  background: color-mix(in oklab, var(--surface) 40%, transparent);
+  border: 1px dashed color-mix(in oklab, var(--border) 55%, transparent);
+  background: color-mix(in oklab, var(--surface) 32%, transparent);
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: clamp(0.7rem, 2.9vw, 1rem);
+  font-size: clamp(0.62rem, 2.6vw, 0.95rem);
   color: var(--text);
   min-width: 0;
   overflow: hidden;
 }
 
+/* Dosednutá slabika. */
 .cell.filled {
   border-style: solid;
   border-color: transparent;
   background: color-mix(in oklab, var(--accent) 18%, var(--surface));
   border-bottom: 3px solid color-mix(in oklab, var(--accent) 45%, var(--border));
-  animation: pop var(--t-base) var(--ease-back) both;
 }
 
-/* Políčko, do kterého slabika spadne. Musí být poznat na první pohled —
-   je to jediné místo ve sloupci, kam tah opravdu půjde. */
-.cell.landing {
-  border-color: color-mix(in oklab, var(--text-faint) 70%, transparent);
-  box-shadow: inset 0 -2px 0 color-mix(in oklab, var(--text-faint) 40%, transparent);
+/* Padající dvojice svítí — musí být na první pohled jasné, s čím hráč hýbe. */
+.cell.live {
+  border-style: solid;
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--band-ink);
+  box-shadow: var(--shadow-2);
 }
 
-/* Poslední složená slova pod deskou. Hráč po nich pozná, co se mu povedlo,
-   aniž by musel otevírat panel. */
-.found-strip {
-  display: flex;
+/* Stín tam, kam dvojice dopadne. Bez něj se u rychlejšího tempa netrefí
+   ani sloupec. */
+.cell.ghost {
+  border-style: solid;
+  border-color: color-mix(in oklab, var(--accent) 45%, transparent);
+  background: color-mix(in oklab, var(--accent) 8%, transparent);
+}
+
+/* Sloupec, na který ukázala nápověda. */
+.cell.spot {
+  border-color: var(--gold);
+  background: color-mix(in oklab, var(--gold) 14%, transparent);
+}
+
+/* Ovládání. Čtyři velká tlačítka pod deskou — na telefonu se hraje palcem
+   a mířit na malé ikony za pádu nejde. */
+.pad {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: var(--sp-2);
-  flex-wrap: wrap;
-  justify-content: center;
-  min-height: 1.6rem;
+  width: min(440px, 100%);
+  margin-inline: auto;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .cell.filled {
-    animation: none;
-  }
+.pad-key {
+  min-height: 52px;
+  font-size: 1.3rem;
+  line-height: 1;
+  padding-inline: 0;
+}
+
+.pad-turn {
+  font-size: 1.5rem;
+}
+
+.pad-drop {
+  font-size: 1.5rem;
 }
 
 /* ---------- Etymologický detektiv ---------- */

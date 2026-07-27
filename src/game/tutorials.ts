@@ -312,13 +312,22 @@ export const TUTORIALS: Record<ModeId, TutorialStep[]> = {
 
   tetris: [
     {
-      title: 'Slabiky padají, ty z nich skládáš slova',
+      title: 'Padají slabiky, ty z nich skládáš slova',
       visual: { kind: 'tetris' },
       body: [
-        'Nahoře čeká slabika. Ťukni na sloupec a ona do něj spadne — na to, co v něm už leží.',
+        'Shora padá dvojice slabik. Posouváš ji doleva a doprava, otáčíš a můžeš ji nechat spadnout naráz.',
         'Jakmile dvě nebo tři sousední slabiky dají platné české slovo, slovo zmizí a co bylo nad ním, spadne dolů.',
       ],
       key: 'Vodorovně se čte zleva doprava, svisle **zdola nahoru** — tím směrem, kterým sloupec roste.',
+    },
+    {
+      title: 'Otáčení je celá hra',
+      visual: { kind: 'tetris-chain' },
+      body: [
+        'Dvojice má čtyři polohy a v každé se čte jinak. „ko" a „lo" dá KOLO vodorovně i svisle — jen je otočit správně.',
+        'Zhruba každá třetí dvojice je rozdělené slovo. Ostatní musíš doplnit tím, co už na desce leží.',
+      ],
+      key: 'Delší slovo má přednost: ze „žra-lok" se nestane „lok".',
     },
     {
       title: 'Jaké tvary slov platí',
@@ -328,30 +337,21 @@ export const TUTORIALS: Record<ModeId, TutorialStep[]> = {
         '**Platí:** podstatná jména v 1. pádu — jednotné i množné číslo, slovesa v infinitivu, přídavná jména, číslovky, zájmena, příslovce a spojky.',
         '**Neplatí:** ostatní pády, časované tvary, rozkazy ani stupňování.',
       ],
-      key: 'Ke každé dávce je předem spočítaný seznam všech slov, která z ní jdou složit. Hra tedy nic nehádá.',
+      key: 'Hra má předem spočítaný seznam devíti tisíc slov, která z padajících slabik jdou složit. Nic neodhaduje.',
     },
     {
-      title: 'Řetěz',
-      visual: { kind: 'tetris-chain' },
+      title: 'Řetěz a tempo',
       body: [
-        'Když po zmizelém slově spadne dolů něco, co složí další slovo, řetěz pokračuje sám.',
-        'Za každé slovo v řetězu se násobitel zvedá. Dva řetězy po dvou slovech nesou míň než jeden po čtyřech.',
+        'Když po zmizelém slově spadne dolů něco, co složí další slovo, řetěz pokračuje sám a násobitel roste.',
+        'Každých pár složených slov přidá úroveň a s ní tempo. Kolo končí, až se nová dvojice nemá kam vejít.',
       ],
-      key: 'Delší slovo má přednost: ze „žra-lok" se nestane „lok".',
-    },
-    {
-      title: 'Dávka je z celých slov',
-      body: [
-        'Slabiky v dávce nejsou náhodné — vznikly rozsypáním několika celých slov. Není mezi nimi ani jedna, která by nikam nepatřila.',
-        'Kolo končí, až rozmístíš celou dávku, nebo když je deska plná. Co na desce zbude, stojí body, ale kolo je dohrané.',
-      ],
-      key: 'Nápověda **Poradit sloupec** ukáže, kam se právě teď dá něco složit. **Vyměnit** pošle slabiku na řadě dozadu.',
+      key: 'Pauza je zdarma a kdykoli. Nápověda **Poradit** ukáže polohu, ve které se právě teď dá něco složit.',
     },
     {
       title: 'Body',
       body: [
-        'Za každé slovo body podle jeho délky a počtu slabik. Řetěz je násobí.',
-        'Za každou slabiku, která zůstala na desce, se odečítá. Dávka rozpuštěná beze zbytku a bez nápovědy má násobitel.',
+        'Za každé slovo body podle jeho délky, za řetěz prémie a za dosaženou úroveň bonus.',
+        'Kolo bez jediné nápovědy a aspoň s tuctem slov má násobitel.',
       ],
     },
   ],
@@ -385,7 +385,7 @@ export const MODE_SUMMARY: Record<ModeId, string[]> = {
     'Kdo na slovo přijde, může ho tipnout celé.',
   ],
   tetris: [
-    'Dvě nebo tři slabiky vedle sebe dají slovo.',
+    'Otoč dvojici, ať dá slovo.',
     'Vodorovně zleva, svisle zdola nahoru.',
     'Jen 1. pád a infinitiv.',
   ],

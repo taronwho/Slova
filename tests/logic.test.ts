@@ -59,16 +59,22 @@ import { RANKS as PROFILE_RANKS, rankFor as profileRankFor } from '../src/game/r
 import { AWARDS, AWARD_GROUPS } from '../src/game/awards'
 import { scoreChain, scoreDetective, scoreGallows, streakMultiplier } from '../src/game/scoring'
 import {
-  canDrop,
+  cells,
   createTetrisState,
-  dropSyllable,
-  isOver as tetrisOver,
+  dropMs,
+  hardDrop,
+  level as tetrisLevel,
+  partnerCell,
   placed as tetrisPlaced,
-  scoringColumns,
-  tray,
+  rotate,
+  step,
   takeTetrisHint,
+  tetrisSetup,
   TETRIS_HINT_COST,
-  type TetrisPuzzle,
+  togglePause,
+  type Piece,
+  type TetrisDeck,
+  type TetrisState,
 } from '../src/game/tetris'
 import type { RoundResult } from '../src/game/types'
 import { awardInk, DAILY_INK, inkPrice, rankInk } from '../src/game/economy'
@@ -614,101 +620,111 @@ describe('ocenění', () => {
 })
 
 describe('slabikový tetris', () => {
-  const puzzle: TetrisPuzzle = {
-    id: 't-test',
-    difficulty: 'normal',
-    cols: 4,
-    rows: 4,
-    queue: ['ko', 'lo', 'vo', 'da'],
-    words: ['kolo', 'voda', 'kova'],
-    seed: ['kolo', 'voda'],
+  const deck: TetrisDeck = {
+    syllables: [
+      ['ko', 3],
+      ['lo', 3],
+      ['vo', 2],
+      ['da', 2],
+    ],
+    pairs: [['ko', 'lo']],
+    words: ['kolo', 'voda', 'kova', 'lokovat'],
+  }
+  const setup = tetrisSetup('normal', 1)
+  const fresh = () => createTetrisState(deck, setup, 0)
+
+  /** Postaví desku ze sloupců zdola nahoru — v testu se to čte líp než tahy. */
+  function withGrid(grid: string[][], piece: Partial<Piece> = {}): TetrisState {
+    const base = fresh()
+    return {
+      ...base,
+      grid: Array.from({ length: setup.cols }, (_, i) => grid[i] ?? []),
+      piece: { a: 'ko', b: 'lo', col: 0, row: setup.rows - 1, turn: 0, ...piece },
+    }
   }
 
-  it('dvě slabiky vedle sebe složí slovo a zmizí', () => {
-    let state = createTetrisState(puzzle)
-    state = dropSyllable(state, 0)!.state
-    const hit = dropSyllable(state, 1)!
-    expect(hit.words).toEqual(['kolo'])
-    expect(tetrisPlaced(hit.state)).toBe(0)
+  it('dvojice padá po patrech, dokud nedosedne', () => {
+    let state = fresh()
+    const startRow = state.piece!.row
+    state = step(state).state
+    expect(state.piece!.row).toBe(startRow - 1)
   })
 
-  it('svisle se čte zdola nahoru — tím směrem sloupec roste', () => {
-    let state = createTetrisState(puzzle)
-    state = dropSyllable(state, 0)!.state
-    // „lo" do vzdáleného sloupce, aby nevzniklo vodorovné „kolo".
-    state = dropSyllable(state, 2)!.state
-    // Teď „vo" nad „ko": zdola nahoru je to „kovo", což slovo není.
-    const miss = dropSyllable(state, 0)!
-    expect(miss.words).toEqual([])
+  // Tohle je jádro hry: jedna dvojice se dá přečíst čtyřmi způsoby.
+  it('otočení mění pořadí i směr čtení', () => {
+    const state = withGrid([], { turn: 0 })
+    expect(cells(state.piece!).map((c) => c.text)).toEqual(['ko', 'lo'])
+    // 0 = vodorovně vedle sebe, 1 = svisle nad sebou.
+    expect(partnerCell(state.piece!)).toEqual({ col: 1, row: state.piece!.row })
+    const turned = rotate(state).piece!
+    expect(partnerCell(turned)).toEqual({ col: 0, row: state.piece!.row + 1 })
   })
 
-  // Zásobník je to, co dělá hru hrou: bez volby by slabika, která se zrovna
-  // nehodí, zůstala ležet navždycky.
-  it('hráč si vybírá ze tří slabik v zásobníku', () => {
-    const state = createTetrisState(puzzle)
-    expect(tray(state)).toEqual(['ko', 'lo', 'vo'])
-    // Druhá slabika ze zásobníku; první zůstává ve frontě.
-    const after = dropSyllable(state, 0, 1)!.state
-    expect(tray(after)).toEqual(['ko', 'vo', 'da'])
-    expect(after.queue.length).toBe(3)
+  it('vodorovná dvojice složí slovo zleva doprava', () => {
+    const state = withGrid([], { col: 0, turn: 0 })
+    const result = hardDrop(state)
+    expect(result.words).toEqual(['kolo'])
+    expect(tetrisPlaced(result.state)).toBe(0)
   })
 
-  it('do zásobníku se sahá jen na první tři slabiky', () => {
-    const state = createTetrisState(puzzle)
-    expect(dropSyllable(state, 0, 3)).toBeNull()
+  it('svislá dvojice se čte zdola nahoru', () => {
+    // turn 1 = „b" nad „a", tedy zdola „ko" a nad ním „lo".
+    const state = withGrid([], { col: 0, turn: 1 })
+    expect(hardDrop(state).words).toEqual(['kolo'])
+    // Opačná poloha dá „loko", což slovo není.
+    const flipped = withGrid([], { col: 0, turn: 3 })
+    expect(hardDrop(flipped).words).toEqual([])
   })
 
-  it('slabika, která nic nesloží, prostě zůstane ležet', () => {
-    const state = createTetrisState(puzzle)
-    const result = dropSyllable(state, 0)!
-    expect(result.words).toEqual([])
-    expect(tetrisPlaced(result.state)).toBe(1)
+  it('slovo se skládá i s tím, co na desce leží', () => {
+    // Ve sloupci 1 leží „da"; dvojice „vo"+? doplní VODA vodorovně.
+    const state = withGrid([[], ['da']], { a: 'vo', b: 'ko', col: 0, turn: 0 })
+    const result = hardDrop(state)
+    expect(result.words).toEqual(['voda'])
   })
 
-  // Zásadní pojistka: co hra uzná, musí být v předpočítaném seznamu dávky.
-  // Runtime nemá jak vymyslet slovo, které by ve slovníku nebylo.
-  it('uzná jen slovo ze seznamu dávky', () => {
-    const strict: TetrisPuzzle = { ...puzzle, words: ['voda'] }
-    let state = createTetrisState(strict)
-    state = dropSyllable(state, 0)!.state
-    const result = dropSyllable(state, 1)!
+  // Runtime nemá jak vymyslet slovo mimo slovník balíčku.
+  it('uzná jen slovo ze slovníku balíčku', () => {
+    const strict: TetrisDeck = { ...deck, words: ['voda'] }
+    const state = { ...withGrid([], { col: 0, turn: 0 }), deck: strict }
+    const result = hardDrop(state)
     expect(result.words).toEqual([])
     expect(tetrisPlaced(result.state)).toBe(2)
   })
 
-  it('plný sloupec už nepřijme', () => {
-    const narrow: TetrisPuzzle = {
-      ...puzzle,
-      cols: 1,
-      rows: 2,
-      queue: ['ko', 'ko', 'ko'],
-      words: [],
-    }
-    let state = createTetrisState(narrow)
-    state = dropSyllable(state, 0)!.state
-    state = dropSyllable(state, 0)!.state
-    expect(canDrop(state, 0)).toBe(false)
-    expect(dropSyllable(state, 0)).toBeNull()
-    expect(tetrisOver(state)).toBe(true)
+  it('tempo se s úrovní zrychluje', () => {
+    const slow = fresh()
+    const fast = { ...slow, cleared: Array.from({ length: 24 }, () => 'kolo') }
+    expect(tetrisLevel(fast)).toBeGreaterThan(tetrisLevel(slow))
+    expect(dropMs(fast)).toBeLessThan(dropMs(slow))
   })
 
-  it('nápověda ukáže sloupec, kde se něco složí', () => {
-    let state = createTetrisState(puzzle)
-    state = dropSyllable(state, 0)!.state
-    // Po „ko" ve sloupci 0 složí „lo" slovo hned dvakrát: vedle (vodorovně)
-    // i na něj (svisle zdola nahoru).
-    expect(scoringColumns(state)).toEqual([0, 1])
-    const hint = takeTetrisHint(state, 'column', false)!
-    expect(scoringColumns(state)).toContain(hint.column)
-    expect(hint.state.hintCost).toBe(TETRIS_HINT_COST.column)
+  it('kolo skončí, až se nová dvojice nemá kam vejít', () => {
+    const full = Array.from({ length: setup.cols }, () =>
+      Array.from({ length: setup.rows }, () => 'xx'),
+    )
+    const state = withGrid(full, { col: 0, turn: 0 })
+    const result = hardDrop(state)
+    expect(result.state.over).toBe(true)
+  })
+
+  it('nápověda najde polohu, ve které se něco složí', () => {
+    const state = withGrid([], { a: 'ko', b: 'lo' })
+    const hint = takeTetrisHint(state, 'spot', false)!
+    expect(hint.spot!.words).toContain('kolo')
+    expect(hint.state.hintCost).toBe(TETRIS_HINT_COST.spot)
   })
 
   it('nápověda zaplacená inkoustem nestojí body, ale pořád je to nápověda', () => {
-    const state = createTetrisState(puzzle)
-    const hint = takeTetrisHint(state, 'swap', true)!
+    const hint = takeTetrisHint(fresh(), 'swap', true)!
     expect(hint.state.hintCost).toBe(0)
     expect(hint.state.hintsUsed).toBe(1)
     expect(hint.state.freeHints).toBe(1)
+  })
+
+  it('pauza zastaví pád', () => {
+    const paused = togglePause(fresh())
+    expect(step(paused).state.piece!.row).toBe(paused.piece!.row)
   })
 })
 

@@ -310,68 +310,60 @@ function Visual({ visual }: { visual: TutorialVisual }) {
         </div>
       )
 
-    // Deska se dvěma slabikami vedle sebe. Ukázka je statická, ale ukazuje
-    // přesně to, co hráč uvidí: sloupce, políčka a slovo, které z nich padne.
+    // Padající dvojice a čtyři polohy, ve kterých se dá přečíst.
     case 'tetris':
       return (
         <div className="tut-visual">
-          <div className="well" style={{ ['--cols' as string]: 4, width: 200 }}>
+          <div
+            className="well"
+            style={{ ['--cols' as string]: 4, ['--rows' as string]: 3, width: 180 }}
+          >
             {[
-              [null, null],
-              ['ko', null],
-              ['lo', null],
-              [null, null],
-            ].map((column, col) => (
-              <div className="well-col" key={col}>
-                {[1, 0].map((row) => (
-                  <span
-                    className={`cell ${column[row] ? 'filled' : ''}`}
-                    key={row}
-                  >
-                    {column[row] ?? ''}
-                  </span>
-                ))}
-              </div>
-            ))}
+              ['', '', '', ''],
+              ['ko', 'lo', '', ''],
+              ['', '', '', ''],
+            ].map((row, r) =>
+              row.map((text, c) => (
+                <span className={`cell ${text ? 'live' : ''}`} key={`${r}-${c}`}>
+                  {text}
+                </span>
+              )),
+            )}
           </div>
-          <p className="tut-caption">KO + LO vedle sebe = kolo. Obojí zmizí.</p>
+          <p className="tut-caption">KO + LO vedle sebe = KOLO. Obojí zmizí.</p>
         </div>
       )
 
-    // Řetěz: po zmizelém slově spadne dolů něco, co složí další.
+    // Otáčení: táž dvojice, čtyři polohy, dvojí pořadí.
     case 'tetris-chain':
       return (
         <div className="tut-visual">
           <div
-            style={{ display: 'flex', gap: 'var(--sp-3)', alignItems: 'center' }}
+            style={{ display: 'flex', gap: 'var(--sp-4)', alignItems: 'center', justifyContent: 'center' }}
           >
-            <div className="well" style={{ ['--cols' as string]: 2, width: 96 }}>
-              {[
-                ['ko', 'vo'],
-                ['lo', 'da'],
-              ].map((column, col) => (
-                <div className="well-col" key={col}>
-                  {[1, 0].map((row) => (
-                    <span className="cell filled" key={row}>
-                      {column[row]}
-                    </span>
-                  ))}
-                </div>
-              ))}
+            <div style={{ textAlign: 'center' }}>
+              <div className="well" style={{ ['--cols' as string]: 2, width: 88 }}>
+                <span className="cell live">ko</span>
+                <span className="cell live">lo</span>
+              </div>
+              <span className="faint" style={{ fontSize: '0.72rem' }}>
+                KOLO
+              </span>
             </div>
             <span className="tut-arrow" aria-hidden="true">
-              →
+              ⟳
             </span>
-            <div className="well" style={{ ['--cols' as string]: 2, width: 96 }}>
-              {[['vo'], ['da']].map((column, col) => (
-                <div className="well-col" key={col}>
-                  <span className="cell" />
-                  <span className="cell filled">{column[0]}</span>
-                </div>
-              ))}
+            <div style={{ textAlign: 'center' }}>
+              <div className="well" style={{ ['--cols' as string]: 1, width: 44 }}>
+                <span className="cell live">lo</span>
+                <span className="cell live">ko</span>
+              </div>
+              <span className="faint" style={{ fontSize: '0.72rem' }}>
+                taky KOLO
+              </span>
             </div>
           </div>
-          <p className="tut-caption">KOLO zmizí, VODA spadne dolů a jde hned po něm.</p>
+          <p className="tut-caption">Svisle se čte zdola nahoru — proto je „lo" nahoře.</p>
         </div>
       )
 

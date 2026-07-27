@@ -69,9 +69,9 @@ const DIFFICULTY_NOTE: Record<ModeId, Record<Difficulty, string>> = {
     hard: 'dlouhá slova a spletitější původ',
   },
   tetris: {
-    easy: '5 sloupců, samé dvojslabičné',
-    normal: '5 sloupců, delší dávka',
-    hard: '6 sloupců, nejdelší dávka',
+    easy: '6 sloupců, klidné tempo',
+    normal: '6 sloupců, svižnější',
+    hard: '7 sloupců, rychlý pád',
   },
 }
 
@@ -88,8 +88,7 @@ function progressNote(saved: SavedRound): string {
     found?: string[]
     built?: string[]
     tried?: string[]
-    at?: number
-    queue?: string[]
+    cleared?: string[]
     puzzle?: { solutions?: string[]; levels?: unknown[] }
   }
   switch (saved.mode) {
@@ -101,7 +100,7 @@ function progressNote(saved: SavedRound): string {
     case 'detective':
       return plural(state.tried?.length ?? 0, 'písmeno', 'písmena', 'písmen')
     case 'tetris':
-      return `${state.at ?? 0} z ${state.queue?.length ?? 0} slabik`
+      return plural(state.cleared?.length ?? 0, 'slovo', 'slova', 'slov')
     default: {
       const built = (state.built?.length ?? 1) - 1
       return `${built} z ${(state.puzzle?.levels?.length ?? 1) - 1} pater`

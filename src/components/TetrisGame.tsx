@@ -5,20 +5,25 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { inkPrice } from '../game/economy'
 import { scoreTetris } from '../game/scoring'
 import {
-  canDrop,
+  cells,
   createTetrisState,
-  dropSyllable,
-  giveUp as giveUpState,
-  isOver,
-  isSwept,
+  landing,
+  dropMs,
+  endRound,
+  fill,
+  hardDrop,
   isWon,
+  level,
+  move,
   placed,
-  scoringColumns,
+  rotate,
+  step,
   takeTetrisHint,
   TETRIS_HINT_COST,
-  tray,
-  upcoming,
-  type TetrisPuzzle,
+  togglePause,
+  type Spot,
+  type TetrisDeck,
+  type TetrisSetup,
   type TetrisState,
 } from '../game/tetris'
 import type { RoundResult } from '../game/types'
@@ -27,7 +32,8 @@ import { HintHead, HintPrice } from './HintPanel'
 import { ResultOverlay } from './ResultOverlay'
 
 interface Props {
-  puzzle: TetrisPuzzle
+  deck: TetrisDeck
+  setup: TetrisSetup
   streak: number
   dayLabel: string
   onFinish: (result: RoundResult) => void
@@ -42,7 +48,8 @@ interface Props {
 }
 
 export function TetrisGame({
-  puzzle,
+  deck,
+  setup,
   streak,
   dayLabel,
   onFinish,
@@ -53,33 +60,28 @@ export function TetrisGame({
   onSpendInk,
   onProgress,
 }: Props) {
-  const [state, setState] = useState<TetrisState>(() => resume ?? createTetrisState(puzzle))
+  const [state, setState] = useState<TetrisState>(
+    () => resume ?? createTetrisState(deck, setup),
+  )
   const [flash, setFlash] = useState<{ text: string; tone: string; key: number } | null>(null)
-  const [tip, setTip] = useState<number | null>(null)
-  /** Kterou slabiku ze zásobníku hráč zrovna pokládá. */
-  const [slot, setSlot] = useState(0)
+  const [spot, setSpot] = useState<Spot | null>(null)
   const [done, setDone] = useState(false)
   const [confirmEnd, setConfirmEnd] = useState(false)
   const reported = useRef(false)
 
-  const over = isOver(state)
-  const won = isWon(state)
-  const hand = useMemo(() => tray(state), [state])
-  const pick = Math.min(slot, Math.max(0, hand.length - 1))
-  const next = useMemo(() => upcoming(state), [state])
+  const over = state.over
   const left = placed(state)
 
-  const shown = useRef(puzzle.id)
+  const shown = useRef(setup.seed)
   useEffect(() => {
-    if (shown.current === puzzle.id) return
-    shown.current = puzzle.id
-    setState(createTetrisState(puzzle))
+    if (shown.current === setup.seed) return
+    shown.current = setup.seed
+    setState(createTetrisState(deck, setup))
     setFlash(null)
-    setTip(null)
-    setSlot(0)
+    setSpot(null)
     setDone(false)
     reported.current = false
-  }, [puzzle])
+  }, [deck, setup])
 
   useEffect(() => {
     onProgress(state, over || done)
@@ -93,18 +95,18 @@ export function TetrisGame({
     setDone(true)
     onFinish({
       mode: 'tetris',
-      difficulty: puzzle.difficulty,
-      puzzleId: puzzle.id,
+      difficulty: setup.difficulty,
+      puzzleId: `t-${setup.seed}`,
       score: breakdown.total,
       perfect: breakdown.perfect,
-      success: won,
+      success: isWon(state),
       elapsedMs: (state.finishedAt ?? Date.now()) - state.startedAt,
       hintsUsed: state.hintsUsed,
       detail: {
         words: state.cleared.length,
         chain: state.bestChain,
+        level: level(state),
         leftover: left,
-        swept: isSwept(state) ? 1 : 0,
         extra: state.cleared.length,
       },
     })
@@ -115,64 +117,92 @@ export function TetrisGame({
     setFlash({ text, tone, key: Date.now() })
   }, [])
 
-  const drop = useCallback(
-    (col: number) => {
-      const result = dropSyllable(state, col, pick)
-      if (!result) return
-      setTip(null)
-      setSlot(0)
-      setState(result.state)
-      if (result.words.length > 0) {
-        if (navigator.vibrate) navigator.vibrate(20)
-        showFlash(
-          result.words.length === 1
-            ? `${result.words[0]!.toUpperCase()}`
-            : `Řetěz ×${result.words.length} · ${result.words.join(' · ').toUpperCase()}`,
-          result.words.length > 1 ? 'gold' : 'ok',
-        )
-      }
+  /** Společný konec tahu: hlášení o složených slovech, zhasnutí nápovědy. */
+  const settle = useCallback(
+    (words: string[]) => {
+      if (words.length === 0) return
+      setSpot(null)
+      if (navigator.vibrate) navigator.vibrate(words.length > 1 ? 40 : 18)
+      showFlash(
+        words.length === 1
+          ? words[0]!.toUpperCase()
+          : `Řetěz ×${words.length} · ${words.join(' · ').toUpperCase()}`,
+        words.length > 1 ? 'gold' : 'ok',
+      )
     },
-    [pick, showFlash, state],
+    [showFlash],
   )
+
+  // Hodiny hry. Interval se přepočítá, kdykoli se změní tempo — tedy po
+  // každé nové úrovni.
+  const speed = dropMs(state)
+  useEffect(() => {
+    if (over || state.paused || done) return undefined
+    const timer = window.setInterval(() => {
+      setState((prev) => {
+        const result = step(prev)
+        if (result.words.length > 0) settle(result.words)
+        return result.state
+      })
+    }, speed)
+    return () => window.clearInterval(timer)
+  }, [speed, over, state.paused, done, settle])
+
+  const drop = useCallback(() => {
+    setState((prev) => {
+      const result = hardDrop(prev)
+      if (result.words.length > 0) settle(result.words)
+      return result.state
+    })
+  }, [settle])
+
+  const soft = useCallback(() => {
+    setState((prev) => {
+      const result = step(prev)
+      if (result.words.length > 0) settle(result.words)
+      return result.state
+    })
+  }, [settle])
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (event.metaKey || event.ctrlKey || event.altKey) return
-      const index = Number(event.key)
-      if (!Number.isInteger(index) || index < 1 || index > puzzle.cols) return
+      const key = event.key
+      if (key === 'ArrowLeft') setState((prev) => move(prev, -1))
+      else if (key === 'ArrowRight') setState((prev) => move(prev, 1))
+      else if (key === 'ArrowUp' || key === 'x' || key === 'X') setState((prev) => rotate(prev))
+      else if (key === 'z' || key === 'Z') setState((prev) => rotate(prev, -1))
+      else if (key === 'ArrowDown') soft()
+      else if (key === ' ' || key === 'Enter') drop()
+      else if (key === 'p' || key === 'P') setState(togglePause)
+      else return
       event.preventDefault()
-      drop(index - 1)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [drop, puzzle.cols])
+  }, [drop, soft])
 
-  function hint(kind: 'column' | 'swap') {
+  function hint(kind: 'spot' | 'swap') {
     const price = inkPrice(TETRIS_HINT_COST[kind])
     const free = ink >= price
     const result = takeTetrisHint(state, kind, free)
     if (!result) {
       showFlash(
-        kind === 'column'
-          ? 'Ze zásobníku se teď nic složit nedá. Zkus něco odložit.'
-          : 'Fronta došla, není co odkládat.',
+        kind === 'spot'
+          ? 'Touhle dvojicí se teď nic složit nedá.'
+          : 'Vyměnit teď nejde.',
         'warn',
       )
       return
     }
     if (free) onSpendInk(price)
     setState(result.state)
-    if (result.kind === 'column' && result.column !== undefined) {
-      setSlot(result.slot ?? 0)
-      setTip(result.column)
-      showFlash(
-        `${(hand[result.slot ?? 0] ?? '').toUpperCase()} do sloupce ${result.column + 1}`,
-        'accent',
-      )
-    } else if (result.syllable) {
-      setTip(null)
-      setSlot(0)
-      showFlash(`${result.syllable.toUpperCase()} jde na konec fronty`, 'accent')
+    if (result.spot) {
+      setSpot(result.spot)
+      showFlash(`${result.spot.words[0]!.toUpperCase()} — sloupec ${result.spot.col + 1}`, 'accent')
+    } else {
+      setSpot(null)
+      showFlash('Vyměněno za další dvojici', 'accent')
     }
   }
 
@@ -180,21 +210,18 @@ export function TetrisGame({
     () =>
       [
         `SLOVA — Slabiky ${dayLabel}`,
-        `${state.cleared.length} slov · řetěz ${state.bestChain}`,
+        `${state.cleared.length} slov · řetěz ${state.bestChain} · úroveň ${level(state)}`,
         `★ ${breakdown.total}`,
       ].join('\n'),
-    [breakdown.total, dayLabel, state.bestChain, state.cleared.length],
+    [breakdown.total, dayLabel, state],
   )
 
-  // Kam by slabika spadla — bez toho hráč netrefí sloupec napoprvé.
-  const landing = useMemo(
-    () => state.grid.map((column) => (column.length < puzzle.rows ? column.length : -1)),
-    [state.grid, puzzle.rows],
-  )
-  const helpful = useMemo(
-    () => new Set(over ? [] : scoringColumns(state, pick)),
-    [state, over, pick],
-  )
+  // Kde dvojice dosedne, kdyby teď spadla. Bez stínu se u rychlejšího tempa
+  // netrefí ani sloupec.
+  const ghost = useMemo(() => (state.piece && !over ? landing(state) : []), [state, over])
+
+  const falling = useMemo(() => (state.piece && !over ? cells(state.piece) : []), [state, over])
+  const fullness = fill(state)
 
   return (
     <div className="game with-rail">
@@ -206,12 +233,12 @@ export function TetrisGame({
               <div className="value num accent">{state.cleared.length}</div>
             </div>
             <div className="stat">
-              <div className="label">Ve frontě</div>
-              <div className="value num">{state.queue.length}</div>
-            </div>
-            <div className="stat">
               <div className="label">Řetěz</div>
               <div className="value num gold">{state.bestChain}</div>
+            </div>
+            <div className="stat">
+              <div className="label">Úroveň</div>
+              <div className="value num">{level(state)}</div>
             </div>
           </div>
         </div>
@@ -223,10 +250,10 @@ export function TetrisGame({
               type="button"
               className="btn btn-sm"
               disabled={over}
-              onClick={() => hint('column')}
+              onClick={() => hint('spot')}
             >
-              <span>Poradit tah</span>
-              <HintPrice points={TETRIS_HINT_COST.column} ink={ink} />
+              <span>Poradit</span>
+              <HintPrice points={TETRIS_HINT_COST.spot} ink={ink} />
             </button>
             <button
               type="button"
@@ -234,7 +261,7 @@ export function TetrisGame({
               disabled={over}
               onClick={() => hint('swap')}
             >
-              <span>Odložit</span>
+              <span>Vyměnit</span>
               <HintPrice points={TETRIS_HINT_COST.swap} ink={ink} />
             </button>
           </div>
@@ -242,110 +269,122 @@ export function TetrisGame({
       </aside>
 
       <div className="board">
-        {flash && (
-          <div className={`banner banner-${flash.tone}`} key={flash.key}>
-            <span>{flash.text}</span>
-          </div>
-        )}
-
-        {/* Zásobník: ze tří slabik si hráč vybírá, kterou položí. Bez téhle
-            volby je hra loterie — slabika, která se zrovna nehodí, zůstane
-            na desce ležet navždycky. */}
-        <div className="syl-queue">
-          {hand.map((item, i) => (
-            <button
-              type="button"
-              className={`syl-now ${i === pick ? 'picked' : ''}`}
-              key={`${item}-${i}`}
-              disabled={over}
-              aria-pressed={i === pick}
-              onClick={() => setSlot(i)}
-            >
-              {item}
-            </button>
-          ))}
-          {hand.length === 0 && <span className="faint">konec dávky</span>}
-          {next.length > 0 && (
-            <>
-              <span className="syl-next-label">dál</span>
-              <span className="syl-next">
-                {next.map((item, i) => (
-                  <span className="syl-chip" key={`${item}-${i}`}>
-                    {item}
-                  </span>
-                ))}
+        <div className="well-head">
+          <span className="well-next-label">dál</span>
+          <span className="well-next">
+            {state.queue.map((pair, i) => (
+              <span className="syl-pair" key={i}>
+                <span className="syl-chip">{pair[0]}</span>
+                <span className="syl-chip">{pair[1]}</span>
               </span>
-            </>
+            ))}
+          </span>
+          <span className="well-fill" aria-label="Zaplnění desky">
+            <i style={{ width: `${Math.round(fullness * 100)}%` }} />
+          </span>
+          <button
+            type="button"
+            className="btn btn-sm btn-ghost"
+            onClick={() => setState(togglePause)}
+            disabled={over}
+          >
+            {state.paused ? 'Pokračovat' : 'Pauza'}
+          </button>
+        </div>
+
+        {/* Hlášení o složeném slově má vlastní řádek s pevnou výškou. Padá po
+            každém dopadu, takže kdyby se objevovalo a mizelo, deska by pod
+            ním poskakovala. */}
+        <div className="well-msg">
+          {flash && (
+            <span className={`banner banner-${flash.tone}`} key={flash.key}>
+              {flash.text}
+            </span>
           )}
         </div>
 
-        <div
-          className="well"
-          style={{
-            ['--cols' as string]: puzzle.cols,
-            ['--rows' as string]: puzzle.rows,
-          }}
-        >
-          {state.grid.map((column, col) => (
-            <button
-              type="button"
-              className={`well-col ${tip === col ? 'tip' : ''} ${
-                helpful.has(col) ? 'helpful' : ''
-              }`}
-              key={col}
-              disabled={over || !canDrop(state, col)}
-              aria-label={`Sloupec ${col + 1}`}
-              onClick={() => drop(col)}
-            >
-              {/* Shora dolů, aby políčka seděla tak, jak je hráč vidí. */}
-              {Array.from({ length: puzzle.rows }, (_, i) => {
-                const row = puzzle.rows - 1 - i
-                const item = column[row]
+        <div className="well-stage">
+          <div
+            className={`well ${state.paused ? 'paused' : ''}`}
+            style={{
+              ['--cols' as string]: state.setup.cols,
+              ['--rows' as string]: state.setup.rows,
+            }}
+          >
+            {Array.from({ length: state.setup.rows }, (_, i) => {
+              const row = state.setup.rows - 1 - i
+              return Array.from({ length: state.setup.cols }, (_, col) => {
+                const settled = state.grid[col]![row]
+                const live = falling.find((cell) => cell.col === col && cell.row === row)
+                const shadow = ghost.find((cell) => cell.col === col && cell.row === row)
+                const marked =
+                  spot && spot.col === col && !settled && !live
+                    ? 'spot'
+                    : ''
                 return (
                   <span
-                    className={`cell ${item ? 'filled' : ''} ${
-                      !item && row === landing[col] ? 'landing' : ''
-                    }`}
-                    key={row}
+                    className={`cell ${settled ? 'filled' : ''} ${live ? 'live' : ''} ${
+                      !settled && !live && shadow ? 'ghost' : ''
+                    } ${marked}`}
+                    key={`${col}-${row}`}
                   >
-                    {item ?? ''}
+                    {live?.text ?? settled ?? ''}
                   </span>
                 )
-              })}
-            </button>
-          ))}
+              })
+            })}
+            {state.paused && !over && <div className="well-pause">Pauza</div>}
+          </div>
         </div>
       </div>
 
       <div className="board-footer">
-        <div className="found-strip">
-          {state.cleared.length === 0 ? (
-            <span className="faint">Zatím žádné slovo — dvě slabiky vedle sebe stačí.</span>
-          ) : (
-            state.cleared
-              .slice(-6)
-              .map((word, i) => (
-                <span className="chip" key={`${word}-${i}`}>
-                  {word}
-                </span>
-              ))
-          )}
+        <div className="pad">
+          <button
+            type="button"
+            className="btn pad-key"
+            aria-label="Doleva"
+            disabled={over || state.paused}
+            onClick={() => setState((prev) => move(prev, -1))}
+          >
+            ◀
+          </button>
+          <button
+            type="button"
+            className="btn pad-key pad-turn"
+            aria-label="Otočit"
+            disabled={over || state.paused}
+            onClick={() => setState((prev) => rotate(prev))}
+          >
+            ⟳
+          </button>
+          <button
+            type="button"
+            className="btn pad-key"
+            aria-label="Doprava"
+            disabled={over || state.paused}
+            onClick={() => setState((prev) => move(prev, 1))}
+          >
+            ▶
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary pad-key pad-drop"
+            aria-label="Položit"
+            disabled={over || state.paused}
+            onClick={drop}
+          >
+            ⤓
+          </button>
         </div>
-        <div
-          style={{
-            display: 'flex',
-            gap: 'var(--sp-2)',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-          }}
-        >
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
           <button
             type="button"
             className="btn btn-sm btn-ghost"
             onClick={() => setConfirmEnd(true)}
             disabled={over}
           >
-            Ukončit dávku
+            Ukončit kolo
           </button>
         </div>
       </div>
@@ -354,29 +393,32 @@ export function TetrisGame({
         <div className="card" style={{ padding: 'var(--sp-4)' }}>
           <div className="label">Složená slova</div>
           <div className="found-list" style={{ marginTop: 'var(--sp-2)' }}>
-            {state.cleared.map((word, i) => (
-              <span className="found-word" key={`${word}-${i}`}>
-                {word}
-              </span>
-            ))}
+            {state.cleared
+              .slice()
+              .reverse()
+              .map((word, i) => (
+                <span className="found-word" key={`${word}-${i}`}>
+                  {word}
+                </span>
+              ))}
             {state.cleared.length === 0 && <span className="faint">Zatím nic.</span>}
           </div>
         </div>
         <p className="faint" style={{ fontSize: '0.82rem', lineHeight: 1.55 }}>
-          Vodorovně se čte zleva doprava, svisle zdola nahoru. Slabiky v dávce
-          nejsou náhodné — vznikly rozsypáním celých slov, takže žádná z nich
-          není zbytečná.
+          Dvojice se dá otočit do čtyř poloh a v každé se čte jinak: vodorovně
+          zleva doprava, svisle zdola nahoru. „ko" a „lo" tedy dá KOLO i „lo"
+          a „ko" — jen je otočit správně.
         </p>
       </aside>
 
       {confirmEnd && (
         <Confirm
-          title="Ukončit dávku?"
-          body={`Kolo se spočítá tak, jak je — máš ${state.cleared.length} slov. Zbytek dávky propadne.`}
+          title="Ukončit kolo?"
+          body={`Kolo se spočítá tak, jak je — máš ${state.cleared.length} slov.`}
           confirmLabel="Ukončit"
           onConfirm={() => {
             setConfirmEnd(false)
-            setState(giveUpState(state))
+            setState(endRound(state))
           }}
           onCancel={() => setConfirmEnd(false)}
         />
@@ -384,11 +426,11 @@ export function TetrisGame({
 
       {done && (
         <ResultOverlay
-          title={isSwept(state) ? 'Deska čistá!' : won ? 'Dávka rozmístěna' : 'Konec dávky'}
-          subtitle={`${state.cleared.length} slov · nejdelší řetěz ${state.bestChain}`}
+          title={state.cleared.length > 0 ? 'Deska přetekla' : 'Konec kola'}
+          subtitle={`${state.cleared.length} slov · úroveň ${level(state)}`}
           breakdown={breakdown}
           shareText={shareText}
-          celebrate={isSwept(state)}
+          celebrate={state.cleared.length >= 12}
           onNext={onNext}
           onHome={onHome}
         />

@@ -73,7 +73,7 @@ for (let i = 0; i < TOWER_PACKS; i++) {
 // Šibenice má všechna slova v jednom malém souboru, takže se vejde celá.
 embedded['gallows/puzzles.json'] = readJson('gallows', 'puzzles.json')
 embedded['detective/puzzles.json'] = readJson('detective', 'puzzles.json')
-embedded['tetris/puzzles.json'] = readJson('tetris', 'puzzles.json')
+embedded['tetris/deck.json'] = readJson('tetris', 'deck.json')
 
 /* ---------- JS ---------- */
 
@@ -166,6 +166,6 @@ console.log(
     `, voština ${hiveIndex.hives.length}, věž ${towerIndex.towers.length}` +
     `, šibenice ${embedded['gallows/puzzles.json'].length}` +
     `, detektiv ${embedded['detective/puzzles.json'].length}` +
-    `, slabiky ${embedded['tetris/puzzles.json'].length}`,
+    `, slabiky ${embedded['tetris/deck.json'].words.length} slov`,
 )
 console.log(`\nCelkem   ${kb(page.length)}  ->  ${OUT}`)
