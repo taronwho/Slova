@@ -69,7 +69,7 @@ export function Guide({ onClose, onRules, finishLabel = 'Zavřít' }: Props) {
                   className="btn btn-sm btn-ghost guide-more"
                   onClick={() => show(section.term!)}
                 >
-                  Víc o tom
+                  Více
                 </button>
               )}
             </section>
