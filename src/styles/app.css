@@ -1723,7 +1723,7 @@
     /* Nad deskou jsou dva proužky: náhled se zaplněním a pauzou, a řádek
        pro hlášení o složeném slově. Oba mají pevnou výšku, takže deska pod
        nimi nikdy neposkočí. */
-    --fit-h: calc((100cqh - 106px - (var(--rows, 12) - 1) * var(--gap)) / var(--rows, 12));
+    --fit-h: calc((100cqh - 100px - (var(--rows, 12) - 1) * var(--gap)) / var(--rows, 12));
     --fit-w: calc((100cqw - (var(--cols, 6) - 1) * var(--gap)) / var(--cols, 6));
     --cell: clamp(28px, var(--fit-w), 64px);
     --cell-h: clamp(15px, min(var(--fit-h), calc(var(--cell) * 0.9)), 52px);
@@ -1772,6 +1772,10 @@
 
   .shell.playing[data-mode='tetris'] .pad-key {
     min-height: 46px;
+  }
+
+  .shell.playing[data-mode='tetris'] .well-msg {
+    min-height: 24px;
   }
 
   @media (max-width: 380px) {
@@ -3133,6 +3137,7 @@ button.rank-card:hover {
 }
 
 .cell {
+  position: relative;
   display: grid;
   place-items: center;
   aspect-ratio: 1 / 0.86;
@@ -3179,7 +3184,8 @@ button.rank-card:hover {
 }
 
 /* Ovládání. Čtyři velká tlačítka pod deskou — na telefonu se hraje palcem
-   a mířit na malé ikony za pádu nejde. */
+   a mířit na malé ikony za pádu nejde. Každé má popisek: čtyři samotné
+   ikonky vedle sebe hráči neřeknou, že se s dvojicí dá otáčet. */
 .pad {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -3189,18 +3195,92 @@ button.rank-card:hover {
 }
 
 .pad-key {
-  min-height: 52px;
-  font-size: 1.3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  min-height: 54px;
   line-height: 1;
   padding-inline: 0;
 }
 
-.pad-turn {
-  font-size: 1.5rem;
+.pad-key .pad-icon {
+  font-size: 1.25rem;
+  line-height: 1;
 }
 
-.pad-drop {
-  font-size: 1.5rem;
+.pad-key small {
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.pad-turn .pad-icon {
+  font-size: 1.45rem;
+}
+
+.pad-drop .pad-icon {
+  font-size: 1.4rem;
+}
+
+/* Dokud hráč neotočí poprvé, tlačítko na sebe upozorňuje. Zhasne po použití,
+   ne po čase — kdo to pochopí hned, nemá si čeho všímat. */
+.pad-turn.nudge {
+  border-color: var(--accent);
+  color: var(--accent-text);
+  animation: nudge 1.8s var(--ease) infinite;
+}
+
+@keyframes nudge {
+  0%,
+  70%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--accent) 45%, transparent);
+  }
+  35% {
+    box-shadow: 0 0 0 6px color-mix(in oklab, var(--accent) 0%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pad-turn.nudge {
+    animation: none;
+  }
+}
+
+/* Šipka na první půlce padající dvojice: kterým směrem se čte. */
+.lead {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border: 4px solid transparent;
+  opacity: 0.85;
+}
+
+.lead[data-turn='0'] {
+  right: 1px;
+  border-left-color: var(--band-ink);
+  border-right-width: 0;
+}
+
+.lead[data-turn='1'] {
+  top: 1px;
+  border-bottom-color: var(--band-ink);
+  border-top-width: 0;
+}
+
+.lead[data-turn='2'] {
+  left: 1px;
+  border-right-color: var(--band-ink);
+  border-left-width: 0;
+}
+
+.lead[data-turn='3'] {
+  bottom: 1px;
+  border-top-color: var(--band-ink);
+  border-bottom-width: 0;
 }
 
 /* ---------- Etymologický detektiv ---------- */

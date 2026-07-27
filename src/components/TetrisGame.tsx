@@ -67,6 +67,8 @@ export function TetrisGame({
   const [spot, setSpot] = useState<Spot | null>(null)
   const [done, setDone] = useState(false)
   const [confirmEnd, setConfirmEnd] = useState(false)
+  /** Otočil už hráč aspoň jednou? Do té doby se tlačítko hlásí samo. */
+  const [turned, setTurned] = useState(false)
   const reported = useRef(false)
 
   const over = state.over
@@ -80,6 +82,7 @@ export function TetrisGame({
     setFlash(null)
     setSpot(null)
     setDone(false)
+    setTurned(false)
     reported.current = false
   }, [deck, setup])
 
@@ -115,6 +118,18 @@ export function TetrisGame({
 
   const showFlash = useCallback((text: string, tone: string) => {
     setFlash({ text, tone, key: Date.now() })
+  }, [])
+
+  // První, co hráč v kole uvidí. Otáčení je nejméně samozřejmá věc na celé
+  // hře, takže se o něm řekne rovnou, ne až v návodu.
+  useEffect(() => {
+    if (turned || over) return undefined
+    const timer = window.setTimeout(
+      () => showFlash('Dvojici můžeš otáčet tlačítkem ⟳', 'accent'),
+      600,
+    )
+    return () => window.clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   /** Společný konec tahu: hlášení o složených slovech, zhasnutí nápovědy. */
@@ -170,8 +185,13 @@ export function TetrisGame({
       const key = event.key
       if (key === 'ArrowLeft') setState((prev) => move(prev, -1))
       else if (key === 'ArrowRight') setState((prev) => move(prev, 1))
-      else if (key === 'ArrowUp' || key === 'x' || key === 'X') setState((prev) => rotate(prev))
-      else if (key === 'z' || key === 'Z') setState((prev) => rotate(prev, -1))
+      else if (key === 'ArrowUp' || key === 'x' || key === 'X') {
+        setTurned(true)
+        setState((prev) => rotate(prev))
+      } else if (key === 'z' || key === 'Z') {
+        setTurned(true)
+        setState((prev) => rotate(prev, -1))
+      }
       else if (key === 'ArrowDown') soft()
       else if (key === ' ' || key === 'Enter') drop()
       else if (key === 'p' || key === 'P') setState(togglePause)
@@ -321,6 +341,10 @@ export function TetrisGame({
                   spot && spot.col === col && !settled && !live
                     ? 'spot'
                     : ''
+                // Šipka na první půlce ukazuje, kterým směrem se dvojice čte.
+                // Bez ní se pravidlo „svisle zdola nahoru" musí pamatovat;
+                // takhle je vidět přímo na desce.
+                const lead = Boolean(live) && live === falling[0]
                 return (
                   <span
                     className={`cell ${settled ? 'filled' : ''} ${live ? 'live' : ''} ${
@@ -329,6 +353,9 @@ export function TetrisGame({
                     key={`${col}-${row}`}
                   >
                     {live?.text ?? settled ?? ''}
+                    {lead && state.piece && (
+                      <i className="lead" data-turn={state.piece.turn} aria-hidden="true" />
+                    )}
                   </span>
                 )
               })
@@ -347,16 +374,28 @@ export function TetrisGame({
             disabled={over || state.paused}
             onClick={() => setState((prev) => move(prev, -1))}
           >
-            ◀
+            <span className="pad-icon" aria-hidden="true">
+              ◀
+            </span>
+            <small>vlevo</small>
           </button>
+          {/* Otáčení je ten tah, o který v téhle hře jde, a čtyři stejné
+              ikonky vedle sebe ho neprozradí — proto popisek a dokud ho hráč
+              nepoužije, i pulz. Zhasne po prvním otočení, ne po čase. */}
           <button
             type="button"
-            className="btn pad-key pad-turn"
-            aria-label="Otočit"
+            className={`btn pad-key pad-turn ${turned ? '' : 'nudge'}`}
+            aria-label="Otočit dvojici"
             disabled={over || state.paused}
-            onClick={() => setState((prev) => rotate(prev))}
+            onClick={() => {
+              setTurned(true)
+              setState((prev) => rotate(prev))
+            }}
           >
-            ⟳
+            <span className="pad-icon" aria-hidden="true">
+              ⟳
+            </span>
+            <small>otočit</small>
           </button>
           <button
             type="button"
@@ -365,7 +404,10 @@ export function TetrisGame({
             disabled={over || state.paused}
             onClick={() => setState((prev) => move(prev, 1))}
           >
-            ▶
+            <span className="pad-icon" aria-hidden="true">
+              ▶
+            </span>
+            <small>vpravo</small>
           </button>
           <button
             type="button"
@@ -374,7 +416,10 @@ export function TetrisGame({
             disabled={over || state.paused}
             onClick={drop}
           >
-            ⤓
+            <span className="pad-icon" aria-hidden="true">
+              ⤓
+            </span>
+            <small>položit</small>
           </button>
         </div>
         <div style={{ display: 'flex', justifyContent: 'center' }}>
