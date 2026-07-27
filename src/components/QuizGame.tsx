@@ -41,6 +41,11 @@ interface Props {
   dayLabel: string
   onFinish: (outcome: { solved: boolean; clues: number; ink: number }) => void
   onHome: () => void
+  /**
+   * Další otázka. Jen v kontrolním buildu — v ostré hře žádná další není,
+   * o tom celá hra je.
+   */
+  onNext?: () => void
 }
 
 /** Kolik teček nese indicie — stejná řeč jako na kartách: víc teček, víc bodů. */
@@ -54,7 +59,7 @@ function Pips({ count }: { count: number }) {
   )
 }
 
-export function QuizGame({ question, day, dayLabel, onFinish, onHome }: Props) {
+export function QuizGame({ question, day, dayLabel, onFinish, onHome, onNext }: Props) {
   const [state, setState] = useState<QuizState>(() => createQuizState(question))
   const [draft, setDraft] = useState('')
   const [flash, setFlash] = useState<{ text: string; key: number } | null>(null)
@@ -138,13 +143,6 @@ export function QuizGame({ question, day, dayLabel, onFinish, onHome }: Props) {
                   <span className="quiz-bet-reward num">
                     <InkMark size={13} /> {QUIZ_REWARD[count]}
                   </span>
-                  <small className="faint">
-                    {count === 1
-                      ? 'jen ta nejtěžší'
-                      : count === 2
-                        ? 'i ta prostřední'
-                        : 'včetně návodné'}
-                  </small>
                 </button>
               ))}
             </div>
@@ -251,10 +249,23 @@ export function QuizGame({ question, day, dayLabel, onFinish, onHome }: Props) {
                 ))}
               </ol>
             )}
-            <p className="faint">Další otázka na tebe čeká zítra.</p>
-            <button type="button" className="btn btn-primary" onClick={onHome}>
-              Zpět do menu
-            </button>
+            <p className="faint">
+              {onNext ? 'Kontrolní verze — otázky jdou procházet za sebou.' : 'Další otázka na tebe čeká zítra.'}
+            </p>
+            <div className="sheet-actions">
+              {onNext && (
+                <button type="button" className="btn btn-primary" onClick={onNext}>
+                  Další otázka
+                </button>
+              )}
+              <button
+                type="button"
+                className={`btn ${onNext ? '' : 'btn-primary'}`}
+                onClick={onHome}
+              >
+                Zpět do menu
+              </button>
+            </div>
           </div>
         )}
 

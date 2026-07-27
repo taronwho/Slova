@@ -142,7 +142,8 @@ export function Home({
 
   // Otázka dne se hraje jednou za den; podle zápisu v profilu se pozná,
   // že je dnešek hotový.
-  const quizDone = profile.quiz.lastDay === dayKey
+  // Kontrolní build zámek nemá — jinak by po první otázce nešlo pokračovat.
+  const quizDone = !__QUIZ_ALL__ && profile.quiz.lastDay === dayKey
 
   const pickedMode = picked ? MODES.find((m) => m.id === picked)! : null
   const pickedSaved = picked ? saved[picked] : undefined

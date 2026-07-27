@@ -15,7 +15,12 @@ import { fileURLToPath } from 'node:url'
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const DIST = join(ROOT, 'dist')
 const DATA = join(ROOT, 'public', 'data')
-const OUT = join(ROOT, 'dist', 'slova-standalone.html')
+// Kontrolní build se ukládá vedle ostrého, ať se dají držet oba naráz.
+const OUT = join(
+  ROOT,
+  'dist',
+  process.env.QUIZ_ALL === '1' ? 'slova-kontrolni.html' : 'slova-standalone.html',
+)
 
 // Kolik balíčků se do jednosouborové verze vejde. Řetěz jde celý, u ostatních
 // je to výřez — pořád stovky hádanek na režim.

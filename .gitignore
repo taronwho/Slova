@@ -13,3 +13,6 @@ tools/*.log
 .DS_Store
 *.local
 __pycache__/
+
+# Kontrolní build Otázky dne — vzniká na vyžádání, do repozitáře nepatří.
+review/

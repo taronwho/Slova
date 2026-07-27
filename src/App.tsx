@@ -101,6 +101,12 @@ export default function App() {
   const [splash, setSplash] = useState(true)
   /** Co hráči za poslední kolo přibylo — ukáže se nad výsledkem. */
   const [gained, setGained] = useState<Gained | null>(null)
+  /**
+   * O kolik dní dopředu se v Otázce dne kouká. V ostré hře vždycky nula —
+   * otázka je jedna denně. V kontrolním buildu se tím listuje bankou, aby
+   * šlo dvě stě otázek přečíst dřív než za dvě stě dní.
+   */
+  const [quizOffset, setQuizOffset] = useState(0)
 
   const rank = rankFor(profile.fame)
   const dayKey = todayKey()
@@ -347,14 +353,15 @@ export default function App() {
    * Otázka dne. Balík otázek je největší datový soubor ve hře a v ostatních
    * režimech není k ničemu, takže se stahuje až tady.
    */
-  const startQuiz = useCallback(async () => {
+  const startQuiz = useCallback(async (offset = 0) => {
     setLoading(true)
     setError(null)
     try {
       const deck = await loadQuiz()
-      const question = quizFor(deck, dayNumber())
+      const question = quizFor(deck, dayNumber() + offset)
       if (!question) throw new Error('Otázka na dnešek chybí')
       setLoaded({ quiz: question })
+      setQuizOffset(offset)
       setView({ kind: 'quiz' })
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Otázku se nepodařilo načíst')
@@ -594,10 +601,13 @@ export default function App() {
           <QuizGame
             key={loaded.quiz.id}
             question={loaded.quiz}
-            day={dayNumber()}
-            dayLabel={dayLabel}
+            day={dayNumber() + quizOffset}
+            dayLabel={__QUIZ_ALL__ ? `#${dayNumber() + quizOffset}` : dayLabel}
             onFinish={finishQuiz}
             onHome={goHome}
+            {...(__QUIZ_ALL__
+              ? { onNext: () => void startQuiz(quizOffset + 1) }
+              : {})}
           />
         )}
 
