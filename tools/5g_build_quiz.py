@@ -158,10 +158,23 @@ def main() -> int:
             continue
 
         out = []
+        # Dvakrát napsaná odpověď se při psaní po stovkách neuhlídá pamětí:
+        # dvě různě formulované otázky na Nový Zéland vypadají každá zvlášť
+        # v pořádku a chyba se ukáže až hráči, kterému přijde stejná odpověď
+        # dvakrát za rok.
+        seen_answers: dict[str, int] = {}
         for i, row in enumerate(rows):
             ask, answer, alt, clues = row
             qid = f"{topic}-{i + 1:04d}"
             where = f"{topic} #{i + 1} ({answer})"
+
+            key = fold(answer).strip()
+            if key in seen_answers:
+                problems.append(
+                    f"{where}: stejnou odpověď má už #{seen_answers[key]}"
+                )
+            else:
+                seen_answers[key] = i + 1
 
             # Rozepsaná poznámka v poli odpovědi. Stalo se to při psaní ve
             # velkém dvakrát a nic jiného to nechytilo — odpověď vypadala
