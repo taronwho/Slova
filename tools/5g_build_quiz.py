@@ -90,7 +90,9 @@ GENERIC = {
     "malir", "spisovatel", "osobnost", "sportovec", "sportovkyne",
     "fotbalista", "videohra", "letadlo", "auto", "znacka", "lecivo",
     "jednotka", "teorie", "objev", "organ", "teleso", "poust", "vrchol",
-    "pisma", "konference", "listina", "listiny", "svobod",
+    "pisma", "konference", "listina", "listiny", "svobod", "vlast",
+    "mineral", "migrace", "vynalez", "objeveni", "dynastie", "rise",
+    "most", "prehrada", "nadraz", "vez", "zamek", "hrad",
 }
 
 
@@ -113,8 +115,34 @@ def leaks(answer: str, clue: str) -> str | None:
     return None
 
 
+# Slova, kterými se v češtině říká „tohle je na světě jediné svého druhu".
+#
+# V první indicii jsou skoro vždycky chybou: superlativ je právě to, co si
+# s odpovědí spojí každý, takže „měří 4 000 kilometrů na délku, ale jen 180
+# na šířku" prozradí Chile dřív, než dočteš větu. Patří na třetí místo. Build
+# je nezakazuje — někdy je superlativ opravdu okrajový („nejnižší tělesná
+# teplota ze všech placentálních savců") —, ale vypíše je, aby se dalo projít,
+# jestli je každý z nich obhajitelný.
+SUPERLATIVES = (
+    "nejvyšš", "nejniž", "největš", "nejmenš", "nejdelš", "nejkratš",
+    "nejstarš", "nejmladš", "nejrychlej", "nejtěžš", "nejlehč", "nejhlub",
+    "nejlidnatě", "nejvodnatě", "nejúspěšně", "nejznámě", "nejbohat",
+    "jako jediný", "jako jediná", "jako jediné", "jediný na světě",
+    "jediná na světě", "jediné na světě", "první na světě", "na světě první",
+)
+
+
+def superlative(clue: str) -> str | None:
+    low = clue.lower()
+    for word in SUPERLATIVES:
+        if word in low:
+            return word
+    return None
+
+
 def main() -> int:
     problems: list[str] = []
+    loud: list[str] = []
     deck: dict[str, list] = {}
     ids: set[str] = set()
 
@@ -149,6 +177,10 @@ def main() -> int:
                         )
                         break
 
+            hint = superlative(clues[0])
+            if hint:
+                loud.append(f"{where}: 1. indicie nese superlativ („{hint}…“)")
+
             entry = {
                 "id": qid,
                 "topic": topic,
@@ -171,6 +203,11 @@ def main() -> int:
         print(f"  {topic:12s} {sizes[topic]:4d}")
     print(f"\ncelkem      {sum(sizes.values())}")
     print(f"bez opakování {cycle} dní ({cycle / 365:.1f} roku)")
+
+    if loud:
+        print(f"\nK PŘEČTENÍ ({len(loud)}) — superlativ v první indicii bývá prozrazení:")
+        for note in loud:
+            print(f"  ? {note}")
 
     if problems:
         print(f"\nNÁLEZY ({len(problems)}):")

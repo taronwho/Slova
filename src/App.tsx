@@ -27,6 +27,7 @@ import { Guide } from './components/Guide'
 import { HiveGame } from './components/HiveGame'
 import { Home } from './components/Home'
 import { QuizGame } from './components/QuizGame'
+import { QuizReview } from './components/QuizReview'
 import { Splash } from './components/Splash'
 import { Stats } from './components/Stats'
 import { Tutorial } from './components/Tutorial'
@@ -37,7 +38,7 @@ import type { DetectivePuzzle, DetectiveState } from './game/detective'
 import type { ExplainTarget } from './game/glossary'
 import type { GallowsPuzzle, GallowsState } from './game/gallows'
 import type { HivePuzzle, HiveState } from './game/hive'
-import { quizFor, type QuizQuestion } from './game/quiz'
+import { quizFor, type QuizDeck, type QuizQuestion } from './game/quiz'
 import { RANKS, rankFor } from './game/ranks'
 import { tetrisSetup, type TetrisDeck, type TetrisSetup, type TetrisState } from './game/tetris'
 import type { TowerPuzzle, TowerState } from './game/tower'
@@ -67,6 +68,8 @@ type View =
   // Otázka dne stojí mimo šestici — nemá obtížnost ani rozehrané kolo,
   // takže se do `game` nevejde.
   | { kind: 'quiz' }
+  // Přehled všech otázek. Jen v kontrolním buildu, viz QuizReview.
+  | { kind: 'quizlist' }
 
 interface Loaded {
   chain?: { bundle: ChainBundle; puzzle: ChainPuzzle }
@@ -76,6 +79,7 @@ interface Loaded {
   detective?: DetectivePuzzle
   tetris?: { deck: TetrisDeck; setup: TetrisSetup }
   quiz?: QuizQuestion
+  quizDeck?: QuizDeck
 }
 
 export default function App() {
@@ -360,11 +364,26 @@ export default function App() {
       const deck = await loadQuiz()
       const question = quizFor(deck, dayNumber() + offset)
       if (!question) throw new Error('Otázka na dnešek chybí')
-      setLoaded({ quiz: question })
+      setLoaded({ quiz: question, quizDeck: deck })
       setQuizOffset(offset)
       setView({ kind: 'quiz' })
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Otázku se nepodařilo načíst')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  /** Přehled všech otázek — jen v kontrolním buildu. */
+  const openQuizList = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const deck = await loadQuiz()
+      setLoaded((previous) => ({ ...previous, quizDeck: deck }))
+      setView({ kind: 'quizlist' })
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Otázky se nepodařilo načíst')
     } finally {
       setLoading(false)
     }
@@ -579,6 +598,7 @@ export default function App() {
             onRules={(mode) => setTutorial({ mode, pending: false })}
             onGuide={() => setGuide(true)}
             onQuiz={() => void startQuiz()}
+            {...(__QUIZ_ALL__ ? { onQuizList: () => void openQuizList() } : {})}
             saved={saved}
             onResume={(mode) => {
               const round = saved[mode]
@@ -596,6 +616,10 @@ export default function App() {
         )}
 
         {!loading && view.kind === 'awards' && <Awards profile={profile} onBack={goHome} />}
+
+        {!loading && view.kind === 'quizlist' && loaded.quizDeck && (
+          <QuizReview deck={loaded.quizDeck} today={dayNumber()} onBack={goHome} />
+        )}
 
         {!loading && view.kind === 'quiz' && loaded.quiz && (
           <QuizGame

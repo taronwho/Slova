@@ -32,6 +32,8 @@ interface Props {
   onGuide: () => void
   /** Otázka dne — jednou denně, mimo šestici slovních her. */
   onQuiz: () => void
+  /** Přehled všech otázek. Předává se jen v kontrolním buildu. */
+  onQuizList?: () => void
   /** Kola přerušená odchodem do menu nebo zavřením hry, po jednom od režimu. */
   saved: SavedRounds
   onResume: (mode: ModeId) => void
@@ -125,6 +127,7 @@ export function Home({
   onRules,
   onGuide,
   onQuiz,
+  onQuizList,
   saved,
   onResume,
 }: Props) {
@@ -255,6 +258,18 @@ export function Home({
           </span>
         )}
       </button>
+
+      {/* Kontrolní build: seznam všech otázek, ať se nemusí prohádat. */}
+      {onQuizList && (
+        <button
+          type="button"
+          className="btn btn-sm review-open"
+          onClick={onQuizList}
+          style={{ width: '100%', marginBottom: 'var(--sp-4)' }}
+        >
+          Projít všechny otázky
+        </button>
+      )}
 
       {pickedMode && (
         <div
