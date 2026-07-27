@@ -197,11 +197,12 @@ export const AWARDS: Award[] = [
 /**
  * Kolik nápověd zdarma padne za ocenění.
  *
- * Podle stupně v rodině: první stupeň jednu, poslední tři. Meta bez stupně
- * (Kompletní plástev, Královna češtiny) je sama o sobě náročná, takže dvě.
+ * Držené schválně nízko: nápověda má být něco, s čím hráč šetří, ne zásoba,
+ * kterou nestíhá utrácet. Nejvyšší stupeň rodiny dá dvě, všechno ostatní
+ * jednu — a i tak se za celou hru nasbírá přes čtyřicet.
  */
 export function AWARD_HINTS(award: Award): number {
-  return award.tier ?? 2
+  return award.tier === 3 ? 2 : 1
 }
 
 export const AWARD_GROUPS: AwardGroup[] = ['start', 'clean', 'score', 'feat', 'grit']

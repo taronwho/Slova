@@ -49,7 +49,14 @@ import { RANKS as PROFILE_RANKS, rankFor as profileRankFor } from '../src/game/r
 import { AWARDS, AWARD_GROUPS } from '../src/game/awards'
 import { scoreChain, scoreGallows, streakMultiplier } from '../src/game/scoring'
 import type { RoundResult } from '../src/game/types'
-import { DAILY_HINTS, emptyProfile, grantAwards, recordRound, spendHint } from '../src/lib/storage'
+import {
+  DAILY_HINTS,
+  emptyProfile,
+  grantAwards,
+  recordRound,
+  spendHint,
+  type Profile,
+} from '../src/lib/storage'
 
 describe('české utility', () => {
   it('skládá diakritiku', () => {
@@ -454,6 +461,7 @@ describe('ocenění', () => {
     puzzleId: 'p1',
     score: 1000,
     perfect: false,
+    success: true,
     elapsedMs: 120_000,
     hintsUsed: 0,
     detail: {},
@@ -599,6 +607,7 @@ describe('nápovědy zdarma', () => {
     puzzleId: 'p1',
     score: 1000,
     perfect: false,
+    success: true,
     elapsedMs: 120_000,
     hintsUsed: 0,
     detail: {},
@@ -652,10 +661,47 @@ describe('nápovědy zdarma', () => {
     expect(grantAwards(after).hints).toBe(after.hints)
   })
 
-  it('denní výzva připíše nápovědu navíc', () => {
-    const plain = recordRound(emptyProfile(), round(), '2026-01-01', false)
-    const daily = recordRound(emptyProfile(), round(), '2026-01-01', true)
-    expect(daily.hints - plain.hints).toBe(DAILY_HINTS)
+  // Čtyři režimy krát nápověda denně by peněženku zaplavily rychleji než
+  // všechno ostatní; padne proto až za kompletní denní várku.
+  it('nápověda padne až za všechny denní výzvy dne', () => {
+    const day = '2026-01-01'
+    // Porovnává se proti témuž kolu mimo denní výzvu — jinak by do rozdílu
+    // spadly i nápovědy za ocenění, která tím kolem shodou okolností padla.
+    const start = emptyProfile()
+    expect(recordRound(start, round(), day, true).hints).toBe(
+      recordRound(start, round(), day, false).hints,
+    )
+
+    const almost: Profile = {
+      ...start,
+      dailyDone: { [`${day}:hive`]: 1, [`${day}:tower`]: 1, [`${day}:gallows`]: 1 },
+    }
+    expect(
+      recordRound(almost, round(), day, true).hints -
+        recordRound(almost, round(), day, false).hints,
+    ).toBe(DAILY_HINTS)
+  })
+
+  // Přesně to, co hráč nahlásil: dostal metu „bez nápovědy" za kolo, které
+  // prohrál. Neúspěšné kolo se za čisté počítat nesmí.
+  it('prohrané kolo se za čisté nepočítá, i když v něm nebyla nápověda', () => {
+    const lost = recordRound(emptyProfile(), round({ mode: 'gallows', success: false }), '2026-01-01')
+    expect(lost.counters.noHint).toBe(0)
+    expect(lost.counters.noHintStreak).toBe(0)
+    expect(lost.awards['cisto-1']).toBeUndefined()
+
+    const won = recordRound(emptyProfile(), round({ mode: 'gallows', success: true }), '2026-01-01')
+    expect(won.counters.noHint).toBe(1)
+    expect(won.awards['cisto-1']).toBeDefined()
+  })
+
+  it('nedotažená plástev taky není čisté kolo', () => {
+    const quit = recordRound(
+      emptyProfile(),
+      round({ mode: 'hive', success: false, detail: { found: 3, total: 40 } }),
+      '2026-01-01',
+    )
+    expect(quit.counters.noHint).toBe(0)
   })
 })
 

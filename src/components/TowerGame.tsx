@@ -96,6 +96,7 @@ export function TowerGame({
       puzzleId: puzzle.id,
       score: breakdown.total,
       perfect: breakdown.perfect,
+      success: state.built.length === puzzle.levels.length,
       elapsedMs: (state.finishedAt ?? Date.now()) - state.startedAt,
       hintsUsed: state.hintsUsed,
       detail: {

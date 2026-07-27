@@ -138,6 +138,8 @@ export function ChainGame({
       puzzleId: puzzle.id,
       score: breakdown.total,
       perfect: breakdown.perfect,
+      // Řetěz se hlásí jen po dosažení cíle — vzdané kolo se nezapisuje.
+      success: true,
       elapsedMs: (state.finishedAt ?? Date.now()) - state.startedAt,
       hintsUsed: state.hintsUsed,
       detail: { moves, par: puzzle.par, extra: moves - puzzle.par },

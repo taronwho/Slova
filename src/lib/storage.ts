@@ -255,7 +255,13 @@ export function saveRounds(rounds: SavedRounds): void {
 /** Seznam dohraných hádanek držíme omezený, ať localStorage neroste bez konce. */
 const SEEN_LIMIT = 4000
 
-/** Kolik nápověd zdarma padne za dohranou denní výzvu. */
+/**
+ * Kolik nápověd zdarma padne za **kompletní** denní várku.
+ *
+ * Ne za každou výzvu zvlášť: čtyři režimy krát jedna nápověda denně by
+ * peněženku zaplavily rychleji než všechno ostatní dohromady. Takhle je to
+ * jedna denně a zároveň důvod dohrát i tu čtvrtou.
+ */
 export const DAILY_HINTS = 1
 
 /** Utratí nápovědu zdarma, pokud nějakou má. */
@@ -278,7 +284,10 @@ function fastest(current: number, candidate: number): number {
 
 function updateCounters(profile: Profile, result: RoundResult, daily: boolean): Counters {
   const c = { ...profile.counters }
-  const clean = result.hintsUsed === 0
+  // Čisté kolo je až to, které hráč **dotáhl** bez nápovědy. Viselec ani
+  // plástev ukončená po třech slovech se nepočítají — jinak by se meta „Vlastní
+  // hlavou" dala splnit tím, že hráč kolo prostě prohraje.
+  const clean = result.hintsUsed === 0 && result.success
   c.bestScore = Math.max(c.bestScore, result.score)
   if (daily) c.dailies += 1
 
@@ -320,6 +329,20 @@ function updateCounters(profile: Profile, result: RoundResult, daily: boolean): 
   return c
 }
 
+/** Má hráč po tomhle kole hotové denní výzvy ve všech režimech? */
+function allDailiesDone(
+  profile: Profile,
+  result: RoundResult,
+  day: string,
+  daily: boolean,
+): boolean {
+  if (!daily) return false
+  const modes: ModeId[] = ['chain', 'hive', 'tower', 'gallows']
+  return modes.every(
+    (mode) => mode === result.mode || profile.dailyDone[`${day}:${mode}`] !== undefined,
+  )
+}
+
 export function recordRound(
   profile: Profile,
   result: RoundResult,
@@ -339,8 +362,8 @@ export function recordRound(
   return grantAwards({
     ...profile,
     // Denní výzva je jediná věc, za kterou padá nápověda jen za účast —
-    // je to důvod se vrátit zítra.
-    hints: profile.hints + (daily ? DAILY_HINTS : 0),
+    // je to důvod se vrátit zítra. Padne až za všechny čtyři.
+    hints: profile.hints + (allDailiesDone(profile, result, day, daily) ? DAILY_HINTS : 0),
     xp: profile.xp + result.score,
     streak,
     bestStreak: Math.max(profile.bestStreak, streak),

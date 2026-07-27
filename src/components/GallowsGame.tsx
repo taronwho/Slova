@@ -99,6 +99,7 @@ export function GallowsGame({
       puzzleId: puzzle.id,
       score: breakdown.total,
       perfect: breakdown.perfect,
+      success: won,
       elapsedMs: (state.finishedAt ?? Date.now()) - state.startedAt,
       hintsUsed: state.hintsUsed,
       detail: {

@@ -31,6 +31,15 @@ export interface RoundResult {
   puzzleId: string
   score: number
   perfect: boolean
+  /**
+   * Splnil hráč to, o co v režimu jde? Dojít do cíle, vysbírat plástev,
+   * dostavět věž, uhodnout slovo.
+   *
+   * Není to totéž co „kolo skončilo". Šibenici lze dohrát tak, že hráč
+   * visí, a plástev lze ukončit po třech slovech — obojí je regulérní konec
+   * kola, ale ani jedno není výkon, za který se má počítat čisté kolo.
+   */
+  success: boolean
   elapsedMs: number
   hintsUsed: number
   /** Režimově specifický detail pro sdílení a historii. */

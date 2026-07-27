@@ -112,6 +112,8 @@ export function HiveGame({
       puzzleId: puzzle.id,
       score: breakdown.total,
       perfect: breakdown.perfect,
+      // Plástev se dá ukončit kdykoli; výkon je vysbírat ji celou.
+      success: complete,
       elapsedMs: Date.now() - state.startedAt,
       hintsUsed: state.hintsUsed,
       detail: {

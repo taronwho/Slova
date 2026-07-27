@@ -29,7 +29,7 @@ export interface Rank {
 }
 
 /** Kolik nápověd zdarma padne za každou nově dosaženou hodnost. */
-export const RANK_HINTS = 2
+export const RANK_HINTS = 1
 
 const NAMES = [
   'Nováček',

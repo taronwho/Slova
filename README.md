@@ -318,6 +318,12 @@ v řadě), hned za ní „Body" (osm met za skóre v jednom kole a za nasbíran�
 Hlídá to i test „většina met stojí na dovednosti nebo bodech": skupiny `clean`
 a `score` musí dohromady tvořit víc než polovinu.
 
+**Čisté kolo je až to, které hráč dotáhl.** Viselec v Šibenici ani plástev
+ukončená po třech slovech se nepočítají, i když v nich nebyla ani jedna
+nápověda — jinak by se meta „Vlastní hlavou" dala splnit tím, že hráč kolo
+prostě prohraje. Každý režim proto hlásí `success` (došel do cíle, vysbíral
+plástev, dostavěl věž, uhodl slovo) zvlášť od toho, že kolo skončilo.
+
 Podmínka ocenění se čte **jen z profilu**, nikdy z právě dohraného kola.
 Ocenění se proto dají kdykoli přepočítat znovu (a při načtení profilu se to
 dělá): kdyby kolo spadlo dřív, než se zapsalo, meta se dožene sama. Profil
@@ -351,10 +357,15 @@ pak odměna za něj. Když padne víc věcí naráz, jdou po jedné.
 
 ### Nápovědy zdarma
 
-Ocenění a hodnosti nejsou jen odznaky: za každou sypou **nápovědy zdarma**
-(dvě za hodnost, jednu až tři za ocenění podle stupně, jednu za denní výzvu).
-Zásoba se veze v profilu a je vidět v horní liště, protože podle ní se hráč
-rozhoduje, jestli si nápovědu vzít.
+Ocenění a hodnosti nejsou jen odznaky: za každou sypou **nápovědy zdarma** —
+jednu za hodnost, jednu (u nejvyššího stupně rodiny dvě) za ocenění a jednu za
+**kompletní** denní várku. Zásoba se veze v profilu a je vidět v horní liště,
+protože podle ní se hráč rozhoduje, jestli si nápovědu vzít.
+
+Čísla jsou schválně nízká. Nápověda má být něco, s čím hráč šetří, ne zásoba,
+kterou nestíhá utrácet; za celou hru se jich nasbírá kolem stovky. Denní
+nápověda padá až za všechny čtyři výzvy dne — čtyři režimy krát jedna denně by
+peněženku zaplavily rychleji než všechno ostatní dohromady.
 
 Nápověda zdarma **nestojí body, ale pořád se počítá jako nápověda**. Do
 `hintsUsed` se započítá stejně jako placená, jen do `freeHints` navíc — a
