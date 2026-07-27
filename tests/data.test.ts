@@ -299,6 +299,44 @@ describe('šibenice — data', () => {
   })
 })
 
+describe('detektiv — data', () => {
+  interface Case {
+    id: string
+    word: string
+    clue: string
+    difficulty: string
+  }
+  const puzzles = readJson<Case[]>('detective', 'puzzles.json')
+
+  it('má dost případů a jedinečná id i slova', () => {
+    expect(puzzles.length).toBeGreaterThan(400)
+    expect(new Set(puzzles.map((p) => p.id)).size).toBe(puzzles.length)
+    expect(new Set(puzzles.map((p) => p.word)).size).toBe(puzzles.length)
+  })
+
+  // Nejdůležitější kontrola celého režimu: text o původu nesmí obsahovat
+  // hledané slovo. Generátor takové výskyty maskuje, tohle to hlídá na
+  // hotových datech.
+  it('text o původu nikde neprozradí hledané slovo', () => {
+    const problems: string[] = []
+    for (const puzzle of puzzles) {
+      if (fold(puzzle.clue.toLowerCase()).includes(fold(puzzle.word))) {
+        problems.push(`${puzzle.word}: ${puzzle.clue}`)
+      }
+    }
+    expect(problems.slice(0, 5)).toEqual([])
+  })
+
+  it('text je čitelně dlouhý a bez zbytků wikitextu', () => {
+    const problems: string[] = []
+    for (const puzzle of puzzles) {
+      if (puzzle.clue.length < 50 || puzzle.clue.length > 320) problems.push(puzzle.word)
+      if (/\[\[|\{\{|<ref|''/.test(puzzle.clue)) problems.push(`${puzzle.word}: wikitext`)
+    }
+    expect(problems.slice(0, 5)).toEqual([])
+  })
+})
+
 describe('slovník — jen základní tvary', () => {
   // Seznam povolených slov vzniká v tools/2b_base_forms.py: hunspell musí
   // slovo přečíst bez jediné přípony a předpony (je to tedy přímo heslo
@@ -326,6 +364,14 @@ describe('slovník — jen základní tvary', () => {
   it('šibenice hádá jen povolené tvary', () => {
     const problems: string[] = []
     for (const puzzle of readJson<{ word: string }[]>('gallows', 'puzzles.json')) {
+      if (!allowed.has(puzzle.word)) problems.push(puzzle.word)
+    }
+    expect(problems.slice(0, 10)).toEqual([])
+  })
+
+  it('detektiv hádá jen povolené tvary', () => {
+    const problems: string[] = []
+    for (const puzzle of readJson<{ word: string }[]>('detective', 'puzzles.json')) {
       if (!allowed.has(puzzle.word)) problems.push(puzzle.word)
     }
     expect(problems.slice(0, 10)).toEqual([])

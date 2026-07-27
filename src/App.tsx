@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   loadChain,
   loadHive,
+  loadDetective,
   loadGallows,
   loadHiveIndex,
   loadTower,
@@ -16,6 +17,7 @@ import { AwardPopup, type Gained } from './components/AwardPopup'
 import { Awards } from './components/Awards'
 import { RankBadge } from './components/art/RankBadge'
 import { ChainGame } from './components/ChainGame'
+import { DetectiveGame } from './components/DetectiveGame'
 import { GallowsGame } from './components/GallowsGame'
 import { HiveGame } from './components/HiveGame'
 import { Home } from './components/Home'
@@ -24,6 +26,7 @@ import { Stats } from './components/Stats'
 import { Tutorial } from './components/Tutorial'
 import { TowerGame } from './components/TowerGame'
 import type { ChainPuzzle, ChainState } from './game/chain'
+import type { DetectivePuzzle, DetectiveState } from './game/detective'
 import type { GallowsPuzzle, GallowsState } from './game/gallows'
 import type { HivePuzzle, HiveState } from './game/hive'
 import { RANKS, rankFor } from './game/ranks'
@@ -56,6 +59,7 @@ interface Loaded {
   hive?: HivePuzzle
   tower?: TowerPuzzle
   gallows?: GallowsPuzzle
+  detective?: DetectivePuzzle
 }
 
 export default function App() {
@@ -149,6 +153,14 @@ export default function App() {
             ? entries[Math.floor(random() * entries.length)]!
             : pickUnseen(entries, (e) => e.id, profile.seen.hive, random)
           setLoaded({ hive: await loadHive(entry) })
+        } else if (mode === 'detective') {
+          const words = await loadDetective()
+          const pool = words.filter((w) => w.difficulty === difficulty)
+          const entries = pool.length > 0 ? pool : words
+          const entry = daily
+            ? entries[Math.floor(random() * entries.length)]!
+            : pickUnseen(entries, (e) => e.id, profile.seen.detective, random)
+          setLoaded({ detective: entry })
         } else if (mode === 'gallows') {
           const words = await loadGallows()
           const pool = words.filter((w) => w.difficulty === difficulty)
@@ -200,6 +212,8 @@ export default function App() {
           setLoaded({ chain: { bundle, puzzle: state.puzzle } })
         } else if (round.mode === 'hive') {
           setLoaded({ hive: (round.state as HiveState).puzzle })
+        } else if (round.mode === 'detective') {
+          setLoaded({ detective: (round.state as DetectiveState).puzzle })
         } else if (round.mode === 'gallows') {
           setLoaded({ gallows: (round.state as GallowsState).puzzle })
         } else {
@@ -543,6 +557,25 @@ export default function App() {
             onSpendHint={spendFreeHint}
             onProgress={(state, finished) =>
               keepProgress('gallows', state.puzzle.id, state.puzzle.difficulty, state, finished)
+            }
+          />
+        )}
+
+        {!loading && view.kind === 'game' && view.mode === 'detective' && loaded.detective && (
+          <DetectiveGame
+            key={`${loaded.detective.id}-${view.nonce}`}
+            puzzle={loaded.detective}
+            streak={profile.streak}
+            dayLabel={view.daily ? dayLabel : ''}
+            onFinish={finishRound}
+            onNext={() => startRound('detective', false)}
+            onHome={goHome}
+            onGiveUp={giveUp}
+            resume={resume as DetectiveState | null}
+            freeHints={profile.hints}
+            onSpendHint={spendFreeHint}
+            onProgress={(state, finished) =>
+              keepProgress('detective', state.puzzle.id, state.puzzle.difficulty, state, finished)
             }
           />
         )}

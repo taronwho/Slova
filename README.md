@@ -1,6 +1,6 @@
 # Slova
 
-Čtyři české slovní hry v jedné webové aplikaci. Běží čistě staticky, bez serveru,
+Pět českých slovních her v jedné webové aplikaci. Běží čistě staticky, bez serveru,
 a **každá vygenerovaná hádanka je ověřeně dohratelná**.
 
 ## Režimy
@@ -33,6 +33,14 @@ která ve slově nejsou, za body, ne za život.
 Slova se vybírají podle frekvence, ne náhodně — u ostatních režimů se dá dojít
 oklikou, tady buď slovo znáš, nebo visíš.
 
+### Etymologický detektiv — poznej slovo podle původu
+Místo písmenkové nápovědy dostane hráč text o tom, odkud slovo přišlo:
+„Z latinského *castellum* (bašta, pevnůstka), zdrobněliny slova *castrum*" →
+KOSTEL. Zkoušejí se písmena jako v Šibenici, ale **chyba nezabíjí, jen stojí
+body** — text má být vodítko, se kterým se dá pracovat, ne past. A kdo na slovo
+přijde dřív, může ho tipnout celé; čím víc písmen je ještě skrytých, tím vyšší
+prémie.
+
 ### Věž — anagramová věž
 Od tří písmen nahoru. V každém patře přibude jedno písmeno a hráč ze **všech**
 dostupných písmen složí nové slovo v libovolném pořadí.
@@ -52,6 +60,7 @@ nemůže zablokovat cestu nahoru. Řetěz podpisů je ověřený už při genero
 | Voština | plástve odvozené od pangramů | 2 400 hádanek |
 | Věž | ověřené řetězy přesmyček 3→6/7/8 | 1 962 hádanek |
 | Šibenice | nejčastější základní tvary po délkách | 2 100 slov |
+| Detektiv | etymologie z české sekce Wikislovníku | 636 hádanek |
 
 ### Jen 1. pád a infinitiv
 
@@ -164,9 +173,12 @@ hráči, a ověří:
 - **Šibenice** — hádané slovo je v ověřeném seznamu základních tvarů, délka
   sedí na obtížnost a slovo má aspoň tři různá písmena (dvoupísmenné slovo se
   uhodne dvěma tahy a hádanka to není).
+- **Detektiv** — hádané slovo je v ověřeném seznamu základních tvarů a **text
+  o původu ho nikde neprozradí**; kontroluje se to na hotových datech, ne jen
+  ve generátoru.
 
 A protože testy čtou vygenerované soubory, jde `npm run play:verify` opačnou
-cestou: v Chromiu **odehraje deset kol od každého ze čtyř režimů** a každé slovo, které
+cestou: v Chromiu **odehraje deset kol od každého z pěti režimů** a každé slovo, které
 se objevilo na obrazovce nebo ho hra přijala, porovná se seznamem povolených
 tvarů. Zároveň ověří, že se rozehrané kolo dá dohrát po návratu do menu
 i po zavření hry a že se na telefonu všechno vejde na jednu obrazovku.
@@ -247,7 +259,9 @@ Skripty v `tools/` běží po krocích:
 | `4_build_hive.py` | odvodí plástve od pangramů a spočítá kompletní řešení |
 | `5_build_tower.py` | najde ověřené řetězy přesmyček |
 | `5b_build_gallows.py` | vybere nejčastější slova po délkách pro Šibenici |
-| `playthrough.mjs` | odehraje 10 kol od každého ze čtyř režimů a zkontroluje tvary slov |
+| `5c_fetch_etymology.py` | stáhne etymologie z Wikislovníku do cache |
+| `5d_build_detective.py` | vybere z nich hádanky a zamaskuje prozrazující slova |
+| `playthrough.mjs` | odehraje 10 kol od každého z pěti režimů a zkontroluje tvary slov |
 
 ## Struktura
 
@@ -456,3 +470,14 @@ Slovníková data pocházejí z projektů
 [hermitdave/FrequencyWords](https://github.com/hermitdave/FrequencyWords) a
 [LibreOffice/dictionaries](https://github.com/LibreOffice/dictionaries)
 a řídí se licencemi svých původních projektů.
+
+Texty o původu slov v režimu **Detektiv** pocházejí z české sekce
+[Wikislovníku](https://cs.wiktionary.org) a jsou pod licencí
+[CC BY-SA](https://creativecommons.org/licenses/by-sa/4.0/deed.cs). Nejsou
+psané mnou ani vygenerované — skript `tools/5c_fetch_etymology.py` je jen
+stáhne přes API, očistí od wikitextu a uloží do cache; `5d_build_detective.py`
+z nich pak vybírá a maskuje výskyty hledaného slova. Etymologie je obor, kde se
+chyba nepozná, takže si hra netroufá tvrdit nic vlastního.
+
+Sběr je šetrný: padesát hesel na jeden dotaz, pauza mezi dávkami, popisná
+hlavička User-Agent a cache, díky které se stejné heslo nestahuje dvakrát.

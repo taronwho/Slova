@@ -7,7 +7,13 @@ import { chromium, devices } from 'playwright'
 import { mkdirSync } from 'node:fs'
 import { dismissTutorial, goHome, openGame, waitReady } from './_ui.mjs'
 
-const MODE_ID = { 'Řetěz': 'chain', 'Voština': 'hive', 'Věž': 'tower', 'Šibenice': 'gallows' }
+const MODE_ID = {
+  'Řetěz': 'chain',
+  'Voština': 'hive',
+  'Věž': 'tower',
+  'Šibenice': 'gallows',
+  'Detektiv': 'detective',
+}
 
 const APP_URL = process.env.URL ?? 'http://localhost:4173/'
 const SHOTS = new URL('../shots/mobile/', import.meta.url).pathname
@@ -27,6 +33,7 @@ const MODES = [
   ['Voština', '.hive'],
   ['Věž', '.tower'],
   ['Šibenice', '.gallows-art'],
+  ['Detektiv', '.clue-card'],
 ]
 
 // Běžné ovládací prvky: 44px podle doporučení pro dotyk.

@@ -58,7 +58,7 @@ log('\nDOMŮ')
     await page.locator('h1', { hasText: 'Vyber si hru' }).isVisible(),
     'výběr hry je hned na úvodu',
   )
-  check((await page.locator('.mode-tile').count()) === 4, 'čtyři dlaždice režimů')
+  check((await page.locator('.mode-tile').count()) === 5, 'pět dlaždic režimů')
   await page.screenshot({ path: `${SHOTS}01-home-light.png`, fullPage: true })
 
   // Tmavé téma

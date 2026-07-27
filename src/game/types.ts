@@ -1,6 +1,6 @@
 /** Sdílené typy napříč všemi třemi režimy. */
 
-export type ModeId = 'chain' | 'hive' | 'tower' | 'gallows'
+export type ModeId = 'chain' | 'hive' | 'tower' | 'gallows' | 'detective'
 
 export type Difficulty = 'easy' | 'normal' | 'hard'
 
@@ -15,6 +15,7 @@ export const MODE_LABEL: Record<ModeId, string> = {
   hive: 'Voština',
   tower: 'Věž',
   gallows: 'Šibenice',
+  detective: 'Detektiv',
 }
 
 export const MODE_TAGLINE: Record<ModeId, string> = {
@@ -22,6 +23,7 @@ export const MODE_TAGLINE: Record<ModeId, string> = {
   hive: 'Skládej slova ze sedmi písmen',
   tower: 'Stav věž z přesmyček',
   gallows: 'Uhodni slovo po písmenech',
+  detective: 'Poznej slovo podle jeho původu',
 }
 
 /** Výsledek dokončeného kola — vstup do bodování i statistik. */

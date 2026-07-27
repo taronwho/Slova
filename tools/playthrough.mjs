@@ -150,6 +150,24 @@ async function playGallows() {
   return await result.isVisible().catch(() => false)
 }
 
+/* ---------- DETEKTIV ---------- */
+
+async function playDetective() {
+  await start('detective')
+  // Vyklikat abecedu se nedá — po dvanácti chybách kolo končí. Pro průchod
+  // stačí nápověda, která odhalí písmeno; kolo tak dojde k výsledku vždycky.
+  for (let guard = 0; guard < 14; guard++) {
+    if (await page.locator('.result-card').isVisible().catch(() => false)) break
+    const hint = page.locator('.hints .btn', { hasText: 'Odhal písmeno' })
+    if (!(await hint.isEnabled().catch(() => false))) break
+    await hint.click()
+    await page.waitForTimeout(120)
+  }
+  const result = page.locator('.result-card')
+  await result.waitFor({ timeout: 5000 }).catch(() => undefined)
+  return await result.isVisible().catch(() => false)
+}
+
 function clean(texts) {
   return texts.map((t) => t.replace(/[\s\n▸·0-9]/g, ''))
 }
@@ -159,6 +177,7 @@ const MODES = [
   ['VOŠTINA', playHive],
   ['VĚŽ', playTower],
   ['ŠIBENICE', playGallows],
+  ['DETEKTIV', playDetective],
 ]
 
 for (const [name, play] of MODES) {
@@ -296,7 +315,7 @@ log('\nOVLÁDÁNÍ')
 /* ---------- Vejde se hra na jednu obrazovku ---------- */
 
 log('\nJEDNA OBRAZOVKA')
-for (const mode of ['chain', 'hive', 'tower', 'gallows']) {
+for (const mode of ['chain', 'hive', 'tower', 'gallows', 'detective']) {
   await start(mode)
   const box = await page.evaluate(() => {
     const main = document.querySelector('.main')
@@ -370,7 +389,7 @@ log('\nDENNÍ VÝZVA A NÁPOVĚDY')
 {
   await goHome(page)
   check(
-    (await page.locator('.daily-strip .daily-item').count()) === 4,
+    (await page.locator('.daily-strip .daily-item').count()) === 5,
     'denní výzva je vidět rovnou v menu, jedna dlaždice na hru',
   )
   const strip = await page.locator('.daily-strip').boundingBox()
@@ -388,28 +407,45 @@ log('\nDENNÍ VÝZVA A NÁPOVĚDY')
   await dismissTutorial(page)
   check(await page.locator('.chip-gold').isVisible(), 'spustí se rovnou denní kolo')
   check(await page.locator('.profile-chip').isVisible(), 'hodnost je vidět i ve hře')
+  await goHome(page)
 
-  const before = Number((await page.locator('.chip-hints .num').innerText()).trim())
-  check(before > 0, `hráč má nápovědy zdarma (${before})`)
-  const label = await page.locator('.hints .btn', { hasText: 'Celé slovo' }).innerText()
+  // Peněženka se pro tuhle kontrolu nastaví do známého stavu. Po padesáti
+  // odehraných kolech je většinou prázdná a test by pak měřil náhodu.
+  const wallet = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    locale: 'cs-CZ',
+  })
+  const shop = await wallet.newPage()
+  await shop.addInitScript(() => {
+    const raw = localStorage.getItem('slova.profile.v1')
+    const profile = raw ? JSON.parse(raw) : {}
+    profile.hints = 2
+    localStorage.setItem('slova.profile.v1', JSON.stringify(profile))
+  })
+  await shop.goto(APP_URL, { waitUntil: 'networkidle' })
+  await waitReady(shop)
+  await openGame(shop, 'chain')
+
+  const before = Number((await shop.locator('.chip-hints .num').innerText()).trim())
+  check(before === 2, `peněženka nese nápovědy zdarma (${before})`)
+  const label = await shop.locator('.hints .btn', { hasText: 'Celé slovo' }).innerText()
   check(label.includes('zdarma'), 'nápověda se nabízí zdarma, dokud je z čeho brát')
 
-  await page.locator('.hints .btn', { hasText: 'Celé slovo' }).click()
-  await page.waitForTimeout(300)
-  // Při vynulování peněženky ukazatel z lišty zmizí — není co ukazovat.
-  const chip = page.locator('.chip-hints .num')
-  const after = (await chip.isVisible().catch(() => false))
-    ? Number((await chip.innerText()).trim())
-    : 0
+  await shop.locator('.hints .btn', { hasText: 'Celé slovo' }).click()
+  await shop.waitForTimeout(300)
+  const after = Number((await shop.locator('.chip-hints .num').innerText()).trim())
   check(after === before - 1, `nápověda zdarma ubrala z peněženky (${before} → ${after})`)
 
-  const paid = await page.locator('.hints .btn', { hasText: 'Celé slovo' }).innerText()
+  await shop.locator('.hints .btn', { hasText: 'Písmeno' }).click()
+  await shop.waitForTimeout(300)
+  // Poslední utracená nápověda ukazatel z lišty schová — není co ukazovat.
   check(
-    after > 0 ? paid.includes('zdarma') : paid.includes('−'),
-    'po vyčerpání peněženky se nápověda zase platí body',
+    !(await shop.locator('.chip-hints').isVisible().catch(() => false)),
+    'prázdná peněženka se v liště neukazuje',
   )
-
-  await goHome(page)
+  const paid = await shop.locator('.hints .btn', { hasText: 'Celé slovo' }).innerText()
+  check(paid.includes('\u2212'), 'po vyčerpání peněženky se nápověda zase platí body')
+  await wallet.close()
 }
 
 log(`\nzkontrolovaných slov: ${seenWords.size}`)

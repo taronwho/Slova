@@ -23,6 +23,7 @@ export type TutorialVisual =
   | { kind: 'word-forms' }
   | { kind: 'gallows' }
   | { kind: 'gallows-fold' }
+  | { kind: 'detective' }
 
 export interface TutorialStep {
   title: string
@@ -272,6 +273,40 @@ export const TUTORIALS: Record<ModeId, TutorialStep[]> = {
       ],
     },
   ],
+  detective: [
+    {
+      title: 'Poznej slovo podle jeho původu',
+      visual: { kind: 'detective' },
+      body: [
+        'Dostaneš text o tom, odkud slovo přišlo — z jakého jazyka, z jakého kořene, co původně znamenalo.',
+        'Slovo samo je schované za prázdnými políčky. Víš jen, kolik má písmen.',
+      ],
+      key: 'Texty pocházejí z Wikislovníku. Kde by hledané slovo prozradily, jsou zakryté třemi tečkami.',
+    },
+    {
+      title: 'Tady se nevěší',
+      body: [
+        'Na rozdíl od Šibenice tě chybné písmeno nezabije — jen tě stojí body. Můžeš tedy v klidu zkoušet a přemýšlet.',
+        'Kolo skončí, až slovo odhalíš, nebo když sáhneš dvanáctkrát vedle.',
+      ],
+      key: 'Text má být vodítko, se kterým se dá pracovat. Proto se za omyl neplatí koncem hry.',
+    },
+    {
+      title: 'Tipni celé slovo',
+      body: [
+        'Když ti to z textu dojde, nemusíš doklikávat zbytek písmen. Tlačítkem **Znám ho** napíšeš slovo celé.',
+        'Čím víc písmen je v tu chvíli ještě skrytých, tím vyšší prémie. Chybný tip stojí jako pár písmen vedle.',
+      ],
+      key: 'Diakritiku psát nemusíš — „kun" projde stejně jako „kůň".',
+    },
+    {
+      title: 'Body',
+      body: [
+        'Základ je za rozluštěné slovo, k němu prémie za tip a za rychlost.',
+        'Odečítají se písmena vedle, chybné tipy a nápovědy. Případ vyřešený bez jediného škobrtnutí má násobitel.',
+      ],
+    },
+  ],
 }
 
 /** Krátký souhrn pravidel na kartu režimu. */
@@ -295,5 +330,10 @@ export const MODE_SUMMARY: Record<ModeId, string[]> = {
     'Zkoušej písmena, osm chyb a konec.',
     'Háčky a čárky se nehádají — „u" odhalí i „ů".',
     'Jen 1. pád a infinitiv.',
+  ],
+  detective: [
+    'Text říká, odkud slovo přišlo.',
+    'Chyba nezabíjí, jen stojí body.',
+    'Kdo na slovo přijde, může ho tipnout celé.',
   ],
 }

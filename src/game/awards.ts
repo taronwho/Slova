@@ -18,7 +18,7 @@
 import type { Profile } from '../lib/storage'
 import type { ModeId } from './types'
 
-const MODES: ModeId[] = ['chain', 'hive', 'tower', 'gallows']
+const MODES: ModeId[] = ['chain', 'hive', 'tower', 'gallows', 'detective']
 
 export type AwardGroup = 'start' | 'clean' | 'score' | 'feat' | 'grit'
 
@@ -29,6 +29,7 @@ export type AwardTone =
   | 'hive'
   | 'tower'
   | 'gallows'
+  | 'detective'
   | 'ok'
   | 'gold'
   | 'warn'
@@ -105,12 +106,14 @@ export const AWARDS: Award[] = [
     (p) => p.stats.tower.played),
   count('prvni-sibenice', 'start', 'gallows', 'První slovo', 'Uhodni slovo v Šibenici',
     'noose', 1, (p) => p.counters.gallowsSolved),
+  count('prvni-pripad', 'start', 'detective', 'První případ',
+    'Rozlušti slovo podle jeho původu', 'glass', 1, (p) => p.counters.detectiveSolved),
   {
-    id: 'ctyrboj',
+    id: 'petiboj',
     group: 'start',
     tone: 'brand',
-    title: 'Čtyřboj',
-    goal: 'Dohraj kolo ve všech čtyřech hrách',
+    title: 'Pětiboj',
+    goal: 'Dohraj kolo ve všech pěti hrách',
     art: 'triad',
     done: (p) => MODES.every((mode) => p.stats[mode].played > 0),
     progress: (p) => ratio(MODES.filter((mode) => p.stats[mode].played > 0).length, MODES.length),
@@ -145,6 +148,12 @@ export const AWARDS: Award[] = [
   count('sibenice-cista-10', 'clean', 'gallows', 'Deset napoprvé',
     'Uhodni deset slov bez jediné chyby a bez nápovědy', 'noose', 10,
     (p) => p.counters.gallowsClean, 3),
+  count('detektiv-cisty', 'clean', 'detective', 'Bez škobrtnutí',
+    'Rozlušti případ bez chybného písmene a bez nápovědy', 'glass', 1,
+    (p) => p.stats.detective.perfect, 1),
+  count('detektiv-cisty-10', 'clean', 'detective', 'Deset bez škobrtnutí',
+    'Rozlušti deset případů bez chyby a bez nápovědy', 'glass', 10,
+    (p) => p.stats.detective.perfect, 3),
 
   // --- Body -------------------------------------------------------------
   count('skore-1500', 'score', 'gold', 'Patnáct set', 'Nasbírej v jednom kole 1 500 bodů',
@@ -175,6 +184,9 @@ export const AWARDS: Award[] = [
     'crown', 1, (p) => p.counters.hiveQueen),
   count('vez-osm', 'feat', 'tower', 'Osmé patro', 'Postav patro z osmi písmen', 'wide', 8,
     (p) => p.counters.towerBestFloor),
+  count('detektiv-tip', 'feat', 'detective', 'Z první ruky',
+    'Tipni slovo, když je ještě víc než půlka písmen skrytá', 'glass', 1,
+    (p) => p.counters.detectiveGuessed),
   {
     id: 'retez-rychlik',
     group: 'feat',

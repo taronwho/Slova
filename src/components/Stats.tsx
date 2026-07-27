@@ -10,7 +10,7 @@ interface Props {
   onReset: () => void
 }
 
-const MODES: ModeId[] = ['chain', 'hive', 'tower', 'gallows']
+const MODES: ModeId[] = ['chain', 'hive', 'tower', 'gallows', 'detective']
 
 /** Popisky detailů kola — v historii je čte hráč, ne vývojář. */
 const DETAIL_LABEL: Record<string, string> = {
@@ -28,6 +28,7 @@ const EXTRA_LABEL: Record<ModeId, string> = {
   hive: 'Průměr nalezených slov',
   tower: 'Průměr postavených pater',
   gallows: 'Průměr zbylých životů',
+  detective: 'Průměr nevyužitých pokusů',
 }
 
 export function Stats({ profile, onBack, onReset }: Props) {

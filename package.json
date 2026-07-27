@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "smoke": "node tools/smoke.mjs",
     "play:verify": "node tools/playthrough.mjs",
-    "data:build": "bash tools/0_download.sh && python3 tools/1_validate_words.py && python3 tools/2_curate.py && python3 tools/2b_base_forms.py && python3 tools/2c_plural.py && python3 tools/3_build_chain.py && python3 tools/4_build_hive.py && python3 tools/5_build_tower.py && python3 tools/5b_build_gallows.py",
+    "data:build": "bash tools/0_download.sh && python3 tools/1_validate_words.py && python3 tools/2_curate.py && python3 tools/2b_base_forms.py && python3 tools/2c_plural.py && python3 tools/3_build_chain.py && python3 tools/4_build_hive.py && python3 tools/5_build_tower.py && python3 tools/5b_build_gallows.py && python3 tools/5c_fetch_etymology.py && python3 tools/5d_build_detective.py",
     "build:standalone": "node tools/build-artifact.mjs",
     "smoke:standalone": "node tools/smoke-standalone.mjs",
     "build:icons": "python3 tools/6_build_icons.py",

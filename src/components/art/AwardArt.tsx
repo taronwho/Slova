@@ -157,6 +157,18 @@ function Glyph({ art }: { art: string }) {
         </>
       )
 
+    // --- Detektiv -------------------------------------------------------
+    // Lupa nad řádkem textu — ten text je v téhle hře to hlavní.
+    case 'glass':
+      return (
+        <>
+          <path d="M6 34h12M6 40h20" className="ln" />
+          <circle cx="27" cy="18" r="12" className="tn" />
+          <path d="M36 27 43 34" className="ln" />
+          <path d="M27 11a7 7 0 0 0-7 7" className="ln" />
+        </>
+      )
+
     // --- Voština --------------------------------------------------------
     case 'star-cell':
       return (

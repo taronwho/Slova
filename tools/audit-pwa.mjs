@@ -7,7 +7,13 @@
 import { chromium } from 'playwright'
 import { dismissTutorial, goHome, openGame, waitReady } from './_ui.mjs'
 
-const MODE_ID = { 'Řetěz': 'chain', 'Voština': 'hive', 'Věž': 'tower', 'Šibenice': 'gallows' }
+const MODE_ID = {
+  'Řetěz': 'chain',
+  'Voština': 'hive',
+  'Věž': 'tower',
+  'Šibenice': 'gallows',
+  'Detektiv': 'detective',
+}
 
 const APP_URL = process.env.URL ?? 'http://localhost:4173/'
 const problems = []
@@ -84,7 +90,7 @@ check(swState !== null && swState.active, 'service worker je zaregistrovaný a a
 /* ---------- Offline ---------- */
 
 // Projít režimy, aby se datové balíčky dostaly do cache.
-for (const mode of ['Řetěz', 'Voština', 'Věž', 'Šibenice']) {
+for (const mode of ['Řetěz', 'Voština', 'Věž', 'Šibenice', 'Detektiv']) {
   await page.goto(APP_URL, { waitUntil: 'networkidle' })
   await page.locator('.splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined)
   await openGame(page, MODE_ID[mode])

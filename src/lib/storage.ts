@@ -54,6 +54,10 @@ export interface Counters {
   gallowsSolved: number
   /** Šibenice: kolik slov uhodl bez jediné chyby (a bez nápovědy). */
   gallowsClean: number
+  /** Detektiv: kolik případů rozluštil. */
+  detectiveSolved: number
+  /** Detektiv: kolikrát tipl slovo, když byla víc než půlka písmen skrytá. */
+  detectiveGuessed: number
   /** Kolik denních výzev dohrál. */
   dailies: number
   /** Nejlepší skóre v jednom kole napříč režimy. */
@@ -108,6 +112,8 @@ export function emptyCounters(): Counters {
     towerFastMs: 0,
     gallowsSolved: 0,
     gallowsClean: 0,
+    detectiveSolved: 0,
+    detectiveGuessed: 0,
     dailies: 0,
     bestScore: 0,
   }
@@ -119,12 +125,13 @@ export function emptyProfile(): Profile {
     streak: 0,
     bestStreak: 0,
     lastPlayedDay: null,
-    seen: { chain: [], hive: [], tower: [], gallows: [] },
+    seen: { chain: [], hive: [], tower: [], gallows: [], detective: [] },
     stats: {
       chain: emptyStats(),
       hive: emptyStats(),
       tower: emptyStats(),
       gallows: emptyStats(),
+      detective: emptyStats(),
     },
     counters: emptyCounters(),
     // Tři na uvítanou, ať si hráč nápovědu zkusí, než začne řešit, co ho stojí.
@@ -132,10 +139,22 @@ export function emptyProfile(): Profile {
     hintRankPaid: 1,
     awards: {},
     history: [],
-    difficulty: { chain: 'normal', hive: 'normal', tower: 'normal', gallows: 'normal' },
+    difficulty: {
+      chain: 'normal',
+      hive: 'normal',
+      tower: 'normal',
+      gallows: 'normal',
+      detective: 'normal',
+    },
     theme: 'system',
     dailyDone: {},
-    tutorialSeen: { chain: false, hive: false, tower: false, gallows: false },
+    tutorialSeen: {
+      chain: false,
+      hive: false,
+      tower: false,
+      gallows: false,
+      detective: false,
+    },
   }
 }
 
@@ -234,7 +253,7 @@ export function loadRounds(): SavedRounds {
     const saved = JSON.parse(raw) as SavedRounds
     if (!saved || typeof saved !== 'object') return {}
     const rounds: SavedRounds = {}
-    for (const mode of ['chain', 'hive', 'tower', 'gallows'] as ModeId[]) {
+    for (const mode of ['chain', 'hive', 'tower', 'gallows', 'detective'] as ModeId[]) {
       const round = saved[mode]
       if (round && round.mode === mode && round.state) rounds[mode] = round
     }
@@ -311,6 +330,14 @@ function updateCounters(profile: Profile, result: RoundResult, daily: boolean): 
     c.hiveBestWords = Math.max(c.hiveBestWords, num(result, 'found'))
     if (num(result, 'found') >= num(result, 'total') && num(result, 'total') > 0) c.hiveFull += 1
     if (num(result, 'rankTop') === 1) c.hiveQueen += 1
+  } else if (result.mode === 'detective') {
+    if (num(result, 'solved') === 1) {
+      c.detectiveSolved += 1
+      // „Z první ruky" je za odvahu tipnout brzy, ne za doklikání abecedy.
+      if (num(result, 'guessed') === 1 && num(result, 'extra') > 0) {
+        c.detectiveGuessed += 1
+      }
+    }
   } else if (result.mode === 'gallows') {
     if (num(result, 'solved') === 1) {
       c.gallowsSolved += 1
@@ -337,7 +364,7 @@ function allDailiesDone(
   daily: boolean,
 ): boolean {
   if (!daily) return false
-  const modes: ModeId[] = ['chain', 'hive', 'tower', 'gallows']
+  const modes: ModeId[] = ['chain', 'hive', 'tower', 'gallows', 'detective']
   return modes.every(
     (mode) => mode === result.mode || profile.dailyDone[`${day}:${mode}`] !== undefined,
   )

@@ -2,6 +2,7 @@
 
 import { buildChainGraph, type ChainGraph, type ChainPuzzle } from '../game/chain'
 import type { HivePuzzle } from '../game/hive'
+import type { DetectivePuzzle } from '../game/detective'
 import type { GallowsPuzzle } from '../game/gallows'
 import type { TowerPuzzle } from '../game/tower'
 import type { Difficulty } from '../game/types'
@@ -130,6 +131,13 @@ export async function loadTower(entry: TowerIndexEntry): Promise<TowerPuzzle> {
    souboru — dělit je na balíčky by bylo zbytečné. */
 export function loadGallows(): Promise<GallowsPuzzle[]> {
   return fetchJson<GallowsPuzzle[]>('gallows/puzzles.json')
+}
+
+/* ---------- Detektiv ---------- */
+
+/* Hádanek je pár set a nesou navíc jen krátký text, takže jeden soubor stačí. */
+export function loadDetective(): Promise<DetectivePuzzle[]> {
+  return fetchJson<DetectivePuzzle[]>('detective/puzzles.json')
 }
 
 /* ---------- Výběr hádanky ---------- */

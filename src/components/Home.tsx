@@ -35,6 +35,7 @@ const MODES: { id: ModeId; glyph: string; color: string }[] = [
   { id: 'hive', glyph: '⬡', color: 'var(--mode-hive)' },
   { id: 'tower', glyph: '↑', color: 'var(--mode-tower)' },
   { id: 'gallows', glyph: '?', color: 'var(--mode-gallows)' },
+  { id: 'detective', glyph: '§', color: 'var(--mode-detective)' },
 ]
 
 const DIFFICULTIES: Difficulty[] = ['easy', 'normal', 'hard']
@@ -59,6 +60,11 @@ const DIFFICULTY_NOTE: Record<ModeId, Record<Difficulty, string>> = {
     easy: '4–5 písmen, nejběžnější slova',
     normal: '6–7 písmen',
     hard: '8–9 písmen',
+  },
+  detective: {
+    easy: 'krátká, běžná slova',
+    normal: '6–7 písmen',
+    hard: 'dlouhá slova a spletitější původ',
   },
 }
 

@@ -3,7 +3,13 @@ import { chromium } from 'playwright'
 import { readFileSync, writeFileSync, unlinkSync } from 'node:fs'
 import { dismissTutorial, goHome, openGame, waitReady } from './_ui.mjs'
 
-const MODE_ID = { 'Řetěz': 'chain', 'Voština': 'hive', 'Věž': 'tower', 'Šibenice': 'gallows' }
+const MODE_ID = {
+  'Řetěz': 'chain',
+  'Voština': 'hive',
+  'Věž': 'tower',
+  'Šibenice': 'gallows',
+  'Detektiv': 'detective',
+}
 
 const FILE = process.env.SURL ?? 'http://localhost:4180/slova-standalone.html'
 const problems = []
@@ -42,6 +48,7 @@ for (const [mode, sel] of [
   ['Voština', '.hive'],
   ['Věž', '.tower'],
   ['Šibenice', '.gallows-art'],
+  ['Detektiv', '.clue-card'],
 ]) {
   await page.goto(FILE, { waitUntil: 'networkidle' })
   await page.locator('.splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined)

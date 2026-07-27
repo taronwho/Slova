@@ -2,6 +2,13 @@
 
 import { budgetFor, type ChainState } from './chain'
 import {
+  DETECTIVE_COST,
+  isWon as detectiveWon,
+  missCount,
+  neededLetters as detectiveLetters,
+  type DetectiveState,
+} from './detective'
+import {
   GALLOWS_LIVES,
   isWon,
   neededLetters,
@@ -195,6 +202,68 @@ export function scoreGallows(
 
   const labels: string[] = []
   if (perfect) labels.push('BEZ CHYBY ×1,5')
+  if (streakMul > 1) labels.push(`Série ×${streakMul.toFixed(2).replace('.', ',')}`)
+
+  return finish(lines, multiplier, labels.join('  ·  ') || null, perfect, 0)
+}
+
+/**
+ * Detektiv: základ za rozluštění, prémie za tip na celé slovo.
+ *
+ * Chybné písmeno tu nekončí kolo, jen stojí — proto je odečet jediné, co
+ * hráče brzdí, a proto je tip na celé slovo tak štědrý: je to sázka, kterou
+ * dělá jen ten, kdo z textu opravdu něco vyčetl.
+ */
+export function scoreDetective(
+  state: DetectiveState,
+  streak: number,
+  now = Date.now(),
+): ScoreBreakdown {
+  const elapsed = (state.finishedAt ?? now) - state.startedAt
+  const misses = missCount(state)
+  const won = detectiveWon(state)
+
+  const lines: { label: string; value: number }[] = []
+  if (won) {
+    lines.push({ label: 'Rozluštěné slovo', value: 800 })
+    if (state.solved) {
+      // Kolik písmen zbývalo odhalit, když hráč slovo tipl — čím dřív, tím víc.
+      const open = [...detectiveLetters(state.puzzle)].filter(
+        (letter) => !state.tried.includes(letter),
+      ).length
+      lines.push({ label: `Tip na slovo (${open} písmen skrytých)`, value: 100 * open })
+    }
+  } else {
+    const found = [...detectiveLetters(state.puzzle)].filter((letter) =>
+      state.tried.includes(letter),
+    ).length
+    lines.push({ label: `Odhalená písmena (${found})`, value: 40 * found })
+    lines.push({ label: 'Slovo nerozluštěno', value: -100 })
+  }
+
+  if (misses > 0) {
+    lines.push({ label: `Písmena vedle (${misses})`, value: -DETECTIVE_COST.miss * misses })
+  }
+  if (state.guesses.length > 0) {
+    lines.push({
+      label: `Chybné tipy (${state.guesses.length})`,
+      value: -DETECTIVE_COST.wrongGuess * state.guesses.length,
+    })
+  }
+  if (state.hintCost > 0) {
+    const paid = Math.max(0, state.hintsUsed - (state.freeHints ?? 0))
+    lines.push({ label: `Nápovědy (${paid})`, value: -state.hintCost })
+  }
+
+  const bonus = won ? speedBonus(elapsed, 60_000, 240_000, 200) : 0
+  if (bonus > 0) lines.push({ label: 'Rychlost', value: bonus })
+
+  const perfect = won && misses === 0 && state.hintsUsed === 0 && state.guesses.length === 0
+  const streakMul = streakMultiplier(streak)
+  const multiplier = (perfect ? 1.5 : 1) * streakMul
+
+  const labels: string[] = []
+  if (perfect) labels.push('BEZ ŠKOBRTNUTÍ ×1,5')
   if (streakMul > 1) labels.push(`Série ×${streakMul.toFixed(2).replace('.', ',')}`)
 
   return finish(lines, multiplier, labels.join('  ·  ') || null, perfect, 0)

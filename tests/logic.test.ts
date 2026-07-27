@@ -41,13 +41,23 @@ import {
   wrongCount,
   type GallowsPuzzle,
 } from '../src/game/gallows'
+import {
+  createDetectiveState,
+  guessLetter as detectiveLetter,
+  guessWord,
+  isOver as detectiveOver,
+  isWon as detectiveWon,
+  missCount as detectiveMisses,
+  revealed as detectiveRevealed,
+  type DetectivePuzzle,
+} from '../src/game/detective'
 import { fold, letterMask, normalizeInput, signature } from '../src/lib/czech'
 import { mulberry32, shuffled } from '../src/lib/rng'
 // Hodnost v plástvi (rankFor z game/hive) a hodnost profilu jsou dvě různé
 // věci se stejným jménem — v testu se proto rozlišují předponou.
 import { RANKS as PROFILE_RANKS, rankFor as profileRankFor } from '../src/game/ranks'
 import { AWARDS, AWARD_GROUPS } from '../src/game/awards'
-import { scoreChain, scoreGallows, streakMultiplier } from '../src/game/scoring'
+import { scoreChain, scoreDetective, scoreGallows, streakMultiplier } from '../src/game/scoring'
 import type { RoundResult } from '../src/game/types'
 import {
   DAILY_HINTS,
@@ -674,7 +684,12 @@ describe('nápovědy zdarma', () => {
 
     const almost: Profile = {
       ...start,
-      dailyDone: { [`${day}:hive`]: 1, [`${day}:tower`]: 1, [`${day}:gallows`]: 1 },
+      dailyDone: {
+        [`${day}:hive`]: 1,
+        [`${day}:tower`]: 1,
+        [`${day}:gallows`]: 1,
+        [`${day}:detective`]: 1,
+      },
     }
     expect(
       recordRound(almost, round(), day, true).hints -
@@ -807,5 +822,78 @@ describe('šibenice', () => {
     expect(lost.perfect).toBe(false)
     expect(lost.total).toBeGreaterThanOrEqual(0)
     expect(lost.total).toBeLessThan(won.total)
+  })
+})
+
+describe('detektiv', () => {
+  const puzzle: DetectivePuzzle = {
+    id: 'd-1',
+    word: 'kostel',
+    clue: 'Z latinského castellum, zdrobněliny slova castrum.',
+    difficulty: 'normal',
+  }
+
+  it('chybné písmeno kolo neukončí, jen se počítá', () => {
+    const miss = detectiveLetter(createDetectiveState(puzzle), 'x')
+    expect(miss.ok).toBe(true)
+    if (!miss.ok) return
+    expect(miss.hit).toBe(false)
+    expect(detectiveMisses(miss.state)).toBe(1)
+    expect(detectiveOver(miss.state)).toBe(false)
+  })
+
+  it('slovo se dá tipnout celé, i bez diakritiky', () => {
+    const kun: DetectivePuzzle = { ...puzzle, word: 'kůň' }
+    const hit = guessWord(createDetectiveState(kun), 'kun')
+    expect(hit.ok && hit.correct).toBe(true)
+    if (!hit.ok) return
+    expect(detectiveWon(hit.state)).toBe(true)
+    expect(detectiveRevealed(hit.state)).toEqual(['k', 'ů', 'ň'])
+  })
+
+  it('chybný tip se zapamatuje a podruhé neprojde', () => {
+    const first = guessWord(createDetectiveState(puzzle), 'hrad')
+    expect(first.ok).toBe(true)
+    if (!first.ok) return
+    expect(first.correct).toBe(false)
+    expect(first.state.guesses).toEqual(['hrad'])
+    expect(guessWord(first.state, 'hrad')).toMatchObject({ ok: false, error: 'repeat' })
+  })
+
+  it('dvanáct písmen vedle případ uzavře jako nevyřešený', () => {
+    let state = createDetectiveState(puzzle)
+    for (const letter of 'abdfghijmpqru') {
+      const result = detectiveLetter(state, letter)
+      if (result.ok) state = result.state
+    }
+    expect(detectiveMisses(state)).toBeGreaterThanOrEqual(12)
+    expect(detectiveOver(state)).toBe(true)
+    expect(detectiveWon(state)).toBe(false)
+  })
+
+  it('odhalení všech písmen je taky výhra', () => {
+    let state = createDetectiveState(puzzle)
+    for (const letter of ['k', 'o', 's', 't', 'e', 'l']) {
+      const result = detectiveLetter(state, letter)
+      if (result.ok) state = result.state
+    }
+    expect(detectiveWon(state)).toBe(true)
+    expect(detectiveOver(state)).toBe(true)
+  })
+
+  it('tip zavčas dá víc bodů než doklikání po písmenech', () => {
+    const early = guessWord(createDetectiveState(puzzle), 'kostel')
+    expect(early.ok).toBe(true)
+    if (!early.ok) return
+
+    let slow = createDetectiveState(puzzle)
+    for (const letter of ['k', 'o', 's', 't', 'e', 'l']) {
+      const result = detectiveLetter(slow, letter)
+      if (result.ok) slow = result.state
+    }
+    const fast = scoreDetective(early.state, 1, early.state.startedAt + 10_000)
+    const plodding = scoreDetective(slow, 1, slow.startedAt + 10_000)
+    expect(fast.total).toBeGreaterThan(plodding.total)
+    expect(fast.perfect).toBe(true)
   })
 })

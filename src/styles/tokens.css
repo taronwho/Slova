@@ -60,6 +60,7 @@
   --mode-hive: #d98704;
   --mode-tower: #e23a2e;
   --mode-gallows: #0f8f92;
+  --mode-detective: #8a5a2b;
 
   /* Výchozí akcent = barva značky; uvnitř hry ho přepíše barva režimu. */
   --accent: #5b3df5;
@@ -114,6 +115,8 @@
     --mode-hive: #f5b027;
     --mode-tower: #ff6a5e;
     --mode-gallows: #3ed0d6;
+  --mode-detective: #d8a96a;
+    --mode-detective: #d8a96a;
 
     --accent: #8f7bff;
     --accent-soft: #2a2260;
@@ -156,6 +159,7 @@
   --mode-hive: #d98704;
   --mode-tower: #e23a2e;
   --mode-gallows: #0f8f92;
+  --mode-detective: #8a5a2b;
   --accent: #5b3df5;
   --accent-soft: #e7e2ff;
   --accent-text: #4022d1;
@@ -196,6 +200,7 @@
   --mode-hive: #f5b027;
   --mode-tower: #ff6a5e;
   --mode-gallows: #3ed0d6;
+  --mode-detective: #d8a96a;
   --accent: #8f7bff;
   --accent-soft: #2a2260;
   --accent-text: #bcb0ff;
@@ -250,4 +255,10 @@
   --accent: var(--mode-gallows);
   --accent-soft: color-mix(in oklab, var(--mode-gallows) 16%, var(--surface));
   --accent-text: color-mix(in oklab, var(--mode-gallows) 74%, var(--text));
+}
+
+.shell[data-mode='detective'] {
+  --accent: var(--mode-detective);
+  --accent-soft: color-mix(in oklab, var(--mode-detective) 16%, var(--surface));
+  --accent-text: color-mix(in oklab, var(--mode-detective) 76%, var(--text));
 }
