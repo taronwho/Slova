@@ -76,7 +76,7 @@ export function Guide({ onClose, onRules, finishLabel = 'Zavřít' }: Props) {
           ))}
 
           <section>
-            <h3>Šestice her</h3>
+            <h3>Které hry to jsou</h3>
             <p>Ťukni na hru a otevře se její podrobný návod s ukázkami.</p>
             <div className="guide-modes">
               {MODES.map((mode) => (

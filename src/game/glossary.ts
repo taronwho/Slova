@@ -41,7 +41,7 @@ export interface Term {
 }
 
 /** Cena nápovědy v inkoustu podle bodové ceny — ať se čísla ve výkladu nehádají. */
-const SMALL = inkPrice(20)
+const SMALL = inkPrice(17)
 const MEDIUM = inkPrice(35)
 const WHOLE = inkPrice(66)
 
@@ -51,7 +51,7 @@ export const TERMS: Record<string, Term> = {
     body: [
       'Věhlas je součet **všech bodů**, které jsi kdy ve Slovech získal. Nikdy neklesá a nedá se utratit — je to čára, kterou máš za sebou.',
       `Podle věhlasu roste hodnost. Prvních pár stupňů padne hned první večer, pak se rozestupy natahují; na padesátou a poslední hodnost je potřeba přes ${(RANKS[RANKS.length - 1]!.at / 1_000_000).toLocaleString('cs-CZ')} milionu věhlasu.`,
-      'Body se počítají v každé hře trochu jinak, ale do věhlasu jdou všechny stejně — je jedno, kterou z šestice hraješ.',
+      'Body se počítají v každé hře trochu jinak, ale do věhlasu jdou všechny stejně — je jedno, kterou z her si zahraješ.',
     ],
     links: [
       { label: 'Hodnosti a ocenění', to: 'awards' },
@@ -63,7 +63,7 @@ export const TERMS: Record<string, Term> = {
     title: 'Hodnost',
     body: [
       `Padesát stupňů od Nováčka po Vládce slov. Postupuje se za věhlas, tedy za nasbírané body — a jen za ně, na ničem jiném hodnost nezávisí.`,
-      `Odznak se mění po pěti hodnostech: jiný kov, jiný tvar štítu. Uvnitř pětice se stupně poznají podle počtu krokví pod znakem.`,
+      `Odznak se mění po pěti hodnostech: jiný kov, jiný tvar štítu. Uvnitř pětice se stupně poznají podle počtu krokví pod odznakem.`,
       `Za každou novou hodnost padne inkoust — u prvních ${rankInk(2)}, u nejvyšších ${rankInk(50)}.`,
     ],
     links: [{ label: 'Celý žebříček hodností', to: 'awards' }],
@@ -74,7 +74,7 @@ export const TERMS: Record<string, Term> = {
     body: [
       'Inkoust je jediná měna ve hře a kupují se za něj **nápovědy**. Utrácí se místo bodů: když nápovědu zaplatíš inkoustem, skóre ti zůstane celé.',
       `Cena odpovídá tomu, jak velkou pomoc dostaneš. Malý postrk stojí kolem ${SMALL}, prozrazené písmeno ${MEDIUM}, odhalení celého slova ${WHOLE}.`,
-      `Inkoust se nedá koupit za peníze ani vysedět — sype ho jen nová hodnost, každé získané ocenění (${INK_BY_TIER[1]}–${INK_BY_TIER[5]} podle stupně) a ${DAILY_INK} za kompletní denní várku ve všech šesti hrách.`,
+      `Inkoust se nedá koupit za peníze ani vysedět — sype ho jen nová hodnost, každé získané ocenění (${INK_BY_TIER[1]}–${INK_BY_TIER[5]} podle stupně) a ${DAILY_INK} za kompletní denní várku, tedy za denní výzvu ve všech hrách naráz.`,
       'Nápověda placená inkoustem je pořád nápověda: kolo s ní se nepočítá jako čisté, takže mety „bez nápovědy" se za inkoust koupit nedají.',
     ],
     links: [
@@ -119,7 +119,7 @@ export const TERMS: Record<string, Term> = {
   oceneni: {
     title: 'Ocenění',
     body: [
-      'Trvalé mety, které se udělují jednou a už nezmizí. Většina jich stojí v **žebříčcích** po pěti stupních — od Učně po Legendu.',
+      'Trvalé mety, které se udělují jednou a už nezmizí. Většina jich stojí v **žebříčcích** po několika stupních — u mistrovství jednotlivých her od Učně po Legendu.',
       'Ve vitríně vidíš získané stupně a vždycky jeden další, na který se zrovna hraje. Zbytek žebříčku se ukáže, až na něj dojde řada.',
       'Za každé ocenění padne inkoust; čím vyšší stupeň, tím víc.',
     ],
@@ -129,8 +129,8 @@ export const TERMS: Record<string, Term> = {
   denni: {
     title: 'Denní výzva',
     body: [
-      'Šest hádanek na den, pro každou hru jedna. Všichni hráči dostanou tentýž den stejné zadání — je odvozené z data, ne z náhody.',
-      `Za dohrání celé šestice padne ${DAILY_INK} inkoustu. Za jednotlivé výzvy ne, jinak by denní várka zaplavila kalamář víc než všechno ostatní dohromady.`,
+      'Jedna hádanka na den pro každou hru. Všichni hráči dostanou tentýž den stejné zadání — je odvozené z data, ne z náhody.',
+      `Za dohrání celé denní várky padne ${DAILY_INK} inkoustu. Za jednotlivé výzvy ne, jinak by denní várka zaplavila kalamář víc než všechno ostatní dohromady.`,
       'Denní výzva se dá zahrát jen jednou. Body z ní se počítají normálně.',
     ],
   },
@@ -168,7 +168,7 @@ export const TERMS: Record<string, Term> = {
   odehrano: {
     title: 'Odehráno',
     body: [
-      'Kolik kol máš dohraných dohromady, napříč všemi šesti hrami. Počítá se každé kolo, i to nepovedené.',
+      'Kolik kol máš dohraných dohromady, napříč všemi hrami. Počítá se každé kolo, i to nepovedené.',
       'Na samotném počtu odehraných kol stojí jen pár met ve Vytrvalosti. Ostatní žebříčky se dívají na kola dohraná bez nápovědy — vydržet klikat umí každý.',
     ],
     links: [{ label: 'Podrobné statistiky', to: 'stats' }],

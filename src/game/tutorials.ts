@@ -5,6 +5,7 @@
  * prvním spuštění i v přehledu pravidel na domovské obrazovce.
  */
 
+import { AWARDS } from './awards'
 import type { ModeId } from './types'
 
 /** Malá ukázka, která se u kroku vykreslí nad textem. */
@@ -377,17 +378,17 @@ export interface GuideSection {
 
 export const GUIDE: GuideSection[] = [
   {
-    title: 'Šest her z jedné češtiny',
+    title: 'Soubor slovních her',
     body: [
-      'Slova jsou šest slovních her, které sdílejí jeden slovník a jeden profil. Je jedno, kterou hraješ — body, hodnost i ocenění se sčítají dohromady.',
-      'Každá hra má vlastní podrobný návod. Otevřeš ho na domovské obrazovce nebo otazníkem v liště, kdykoli během hraní.',
+      'Slova jsou souborem slovních her, které sdílejí jeden slovník a jeden profil. Je jedno, kterou z nich hraješ — body, hodnost i ocenění se sčítají dohromady.',
+      'Každá hra má vlastní podrobný návod. Otevřeš ho na domovské obrazovce, nebo kdykoli během hraní otazníkem v horní liště.',
     ],
   },
   {
     title: 'Jedno pravidlo platí všude',
     body: [
-      'Uznávají se **jen základní tvary** — tak, jak slovo stojí ve slovníku. Podstatná jména v 1. pádu (jednotné i množné číslo), slovesa v infinitivu, přídavná jména a číslovky v základním tvaru.',
-      'Neplatí ostatní pády, časované tvary, rozkazy ani stupňování. Když hra slovo neuzná, bývá to skoro vždycky tímhle.',
+      'Uznávají se **jen základní tvary** — tak, jak slovo stojí ve slovníku. Platí podstatná jména v 1. pádu (jednotné i množné číslo), slovesa v infinitivu a přídavná jména i číslovky v základním tvaru.',
+      'Neplatí ostatní pády, časované tvary, rozkazy ani stupňování. Když ti hra slovo neuzná, bývá to skoro vždycky tímhle.',
     ],
     term: 'zaklad',
   },
@@ -396,15 +397,15 @@ export const GUIDE: GuideSection[] = [
     body: [
       'Za dohrané kolo dostaneš body — základ za splněný cíl a k tomu prémie za rychlost, čistotu a povedené kousky.',
       'Součet všech bodů za celou dobu je **věhlas**. Nikdy neklesá, nedá se utratit a jenom on žene hodnost nahoru.',
-      'Dobré kolo dá kolem čtyř set bodů. Čísla nejsou nafouklá schválně: když je štědré všechno, není štědré nic.',
+      'Dobré kolo dá kolem čtyř set bodů. Čísla schválně nejsou nafouklá: když je štědré všechno, není štědré nic.',
     ],
     term: 'body',
   },
   {
     title: 'Hodnost',
     body: [
-      'Padesát stupňů od Nováčka po Vládce slov. První tři padnou hned první večer, dál se rozestupy natahují — na tu poslední se hraje roky.',
-      'Odznak se mění po pěticích. Uvnitř pětice poznáš stupeň podle počtu krokví pod znakem.',
+      'Padesát stupňů od Nováčka po Vládce slov. První tři hodnosti padnou hned první večer, dál se rozestupy natahují — na tu poslední se hraje roky.',
+      'Odznak se mění po každých pěti hodnostech. Uvnitř pětice poznáš stupeň podle počtu krokví pod odznakem.',
     ],
     term: 'hodnost',
   },
@@ -412,15 +413,15 @@ export const GUIDE: GuideSection[] = [
     title: 'Inkoust a nápovědy',
     body: [
       'Každá hra umí poradit. Nápověda se platí buď **body** z rozehraného kola, nebo **inkoustem** — a inkoust je ta možnost, po které ti skóre zůstane celé.',
-      'Cena odpovídá velikosti pomoci: malý postrk je za pár kapek, odhalení celého slova za dvacet. Inkoust se nedá koupit za peníze — sype ho nová hodnost, získané ocenění a kompletní denní várka.',
-      'Nápověda placená inkoustem je pořád nápověda: kolo s ní není čisté a mety „bez nápovědy" se za ni koupit nedají. Inkoust šetří skóre, ne poctivost.',
+      'Cena odpovídá velikosti pomoci: malý postrk stojí pět inkoustu, odhalení celého slova dvacet. Inkoust se nedá koupit za peníze — sype ho nová hodnost, získané ocenění a kompletní denní várka.',
+      'Nápověda placená inkoustem je pořád nápověda: kolo s ní není čisté a mety „bez nápovědy" se za inkoust koupit nedají. Inkoust šetří skóre, ne poctivost.',
     ],
     term: 'inkoust',
   },
   {
     title: 'Série a dny v řadě',
     body: [
-      '**Série** je řada čistých kol za sebou — dohraných a bez jediné nápovědy. Násobí se jí skóre, takže něco stojí: prohrané nebo napovězené kolo ji utne na nulu.',
+      '**Série** je řada čistých kol za sebou — dohraných do konce a bez jediné nápovědy. Násobí se jí skóre, takže se vyplatí ji držet: prohrané, vzdané i napovězené kolo ji utne na nulu.',
       '**Dny v řadě** jsou něco jiného. Počítají se dny, kdy sis hru aspoň jednou otevřel, a nepovedené kolo je nepřeruší.',
     ],
     term: 'serie',
@@ -428,7 +429,7 @@ export const GUIDE: GuideSection[] = [
   {
     title: 'Ocenění',
     body: [
-      'Přes sto šedesát trvalých met, většina po pěti stupních od Učně po Legendu. Ve vitríně vidíš získané stupně a vždycky jeden další, na který se dá dosáhnout.',
+      `Trvalých met je ${AWARDS.length} a většina z nich stojí v žebříčcích po několika stupních — u mistrovství jednotlivých her od Učně po Legendu. Ve vitríně vidíš získané stupně a vždycky jeden další, na který se dá dosáhnout.`,
       'Nejvyšší stupně jsou schválně daleko. Slova mají vydržet roky, ne týden.',
     ],
     term: 'oceneni',
@@ -436,15 +437,15 @@ export const GUIDE: GuideSection[] = [
   {
     title: 'Denní výzva',
     body: [
-      'Šest hádanek na den, pro každou hru jedna, pro všechny hráče stejná. Za dohrání celé šestice padne inkoust.',
-      'Je to nejlevnější způsob, jak si kalamář udržet plný — a jediný, který se nedá dohnat zpětně.',
+      'Jedna hádanka na den pro každou hru, pro všechny hráče stejná. Za dohrání celé denní várky padne inkoust.',
+      'Je to nejspolehlivější způsob, jak si udržet plný kalamář — a jediný, který se nedá dohnat zpětně.',
     ],
     term: 'denni',
   },
   {
     title: 'Když si nejsi jistý',
     body: [
-      'Ve Slovech jde kliknout na všechno. Každé číslo v liště, každý čip v profilu i každá dlaždice ocenění ti po ťuknutí řekne, co znamená, nebo tě rovnou pustí tam, kam patří.',
+      'Ve Slovech jde kliknout na všechno. Každé číslo v liště, každý čip v profilu i každá dlaždice ocenění ti po ťuknutí řekne, co znamená, nebo tě rovnou přepne tam, kde se to dá vyřešit.',
     ],
   },
 ]
