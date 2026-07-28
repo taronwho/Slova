@@ -5977,8 +5977,8 @@ BANK["historie"] += [
         "Říšský zákon, který na půl tisíciletí stanovil pravidla volby římského císaře.",
     )),
     ("Poznej historickou událost.", "Zavedení kalendáře", ["gregoriánský kalendář"], (
-        "Aby se srovnal rozdíl, který se za staletí nasčítal, muselo se v jednom roce prostě deset dní vynechat.",
         "Papež Řehoř XIII. tu změnu nařídil roku 1582 a protestantské země ji přijaly až o sto padesát let později.",
+        "Aby se srovnal rozdíl, který se za staletí nasčítal, muselo se v jednom roce prostě deset dní vynechat.",
         "Kvůli němu se přestupný rok vynechává v letech dělitelných stem, ale ne čtyřmi sty.",
     )),
     ("Poznej historickou událost.", "Dobytí Tenochtitlanu", [], (

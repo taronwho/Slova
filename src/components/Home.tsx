@@ -154,8 +154,60 @@ export function Home({
   // Systémové zpět zavře panel, ne celou hru.
   useBackGuard(picked !== null, () => setPicked(null))
 
+  /**
+   * Proužek Otázky dne.
+   *
+   * Stojí buď úplně nahoře, nebo úplně dole — podle toho, jestli je dnešek
+   * zodpovězený. Nezodpovězený tiše pulzuje nad nadpisem, protože je to jediná
+   * věc na obrazovce, která zítra propadne; jakmile hráč odpoví, sesune se pod
+   * hry a přestane se hýbat.
+   *
+   * Popisek, co Otázka dne obnáší, v proužku nestojí — vejde se do otazníčku
+   * vpravo, který otevře výklad. Proužek tak zůstane úzký i na malém telefonu.
+   *
+   * Není to jeden `<button>`, ale `<div>` se dvěma: otazník uvnitř spouštěče
+   * by byl tlačítko v tlačítku, což prohlížeč ani čtečka neunesou.
+   */
+  const quizStrip = (
+    <div className={`quiz-strip ${quizDone ? 'done' : 'live'}`}>
+      <button
+        type="button"
+        className="quiz-strip-go"
+        onClick={onQuiz}
+        disabled={quizDone}
+        aria-label={
+          quizDone ? 'Otázka dne — dnešek hotový' : `Hrát Otázku dne ${dayLabel}`
+        }
+      >
+        <span className="quiz-strip-mark" aria-hidden="true">
+          ?
+        </span>
+        <span className="quiz-strip-body">
+          <span className="quiz-strip-title">Otázka dne</span>
+          <span className="faint">
+            {quizDone
+              ? `Uhodnuto ${profile.quiz.solved} z ${profile.quiz.played} · další zítra`
+              : dayLabel}
+          </span>
+        </span>
+        {!quizDone && (
+          <span className="chip chip-ink">
+            <InkMark size={12} /> <span className="num">{QUIZ_REWARD[1]}</span>
+          </span>
+        )}
+      </button>
+      <Explain term="otazka" className="quiz-strip-help" label="Jak Otázka dne funguje">
+        ?
+      </Explain>
+    </div>
+  )
+
   return (
     <>
+      {/* Dokud se na dnešní otázku neodpovědělo, drží si místo úplně nahoře
+          a upozorňuje na sebe. Je to jediná věc, která se každý den zamyká. */}
+      {!quizDone && quizStrip}
+
       {/* Mřížka her je první věc na stránce a vejde se celá na displej.
           Až přibudou další režimy, jen se do ní přidají další dlaždice. */}
       <h1 className="home-head">Vyber si hru</h1>
@@ -229,35 +281,9 @@ export function Home({
         </div>
       </div>
 
-      {/* Otázka dne stojí zvlášť. Není to sedmá slovní hra, je to jiný druh
-          zábavy na jednou denně — a hlavně jediné místo, kde se dá vydělat
-          pořádná zásoba inkoustu. */}
-      <button
-        type="button"
-        className={`panel quiz-strip ${quizDone ? 'done' : ''}`}
-        onClick={onQuiz}
-        disabled={quizDone}
-      >
-        <span className="quiz-strip-mark" aria-hidden="true">
-          ?
-        </span>
-        <span className="quiz-strip-body">
-          <span className="label">Otázka dne {dayLabel}</span>
-          <span className="quiz-strip-title">
-            {quizDone ? 'Dneska hotovo — další zítra' : 'Poznáš to podle indicií?'}
-          </span>
-          <span className="faint">
-            {quizDone
-              ? `Zatím uhodnuto ${profile.quiz.solved} z ${profile.quiz.played}`
-              : `Čím míň indicií si vezmeš, tím víc inkoustu — až ${QUIZ_REWARD[1]} kapek`}
-          </span>
-        </span>
-        {!quizDone && (
-          <span className="chip chip-ink">
-            <InkMark size={12} /> <span className="num">{QUIZ_REWARD[1]}</span>
-          </span>
-        )}
-      </button>
+      {/* Zodpovězená otázka se odsune sem dolů — je z ní jen tichý řádek se
+          skóre, který nikomu nepřekáží. Zítra se zase objeví nahoře. */}
+      {quizDone && quizStrip}
 
       {/* Kontrolní build: seznam všech otázek, ať se nemusí prohádat. */}
       {onQuizList && (

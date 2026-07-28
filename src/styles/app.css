@@ -3425,9 +3425,10 @@ button.rank-card:hover {
 }
 
 /* Všude jinde tečkované podtržení, tak jak se značí vysvětlivka v textu.
-   Velké skóre a celý řádek hodnosti jsou z toho venku — pod třemi centimetry
-   číslic vypadá tečkovaná linka jako chyba sazby, ne jako nabídka. */
-.explain:not(.chip):not(.rank-line):not(.score-big) {
+   Velké skóre, řádek hodnosti a otazníček v Otázce dne jsou z toho venku —
+   pod třemi centimetry číslic vypadá tečkovaná linka jako chyba sazby a
+   uvnitř kolečka jako škrtnutí. */
+.explain:not(.chip):not(.rank-line):not(.score-big):not(.quiz-strip-help) {
   text-decoration: underline dotted;
   text-underline-offset: 3px;
   text-decoration-color: color-mix(in oklab, currentColor 45%, transparent);
@@ -3613,58 +3614,164 @@ button.stat.open {
 
 /* ---------- Otázka dne ---------- */
 
-/* Pruh na domovské obrazovce. Není to sedmá dlaždice v mřížce — je to jiný
-   druh zábavy a má vypadat jinak než šestice slovních her. */
+/* Proužek na domovské obrazovce. Není to sedmá dlaždice v mřížce — je to jiný
+   druh zábavy a má vypadat jinak než šestice slovních her.
+
+   Dokud se neodpovědělo, stojí nad nadpisem a dýchá; pak se sesune pod hry
+   a ztichne. Vysvětlení, co Otázka dne obnáší, si bere otazníček vpravo,
+   takže proužek zůstane úzký i na nejmenším telefonu. */
 .quiz-strip {
+  position: relative;
   display: flex;
-  align-items: center;
-  gap: var(--sp-4);
+  align-items: stretch;
   width: 100%;
-  text-align: left;
-  cursor: pointer;
+  border-radius: var(--r-3);
   margin-bottom: var(--sp-4);
-  border: 1px solid color-mix(in oklab, var(--gold) 35%, var(--border));
+  border: 1px solid color-mix(in oklab, var(--gold) 38%, var(--border));
   background: linear-gradient(
     120deg,
-    color-mix(in oklab, var(--gold) 9%, var(--surface)),
-    var(--surface) 60%
+    color-mix(in oklab, var(--gold) 11%, var(--surface)),
+    var(--surface) 65%
   );
 }
 
-.quiz-strip:disabled {
-  cursor: default;
-  opacity: 0.65;
-  background: var(--surface);
+.quiz-strip-go {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex: 1;
+  min-width: 0;
+  padding: var(--sp-2) var(--sp-3);
+  text-align: left;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: inherit;
+  color: inherit;
+}
+
+/* Zlatý kroužek, který nad nezodpovězenou otázkou pomalu dýchá. Není to
+   blikání — je to nádech a výdech, aby to šlo přehlédnout, ale nerušilo to
+   při čtení zbytku obrazovky. */
+.quiz-strip.live {
+  animation: quiz-breathe 3.4s ease-in-out infinite;
+}
+
+@keyframes quiz-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--gold) 28%, transparent);
+    border-color: color-mix(in oklab, var(--gold) 38%, var(--border));
+  }
+  50% {
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--gold) 14%, transparent);
+    border-color: color-mix(in oklab, var(--gold) 70%, var(--border));
+  }
+}
+
+/* Odpovězený proužek stojí dole, nesvítí a nehýbe se. */
+.quiz-strip.done {
   border-color: var(--border);
+  background: var(--surface);
+  opacity: 0.7;
+  margin-top: var(--sp-4);
+}
+
+.quiz-strip.done .quiz-strip-go {
+  cursor: default;
 }
 
 .quiz-strip-mark {
   flex: none;
   display: grid;
   place-items: center;
-  width: 46px;
-  height: 46px;
+  width: 34px;
+  height: 34px;
   border-radius: var(--r-full);
   background: var(--gold-soft);
   color: var(--gold);
   font-family: var(--font-display);
-  font-size: 1.6rem;
+  font-size: 1.25rem;
   font-weight: 800;
+  line-height: 1;
+}
+
+/* Otazník uvnitř dýchá s proužkem — je to to jediné, co v něm svítí. */
+.quiz-strip.live .quiz-strip-mark {
+  animation: quiz-mark-pulse 3.4s ease-in-out infinite;
+}
+
+@keyframes quiz-mark-pulse {
+  0%,
+  100% {
+    background: var(--gold-soft);
+  }
+  50% {
+    background: color-mix(in oklab, var(--gold) 26%, var(--surface));
+  }
+}
+
+.quiz-strip.done .quiz-strip-mark {
+  background: var(--surface-2, var(--surface));
+  color: var(--muted);
 }
 
 .quiz-strip-body {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0;
   flex: 1;
   min-width: 0;
 }
 
 .quiz-strip-title {
   font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 650;
   color: var(--text);
+  line-height: 1.2;
+}
+
+.quiz-strip-body .faint {
+  font-size: 0.78rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Malý otazníček s výkladem. Sedí na kraji proužku, aby se nepletl s
+   ťuknutím do hry, a je dost velký na prst i při té drobné velikosti. */
+.quiz-strip-help {
+  flex: none;
+  align-self: center;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-right: var(--sp-2);
+  border-radius: var(--r-full);
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.quiz-strip-help:hover {
+  color: var(--gold);
+  border-color: color-mix(in oklab, var(--gold) 55%, var(--border));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quiz-strip.live,
+  .quiz-strip.live .quiz-strip-mark {
+    animation: none;
+  }
+  .quiz-strip.live {
+    border-color: color-mix(in oklab, var(--gold) 70%, var(--border));
+  }
 }
 
 /* Deska hry. Otázka dne se nehraje na mřížce ani na klávesnici, takže si
