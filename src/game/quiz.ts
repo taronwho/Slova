@@ -189,14 +189,100 @@ export function isOver(state: QuizState): boolean {
  * jen doprovází — mezery, spojovníky, tečky, uvozovky. „Édith Piaf",
  * „edith piaf" i „Edith-Piaf" jsou tatáž odpověď a odmítnout to poslední by
  * bylo jen chytání za slovo.
+ *
+ * **A hlavně se odpouští tvar.** Hráč zná odpověď a píše ji, jak mu přijde
+ * pod ruku: na „Podávání ruky" napsal „podání ruky" a hra ho odmítla. To je
+ * ta nejhorší možná prohra — vědět a nedostat. Proto se porovnávají kmeny
+ * jednotlivých slov s tolerancí na jedno písmeno, ne celý řetězec:
+ * „podání ruky", „podávání rukou" i „podávání ruky" projdou.
+ *
+ * Volnost má hranici u **významu**. „Potřesení ruky" je synonymum, ne jiný
+ * tvar, a žádné porovnávání písmen ho neuhodne — takové odpovědi musí být
+ * vypsané v `alt` u otázky. Kontrola v `tools/5g_build_quiz.py` hlídá, aby
+ * se do indicií neprozradily.
  */
 export function matches(question: QuizQuestion, guess: string): boolean {
-  const want = [question.answer, ...(question.alt ?? [])].map(key)
-  return want.includes(key(guess))
+  const want = [question.answer, ...(question.alt ?? [])]
+  if (want.some((text) => key(text) === key(guess))) return true
+  const mine = stems(guess)
+  return want.some((text) => sameStems(stems(text), mine))
 }
 
 function key(text: string): string {
   return fold(text.toLowerCase()).replace(/[^a-z0-9]+/g, '')
+}
+
+/**
+ * Slova, která odpověď jen lepí dohromady.
+ *
+ * Kdo napíše „bitva u Hastingsu" místo „bitva u Hastingsu", nemá být
+ * odmítnutý kvůli předložce, a kdo ji vynechá, taky ne.
+ */
+const GLUE = new Set([
+  'a', 'i', 'o', 'u', 'v', 'z', 'k', 's', 'na', 'do', 'od', 'po', 'za', 'ze',
+  'se', 'si', 'je', 'to', 'ta', 'ten', 'the', 'pri', 'pro', 'nad', 'pod',
+])
+
+/**
+ * Kmen slova — hrubě, useknutím konce.
+ *
+ * Čeština ohýbá na konci, takže první písmena nesou význam. Delší slovo si
+ * může dovolit delší kmen; u krátkého by useknutí smazalo všechno.
+ */
+function stem(word: string): string {
+  if (word.length <= 4) return word
+  if (word.length <= 6) return word.slice(0, 4)
+  return word.slice(0, 5)
+}
+
+function stems(text: string): string[] {
+  return fold(text.toLowerCase())
+    .split(/[^a-z0-9]+/)
+    .filter((word) => word.length > 0 && !GLUE.has(word))
+    .map(stem)
+}
+
+/**
+ * Liší se dvě slova nejvýš o jedno písmeno? (vložení, smazání, záměna)
+ *
+ * U krátkých slov se neodpouští nic. Jedno písmeno ze tří je třetina slova
+ * a „sůl" by pak brala „sil"; u čtyř a víc už je to bezpečně jen koncovka.
+ */
+function near(a: string, b: string): boolean {
+  if (a === b) return true
+  if (a.length < 4 || b.length < 4) return false
+  if (Math.abs(a.length - b.length) > 1) return false
+  const [short, long] = a.length <= b.length ? [a, b] : [b, a]
+  let i = 0
+  let j = 0
+  let slack = 1
+  while (i < short.length && j < long.length) {
+    if (short[i] === long[j]) {
+      i += 1
+      j += 1
+      continue
+    }
+    if (slack === 0) return false
+    slack -= 1
+    // Při stejné délce se písmeno zamění, jinak se v delším přeskočí.
+    if (short.length === long.length) i += 1
+    j += 1
+  }
+  return true
+}
+
+/**
+ * Odpovídají si dvě sady kmenů?
+ *
+ * Musí to platit **oběma směry**: samotné „ruky" nesmí projít jako
+ * „podávání ruky" a naopak. Jinak by hráč vyhrál každou otázku o dvou
+ * slovech tím, že napíše to obecnější z nich.
+ */
+function sameStems(want: string[], got: string[]): boolean {
+  if (want.length === 0 || got.length === 0) return false
+  const covers = (from: string[], to: string[]) =>
+    from.every((word) => to.some((other) => near(word, other)))
+  return covers(want, got) && covers(got, want)
 }
 
 export interface QuizOutcome {

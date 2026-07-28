@@ -19,6 +19,19 @@ export const MODE_LABEL: Record<ModeId, string> = {
   tetris: 'Slabiky',
 }
 
+/**
+ * Nadpis návodu ke hře.
+ *
+ * Není to jen `Jak se hraje ${název}`: Slabiky jsou množné číslo, takže se
+ * *hrají*. Jedno slovo, ale v nadpisu, na který se hráč dívá pokaždé, když
+ * hledá pravidla — a špatná shoda tam bije do očí.
+ */
+export function howToPlay(mode: ModeId): string {
+  return mode === 'tetris'
+    ? 'Jak se hrají Slabiky'
+    : `Jak se hraje ${MODE_LABEL[mode]}`
+}
+
 export const MODE_TAGLINE: Record<ModeId, string> = {
   chain: 'Měň jedno písmeno a dojdi k cíli',
   hive: 'Skládej slova ze sedmi písmen',

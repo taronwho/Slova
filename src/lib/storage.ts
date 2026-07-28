@@ -596,8 +596,16 @@ export function recordRound(
   profile: Profile,
   result: RoundResult,
   day: string,
-  daily = false,
+  wanted = false,
 ): Profile {
+  // Denní výzva se počítá jednou za den a hru. Bez téhle podmínky šlo pustit
+  // hotovou výzvu znovu a znovu a pokaždé inkasovat inkoust za dokončenou
+  // várku — hráč na to přišel. Nestačí zašedit dlaždici: kdo zná adresu,
+  // spustí kolo i tak, takže se to hlídá tady, ne v obrazovce.
+  //
+  // Kolo se pořád zapíše jako běžné — body, věhlas i statistiky platí.
+  // Nepočítá se jen podruhé jako *denní*.
+  const daily = wanted && profile.dailyDone[`${day}:${result.mode}`] === undefined
   // Série je řada **čistých** kol: dotažených a bez jediné nápovědy. Dřív se
   // počítalo každé odehrané kolo, takže série osmnácti mohla vzniknout
   // z osmnácti prohraných šibenic. Násobí se jí skóre, takže musí něco stát.

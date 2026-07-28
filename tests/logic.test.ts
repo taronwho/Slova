@@ -1303,7 +1303,35 @@ describe('otázka dne', () => {
     expect(quizMatches(q, 'edith piaf')).toBe(true)
     expect(quizMatches(q, 'Edith-Piaf')).toBe(true)
     expect(quizMatches(q, '  PIAF ')).toBe(true)
-    expect(quizMatches(q, 'Piaff')).toBe(false)
+    // Překlep o jedno písmeno se odpouští. Hráč odpověď zná a hra ho za
+    // uklouznutý prst trestat nemá — dřív „Piaff" propadlo.
+    expect(quizMatches(q, 'Piaff')).toBe(true)
+    // Jiné jméno ale projít nesmí.
+    expect(quizMatches(q, 'Dalida')).toBe(false)
+    expect(quizMatches(q, 'Edith')).toBe(false)
+  })
+
+  /**
+   * Tolerance tvaru. Hráč napsal na „Podávání ruky" hned tři varianty a hra
+   * ho pokaždé odmítla — to je ta nejhorší prohra, vědět a nedostat.
+   */
+  it('odpouští se skloňování a odvozený tvar, ne jiný význam', () => {
+    const q: QuizQuestion = {
+      id: 'x',
+      topic: 'spolecnost',
+      ask: 'Co?',
+      clues: ['a', 'b', 'c'],
+      answer: 'Podávání ruky',
+      alt: ['potřesení rukou', 'stisknutí ruky'],
+    }
+    expect(quizMatches(q, 'podání ruky')).toBe(true)
+    expect(quizMatches(q, 'podávání rukou')).toBe(true)
+    expect(quizMatches(q, 'potřesení ruky')).toBe(true)
+    expect(quizMatches(q, 'stisk ruky')).toBe(true)
+    // Jedno slovo z dvouslovné odpovědi nestačí — jinak by hráč vyhrál
+    // každou takovou otázku tím obecnějším z nich.
+    expect(quizMatches(q, 'ruka')).toBe(false)
+    expect(quizMatches(q, 'objetí')).toBe(false)
   })
 
   it('po třech chybách kolo končí a odměna je nulová', () => {

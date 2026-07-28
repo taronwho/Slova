@@ -330,8 +330,11 @@ export default function App() {
       })
       updateProfile((previous) => {
         const isDaily = view.kind === 'game' && view.daily
+        // Zapsat výsledek smí jen první dnešní pokus. Druhý by přepsal skóre
+        // a hlavně by znovu odemkl várku i s odměnou.
+        const first = isDaily && previous.dailyDone[`${dayKey}:${result.mode}`] === undefined
         const next = recordRound(previous, result, dayKey, isDaily)
-        if (!isDaily) return next
+        if (!first) return next
         return {
           ...next,
           dailyDone: { ...next.dailyDone, [`${dayKey}:${result.mode}`]: result.score },

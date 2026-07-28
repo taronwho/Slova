@@ -97,6 +97,27 @@ for (const size of SIZES) {
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
   )
   if (homeOverflow > 0) note(`${size.name}/domů`, `přetéká vodorovně o ${homeOverflow}px`)
+
+  // Všech šest dlaždic musí být vidět bez rolování — i když nad nimi svítí
+  // obě upomínky (Otázka dne i nedohrané denní výzvy). Na výšku se to měří
+  // v nejhorším případě, tedy s prázdným profilem, kdy svítí obě.
+  const grid = await page.evaluate(() => {
+    const tiles = [...document.querySelectorAll('.mode-tile')]
+    const last = tiles.at(-1)?.getBoundingClientRect()
+    return {
+      tiles: tiles.length,
+      bottom: last ? Math.round(last.bottom) : 0,
+      view: window.innerHeight,
+      alerts: document.querySelectorAll('.home-top > *').length,
+    }
+  })
+  if (size.height >= size.width && grid.bottom > grid.view) {
+    note(
+      `${size.name}/domů`,
+      `šestá dlaždice je pod okrajem o ${grid.bottom - grid.view}px ` +
+        `(upomínek nahoře: ${grid.alerts})`,
+    )
+  }
   // Pozor: screenshot s fullPage dočasně mění viewport a Chromium při tom
   // ztratí emulaci dotyku, takže `pointer: coarse` přestane platit. Snímek
   // domovské obrazovky proto až na konci, po všech měřeních.

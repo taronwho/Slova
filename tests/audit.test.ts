@@ -139,6 +139,54 @@ describe('mety s nápovědou', () => {
   })
 })
 
+describe('denní výzva jde jen jednou denně', () => {
+  /**
+   * Hotovou výzvu šlo pustit znovu a znovu a pokaždé inkasovat inkoust za
+   * dokončenou várku. Hráč na to přišel dřív než my.
+   */
+  it('druhé kolo téže výzvy se jako denní nepočítá', () => {
+    let profile = emptyProfile()
+    const done = (p: typeof profile, mode: ModeId) => ({
+      ...p,
+      dailyDone: { ...p.dailyDone, [`${DAY}:${mode}`]: 100 },
+    })
+
+    for (const mode of MODES) {
+      profile = recordRound(profile, round(mode, 0), DAY, true)
+      profile = done(profile, mode)
+    }
+    const afterFirst = { dailies: profile.counters.dailies, sets: profile.counters.dailySets, ink: profile.ink }
+    expect(afterFirst.dailies).toBe(6)
+    expect(afterFirst.sets).toBe(1)
+
+    // Znovu totéž — nesmí přibýt ani výzva, ani várka.
+    const replay = (as: boolean) => {
+      let next = profile
+      for (const mode of MODES) {
+        next = recordRound(next, { ...round(mode, 0), puzzleId: `again-${mode}` }, DAY, as)
+      }
+      return next
+    }
+    const again = replay(true)
+    expect(again.counters.dailies).toBe(afterFirst.dailies)
+    expect(again.counters.dailySets).toBe(afterFirst.sets)
+
+    // Inkoust se za mety sype pořád — kolo je regulérní. Nesmí ale přibýt
+    // nic navíc oproti témuž kolu zahranému mimo denní výzvu; kdyby ano,
+    // je to ta odměna za várku, kterou šlo farmit.
+    expect(again.ink).toBe(replay(false).ink)
+  })
+
+  it('kolo se ale pořád zapíše jako běžné — body a statistiky platí', () => {
+    let profile = emptyProfile()
+    profile = recordRound(profile, round('chain', 0), DAY, true)
+    profile = { ...profile, dailyDone: { [`${DAY}:chain`]: 100 } }
+    const before = profile.stats.chain.played
+    profile = recordRound(profile, { ...round('chain', 0), puzzleId: 'again' }, DAY, true)
+    expect(profile.stats.chain.played).toBe(before + 1)
+  })
+})
+
 describe('text mety sedí s podmínkou', () => {
   /**
    * Meta, jejíž popis slibuje kolo bez nápovědy, se nesmí dát splnit kolem

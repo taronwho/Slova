@@ -745,7 +745,7 @@ BANK["technika"] = [
         "Ohřívá tak, že rozkmitá molekuly vody v potravině.",
         "První model z roku 1947 vážil přes 300 kilo a stál jako auto; dnes je skoro v každé kuchyni.",
     )),
-    ("Poznej stroj.", "Parní stroj", [], (
+    ("Poznej stroj.", "Parní stroj", ["parní motor"], (
         "Jeho starší podoba se od začátku 18. století používala hlavně k čerpání vody z dolů a hltala uhlí přímo na místě.",
         "Jeho výkon se dodnes připomíná jednotkou, kterou Watt zavedl, aby ho porovnal s tažnými zvířaty.",
         "Poháněl první lokomotivy a rozjel průmyslovou revoluci.",
@@ -1058,7 +1058,7 @@ BANK["spolecnost"] = [
         "Ta města jsou Brusel a Štrasburk, sekretariát sídlí v Lucemburku.",
         "Jeho poslance volí občané členských států unie přímo, jednou za pět let.",
     )),
-    ("Poznej zvyk.", "Podávání ruky", ["potřesení rukou", "handshake"], (
+    ("Poznej zvyk.", "Podávání ruky", ["potřesení rukou", "stisknutí ruky", "stisk ruky", "podání ruky", "handshake"], (
         "Ve starém Řecku se jím stvrzovala dohoda a zobrazuje ho i řada náhrobních reliéfů.",
         "V Japonsku ho z velké části nahrazuje úklona, v arabském světě má vlastní pravidla.",
         "Je to nejběžnější evropský pozdrav při setkání i uzavření dohody.",
@@ -1577,7 +1577,7 @@ BANK["historie"] += [
         "Vládli přes čtyři sta let a pohřbívat se nechávali v rotundě a bazilice na Pražském hradě.",
         "Patřili k nim svatý Václav i Otakar II. a vymřeli po meči roku 1306 zavražděním Václava III.",
     )),
-    ("Poznej období.", "Průmyslová revoluce", [], (
+    ("Poznej období.", "Průmyslová revoluce", ["industrializace"], (
         "Zahájila ji v Anglii textilní výroba; létající člunek a spřádací stroj předběhly i parní pohon.",
         "Přinesla stěhování lidí do měst, dětskou práci v továrnách a vznik dělnické třídy.",
         "Její pohon obstaral parní stroj a symbolem se staly komíny a železnice.",
@@ -2117,12 +2117,12 @@ BANK["spolecnost"] += [
         "Ve Švýcarsku se koná několikrát ročně a lidé v něm rozhodují i o zdanění.",
         "Je to hlasování všech občanů o jedné otázce.",
     )),
-    ("Poznej instituci.", "Ústavní soud", [], (
+    ("Poznej instituci.", "Ústavní soud", ["ústavní soud ČR"], (
         "Jeho patnáct členů jmenuje prezident se souhlasem Senátu na deset let a týž člověk to nesmí dělat dvakrát po sobě.",
         "Sídlí v Brně a obrátit se na něj může i jednotlivec, když vyčerpal všechny ostatní možnosti.",
         "Může zrušit zákon, který schválil parlament, pokud odporuje nejvyšší normě státu.",
     )),
-    ("Poznej pojem.", "Občanská neposlušnost", [], (
+    ("Poznej pojem.", "Občanská neposlušnost", ["nenásilný odpor"], (
         "Pojem zpopularizoval americký myslitel Henry David Thoreau esejí z roku 1849, když odmítl platit daň.",
         "Její podstatou je vědomé porušení zákona spojené s přijetím trestu, aby se ukázala jeho nespravedlnost.",
         "Použil ji Gándhí i Martin Luther King.",
@@ -2440,12 +2440,12 @@ BANK["veda"] += [
         "Pro elektroniku se musí vyčistit tak, že na miliardu atomů připadá méně než jeden cizí.",
         "Jsou z něj čipy a je po něm pojmenováno kalifornské údolí.",
     )),
-    ("Poznej jev.", "Skleníkový efekt", [], (
+    ("Poznej jev.", "Skleníkový efekt", ["skleníkový jev"], (
         "Bez něj by průměrná teplota Země byla kolem minus osmnácti stupňů a planeta by byla neobyvatelná.",
         "Popsal ho už v 19. století Svante Arrhenius a spočítal i vliv spalování uhlí.",
         "Zesiluje ho oxid uhličitý a metan a způsobuje oteplování.",
     )),
-    ("Poznej vesmírný objekt.", "Černá díra", [], (
+    ("Poznej vesmírný objekt.", "Černá díra", ["černé díry"], (
         "První snímek jedné z nich zveřejnili roku 2019 a vznikl propojením osmi radioteleskopů po celé planetě.",
         "Její hranicí je horizont událostí a v jejím okolí plyne čas pomaleji.",
         "Nic z ní neunikne, ani světlo, a vzniká zhroucením hmotné hvězdy.",
@@ -2666,7 +2666,7 @@ BANK["historie"] += [
         "Proběhlo v noci na 1. ledna 1993 a označuje se jako sametový rozvod.",
         "Vznikly tím Česká republika a Slovensko.",
     )),
-    ("Poznej období.", "Doba kamenná", [], (
+    ("Poznej období.", "Doba kamenná", ["pravěk"], (
         "Její poslední úsek přinesl zemědělství, což se označuje za největší proměnu způsobu života v dějinách.",
         "Dělí se na starší, střední a mladší a končí objevem zpracování kovů.",
         "Lidé v ní používali pěstní klín a malovali v jeskyních.",
@@ -3101,7 +3101,7 @@ BANK["jazyk"] += [
 ]
 
 BANK["spolecnost"] += [
-    ("Poznej pojem.", "Minimální mzda", [], (
+    ("Poznej pojem.", "Minimální mzda", ["minimální plat"], (
         "V některých zemích neexistuje vůbec a její výši tam určuje jen dohoda odborů se zaměstnavateli.",
         "V Česku ji stanovuje vláda nařízením a od ní se odvozují i zaručené mzdy podle náročnosti práce.",
         "Je to nejnižší částka, kterou zaměstnavatel smí za měsíc práce vyplatit.",
@@ -4473,7 +4473,7 @@ BANK["veda"] += [
         "U země patří mezi škodliviny a v horkých dnech kvůli němu hygienici hlásí smogovou situaci.",
         "Ve stratosféře tvoří vrstvu, která nás chrání před ultrafialovým zářením a kterou děravěly freony.",
     )),
-    ("Poznej chemickou látku.", "Peroxid vodíku", [], (
+    ("Poznej chemickou látku.", "Peroxid vodíku", ["kysličník vodíku"], (
         "Jeho rozklad v kontaktu s krví obstará enzym kataláza — proto to na ráně zašumí a zapění.",
         "V lékárně se prodává tříprocentní roztok v tmavé lahvičce, protože na světle se rozkládá.",
         "Používá se k dezinfekci ran a k odbarvování vlasů na blond; vzorec H2O2.",
@@ -4508,7 +4508,7 @@ BANK["veda"] += [
         "Sklo ho zadrží, a proto se člověk za oknem neopálí.",
         "Kvůli němu se maže opalovací krém a v atmosféře nás před ním chrání ozonová vrstva.",
     )),
-    ("Poznej fyzikální veličinu.", "Rychlost světla", [], (
+    ("Poznej fyzikální veličinu.", "Rychlost světla", ["rychlost svetla ve vakuu"], (
         "Poprvé ji odhadl Ole Rømer roku 1676 z toho, že zatmění Jupiterových měsíců přicházela opožděně.",
         "Michelson s Morleym zjistili, že vychází stejně bez ohledu na pohyb pozorovatele, a tím padl éter.",
         "Je to zhruba 300 000 kilometrů za sekundu a označuje se písmenem c ve vzorci E = mc2.",
@@ -4518,7 +4518,7 @@ BANK["veda"] += [
         "Vnitřní plocha měřená přes všechny sklípky se odhaduje na sedmdesát čtverečních metrů.",
         "Tady se do krve dostává kyslík a odchází z ní oxid uhličitý; nádech a výdech.",
     )),
-    ("Poznej lidský orgán.", "Štítná žláza", [], (
+    ("Poznej lidský orgán.", "Štítná žláza", ["štítnice"], (
         "K výrobě svého hormonu potřebuje jod, a právě proto se jod přidává do kuchyňské soli.",
         "Leží na krku před průdušnicí a má tvar motýla.",
         "Řídí rychlost látkové výměny; při její nedostatečnosti člověk přibírá a je mu zima.",
@@ -4553,7 +4553,7 @@ BANK["veda"] += [
         "Patří k němu brzlík, slezina, mízní uzliny a bílé krvinky.",
         "Díky jeho paměti funguje očkování a po prodělané nemoci je člověk chráněný.",
     )),
-    ("Poznej veličinu měřenou u lékaře.", "Krevní tlak", [], (
+    ("Poznej veličinu měřenou u lékaře.", "Krevní tlak", ["tlak krve"], (
         "Poprvé ho změřil roku 1733 anglický farář Stephen Hales, když zavedl skleněnou trubici do tepny živého koně.",
         "Zapisuje se dvěma čísly a měří se v milimetrech rtuťového sloupce.",
         "Za normu se bere zhruba sto dvacet na osmdesát a jeho vysoká hodnota je hlavní rizikový faktor infarktu.",
@@ -4804,7 +4804,7 @@ BANK["historie"] += [
         "Vypukla roku 1861 po ostřelování pevnosti Sumter a jižní státy si zvolily vlastního prezidenta Jeffersona Davise.",
         "Sever proti Jihu, Abraham Lincoln, Gettysburg a konec otroctví.",
     )),
-    ("Poznej historickou událost.", "Solný pochod", [], (
+    ("Poznej historickou událost.", "Solný pochod", ["solná stávka"], (
         "Šlo se čtyřiadvacet dní a 385 kilometrů k moři jen proto, aby si někdo mohl beztrestně nabrat trochu z pláže.",
         "Vedl ho Mahátma Gándhí roku 1930 jako protest proti britskému daňovému monopolu.",
         "Indové si po něm vyráběli sůl z mořské vody a šli za to do vězení; symbol nenásilného odporu.",
@@ -4882,7 +4882,7 @@ BANK["priroda"] += [
         "Dokáže vypít sto litrů za deset minut a jeho moč je hustá jako sirup.",
         "Loď pouště s jedním nebo dvěma hrby.",
     )),
-    ("Poznej živočicha.", "Lední medvěd", [], (
+    ("Poznej živočicha.", "Lední medvěd", ["medvěd lední", "polární medvěd"], (
         "Jeho kůže je pod srstí černá a chlupy nejsou bílé, ale duté a průsvitné.",
         "Loví tuleně u dýchacích otvorů v zamrzlém moři a zákon ho řadí mezi mořské savce.",
         "Šelma ze Špicberků a Grónska, symbol tání Arktidy.",
@@ -4892,7 +4892,7 @@ BANK["priroda"] += [
         "Na přední tlapě má šestý prst, který ve skutečnosti vyrostl ze zápěstní kosti.",
         "Černobílá šelma z Číny, která žere bambus a je ve znaku ochranářské organizace WWF.",
     )),
-    ("Poznej živočicha.", "Varan komodský", [], (
+    ("Poznej živočicha.", "Varan komodský", ["komodský varan", "komodský drak"], (
         "Dlouho se myslelo, že zabíjí bakteriemi ve slinách; ukázalo se, že má opravdové jedové žlázy.",
         "Samice se výjimečně rozmnoží i bez samce a z takových vajec se líhnou jen samci.",
         "Třímetrový ještěr z indonéských ostrovů, největší na světě.",
@@ -4952,7 +4952,7 @@ BANK["priroda"] += [
         "Vzniká přímo z vodní páry na drobném zrnku prachu, aniž by po cestě byla kapkou.",
         "Má vždycky šest ramen a Wilson Bentley jich vyfotil přes pět tisíc, aby ukázal, že se žádné dvě neshodují.",
     )),
-    ("Poznej přírodní děj.", "Koloběh vody", [], (
+    ("Poznej přírodní děj.", "Koloběh vody", ["oběh vody", "vodní cyklus", "hydrologický cyklus"], (
         "Molekula, kterou dnes vypijete, byla statisticky vzato už mnohokrát v oceánu i v mraku — nic se cestou neztrácí ani nepřidává.",
         "Pohání ho sluneční energie a patří do něj výpar, kondenzace, srážky a odtok.",
         "Z moře se vypaří, spadne jako déšť a řekami se vrátí zpátky.",
@@ -4995,12 +4995,12 @@ BANK["technika"] += [
         "Model Zippo se pozná podle cvaknutí víčka a firma na něj dává doživotní záruku.",
         "Kolečkem nebo piezoelektrickou jiskrou zažehne plyn; kuřák ho nosí v kapse u cigaret.",
     )),
-    ("Poznej předmět.", "Náramkové hodinky", [], (
+    ("Poznej předmět.", "Náramkové hodinky", ["hodinky na ruku", "hodinky"], (
         "Dlouho platily za ženskou ozdobu; mezi muži je prosadily až zákopy, kde nešlo tahat z kapsy nic na řetízku.",
         "Automatický nátah pohání pohyb ruky a od sedmdesátých let jim konkuruje krystal křemene.",
         "Nosí se na zápěstí, ukazují čas a dělá je Rolex nebo Prim.",
     )),
-    ("Poznej předmět.", "Kyvadlové hodiny", [], (
+    ("Poznej předmět.", "Kyvadlové hodiny", ["hodiny s kyvadlem", "pendlovky"], (
         "Jejich přesnost stojí na tom, že doba jednoho kmitu skoro nezávisí na velikosti rozkyvu — všiml si toho Galileo u lustru v kostele.",
         "Sestrojil je roku 1656 Christiaan Huygens a zpřesnily měření času z čtvrthodin na vteřiny.",
         "Vysoká dřevěná skříň v obývacím pokoji, uvnitř se houpe závaží na tyči a nahoře to odbíjí.",
@@ -5030,7 +5030,7 @@ BANK["technika"] += [
         "První domácí model prodal kožešník James Spangler firmě Hoover a z té značky se v angličtině stalo sloveso.",
         "Sáčkový nebo bezsáčkový přístroj s hadicí, který vtáhne prach z koberce.",
     )),
-    ("Poznej vynález.", "Psací stroj", [], (
+    ("Poznej vynález.", "Psací stroj", ["pišící stroj"], (
         "První sériový model z roku 1874 uměl jen velká písmena a pisatel na text neviděl, dokud nezvedl válec.",
         "Mark Twain na něm jako první odevzdal rukopis knihy a značky Underwood či Remington vydržely sto let.",
         "Klapání kláves, páčky s literami a válec s papírem, do kterého se vkládal kopírák.",
@@ -5045,12 +5045,12 @@ BANK["technika"] += [
         "Jméno dostala podle kabelu, který z ní vzadu vedl jako ocásek.",
         "Kolečko, dvě tlačítka a kurzor na obrazovce; leží vedle klávesnice.",
     )),
-    ("Poznej vynález.", "Čárový kód", [], (
+    ("Poznej vynález.", "Čárový kód", ["čárkový kód", "EAN"], (
         "Nápad vznikl roku 1948 na pláži, kde si student kreslil do písku Morseovu abecedu a protáhl tečky a čárky dolů.",
         "První zboží jím označené prošlo pokladnou roku 1974 v Ohiu — byla to žvýkačka Wrigley.",
         "Svislé proužky na obalu, které načte laserová čtečka u kasy.",
     )),
-    ("Poznej vynález.", "Platební karta", [], (
+    ("Poznej vynález.", "Platební karta", ["kreditní karta", "debetní karta", "bankovní karta"], (
         "Legenda říká, že nápad vznikl roku 1949, když jeden podnikatel zapomněl v restauraci peněženku a neměl čím zaplatit večeři.",
         "Číslo na ní má kontrolní číslici počítanou Luhnovým algoritmem, takže překlep pozná automat.",
         "Obdélníček s čipem, kterým se platí u terminálu; vydává ho Visa nebo Mastercard.",
@@ -5080,7 +5080,7 @@ BANK["technika"] += [
         "Váhově je pětkrát pevnější než ocel a rozkládá energii nárazu do vláken.",
         "Aramidové vlákno z neprůstřelných vest a helem.",
     )),
-    ("Poznej stroj.", "Spalovací motor", [], (
+    ("Poznej stroj.", "Spalovací motor", ["benzinový motor", "zážehový motor"], (
         "Čtyřdobý cyklus popsal Nicolaus Otto a v jeho firmě pracovali muži, kteří pak založili Daimler a Benz.",
         "V každém válci se opakuje sání, komprese, výbuch a výfuk a klikový hřídel z toho udělá otáčení.",
         "Pohání auta na benzin a naftu, potřebuje svíčky a nasává vzduch smíchaný s palivem.",
@@ -5113,17 +5113,17 @@ BANK["sport"] += [
         "Nejznámější dálkový závod se jmenuje Vasův a měří devadesát kilometrů.",
         "Bílá stopa, hůlky a Jizerská padesátka.",
     )),
-    ("Poznej atletickou disciplínu.", "Skok o tyči", [], (
+    ("Poznej atletickou disciplínu.", "Skok o tyči", ["tyčka"], (
         "Rekordy povyskočily, když se v šedesátých letech nahradil bambus a kov pružným laminátem.",
         "Sergej Bubka posouval světový rekord po centimetrech pětatřicetkrát.",
         "Atlet se rozběhne s dlouhým pružným prutem, zapře ho do skříňky a přehoupne se pozadu přes laťku.",
     )),
-    ("Poznej atletickou disciplínu.", "Skok do dálky", [], (
+    ("Poznej atletickou disciplínu.", "Skok do dálky", ["dálka"], (
         "Světový rekord Boba Beamona z roku 1968 překonal ten dosavadní o víc než půl metru a vydržel dvacet tři let.",
         "Měří se od odrazového prkna k nejbližšímu otisku v písku.",
         "Rozběh, odraz a doskok do pískoviště; závodníci ve vzduchu šlapou nebo se prohýbají.",
     )),
-    ("Poznej atletickou disciplínu.", "Vrh koulí", [], (
+    ("Poznej atletickou disciplínu.", "Vrh koulí", ["hod koulí", "koule"], (
         "Náčiní se nesmí hodit — musí se od ramene vytlačit a po celou dobu zůstat u krku.",
         "Náčiní váží u mužů 7,26 kilogramu a závodí se v kruhu o průměru 2,135 metru s prkénkem vpředu.",
         "Otočka nebo sun v kruhu a odhozené litinové závaží do vyznačené výseče.",
@@ -5133,7 +5133,7 @@ BANK["sport"] += [
         "Hraje se sedm na sedm, brankáři patří šestimetrové území a útok má na akci třicet vteřin.",
         "Míč se nosí v ruce, smějí se s ním udělat tři kroky a střílí se ve výskoku do branky.",
     )),
-    ("Poznej sport.", "Americký fotbal", [], (
+    ("Poznej sport.", "Americký fotbal", ["NFL"], (
         "Vzniklo to z ragby a klíčovou změnou byl nápad, že tým dostane několik pokusů posunout se o deset yardů.",
         "Hraje se jedenáct na jedenáct, přihrávat dopředu se smí jednou za akci a hráči mají helmy a chrániče.",
         "Finále se jmenuje Super Bowl a hraje se v soutěži NFL.",
@@ -5291,7 +5291,7 @@ BANK["jazyk"] += [
         "Dvořák a Smetana kvůli němu dělají cizincům potíže a logopedi ho učí děti jako poslední.",
         "Ta hláska s háčkem, kterou má v podstatě jen čeština; třista třicet tři stříbrných křepelek.",
     )),
-    ("Poznej pojem z jazykovědy.", "Obecná čeština", [], (
+    ("Poznej pojem z jazykovědy.", "Obecná čeština", ["hovorová čeština"], (
         "Není to nářečí, ale útvar, který se rozšířil z Čech do velké části země a v mluvě funguje jako běžný standard.",
         "Pozná se podle ej místo ý a í místo é: dobrej, mlíko, vokno.",
         "Nespisovná mluva, kterou v Praze slyšíte na potkání a která se do knih dostává v dialozích.",
@@ -5404,7 +5404,7 @@ BANK["spolecnost"] += [
         "Lloyd's v Londýně začal jako kavárna, kde se ti, kdo taková rizika kupovali, scházeli.",
         "Platíte pravidelnou částku a když přijde škoda, dostanete plnění; u auta je povinné.",
     )),
-    ("Poznej pojem z veřejného života.", "Rodičovská dovolená", [], (
+    ("Poznej pojem z veřejného života.", "Rodičovská dovolená", ["rodičovská", "mateřská dovolená", "mateřská"], (
         "Ve Švédsku je část měsíců vyhrazená druhému z páru a propadne, pokud si ji nevybere.",
         "V Česku patří k nejdelším v Evropě a příspěvek se dá rozvrhnout do dvou až čtyř let.",
         "Volno pro matku nebo otce, kteří zůstávají doma s malým dítětem.",
@@ -5414,12 +5414,12 @@ BANK["spolecnost"] += [
         "Na tabák se u nás nesmí vůbec a na alkohol nesmí cílit na mladistvé.",
         "Přeruší film, visí na billboardu a chce, abyste si něco koupili.",
     )),
-    ("Poznej pojem z práva.", "Ochranná známka", [], (
+    ("Poznej pojem z práva.", "Ochranná známka", ["obchodní známka", "registrovaná známka"], (
         "Zapisuje se na deset let a musí se používat, jinak ji lze po pěti letech zrušit pro neužívání.",
         "Když zdruhoví — jako termoska nebo eskalátor — majitel o ni může přijít, protože se stala běžným slovem.",
         "Nápis nebo obrázek s písmenkem R v kroužku, který nesmí nikdo jiný použít; třeba jablko od Applu.",
     )),
-    ("Poznej pojem z práva.", "Autorské právo", [], (
+    ("Poznej pojem z práva.", "Autorské právo", ["copyright", "autorská práva"], (
         "Nechrání nápad, ale jeho konkrétní vyjádření — na samotnou myšlenku ho nikdo nemá.",
         "Trvá po celý život tvůrce a dalších sedmdesát let, pak dílo přechází do volného užití.",
         "Kvůli němu se nesmí stahovat filmy a platí se OSA za hudbu puštěnou v restauraci.",
@@ -5434,7 +5434,7 @@ BANK["spolecnost"] += [
         "Slovo se do světových jazyků dostalo přes ruštinu a bylo součástí zpravodajského řemesla.",
         "Záměrně vymyšlené zprávy na sociálních sítích, kterým se říká i fake news.",
     )),
-    ("Poznej pojem z veřejného života.", "Průzkum veřejného mínění", [], (
+    ("Poznej pojem z veřejného života.", "Průzkum veřejného mínění", ["sociologický průzkum"], (
         "Časopis Literary Digest oslovil roku 1936 dva miliony lidí a spletl se, zatímco Gallup se dvěma tisíci trefil — protože vybíral vzorek, ne adresář majitelů aut.",
         "Udává se u něj statistická odchylka, obvykle kolem tří procent.",
         "Agentura se zeptá tisícovky lidí, koho by volili, a z toho vyjdou předvolební preference.",
@@ -6157,17 +6157,17 @@ BANK["technika"] += [
         "Jeho první podoba se jmenovala leidenská láhev a experimentátory z 18. století pořádně kopalo.",
         "Součástka na desce, která vyhlazuje napětí a v blesku fotoaparátu vydá naráz celou nashromážděnou energii.",
     )),
-    ("Poznej vynález.", "Sluneční hodiny", [], (
+    ("Poznej vynález.", "Sluneční hodiny", ["slunečné hodiny"], (
         "Ukazují pravý místní čas, takže se s náramkovými strojky rozcházejí i o desítky minut podle zeměpisné délky a ročního období.",
         "Šikmá tyč na nich musí mířit k severnímu pólu, jinak by ukazovaly správně jen jednou za rok.",
         "Ciferník na jižní stěně kostela, kde čas ukazuje stín.",
     )),
-    ("Poznej vynález.", "Vodní kolo", [], (
+    ("Poznej vynález.", "Vodní kolo", ["mlýnské kolo"], (
         "Rozlišuje se, jestli voda dopadá shora, nebo podtéká zespodu — na tom závisí, kolik energie se využije.",
         "Po staletí to byl hlavní zdroj síly pro mlýny, hamry a pily.",
         "Otáčející se dřevěná konstrukce s lopatkami na potoce u mlýna.",
     )),
-    ("Poznej vynález.", "Parní lokomotiva", [], (
+    ("Poznej vynález.", "Parní lokomotiva", ["parní mašina", "parní vlak"], (
         "Rocket George Stephensona vyhrála roku 1829 soutěž v Rainhillu a určila podobu strojů na dalších sto let.",
         "Rozchod kolejí 1435 milimetrů pochází z rozteče kol anglických vozů a platí dodnes po celé Evropě.",
         "Černý stroj s komínem, ve kterém uhlí ohřívá kotel a pára tlačí písty spojené s koly.",
@@ -6195,12 +6195,12 @@ BANK["technika"] += [
 ]
 
 BANK["sport"] += [
-    ("Poznej sport.", "Vodní pólo", [], (
+    ("Poznej sport.", "Vodní pólo", ["pólo"], (
         "Hráči se v hlubokém bazénu drží nahoře šlapáním a to podstatné, co se děje pod hladinou, rozhodčí většinou nevidí.",
         "Zápas trvá čtyři osmiminutové části a míč se smí držet jen jednou rukou.",
         "Míčová hra v bazénu s brankami na obou koncích a čepičkami s chrániči uší.",
     )),
-    ("Poznej sport.", "Skoky do vody", [], (
+    ("Poznej sport.", "Skoky do vody", ["skok do vody", "skoky z můstku"], (
         "Závodník musí do hladiny vstoupit tak, aby po něm nezůstala skoro žádná sprška — tomu se říká čistý vstup.",
         "Startuje se z pružného prkna z jednoho a tří metrů a z pevné plošiny z deseti metrů.",
         "Salta a vruty nad bazénem, ve kterých Číňané vyhrávají skoro všechno.",
@@ -6240,7 +6240,7 @@ BANK["sport"] += [
         "Jede se v květnu a jeho legendární stoupání je Passo dello Stelvio.",
         "Třítýdenní etapový závod přes celý Apeninský poloostrov, druhý nejslavnější po tom francouzském.",
     )),
-    ("Poznej sportovní soutěž.", "Liga mistrů", [], (
+    ("Poznej sportovní soutěž.", "Liga mistrů", ["Champions League"], (
         "Hymnu k ní napsal Tony Britten podle Händelova Zadok the Priest a zpívá se ve třech jazycích.",
         "Do roku 1992 se jmenovala jinak a hrálo se v ní vyřazovacím způsobem hned od prvního kola.",
         "Nejprestižnější klubová soutěž evropského fotbalu s pohárem s velkýma ušima.",
@@ -6411,7 +6411,7 @@ BANK["spolecnost"] += [
         "Obálky se otevírají až po uzavření místností a lístky se počítají veřejně za přítomnosti pozorovatelů.",
         "To, co se v neděli po druhé hodině děje ve školách a hasičárnách, než přijdou první výsledky.",
     )),
-    ("Poznej pojem z práva.", "Presumpce neviny", [], (
+    ("Poznej pojem z práva.", "Presumpce neviny", ["domněnka neviny"], (
         "Znamená to, že důkazní břemeno leží na obžalobě — obviněný nemusí dokazovat vůbec nic.",
         "Pochybnost se vykládá ve prospěch obviněného; latinsky in dubio pro reo.",
         "Zásada, podle níž na každého hledíme jako na bezúhonného, dokud soud nerozhodne jinak.",
@@ -6431,7 +6431,7 @@ BANK["spolecnost"] += [
         "Vznikl z map, které nechal pořídit ještě císař, aby se dalo spravedlivě vyměřit pozemkové zdanění.",
         "Veřejný seznam pozemků a budov s vlastníky, do kterého se dá nahlédnout na internetu.",
     )),
-    ("Poznej ekonomický pojem.", "Nabídka a poptávka", [], (
+    ("Poznej ekonomický pojem.", "Nabídka a poptávka", ["poptávka a nabídka", "zákon nabídky a poptávky"], (
         "Křivky se protínají v bodě, kde je cena taková, že se prodá přesně tolik, kolik chce někdo koupit.",
         "Když je zboží málo a zájemců hodně, cena roste, dokud se část z nich nevzdá.",
         "Dvojice sil, které na trhu určují cenu.",
@@ -6451,7 +6451,7 @@ BANK["spolecnost"] += [
         "Ve Spojených státech kvůli tomu na začátku 20. století rozdělili ropnou společnost Standard Oil na třicet čtyři firem.",
         "Stav, kdy je na trhu jediný dodavatel a zákazník nemá kam jít.",
     )),
-    ("Poznej svátek nebo zvyk.", "Velikonoční pondělí", [], (
+    ("Poznej svátek nebo zvyk.", "Velikonoční pondělí", ["červené pondělí"], (
         "Termín se počítá podle Měsíce: připadá na den po první neděli po prvním jarním úplňku.",
         "Chlapci obcházejí domy s upleteným proutkem a dostávají barevná vejce.",
         "Den, kdy se u nás chodí na koledu s pomlázkou a lije se voda.",
@@ -6471,7 +6471,7 @@ BANK["spolecnost"] += [
         "Prezident při té příležitosti večer na Hradě předává státní vyznamenání.",
         "Svátek, který připadá na osmadvacátý říjen a připomíná zrod republiky roku 1918.",
     )),
-    ("Poznej pojem ze školství.", "Povinná školní docházka", [], (
+    ("Poznej pojem ze školství.", "Povinná školní docházka", ["školní docházka", "povinná docházka"], (
         "U nás ji zavedla roku 1774 Marie Terezie a trvala tehdy šest let; posílat děti do školy se leckde muselo vynucovat pokutami.",
         "Dnes trvá devět let a rodič může požádat o domácí variantu s přezkoušením.",
         "Zákon, díky kterému jde každé dítě od šesti let do lavice.",
@@ -6481,7 +6481,7 @@ BANK["spolecnost"] += [
         "Inženýr se píše před jménem, doktor přírodních věd za ním.",
         "Bc., Mgr. nebo Ing. — to, co člověk získá po absolvování univerzity.",
     )),
-    ("Poznej pojem z veřejného života.", "Sociální pojištění", [], (
+    ("Poznej pojem z veřejného života.", "Sociální pojištění", ["důchodové pojištění"], (
         "Peníze se nespoří na účet konkrétního člověka — vybrané odvody se hned rozdělí těm, kdo pobírají dávky teď.",
         "Odvádí se z každé mzdy a platí ho zaměstnanec i zaměstnavatel.",
         "Systém, ze kterého se vyplácejí důchody, nemocenská a podpora v mateřství.",
@@ -6496,7 +6496,7 @@ BANK["spolecnost"] += [
         "Sídlí v Haagu a vznikl Římským statutem roku 2002; USA, Rusko ani Čína ho neuznaly.",
         "Tribunál, který stíhá genocidu a válečné zločiny a vydal zatykač i na hlavy států.",
     )),
-    ("Poznej pojem z veřejného života.", "Ochrana spotřebitele", [], (
+    ("Poznej pojem z veřejného života.", "Ochrana spotřebitele", ["spotřebitelská práva", "práva spotřebitele"], (
         "Klíčové je právo vrátit zboží koupené po internetu do čtrnácti dnů bez udání důvodu — v kamenném obchodě takové právo není.",
         "Reklamovat lze dva roky a první rok se předpokládá, že vada tam byla od začátku.",
         "Soubor pravidel, díky nimž může zákazník vrátit boty a stěžovat si na obchodní inspekci.",

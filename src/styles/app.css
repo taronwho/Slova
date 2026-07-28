@@ -194,6 +194,107 @@
 
 /* ---------- Domovská obrazovka ---------- */
 
+/*
+ * Pruh upomínek nad výběrem her.
+ *
+ * Vejdou se sem dvě věci, které dneškem propadnou — Otázka dne a nedohrané
+ * denní výzvy — a pod nimi musí pořád zbýt místo na všech šest dlaždic bez
+ * rolování. Proto jsou obě upomínky nízké a mezera pod pruhem se počítá
+ * z toho, kolik jich zrovna svítí: prázdný pruh nezabírá nic.
+ */
+.home-top {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.home-top:not(:empty) {
+  margin-bottom: var(--sp-3);
+}
+
+.home-top > * {
+  margin-bottom: 0;
+}
+
+/* Upomínka na denní výzvy. Zmizí, jakmile je hráč má všechny — dokud svítí,
+   dýchá stejným rytmem jako Otázka dne, aby se ty dvě nepřekřikovaly. */
+.daily-alert {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-3);
+  border: 1px solid color-mix(in oklab, var(--warn) 45%, var(--border));
+  background: linear-gradient(
+    120deg,
+    color-mix(in oklab, var(--warn) 12%, var(--surface)),
+    var(--surface) 70%
+  );
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+
+.daily-alert.live {
+  animation: daily-breathe 3.4s ease-in-out infinite;
+}
+
+@keyframes daily-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--warn) 26%, transparent);
+    border-color: color-mix(in oklab, var(--warn) 45%, var(--border));
+  }
+  50% {
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--warn) 13%, transparent);
+    border-color: color-mix(in oklab, var(--warn) 78%, var(--border));
+  }
+}
+
+.daily-alert-mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--r-full);
+  background: color-mix(in oklab, var(--warn) 20%, var(--surface));
+  color: var(--warn);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.daily-alert-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.daily-alert-count {
+  flex: none;
+  font-weight: 700;
+  color: var(--warn);
+  font-size: 0.95rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .daily-alert.live {
+    animation: none;
+    border-color: color-mix(in oklab, var(--warn) 78%, var(--border));
+  }
+}
+
+/* Hotová denní výzva se nedá spustit znovu — dala se tím farmit odměna za
+   celou várku. Zůstane čitelná, jen přestane vypadat jako tlačítko. */
+.daily-item:disabled {
+  cursor: default;
+}
+
 /* Kompaktní hlavička — velký hero by výběr hry odsunul pod okraj displeje. */
 .home-head {
   margin-bottom: var(--sp-4);
@@ -581,6 +682,96 @@
 }
 
 /* Medová a tyrkysová jsou světlé barvy, bílý text na nich má slabý kontrast. */
+/*
+ * Šest dlaždic se musí vejít na displej i s oběma upomínkami nad nimi —
+ * s Otázkou dne i s nedohranými výzvami. Hráč nemá rolovat, aby našel hru.
+ *
+ * Na 320 px se mřížka `auto-fit` sesypala do jednoho sloupce (dva po 150 px
+ * se do 288 px prostě nevejdou) a stránka narostla na dvojnásobek displeje.
+ * Dva sloupce se proto předepisují napevno.
+ */
+@media (max-width: 460px) {
+  .mode-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-2);
+  }
+}
+
+/*
+ * Nízký displej: dlaždice zhubnou.
+ *
+ * Ustupuje popisek hry — je to jediná věc na dlaždici, kterou hráč nepotřebuje
+ * podruhé (stojí i v panelu po ťuknutí a v návodu). Název a barva zůstávají,
+ * podle nich se hra pozná.
+ */
+@media (max-height: 730px) {
+  .mode-tile {
+    padding: var(--sp-3);
+  }
+
+  .mode-tile .mode-tag {
+    display: none;
+  }
+
+  .mode-glyph {
+    font-size: 1.1rem;
+  }
+}
+
+/*
+ * Malý telefon (320×568 a spol.): stáhne se všechno kolem mřížky.
+ *
+ * Sečteno to dá přesně tolik, aby se šestá dlaždice vešla nad okraj i s oběma
+ * upomínkami — bez toho přetékala o dobrých padesát pixelů. Hlídá to
+ * `npm run audit:mobile`, který měří spodek poslední dlaždice.
+ */
+@media (max-height: 660px) {
+  .main {
+    padding-top: var(--sp-3);
+  }
+
+  .home-top {
+    gap: 6px;
+  }
+
+  .home-top:not(:empty) {
+    margin-bottom: var(--sp-2);
+  }
+
+  .home-head {
+    font-size: 1.35rem;
+    margin-bottom: var(--sp-2);
+  }
+
+  .mode-tile {
+    padding: 8px var(--sp-3);
+  }
+
+  .mode-name {
+    font-size: 1rem;
+  }
+
+  /* Praporek „Nové" nebo „Rozehráno" se na takhle malé dlaždici vejde jen
+     jako proužek pod názvem — a jen když je co hlásit. */
+  .mode-flag {
+    font-size: 0.62rem;
+    padding: 1px 5px;
+  }
+
+  .topbar {
+    padding-block: var(--sp-2);
+  }
+
+  .daily-alert,
+  .quiz-strip-go {
+    padding-block: 6px;
+  }
+
+  .daily-alert-text {
+    font-size: 0.8rem;
+  }
+}
+
 .mode-tile[data-mode='hive'] {
   color: #2b1b00;
 }

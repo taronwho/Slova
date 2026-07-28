@@ -8,6 +8,7 @@ import { rankFor } from '../game/ranks'
 import { MODE_SUMMARY, TUTORIALS } from '../game/tutorials'
 import {
   DIFFICULTY_LABEL,
+  howToPlay,
   MODE_LABEL,
   MODE_TAGLINE,
   type Difficulty,
@@ -202,11 +203,46 @@ export function Home({
     </div>
   )
 
+  /**
+   * Připomínka nedohraných denních výzev.
+   *
+   * Zmizí ve chvíli, kdy je hráč má všechny — proto nese počet, ne jen text:
+   * „4 z 6" je pobídka, „Nedohrál jsi všechny" samo o sobě jen výtka. Ťuknutí
+   * sjede k várce, odkud se výzvy spouštějí.
+   *
+   * Pulzuje stejným rytmem jako Otázka dne, aby se ty dvě věci nahoře
+   * nepřekřikovaly — jsou to dvě upomínky, ne dvě soutěže o pozornost.
+   */
+  const dailyAlert = dailyLeft > 0 && (
+    <button
+      type="button"
+      className="daily-alert live"
+      onClick={() => {
+        document.querySelector('.daily-strip')?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        })
+      }}
+    >
+      <span className="daily-alert-mark" aria-hidden="true">
+        !
+      </span>
+      <span className="daily-alert-text">Nedohrál jsi všechny denní výzvy</span>
+      <span className="daily-alert-count num">
+        {MODES.length - dailyLeft}/{MODES.length}
+      </span>
+    </button>
+  )
+
   return (
     <>
-      {/* Dokud se na dnešní otázku neodpovědělo, drží si místo úplně nahoře
-          a upozorňuje na sebe. Je to jediná věc, která se každý den zamyká. */}
-      {!quizDone && quizStrip}
+      {/* Nahoře stojí to, co dneškem propadne: nezodpovězená Otázka dne
+          a nedohrané denní výzvy. Obojí zmizí, jakmile je hotovo — a mřížka
+          her se musí vejít na displej i s oběma, viz `.home-top` ve stylech. */}
+      <div className="home-top">
+        {!quizDone && quizStrip}
+        {dailyAlert}
+      </div>
 
       {/* Mřížka her je první věc na stránce a vejde se celá na displej.
           Až přibudou další režimy, jen se do ní přidají další dlaždice. */}
@@ -266,6 +302,11 @@ export function Home({
                 key={mode.id}
                 className={`daily-item ${done ? 'done' : ''}`}
                 style={{ ['--mode-color' as string]: mode.color }}
+                // Hotová výzva se už nespustí. Šlo ji hrát pořád dokola a
+                // pokaždé inkasovat inkoust za dokončenou várku; zamčené je
+                // to i v `recordRound`, tohle je jen ta viditelná půlka.
+                disabled={done}
+                title={done ? 'Dnešní výzvu už máš hotovou' : undefined}
                 onClick={() => onPlay(mode.id, true)}
               >
                 <span className="mode-glyph" aria-hidden="true">
@@ -369,7 +410,12 @@ export function Home({
               >
                 {pickedSaved ? 'Nová hra' : 'Hrát'}
               </button>
-              <button type="button" className="btn" onClick={() => onPlay(pickedMode.id, true)}>
+              <button
+                type="button"
+                className="btn"
+                disabled={profile.dailyDone[`${dayKey}:${pickedMode.id}`] !== undefined}
+                onClick={() => onPlay(pickedMode.id, true)}
+              >
                 {profile.dailyDone[`${dayKey}:${pickedMode.id}`] !== undefined
                   ? 'Denní ✓'
                   : 'Denní výzva'}
@@ -470,7 +516,7 @@ export function Home({
                 <span className="mode-glyph" style={{ color: mode.color, fontSize: '1.2rem' }}>
                   {mode.glyph}
                 </span>
-                <span className="rules-title">Jak se hraje {MODE_LABEL[mode.id]}</span>
+                <span className="rules-title">{howToPlay(mode.id)}</span>
                 <span className={`rules-caret ${open ? 'open' : ''}`} aria-hidden="true">
                   ⌄
                 </span>

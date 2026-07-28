@@ -500,11 +500,14 @@ export const AWARDS: Award[] = [
     { need: 365, title: 'Rok se Slovy', goal: `Zahraj si celkem ${days(365)}` },
     { need: 1000, title: 'Tisíc dnů se Slovy', goal: `Zahraj si celkem ${days(1000)}` },
   ]),
+  // Počítají se jednotlivé výzvy, ne dny — a těch je šest na den. Nadpisy
+  // proto mluví o počtu, ne o týdnu a roku: „Týden výzev" za sedm výzev
+  // padl hráči druhý den a znělo to jako chyba, protože to chyba byla.
   ...ladder('denni', 'habit', 'warn', 'day', (p) => p.counters.dailies, [
-    { id: 'denni-7', need: 7, title: 'Týden výzev', goal: 'Dohraj sedm denních výzev' },
+    { id: 'denni-7', need: 7, title: 'Sedm výzev', goal: 'Dohraj sedm denních výzev' },
     { need: 30, title: 'Třicet výzev', goal: 'Dohraj třicet denních výzev' },
     { need: 100, title: 'Sto výzev', goal: 'Dohraj sto denních výzev' },
-    { need: 365, title: 'Rok výzev', goal: 'Dohraj tři sta pětašedesát denních výzev' },
+    { need: 365, title: 'Tři sta pětašedesát výzev', goal: 'Dohraj tři sta pětašedesát denních výzev' },
     { need: 1000, title: 'Tisíc výzev', goal: 'Dohraj tisíc denních výzev' },
   ]),
   // Otázka dne se dá zahrát jen jednou denně, takže i její mety běží v čase
