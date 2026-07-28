@@ -308,12 +308,13 @@ describe('detektiv — data', () => {
   }
   const puzzles = readJson<Case[]>('detective', 'puzzles.json')
 
-  // Hranice byla dřív na dvanácti stech. Spadla, protože se zpřísnilo
-  // maskování: indicie, ze které jde odpověď přečíst, je horší než indicie
-  // žádná, takže tři stovky hádanek šly pryč. Devět set pořád znamená, že
-  // hráč narazí na tutéž nejdřív po devíti stech kolech.
+  // Hranice byla dřív na dvanácti stech. Spadla dvakrát: zpřísnilo se
+  // maskování (indicie, ze které jde odpověď přečíst, je horší než žádná)
+  // a pak se vyhodily indicie, po jejichž zakrytí nezůstalo nic k úvaze.
+  // Osm set pořád znamená, že hráč narazí na tutéž nejdřív po osmi stech
+  // kolech — a každá z nich se dá doopravdy vyluštit.
   it('má dost případů a jedinečná id i slova', () => {
-    expect(puzzles.length).toBeGreaterThan(900)
+    expect(puzzles.length).toBeGreaterThan(800)
     expect(new Set(puzzles.map((p) => p.id)).size).toBe(puzzles.length)
     expect(new Set(puzzles.map((p) => p.word)).size).toBe(puzzles.length)
   })
@@ -339,6 +340,38 @@ describe('detektiv — data', () => {
    * v metru by prošla oběma. Tady se porovnávají souhláskové kostry
    * (souterrain → STRN, suterén → STRN) a nejdelší společný úsek písmen.
    */
+  /**
+   * Po zakrytí musí v indicii zůstat něco, z čeho se dá vyjít.
+   *
+   * „Odvozeno od substantiva [?] pomocí předpony [?]-." má přes čtyřicet
+   * znaků, takže délková podmínka projde — jenže to sedí na stovky slov
+   * a hráč z toho nemá co vytěžit. Délka je špatné měřítko; rozhoduje počet
+   * slov, která opravdu něco tvrdí.
+   */
+  it('po zakrytí zbude v indicii aspoň nějaká informace', () => {
+    const filler = new Set(
+      `odvozeno odvozene odvozeneho odvozena odvozeny odvozenim utvoreno utvorena
+       utvoreny vzniklo vznikla vznikl vznik pochazi prejato prevzato prejaty prejate
+       pres pomoci predpony predpona pripony pripona pripon koncovky substantiva
+       substantivum substantivem adjektiva adjektivum adjektivem slovesa sloveso
+       slovem slova slovo tvaru tvar tvary korene koren zakladu zaklad zakladem
+       jazyka jazyky jazyk vyznamu vyznam vyznamem tehoz stejneho stejnym dolozeno
+       poprve patrne pravdepodobne zrejme nejspis snad dale take tedy dnes puvodne
+       puvodni puvodniho novejsi starsi tvarem varianta prechylenim podstatneho
+       jmena pricesti pritomne minule trpne slovotvornemu slovotvorneho ktery ktera
+       ktere kterym jehoz jejiz coz jako toto tento tato temer velmi`.split(/\s+/),
+    )
+    const hollow = puzzles.filter((puzzle) => {
+      const words = puzzle.clue
+        .replaceAll('[?]', ' ')
+        .split(/[^\p{L}]+/u)
+        .map((word) => fold(word.toLowerCase()))
+        .filter((word) => word.length >= 4 && !filler.has(word))
+      return words.length < 3
+    })
+    expect(hollow.map((p) => `${p.word}: ${p.clue}`).slice(0, 6)).toEqual([])
+  })
+
   it('v indicii není nic, co zní nebo vypadá jako hledané slovo', () => {
     const sound: Record<string, string> = {
       b: 'P', p: 'P', d: 'T', t: 'T', v: 'F', w: 'F', f: 'F',

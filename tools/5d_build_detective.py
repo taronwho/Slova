@@ -275,6 +275,40 @@ def compound_parts(tokens: list[str], target: str) -> set[str]:
     return bad
 
 
+# Slova, kterými etymologické heslo jen drží větu pohromadě. Nesou stavbu
+# výkladu, ne informaci o hledaném slově — „odvozeno od substantiva pomocí
+# předpony" platí pro tisíce slov stejně.
+FILLER = set(
+    """odvozeno odvozene odvozeneho odvozena odvozeny odvozenim utvoreno utvorena
+    utvoreny vzniklo vznikla vznikl vznik pochazi prejato prevzato prejaty prejate
+    pres pomoci predpony predpona pripony pripona pripon koncovky substantiva
+    substantivum substantivem adjektiva adjektivum adjektivem slovesa sloveso slovem
+    slova slovo tvaru tvar tvary korene koren zakladu zaklad zakladem jazyka jazyky
+    jazyk vyznamu vyznam vyznamem tehoz stejneho stejnym dolozeno poprve patrne
+    pravdepodobne zrejme nejspis snad dale take tedy dnes puvodne puvodni puvodniho
+    novejsi starsi tvarem varianta prechylenim podstatneho jmena pricesti pritomne
+    minule trpne slovotvornemu slovotvorneho ktery ktera ktere kterym jehoz jejiz
+    coz jako toto tento tato temer velmi""".split()
+)
+
+
+def informative(masked: str) -> bool:
+    """
+    Zbylo po zakrytí ještě něco, z čeho se dá vyjít?
+
+    „Odvozeno od substantiva [?] pomocí předpony [?]-." má přes čtyřicet
+    znaků, takže délková podmínka projde — jenže neříká vůbec nic. Sedí na
+    stovky slov a hráč z ní nemá co vytěžit. Délka je špatné měřítko;
+    rozhoduje, kolik zůstalo slov, která opravdu něco tvrdí.
+
+    Tři jsou minimum: jazyk původu, doba a význam. S méně už je to hádání
+    z ničeho.
+    """
+    plain = masked.replace(MASK, " ")
+    words = [w for w in TOKEN_RE.findall(plain) if len(fold(w)) >= 4]
+    return sum(1 for w in words if fold(w) not in FILLER) >= 3
+
+
 def mask(word: str, text: str):
     """Zamaskuje prozrazující výrazy. Vrátí (text, použitelné?)."""
     if COMPOUND_START.search(text.strip()):
@@ -313,7 +347,9 @@ def mask(word: str, text: str):
     # Bez zakrytých míst musí zbýt pořád dost textu. Jinak z indicie zůstane
     # jen slovníková formulka („Odvozeno od [?].“), na které se hádat nedá.
     rest = masked.replace(MASK, "").strip()
-    return masked, len(masked) >= MIN_TEXT and len(rest) >= MIN_TEXT
+    if len(masked) < MIN_TEXT or len(rest) < MIN_TEXT:
+        return masked, False
+    return masked, informative(masked)
 
 
 def tidy(text: str) -> str:
