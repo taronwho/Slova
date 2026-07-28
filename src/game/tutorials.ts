@@ -278,13 +278,13 @@ export const TUTORIALS: Record<ModeId, TutorialStep[]> = {
   ],
   detective: [
     {
-      title: 'Poznej slovo podle jeho původu',
+      title: 'Poznej slovo podle spisu o něm',
       visual: { kind: 'detective' },
       body: [
-        'Dostaneš text o tom, odkud slovo přišlo — z jakého jazyka, z jakého kořene, co původně znamenalo.',
+        'Dostaneš spis: slovní druh, počet slabik, co slovo znamená — a u některých i to, odkud přišlo.',
         'Slovo samo je schované za prázdnými políčky. Víš jen, kolik má písmen.',
       ],
-      key: 'Texty pocházejí z Wikislovníku. Kde by hledané slovo prozradily, je místo něj okénko s otazníkem.',
+      key: 'Spis je z Wikislovníku. Kde by hledané slovo prozradil, je místo něj okénko s otazníkem. Celý původ se odkryje až po dohrání.',
     },
     {
       title: 'Tady se nevěší',
@@ -482,7 +482,7 @@ export const MODE_SUMMARY: Record<ModeId, string[]> = {
     'Jen 1. pád a infinitiv.',
   ],
   detective: [
-    'Text říká, odkud slovo přišlo.',
+    'Spis říká, co slovo znamená a odkud je.',
     'Chyba nezabíjí, jen stojí body.',
     'Kdo na slovo přijde, může ho tipnout celé.',
   ],

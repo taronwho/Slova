@@ -62,6 +62,15 @@ function clueParts(clue: string) {
   )
 }
 
+/** Totéž po dohrání — do děr se doplní odpověď, ať je vidět, že sedí. */
+function filled(clue: string, word: string) {
+  return clue.split(GAP).flatMap((piece, i) =>
+    i === 0
+      ? [<span key={`t${i}`}>{piece}</span>]
+      : [<b key={`w${i}`}>{word}</b>, <span key={`t${i}`}>{piece}</span>],
+  )
+}
+
 export function DetectiveGame({
   puzzle,
   streak,
@@ -263,13 +272,23 @@ export function DetectiveGame({
           </div>
         )}
 
-        {/* Text o původu slova je tady to hlavní, ne dekorace — dostává
+        {/* Spis o slově je tady to hlavní, ne dekorace — dostává
             největší plochu a čtenářskou sazbu. */}
+        {/* Spis o slově: mluvnická hlavička, význam, a když ho heslo má,
+            i zakrytý původ. Význam je to hlavní a má proto plnou sazbu;
+            zbytek jsou poznámky na okraji složky. */}
         <blockquote className="clue-card">
           <span className="clue-mark" aria-hidden="true">
             ❝
           </span>
+          {puzzle.grammar && <p className="clue-grammar">{puzzle.grammar}</p>}
           <p>{clueParts(puzzle.clue)}</p>
+          {puzzle.origin && (
+            <p className="clue-origin">
+              <span className="clue-label">původ</span>
+              {clueParts(puzzle.origin)}
+            </p>
+          )}
         </blockquote>
 
         <div className={`word-slots ${shakeKey ? 'animate-shake' : ''}`} key={shakeKey}
@@ -371,7 +390,7 @@ export function DetectiveGame({
 
       <aside className="rail rail-right">
         <p className="faint" style={{ fontSize: '0.82rem', lineHeight: 1.55 }}>
-          Text o původu slova pochází z Wikislovníku. Chybné písmeno tu nikoho
+          Spis o slově pochází z Wikislovníku. Chybné písmeno tu nikoho
           nevěší — jen stojí body, takže se dá v klidu přemýšlet. Kdo na slovo
           přijde dřív, může ho tipnout celé a dostane prémii.
         </p>
@@ -397,20 +416,20 @@ export function DetectiveGame({
           onNext={onNext}
           onHome={onHome}
         >
-          {/* Původ ještě jednou, ale se slovem doplněným do mezer. Uhodnout
+          {/* Spis ještě jednou, ale se slovem doplněným do mezer. Uhodnout
               slovo je půlka věci; druhá je vidět, že to sedí — a kdo neuhodl,
               se z toho aspoň něco dozví. Drobným písmem, ať to nepřebije
               samotnou odpověď. */}
-          <p className="clue-recap">
-            {puzzle.clue.split(GAP).flatMap((piece, i) =>
-              i === 0
-                ? [<span key={`t${i}`}>{piece}</span>]
-                : [
-                    <b key={`w${i}`}>{puzzle.word}</b>,
-                    <span key={`t${i}`}>{piece}</span>,
-                  ],
-            )}
-          </p>
+          <p className="clue-recap">{filled(puzzle.clue, puzzle.word)}</p>
+          {/* A tady teprve celá etymologie, nezakrytá. Během hry by odpověď
+              prozradila jediným slovem; po dohrání je to to nejzajímavější,
+              co se hráč o slově dozví. */}
+          {puzzle.story && (
+            <p className="clue-recap clue-story">
+              <span className="clue-label">původ</span>
+              {puzzle.story}
+            </p>
+          )}
         </ResultOverlay>
       )}
     </div>

@@ -37,7 +37,7 @@ export const MODE_TAGLINE: Record<ModeId, string> = {
   hive: 'Skládej slova ze sedmi písmen',
   tower: 'Stav věž z přesmyček',
   gallows: 'Uhodni slovo po písmenech',
-  detective: 'Poznej slovo podle jeho původu',
+  detective: 'Poznej slovo podle indicií',
   tetris: 'Skládej padající slabiky ve slova',
 }
 

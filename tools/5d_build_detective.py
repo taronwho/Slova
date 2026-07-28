@@ -1,8 +1,26 @@
 """Krok 5d — hádanky pro Etymologického detektiva.
 
-Ze stažených etymologií (krok 5c) se vyberou ty, které se dají použít jako
-hádanka. Rozhoduje se o **použitelnosti, ne o pravdivosti** — text je tak jak
-ho napsal Wikislovník, jen očištěný a zkrácený.
+Ze staženého Wikislovníku (krok 5c) se skládá **spis o slově**. Rozhoduje se
+o použitelnosti, ne o pravdivosti — text je tak, jak ho napsal Wikislovník,
+jen očištěný, zkrácený a se zakrytými místy, která by odpověď prozradila.
+
+Spis má tři části a každá dělá něco jiného:
+
+* **mluvnice** — slovní druh s rodem či videm a počet slabik. Sama o sobě
+  nezaručí nic, ale zužuje pole a dodává hádance detektivní tón.
+* **význam** — hlavní vodítko. Slovníková definice se schválně zkracuje na
+  obecnou část: „věž vyzařující rotující světelný kužel, který varuje
+  projíždějící lodě" je odpověď opsaná jinými slovy, „věž" je hádanka.
+* **původ** — etymologie, když ji heslo má. Bývá vzácná, takže na ní hádanka
+  nestojí, jen ji dokresluje. Zakrývá se stejně přísně jako dřív; celá,
+  nezakrytá, se hráči ukáže až ve vyhodnocení kola.
+
+Dřív stál celý režim jen na etymologii a to byla chyba: etymologické heslo je
+psané pro někoho, kdo hledané slovo **už zná**, takže nese jedinou skutečnou
+informaci — zdrojový tvar. Ten se musí zakrýt a zbude slovotvorná vata
+(„Odvozeno od substantiva [?] pomocí předpony [?]-."). Význam má naopak skoro
+každé heslo a slovo samo v definici nikdy nestojí, protože se tak slovníky
+nepíšou.
 
 Vyhazuje se:
 
@@ -310,10 +328,15 @@ def informative(masked: str) -> bool:
 
 
 def mask(word: str, text: str):
-    """Zamaskuje prozrazující výrazy. Vrátí (text, použitelné?)."""
-    if COMPOUND_START.search(text.strip()):
-        return text, False
+    """
+    Zamaskuje prozrazující výrazy. Vrátí (text, použitelné?).
 
+    Zamaskuje se **vždycky**, i když text neprojde. Volající si posuzuje
+    použitelnost po svém — významová definice snese jiné míry než
+    etymologický výklad —, ale nezakrytý text nesmí dostat nikdy: „Složený
+    z pěvců a/nebo pěvkyň" se dřív vracelo tak, jak přišlo, protože rozbor
+    složeniny propadl hned na začátku a maskování se k němu nedostalo.
+    """
     target = fold(word)
     pieces = TOKEN_RE.split(text)
     words = [fold(p.lower()) for p in pieces if p and TOKEN_RE.fullmatch(p)]
@@ -339,6 +362,10 @@ def mask(word: str, text: str):
     # kolem samotné značky nemá co držet.
     masked = re.sub(r"\[\s*" + re.escape(MASK) + r"\s*\]", MASK, masked)
 
+    # Rozbor složeniny slovo vždycky vyzradí, i po zakrytí — z kousků se dá
+    # poskládat zpátky.
+    if COMPOUND_START.search(text.strip()):
+        return masked, False
     if masks > MAX_MASKS:
         return masked, False
     # Zamaskované slovo hned v úvodu ubere textu smysl („[?] je z [?]").
@@ -352,8 +379,20 @@ def mask(word: str, text: str):
     return masked, informative(masked)
 
 
+def balanced(text: str) -> bool:
+    """Sedí závorky? Useknutá závorka prozradí, že text někde končí dřív."""
+    return text.count("(") == text.count(")")
+
+
 def tidy(text: str) -> str:
     """Uklidí, co je ve slovníkovém hesle navíc a v hádance to jen mate."""
+    # Zbytky wikiodkazů. Vnořený odkaz nebo překlep v hesle projde čističem
+    # v kroku 5c a zůstane po něm „[[překvapení]" — hráči se to zobrazí tak,
+    # jak to tu stojí. Dvojité závorky ven vždycky, osamocené jen když
+    # nesedí do páru (přepisy výslovnosti „[kybernétikos]" jsou v pořádku).
+    text = text.replace("[[", "").replace("]]", "")
+    if text.count("[") != text.count("]"):
+        text = text.replace("[", "").replace("]", "")
     text = XREF_PAREN.sub("", text)
     text = REF_NUM.sub("", text)
     text = XREF_TAIL.sub("", text)
@@ -373,7 +412,7 @@ def tidy(text: str) -> str:
 NOT_END = re.compile(
     r"(?:"
     r"\b\d+\."  # řadová číslovka: 17. století, 2. poloviny
-    r"|\b(?:tzv|resp|např|srov|př|n|l|st|stol|lat|řec|něm|fr|angl|it|špan"
+    r"|\b(?:tzv|resp|např|srov|př|n|l|r|st|stol|lat|řec|něm|fr|angl|it|špan"
     r"|psl|stč|sthn|mj|aj|tj|sv|hl|pol|zač|kon)\."  # obvyklé zkratky
     r")$",
     re.IGNORECASE,
@@ -437,6 +476,155 @@ def shorten(text: str) -> str:
     return out
 
 
+# ── Význam ────────────────────────────────────────────────────────────────
+#
+# Slovníková definice je psaná tak, aby heslo **jednoznačně určila** — což je
+# přesný opak hádanky. Bere se z ní proto jen obecnější začátek a podrobnosti,
+# které by odpověď naservírovaly, se zahazují.
+
+MIN_SENSE, MAX_SENSE = 16, 150
+
+# Kde končí obecná část definice a začíná to, co odpověď prozradí.
+SENSE_CUT = re.compile(
+    r"\s*(?:;|\bkter[ýáéouíáý]\w*\b|\bjenž\b|\bjež\b|\bjehož\b|\bjejíž\b"
+    r"|\bsloužící\b|\burčen[ýáé]\b|\bpoužívan[ýáé]\b)"
+)
+
+# Ocásek, který po zkrácení zůstane viset: spojka bez pokračování („…okruh
+# osob a") nebo zkratka bez tečky („…inscenace hry apod").
+SENSE_TAIL = re.compile(
+    r"[\s,;:]+(?:a|i|s|se|k|ke|o|v|ve|z|ze|na|pro|nebo|či|ale|též|také"
+    r"|apod|atd|atp|aj|tj|např|popř|příp|resp)$",
+    re.I,
+)
+
+# Definice, které mluví o mluvnici místo o věci. „Příčestí trpné jednotného
+# čísla mužského rodu slovesa jíst" je pravda o slově *jeden*, ale hádat se
+# z toho nedá — a hráč by to ani nečekal.
+META = re.compile(
+    r"\b(příčestí|přechodník|rozkazovací|oslovení|1\.\s*osob|2\.\s*osob|3\.\s*osob"
+    r"|slovesa\s+\w+$|tvar\s+slova|zkratka|značka|iniciálov|pravopisn|nespisovn"
+    r"|zastaralý\s+tvar|hovorový\s+tvar"
+    # Wikislovník vede i skloňované tvary jako vlastní hesla („telefony —
+    # nominativ plurálu substantiva telefon"). Ta definice mluví o mluvnici,
+    # ne o věci, a po zakrytí základního tvaru z ní nezbude nic.
+    r"|nominativ|genitiv|dativ|akuzativ|vokativ|lokál|instrumentál"
+    r"|singulár|plurál|substantiva\s+\w+$|adjektiva\s+\w+$)",
+    re.I,
+)
+
+# Slova, kterými se definice rozbíhá, ale sama o slově nic netvrdí. „Mající
+# chuť [?]" má tři slova a přesto je to prázdná indicie.
+DEF_FILLER = set(
+    """majici majicich takovy takova takove takovy ktery ktera ktere kterym jenz
+    schopny schopna schopne nachazejici nachazi urceny urcena urcene slouzici
+    ktereho jehoz nekdo neco nejaky nejaka nejake jeho jeji jejich prip apod
+    zpusob zpusobem vlastnost vlastnosti cinnost delat udelat mit byt stav
+    obvykle zejmena zvlaste vetsinou take tedy prip""".split()
+)
+
+
+def carries_weight(masked: str) -> bool:
+    """
+    Zbylo po zakrytí ještě něco, z čeho se dá vyjít?
+
+    U zakryté definice je to tvrdší otázka než u etymologie. „Mající chuť
+    [?]" u *slaného* nebo „Odborník v oboru [?]" u *psychiatra* projde
+    délkou i počtem slov, jenže všechno podstatné leží právě v té díře.
+    Nezakrytá definice tuhle zkoušku neskládá — ta si vystačí s délkou.
+    """
+    if MASK not in masked:
+        return True
+    plain = masked.replace(MASK, " ")
+    words = [fold(w) for w in TOKEN_RE.findall(plain)]
+    return sum(1 for w in words if len(w) >= 4 and w not in DEF_FILLER) >= 3
+
+# Odkazovací definice bez vlastního obsahu: „viz krokev", „totéž co dřevěnka".
+POINTER = re.compile(r"^(?:viz\b|totéž\b|to\s?též\b|stejně\b|jiný\s+název)", re.I)
+
+
+def blur(sentence: str) -> str:
+    """
+    Zkrátí význam na obecnou část, aby zůstal vodítkem, ne odpovědí.
+
+    Řeže se na prvním místě, kde definice přechází k podrobnostem, ale ne za
+    každou cenu: „Takový, který příliš snadno podléhá strachu" by po prvním
+    řezu zbyl na „Takový", což není vodítko. Proto se přibírá další kus, dokud
+    text něco netvrdí.
+    """
+    for found in SENSE_CUT.finditer(sentence):
+        head = trim(sentence[: found.start()])
+        if len(head) >= MIN_SENSE:
+            return head
+    return trim(sentence)
+
+
+def trim(text: str) -> str:
+    """Odřízne, co po zkrácení zůstalo viset. Střídavě interpunkce a spojky —
+    „…dřevotřísky apod., ze" se odloupává po vrstvách, ne najednou."""
+    while True:
+        shorter = SENSE_TAIL.sub("", text.strip(" ,.;:—–"))
+        if shorter == text:
+            return text
+        text = shorter
+
+
+def sense_clue(word: str, senses: list[str]):
+    """
+    Z významů hesla vyrobí indicii. Vrátí text, nebo None.
+
+    Bere se první význam, který projde — u víceznačných hesel bývá ten první
+    ten hlavní, ale když je to zrovna mluvnická poznámka, zkusí se další.
+    """
+    for raw in senses[:3]:
+        text = tidy(raw)
+        if not text or POINTER.match(text) or META.search(text):
+            continue
+        text = blur(text)
+        if not (MIN_SENSE <= len(text) <= MAX_SENSE) or not balanced(text):
+            continue
+        # Výpustka ve slovníkové citaci („začínající slovy Zdrávas, Maria…")
+        # se plete se značkou zakrytého místa — hráč nepozná, kde je díra
+        # k hádání a kde jen slovník nedopsal citát.
+        if "…" in text or "..." in text:
+            continue
+        masked, _ = mask(word, text)
+        rest = masked.replace(MASK, "").strip(" ,.;:")
+        # Definice nemají délku etymologických výkladů, takže se u nich neměří
+        # informativnost počtem slov — dvě slova („nenasytný člověk") jsou
+        # přesně ta míra, kdy indicie navádí, ale nedaruje.
+        if masked.count(MASK) > 1 or masked.startswith(MASK) or len(rest) < MIN_SENSE:
+            continue
+        if not carries_weight(masked):
+            continue
+        return masked[0].upper() + masked[1:]
+    return None
+
+
+def grammar_line(entry: dict, word: str) -> str | None:
+    """
+    Mluvnická hlavička spisu: slovní druh, rod či vid, počet slabik.
+
+    I tahle vata umí prozradit. U hesla *jméno* stojí v hlavičce „podstatné
+    jméno" a odpověď je rovnou tam; u *řady* nebo *rádia* se zase o slovo
+    otře „rod" a u *slabého* „slabiky". Hlavička není vodítko, jen kulisa,
+    takže když se do slova trefí, vypustí se celá a nic se tím neztratí.
+    """
+    parts = []
+    if entry.get("kind"):
+        parts.append(entry["kind"])
+    syllables = (entry.get("syl") or "").count("-") + 1 if entry.get("syl") else 0
+    if syllables > 1:
+        parts.append(f"{syllables} {'slabiky' if syllables < 5 else 'slabik'}")
+    line = " · ".join(parts)
+    if not line:
+        return None
+    target = fold(word)
+    if any(gives_away(fold(token), target) for token in TOKEN_RE.findall(line)):
+        return None
+    return line
+
+
 def frequency_ranks() -> dict[str, int]:
     """
     Pořadí slov podle toho, jak často se v češtině používají.
@@ -457,6 +645,38 @@ def frequency_ranks() -> dict[str, int]:
                     ranks.setdefault(fold(parts[0]), order)
         break
     return ranks
+
+
+# Kolik hádanek se do hry pustí.
+#
+# Kandidátů je řádově víc, ale data se do aplikace balí celá a v jednosouborové
+# verzi se navíc každý český znak zapíše jako \uXXXX, takže megabajt textu
+# nabobtná na několik. Tři tisíce znamená, že hráč narazí na tutéž hádanku
+# nejdřív po osmi letech denního hraní — víc není k čemu.
+CAP = 3000
+
+
+def pick_best(puzzles: list[dict], ranks: dict[str, int]) -> list[dict]:
+    """
+    Vybere `CAP` hádanek tak, aby zůstal celý rozsah vzácnosti.
+
+    Kdyby se prostě uříznul konec seznamu, zmizela by celá jedna úroveň
+    obtížnosti. Bere se proto rovnoměrně přes celé pořadí a v každém úseku
+    dostane přednost hádanka, která má i etymologii — ta je pro hráče
+    nejzajímavější.
+    """
+    if len(puzzles) <= CAP:
+        return puzzles
+    missing = len(ranks) + 1
+    order = sorted(
+        puzzles, key=lambda p: (ranks.get(fold(p["word"]), missing), len(p["word"]))
+    )
+    step = len(order) / CAP
+    picked = []
+    for i in range(CAP):
+        chunk = order[int(i * step): max(int((i + 1) * step), int(i * step) + 1)]
+        picked.append(next((p for p in chunk if p.get("story")), chunk[0]))
+    return picked
 
 
 def assign_difficulty(puzzles: list[dict], ranks: dict[str, int]) -> None:
@@ -486,14 +706,64 @@ def assign_difficulty(puzzles: list[dict], ranks: dict[str, int]) -> None:
         )
 
 
+def lexicon() -> tuple[set[str], dict[str, int]]:
+    """Povolená slova a jejich frekvence. Bez mezivýstupů kroku 2 se sáhne
+    po ověřeném seznamu základních tvarů, který drží testy."""
+    path = os.path.join(OUT, "lexicon_base.json")
+    if os.path.exists(path):
+        base = json.load(open(path, encoding="utf-8"))
+        return (
+            {w for length in base for w, _ in base[length]},
+            {w: f for length in base for w, f in base[length]},
+        )
+    forms = json.load(
+        open(os.path.join(HERE, "..", "tests", "fixtures", "base-forms.json"),
+             encoding="utf-8")
+    )
+    ranks = frequency_ranks()
+    top = len(ranks) + 1
+    return set(forms), {w: top - ranks.get(fold(w), top) for w in forms}
+
+
+def quiz_answers() -> set[str]:
+    """Slova, na která se ptá Otázka dne. Ta se Detektivovi zapovídají, aby
+    hráč neluštil ráno v kvízu totéž, co odpoledne v detektivce."""
+    path = os.path.join(HERE, "..", "public", "data", "quiz")
+    out: set[str] = set()
+    if not os.path.isdir(path):
+        return out
+    for name in sorted(os.listdir(path)):
+        if not name.endswith(".json"):
+            continue
+        try:
+            data = json.load(open(os.path.join(path, name), encoding="utf-8"))
+        except (ValueError, OSError):
+            continue
+        # Balíček je slovník podle témat, každé téma seznam otázek — ale
+        # projít se dá cokoli, aby přeskládání dat tohle ticho nerozbilo.
+        stack = [data]
+        while stack:
+            node = stack.pop()
+            if isinstance(node, dict):
+                if "answer" in node:
+                    for text in [node.get("answer"), *(node.get("alt") or [])]:
+                        for token in TOKEN_RE.findall(text or ""):
+                            out.add(fold(token))
+                else:
+                    stack.extend(node.values())
+            elif isinstance(node, list):
+                stack.extend(node)
+    return out
+
+
 def main():
     cache = json.load(open(os.path.join(RAW, "etymology.json"), encoding="utf-8"))
-    base = json.load(open(os.path.join(OUT, "lexicon_base.json"), encoding="utf-8"))
-    allowed = {w for length in base for w, _ in base[length]}
-    freq = {w: f for length in base for w, f in base[length]}
+    allowed, freq = lexicon()
+    taken = quiz_answers()
 
     puzzles = []
-    dropped = {"pos": 0, "short": 0, "leak": 0, "mimo slovník": 0}
+    dropped = {"pos": 0, "bez významu": 0, "v kvízu": 0, "mimo slovník": 0}
+    with_origin = 0
 
     for word, entry in cache.items():
         if not entry or not isinstance(entry, dict):
@@ -506,25 +776,43 @@ def main():
         if not (set(entry.get("pos") or []) & KEEP_POS):
             dropped["pos"] += 1
             continue
-        text = shorten(tidy(entry["e"]))
-        if not (MIN_TEXT <= len(text) <= MAX_TEXT):
-            dropped["short"] += 1
+        if fold(word) in taken:
+            dropped["v kvízu"] += 1
             continue
-        text, usable = mask(word, text)
-        if not usable:
-            dropped["leak"] += 1
-            continue
-        puzzles.append(
-            {
-                "id": f"d-{len(puzzles):04d}",
-                "word": word,
-                "clue": text,
-                "difficulty": None,  # doplní se, až bude znám rozsah sady
-            }
-        )
 
-    # Obtížnost se rozdělí až teď, kdy je vidět celá sada.
-    assign_difficulty(puzzles, frequency_ranks())
+        clue = sense_clue(word, entry.get("v") or [])
+        if not clue:
+            dropped["bez významu"] += 1
+            continue
+
+        puzzle = {
+            "id": f"d-{len(puzzles):04d}",
+            "word": word,
+            "clue": clue,
+            "difficulty": None,  # doplní se, až bude znám rozsah sady
+        }
+        line = grammar_line(entry, word)
+        if line:
+            puzzle["grammar"] = line
+
+        # Původ je bonus, ne podmínka. Do indicie jde zakrytý; celý se ukáže
+        # až po dohrání, kdy už prozrazovat nemá co.
+        story = shorten(tidy(entry["e"])) if entry.get("e") else ""
+        if MIN_TEXT <= len(story) <= MAX_TEXT and balanced(story):
+            hidden, usable = mask(word, story)
+            if usable and balanced(hidden):
+                puzzle["origin"] = hidden
+                puzzle["story"] = story
+                with_origin += 1
+
+        puzzles.append(puzzle)
+
+    # Obtížnost se rozdělí až teď, kdy je vidět celá sada — a to až po
+    # ořezu, jinak by třetiny neseděly na to, co se do hry doopravdy dostane.
+    ranks = frequency_ranks()
+    found = len(puzzles)
+    puzzles = pick_best(puzzles, ranks)
+    assign_difficulty(puzzles, ranks)
 
     # Nejběžnější slova první — snadné úrovně mají být i ta známější.
     puzzles.sort(key=lambda p: -freq.get(p["word"], 0))
@@ -536,7 +824,8 @@ def main():
     with open(path, "w", encoding="utf-8") as fh:
         json.dump(puzzles, fh, ensure_ascii=False)
 
-    print(f"hádanek: {len(puzzles)}")
+    kept = sum(1 for p in puzzles if p.get("story"))
+    print(f"hádanek: {len(puzzles)} z {found} kandidátů  (s původem: {kept} z {with_origin})")
     for reason, count in dropped.items():
         print(f"  zahozeno ({reason}): {count}")
     for level in ("easy", "normal", "hard"):

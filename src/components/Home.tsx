@@ -73,9 +73,9 @@ const DIFFICULTY_NOTE: Record<ModeId, Record<Difficulty, string>> = {
     hard: '8–9 písmen',
   },
   detective: {
-    easy: 'krátká, běžná slova',
-    normal: '6–7 písmen',
-    hard: 'dlouhá slova a spletitější původ',
+    easy: 'slova, která zná každý',
+    normal: 'méně častá slova',
+    hard: 'vzácná slova',
   },
   tetris: {
     easy: '6 sloupců, klidné tempo',

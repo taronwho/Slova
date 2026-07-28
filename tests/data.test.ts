@@ -304,51 +304,77 @@ describe('detektiv — data', () => {
     id: string
     word: string
     clue: string
+    grammar?: string
+    origin?: string
+    story?: string
     difficulty: string
   }
   const puzzles = readJson<Case[]>('detective', 'puzzles.json')
 
-  // Hranice byla dřív na dvanácti stech. Spadla dvakrát: zpřísnilo se
-  // maskování (indicie, ze které jde odpověď přečíst, je horší než žádná)
-  // a pak se vyhodily indicie, po jejichž zakrytí nezůstalo nic k úvaze.
-  // Osm set pořád znamená, že hráč narazí na tutéž nejdřív po osmi stech
-  // kolech — a každá z nich se dá doopravdy vyluštit.
+  /** Všechno, co hráč čte během hry. Nic z toho nesmí odpověď prozradit. */
+  const shownWhilePlaying = (puzzle: Case): string[] =>
+    [puzzle.clue, puzzle.grammar, puzzle.origin].filter((text): text is string => !!text)
+
+  // Sada vyrostla řádově, když indicie přestala stát na etymologii a začala
+  // stát na významu: etymologii má sotva každé dvacáté heslo, význam skoro
+  // každé. Hranice je nízko schválně — hlídá se, že se sada nerozsype, ne
+  // kolik přesně jich zrovna je.
   it('má dost případů a jedinečná id i slova', () => {
-    expect(puzzles.length).toBeGreaterThan(800)
+    expect(puzzles.length).toBeGreaterThan(2000)
     expect(new Set(puzzles.map((p) => p.id)).size).toBe(puzzles.length)
     expect(new Set(puzzles.map((p) => p.word)).size).toBe(puzzles.length)
   })
 
-  // Nejdůležitější kontrola celého režimu: text o původu nesmí obsahovat
-  // hledané slovo. Generátor takové výskyty maskuje, tohle to hlídá na
-  // hotových datech.
-  it('text o původu nikde neprozradí hledané slovo', () => {
+  // Nejdůležitější kontrola celého režimu: nic, co hráč během hry vidí,
+  // nesmí obsahovat hledané slovo. Generátor takové výskyty maskuje, tohle
+  // to hlídá na hotových datech.
+  it('nic z toho, co hráč čte, neprozradí hledané slovo', () => {
     const problems: string[] = []
     for (const puzzle of puzzles) {
-      if (fold(puzzle.clue.toLowerCase()).includes(fold(puzzle.word))) {
-        problems.push(`${puzzle.word}: ${puzzle.clue}`)
+      for (const text of shownWhilePlaying(puzzle)) {
+        if (fold(text.toLowerCase()).includes(fold(puzzle.word))) {
+          problems.push(`${puzzle.word}: ${text}`)
+        }
       }
     }
     expect(problems.slice(0, 5)).toEqual([])
   })
 
   /**
-   * Indicie nesmí obsahovat nic, co zní jako hledané slovo.
-   *
-   * Tohle je hlavní kontrola celého režimu a schválně je napsaná jinak než
-   * pravidlo v generátoru: kdyby se obojí měřilo stejným metrem, chyba
-   * v metru by prošla oběma. Tady se porovnávají souhláskové kostry
-   * (souterrain → STRN, suterén → STRN) a nejdelší společný úsek písmen.
-   */
-  /**
    * Po zakrytí musí v indicii zůstat něco, z čeho se dá vyjít.
+   *
+   * „Mající chuť [?]" u *slaného* nebo „Odborník v oboru [?]" u *psychiatra*
+   * projde délkou i počtem slov, jenže všechno podstatné leží právě v té
+   * díře. U nezakryté definice se nic takového stát nemůže, ta se neměří.
+   */
+  it('po zakrytí zbude ve významu aspoň nějaká informace', () => {
+    const filler = new Set(
+      `majici majicich takovy takova takove ktery ktera ktere kterym jenz
+       schopny schopna schopne nachazejici nachazi urceny urcena urcene slouzici
+       ktereho jehoz nekdo neco nejaky nejaka nejake jeho jeji jejich prip apod
+       zpusob zpusobem vlastnost vlastnosti cinnost delat udelat mit byt stav
+       obvykle zejmena zvlaste vetsinou take tedy`.split(/\s+/),
+    )
+    const hollow = puzzles.filter((puzzle) => {
+      if (!puzzle.clue.includes('[?]')) return false
+      const words = puzzle.clue
+        .replaceAll('[?]', ' ')
+        .split(/[^\p{L}]+/u)
+        .map((word) => fold(word.toLowerCase()))
+        .filter((word) => word.length >= 4 && !filler.has(word))
+      return words.length < 3
+    })
+    expect(hollow.map((p) => `${p.word}: ${p.clue}`).slice(0, 6)).toEqual([])
+  })
+
+  /**
+   * Totéž pro původ, jen jiným metrem.
    *
    * „Odvozeno od substantiva [?] pomocí předpony [?]-." má přes čtyřicet
    * znaků, takže délková podmínka projde — jenže to sedí na stovky slov
-   * a hráč z toho nemá co vytěžit. Délka je špatné měřítko; rozhoduje počet
-   * slov, která opravdu něco tvrdí.
+   * a hráč z toho nemá co vytěžit.
    */
-  it('po zakrytí zbude v indicii aspoň nějaká informace', () => {
+  it('po zakrytí zbude v původu aspoň nějaká informace', () => {
     const filler = new Set(
       `odvozeno odvozene odvozeneho odvozena odvozeny odvozenim utvoreno utvorena
        utvoreny vzniklo vznikla vznikl vznik pochazi prejato prevzato prejaty prejate
@@ -362,17 +388,26 @@ describe('detektiv — data', () => {
        ktere kterym jehoz jejiz coz jako toto tento tato temer velmi`.split(/\s+/),
     )
     const hollow = puzzles.filter((puzzle) => {
-      const words = puzzle.clue
+      if (!puzzle.origin) return false
+      const words = puzzle.origin
         .replaceAll('[?]', ' ')
         .split(/[^\p{L}]+/u)
         .map((word) => fold(word.toLowerCase()))
         .filter((word) => word.length >= 4 && !filler.has(word))
       return words.length < 3
     })
-    expect(hollow.map((p) => `${p.word}: ${p.clue}`).slice(0, 6)).toEqual([])
+    expect(hollow.map((p) => `${p.word}: ${p.origin}`).slice(0, 6)).toEqual([])
   })
 
-  it('v indicii není nic, co zní nebo vypadá jako hledané slovo', () => {
+  /**
+   * V indicii nesmí být nic, co zní jako hledané slovo.
+   *
+   * Tohle je hlavní kontrola celého režimu a schválně je napsaná jinak než
+   * pravidlo v generátoru: kdyby se obojí měřilo stejným metrem, chyba
+   * v metru by prošla oběma. Tady se porovnávají souhláskové kostry
+   * (souterrain → STRN, suterén → STRN) a nejdelší společný úsek písmen.
+   */
+  it('v ničem, co hráč čte, není slovo znějící jako odpověď', () => {
     const sound: Record<string, string> = {
       b: 'P', p: 'P', d: 'T', t: 'T', v: 'F', w: 'F', f: 'F',
       g: 'K', h: 'K', k: 'K', c: 'K', q: 'K', x: 'K',
@@ -401,13 +436,15 @@ describe('detektiv — data', () => {
     for (const puzzle of puzzles) {
       const target = fold(puzzle.word.toLowerCase())
       const ear = phon(puzzle.word)
-      for (const raw of puzzle.clue.split(/[^\p{L}]+/u)) {
-        if (raw.length < 3) continue
-        const token = fold(raw.toLowerCase())
-        const mine = phon(raw)
-        const sounds = ear.length >= 2 && mine.length >= 2 && mine === ear
-        const looks = target.length >= 5 && shared(token, target) >= Math.max(4, target.length - 2)
-        if (sounds || looks) leaky.push(`${puzzle.word}: „${raw}"`)
+      for (const text of shownWhilePlaying(puzzle)) {
+        for (const raw of text.split(/[^\p{L}]+/u)) {
+          if (raw.length < 3) continue
+          const token = fold(raw.toLowerCase())
+          const mine = phon(raw)
+          const sounds = ear.length >= 2 && mine.length >= 2 && mine === ear
+          const looks = target.length >= 5 && shared(token, target) >= Math.max(4, target.length - 2)
+          if (sounds || looks) leaky.push(`${puzzle.word}: „${raw}"`)
+        }
       }
     }
     expect(leaky.slice(0, 8)).toEqual([])
@@ -421,7 +458,7 @@ describe('detektiv — data', () => {
    * u balastu. Maskování dřív hlídalo jen společný začátek, a ten se u
    * přejímek často liší uvnitř slova.
    */
-  it('indicie neobsahuje skoro stejné slovo v jiném jazyce', () => {
+  it('nikde není skoro stejné slovo v jiném jazyce', () => {
     const ratio = (a: string, b: string): number => {
       // Podíl shodných znaků v pořadí — hrubá míra podobnosti dvou slov.
       const rows = Array.from({ length: a.length + 1 }, () =>
@@ -442,17 +479,19 @@ describe('detektiv — data', () => {
     for (const puzzle of puzzles) {
       const target = fold(puzzle.word.toLowerCase())
       if (target.length < 5) continue
-      for (const raw of puzzle.clue.split(/[^\p{L}]+/u)) {
-        const token = fold(raw.toLowerCase())
-        if (token.length < 5) continue
-        if (ratio(token, target) >= 0.8) leaky.push(`${puzzle.word}: „${raw}"`)
+      for (const text of shownWhilePlaying(puzzle)) {
+        for (const raw of text.split(/[^\p{L}]+/u)) {
+          const token = fold(raw.toLowerCase())
+          if (token.length < 5) continue
+          if (ratio(token, target) >= 0.8) leaky.push(`${puzzle.word}: „${raw}"`)
+        }
       }
     }
     expect(leaky.slice(0, 8)).toEqual([])
   })
 
   /**
-   * Indicie nesmí skončit uprostřed myšlenky.
+   * Text o původu nesmí skončit uprostřed myšlenky.
    *
    * Text se zkracuje po větách a dělič vět bral tečku za řadovou číslovkou
    * jako konec věty — indicie pak končila „…se na začátku 17." a hráč čekal
@@ -460,40 +499,71 @@ describe('detektiv — data', () => {
    */
   it('text o původu končí dokončenou větou', () => {
     const truncated = puzzles.filter((puzzle) => {
-      const clue = puzzle.clue.trim()
+      const origin = (puzzle.origin ?? '').trim()
+      if (!origin) return false
       return (
-        !/[.!?]$/.test(clue) ||
+        !/[.!?]$/.test(origin) ||
         // řadová číslovka bez toho, co počítá („v 18.")
-        /\s\d{1,2}\.$/.test(clue) ||
+        /\s\d{1,2}\.$/.test(origin) ||
         // Zkratka, po které musí věta pokračovat. Musí před ní stát mezera:
         // `\b` je v JS bez příznaku `u` jen o ASCII, takže „hêr." vypadá
         // jako zkratka „r." a test hlásil planý poplach.
-        /(?:^|\s)(?:např|resp|srov|lat|řec|něm|angl|tzv|stol|r)\.$/i.test(clue) ||
-        clue.split('(').length !== clue.split(')').length
+        /(?:^|\s)(?:např|resp|srov|lat|řec|něm|angl|tzv|stol|r)\.$/i.test(origin) ||
+        origin.split('(').length !== origin.split(')').length
       )
     })
-    expect(truncated.map((p) => `${p.word}: …${p.clue.slice(-40)}`)).toEqual([])
+    expect(truncated.map((p) => `${p.word}: …${p.origin!.slice(-40)}`)).toEqual([])
   })
 
   it('text je čitelně dlouhý a bez zbytků wikitextu', () => {
     const problems: string[] = []
     for (const puzzle of puzzles) {
-      if (puzzle.clue.length < 40 || puzzle.clue.length > 320) problems.push(puzzle.word)
-      if (/\[\[|\{\{|<ref|''/.test(puzzle.clue)) problems.push(`${puzzle.word}: wikitext`)
+      if (puzzle.clue.length < 16 || puzzle.clue.length > 180) {
+        problems.push(`${puzzle.word}: ${puzzle.clue.length} znaků`)
+      }
+      for (const text of [...shownWhilePlaying(puzzle), puzzle.story ?? '']) {
+        if (/\[\[|\{\{|<ref|''/.test(text)) problems.push(`${puzzle.word}: wikitext`)
+      }
     }
     expect(problems.slice(0, 5)).toEqual([])
   })
 
-  // Hráč si stěžoval, že indicii nerozumí: text končil uprostřed souvětí
-  // („…, způsobem metafory a odvození pak i kardinální") a předtím vypočítával
-  // příbuzná slova („Srovnej např. stožár, stehno"), což je ve slovníku na
-  // místě, ale v hádance to jenom mate.
-  it('indicie je celá věta bez slovníkových odkazů', () => {
+  // Hráč si stěžoval, že indicii nerozumí: text vypočítával příbuzná slova
+  // („Srovnej např. stožár, stehno"), což je ve slovníku na místě, ale
+  // v hádance to jenom mate.
+  it('indicie neodkazuje jinam do slovníku', () => {
     const problems: string[] = []
     for (const puzzle of puzzles) {
-      if (!/[.!?]$/.test(puzzle.clue.trim())) problems.push(`${puzzle.word}: bez tečky`)
-      if (/\b(srovnej|srov\.|porovnej|viz)\b/i.test(puzzle.clue)) {
-        problems.push(`${puzzle.word}: odkaz`)
+      for (const text of shownWhilePlaying(puzzle)) {
+        // Hranice slova se musí psát přes `\p{L}`: `\b` je v JS bez příznaku
+        // `u` jen o ASCII, takže „vizí" vypadá jako odkaz „viz".
+        if (/(^|[^\p{L}])(srovnej|srov\.|porovnej|viz)([^\p{L}]|$)/iu.test(text)) {
+          problems.push(`${puzzle.word}: odkaz`)
+        }
+      }
+    }
+    expect(problems.slice(0, 5)).toEqual([])
+  })
+
+  /**
+   * Celá etymologie se ukazuje až ve vyhodnocení, kde prozrazovat nemá co.
+   *
+   * Během hry hráč vidí `origin` se zakrytými místy; `story` je tentýž text
+   * nezakrytý a smí do něj patřit i hledané slovo. Kdyby se ta dvě pole
+   * někdy prohodila, celý režim by se rozsypal — proto se hlídá, že jdou
+   * ruku v ruce a že zakrytá verze je opravdu ta kratší.
+   */
+  it('nezakrytý původ patří k zakrytému a nikam jinam', () => {
+    const problems: string[] = []
+    for (const puzzle of puzzles) {
+      if (!!puzzle.origin !== !!puzzle.story) {
+        problems.push(`${puzzle.word}: původ jen napůl`)
+        continue
+      }
+      if (!puzzle.origin) continue
+      if (puzzle.story!.includes('[?]')) problems.push(`${puzzle.word}: zakryté i ve vyhodnocení`)
+      if (puzzle.story!.length < puzzle.origin.replaceAll('[?]', '').length) {
+        problems.push(`${puzzle.word}: nezakrytá verze je kratší`)
       }
     }
     expect(problems.slice(0, 5)).toEqual([])
@@ -505,6 +575,27 @@ describe('detektiv — data', () => {
     const gaps = puzzles.filter((p) => p.clue.includes('[?]'))
     expect(gaps.length).toBeGreaterThan(100)
     expect(puzzles.filter((p) => p.clue.includes('…'))).toEqual([])
+  })
+
+  // Otázka dne a Detektiv nesmí hrát na totéž slovo. Hráč by v jednom režimu
+  // dostal odpověď z druhého — a ještě týž den.
+  it('nehádá se slovo, na které se ptá Otázka dne', () => {
+    const deck = readJson<Record<string, { answer: string; alt?: string[] }[]>>(
+      'quiz',
+      'deck.json',
+    )
+    const asked = new Set<string>()
+    for (const questions of Object.values(deck)) {
+      for (const question of questions) {
+        for (const text of [question.answer, ...(question.alt ?? [])]) {
+          for (const token of text.split(/[^\p{L}]+/u)) {
+            if (token) asked.add(fold(token.toLowerCase()))
+          }
+        }
+      }
+    }
+    const clash = puzzles.filter((p) => asked.has(fold(p.word.toLowerCase())))
+    expect(clash.map((p) => p.word).slice(0, 5)).toEqual([])
   })
 })
 

@@ -3140,6 +3140,13 @@ button.rank-card:hover {
   font-weight: 700;
 }
 
+/* Celá etymologie, nezakrytá — během hry by odpověď prozradila, po dohrání
+   je to odměna za vyluštění. Vlastní karta pod významem, ať je vidět, že je
+   to jiná informace. */
+.clue-story {
+  margin-top: var(--sp-2);
+}
+
 /* ---------- Šibenice ---------- */
 
 /* Kresba se přizpůsobí výšce hrací plochy stejně jako žebřík nebo věž —
@@ -3594,6 +3601,38 @@ button.rank-card:hover {
   line-height: 1.62;
   color: var(--text);
   text-wrap: pretty;
+}
+
+/* Mluvnická hlavička spisu. Není to vodítko samo o sobě, jen zúžení pole,
+   takže sedí nad významem drobně a potichu. */
+.clue-grammar {
+  margin-bottom: var(--sp-2);
+  font-size: 0.72rem !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted) !important;
+}
+
+/* Původ pod významem: oddělený linkou, o stupeň drobněji. Je to doplněk,
+   ne hlavní stopa — hlavní stopa je význam nad ním. */
+.clue-origin {
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border);
+  font-size: 0.84rem !important;
+  line-height: 1.55 !important;
+  color: var(--muted) !important;
+}
+
+.clue-label {
+  display: inline-block;
+  margin-right: 0.5em;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--accent);
 }
 
 /* Okénko po zakrytém slově. Musí být vidět na první pohled, že tam něco

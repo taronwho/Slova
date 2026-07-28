@@ -1,10 +1,17 @@
 /**
- * Režim ETYMOLOGICKÝ DETEKTIV — hádání slova podle jeho původu.
+ * Režim ETYMOLOGICKÝ DETEKTIV — hádání slova podle spisu o něm.
  *
- * Hráč vidí jen počet písmen a text o tom, odkud slovo přišlo:
+ * Hráč vidí počet písmen a spis: mluvnickou hlavičku, význam zkrácený na
+ * obecnou část a — když ho heslo má — zakrytý původ.
  *
- *     „Odvozeno (snad přes hornoněmčinu) z latinského castellum (bašta,
- *      pevnůstka, menší tvrz), zdrobněliny slova castrum."   →   KOSTEL
+ *     podstatné jméno, rod mužský neživotný · 2 slabiky
+ *     „Dřevěný dechový hudební nástroj se dvěma plátky"
+ *     původ: Z francouzského [?] (doslova vysoké dřevo).      →   HOBOJ
+ *
+ * Dřív stál režim jen na etymologii a to byla chyba: etymologické heslo je
+ * psané pro toho, kdo slovo **už zná**, takže nese jedinou informaci —
+ * zdrojový tvar. Ten se musí zakrýt a zbude slovotvorná vata. Význam má
+ * naopak skoro každé heslo a slovo samo v definici nikdy nestojí.
  *
  * Mechanika je příbuzná Šibenici: zkoušejí se písmena, diakritika se hádá po
  * základním písmeni. Jsou ale dva zásadní rozdíly, a oba jdou za tím, aby to
@@ -13,13 +20,13 @@
  * 1. **Nehraje se na životy, ale na body.** Chybné písmeno nezabíjí, jen
  *    stojí. Hráč tak může přemýšlet nahlas a zkoušet, místo aby po osmi
  *    chybách skončil — text mu má dávat vodítko, kterým se dá pracovat.
- * 2. **Slovo se dá tipnout celé.** Kdo na to přijde z etymologie po třech
+ * 2. **Slovo se dá tipnout celé.** Kdo na to přijde ze spisu po třech
  *    písmenech, nemusí doklikávat zbytek; tipnutí je za prémii a chybný tip
  *    stojí stejně jako pár písmen.
  *
  * Texty pocházejí z české sekce Wikislovníku (CC BY-SA) a generátor v
- * `tools/5d_build_detective.py` vyhazuje ty, které slovo prozradí — nejčastěji
- * rozbory složenin typu „ze spojení jest-li".
+ * `tools/5d_build_detective.py` zakrývá všechno, co by odpověď prozradilo —
+ * kořen slova i cizojazyčný protějšek, který jen jinak hláskuje totéž.
  */
 
 import { fold } from '../lib/czech'
@@ -28,8 +35,14 @@ import type { Difficulty } from './types'
 export interface DetectivePuzzle {
   id: string
   word: string
-  /** Text o původu slova, tak jak ho podává Wikislovník. */
+  /** Hlavní vodítko: slovníkový význam zkrácený na obecnou část. */
   clue: string
+  /** Slovní druh s rodem či videm a počet slabik. */
+  grammar?: string
+  /** Původ slova se zakrytými místy — doplněk, ne každé heslo ho má. */
+  origin?: string
+  /** Původ nezakrytý. Ukáže se až po dohrání, kdy nemá co prozradit. */
+  story?: string
   difficulty: Difficulty
 }
 

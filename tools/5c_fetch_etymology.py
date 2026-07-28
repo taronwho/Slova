@@ -59,23 +59,43 @@ def fetch(titles):
         return json.load(response)
 
 
+HEADING = re.compile(r"^(={2,6})[ \t]*(.+?)[ \t]*\1[ \t]*$", re.M)
+
+
+def sections(text):
+    """
+    Rozloží wikitext na `(úroveň, nadpis, tělo)`.
+
+    Dřív se každá část hledala vlastním regulárním výrazem s pevným počtem
+    rovnítek a to se rozbíjelo: „význam" je zanořený pod slovním druhem, takže
+    má o jedno rovnítko víc než „etymologie". Jednou projít nadpisy je
+    spolehlivější než hádat úroveň dopředu.
+    """
+    marks = list(HEADING.finditer(text))
+    out = []
+    for order, mark in enumerate(marks):
+        stop = marks[order + 1].start() if order + 1 < len(marks) else len(text)
+        out.append((len(mark.group(1)), mark.group(2).strip().lower(), text[mark.end():stop]))
+    return out
+
+
 def czech_section(text):
     """Jen část hesla pod `== čeština ==` — jinde jsou cizí jazyky."""
-    match = re.search(r"^==\s*čeština\s*==\s*$", text, re.M)
-    if not match:
-        return None
-    rest = text[match.end() :]
-    end = re.search(r"^==\s*[^=].*==\s*$", rest, re.M)
-    return rest[: end.start()] if end else rest
+    marks = list(HEADING.finditer(text))
+    for order, mark in enumerate(marks):
+        if len(mark.group(1)) == 2 and mark.group(2).strip().lower() == "čeština":
+            for later in marks[order + 1:]:
+                if len(later.group(1)) == 2:
+                    return text[mark.end():later.start()]
+            return text[mark.end():]
+    return None
 
 
-def etymology_section(text):
-    match = re.search(r"^===\s*etymologie\s*===\s*$", text, re.M)
-    if not match:
-        return None
-    rest = text[match.end() :]
-    end = re.search(r"^==+\s*[^=].*==+\s*$", rest, re.M)
-    return rest[: end.start()] if end else rest
+def etymology_section(czech):
+    for _, title, body in sections(czech):
+        if title == "etymologie":
+            return body
+    return None
 
 
 # Slovní druhy, které se ve hře hodí hádat. Částice a spojky sice etymologii
@@ -88,12 +108,75 @@ POS_HEADINGS = {
 }
 
 
+# Rod a vid stojí v těle sekce slovního druhu jako kurzivní odrážka.
+MARKS = (
+    "rod mužský neživotný", "rod mužský životný", "rod ženský", "rod střední",
+    "nedokonavé", "dokonavé",
+)
+
+
+def senses(body):
+    """Řádky významu z těla sekce `význam`."""
+    out = []
+    for line in body.splitlines():
+        stripped = line.strip()
+        # „#" je význam, „#:" a „#*" je příklad užití — ten do hádanky nepatří.
+        if stripped.startswith("#") and not re.match(r"^#[:*]", stripped):
+            said = clean(stripped)
+            if len(said) > 8:
+                out.append(said)
+    return out
+
+
+def meaning_section(czech):
+    """
+    Významy hesla — z nich se skládá hlavní část indicie.
+
+    Etymologie je vzácná (má ji sotva každé dvacáté heslo) a po zakrytí
+    zdrojového tvaru z ní často nic nezbude. Význam má naopak skoro každé
+    heslo a nikdy neobsahuje popisované slovo, protože se tak slovníky
+    prostě nepíšou. Proto se od téhle verze stahuje obojí.
+
+    Bere se význam u prvního slovního druhu, který hru zajímá. Hesla jako
+    „jeden" nesou vedle číslovky i zájmeno a míchat jejich definice by dalo
+    nesourodou indicii.
+    """
+    wanted, spare = [], []
+    kind = None
+    for level, title, body in sections(czech):
+        if title in POS_HEADINGS:
+            kind = title
+        elif level <= 3:
+            kind = None
+        if title == "význam":
+            (wanted if kind else spare).append(senses(body))
+    for group in wanted + spare:
+        if group:
+            return group
+    return []
+
+
+def grammar(czech):
+    """Slovní druh s rodem či videm a dělení na slabiky."""
+    out = {}
+    for _, title, body in sections(czech):
+        if title in POS_HEADINGS:
+            detail = clean(body[:400])
+            out["kind"] = next(
+                (f"{title}, {mark}" for mark in MARKS if mark in detail), title
+            )
+            break
+    for _, title, body in sections(czech):
+        if title == "dělení":
+            first = clean(body).split()
+            if first and "-" in first[0]:
+                out["syl"] = first[0]
+            break
+    return out
+
+
 def parts_of_speech(czech):
-    found = []
-    for heading, code in POS_HEADINGS.items():
-        if re.search(rf"^===\s*{heading}\s*===\s*$", czech, re.M):
-            found.append(code)
-    return found
+    return list(dict.fromkeys(POS_HEADINGS[t] for _, t, _ in sections(czech) if t in POS_HEADINGS))
 
 
 def strip_templates(text):
@@ -139,13 +222,34 @@ def main():
     if "--limit" in sys.argv:
         limit = int(sys.argv[sys.argv.index("--limit") + 1])
 
-    base = json.load(open(os.path.join(OUT, "lexicon_base.json"), encoding="utf-8"))
-    pool = []
-    for length in sorted(base, key=int):
-        if MIN_LEN <= int(length) <= MAX_LEN:
-            pool.extend(base[length])
-    pool.sort(key=lambda wf: (-wf[1], wf[0]))
-    words = [w for w, _ in pool[:CANDIDATES]]
+    lexicon = os.path.join(OUT, "lexicon_base.json")
+    if os.path.exists(lexicon):
+        base = json.load(open(lexicon, encoding="utf-8"))
+        pool = []
+        for length in sorted(base, key=int):
+            if MIN_LEN <= int(length) <= MAX_LEN:
+                pool.extend(base[length])
+        pool.sort(key=lambda wf: (-wf[1], wf[0]))
+        words = [w for w, _ in pool[:CANDIDATES]]
+    else:
+        # Bez mezivýstupů z kroku 2 se vezme ověřený seznam základních tvarů,
+        # který drží testy. Pořadí podle frekvence, aby se běžná slova
+        # stahovala dřív a přerušený běh měl použitelný začátek.
+        forms = json.load(
+            open(os.path.join(HERE, "..", "tests", "fixtures", "base-forms.json"),
+                 encoding="utf-8")
+        )
+        ranks = {}
+        freq = os.path.join(RAW, "cs_50k.txt")
+        if os.path.exists(freq):
+            for order, line in enumerate(open(freq, encoding="utf-8")):
+                parts = line.split()
+                if parts:
+                    ranks.setdefault(parts[0], order)
+        words = sorted(
+            (w for w in forms if MIN_LEN <= len(w) <= MAX_LEN),
+            key=lambda w: (ranks.get(w, len(ranks) + 1), w),
+        )[:CANDIDATES]
     if limit:
         words = words[:limit]
 
@@ -173,11 +277,21 @@ def main():
                 continue
             text = page["revisions"][0]["slots"]["main"]["content"]
             czech = czech_section(text)
-            section = etymology_section(czech) if czech else None
-            if not section:
+            if not czech:
                 cache[title] = None
                 continue
-            cache[title] = {"e": clean(section), "pos": parts_of_speech(czech)}
+            section = etymology_section(czech)
+            senses = meaning_section(czech)
+            # Heslo je k něčemu, když má aspoň jedno z obojího.
+            if not section and not senses:
+                cache[title] = None
+                continue
+            entry = {"pos": parts_of_speech(czech), **grammar(czech)}
+            if section:
+                entry["e"] = clean(section)
+            if senses:
+                entry["v"] = senses
+            cache[title] = entry
 
         # Hesla, která API vůbec nevrátilo (neexistují), ať se nezkoušejí znovu
         for word in chunk:
