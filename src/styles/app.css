@@ -40,6 +40,34 @@
   }
 }
 
+/*
+ * Pořadí ustupování.
+ *
+ * Lišta je jeden řádek a její obsah se nesmí zalomit ani vysunout za okraj —
+ * uříznutý kalamář hráč nenajde a bude si myslet, že o inkoust přišel. Když
+ * se přestane vejít, ustupuje se odshora dolů podle toho, co se dá zjistit
+ * odjinud:
+ *
+ *   1. čip „Denní" — hráč do denní výzvy sám vlezl a vidí ji i v menu,
+ *   2. jméno hodnosti (od 640 px níž) — číslo vedle odznaku zůstává,
+ *   3. popisek „Série" — místo něj je fajfka,
+ *   4. mezery.
+ *
+ * Nikdy neustoupí kalamář, číslo hodnosti a přepínač témat: první dva jsou
+ * důvod, proč se na lištu hráč vůbec dívá, třetí je jediná cesta k přepnutí
+ * motivu. Hlídá to `npm run audit:mobile`, který spadne, jakmile něco
+ * z lišty přeteče přes okraj.
+ */
+.topbar > * {
+  min-width: 0;
+}
+
+@media (max-width: 560px) {
+  .shell.playing .topbar .chip-gold {
+    display: none;
+  }
+}
+
 @media (max-width: 420px) {
   .topbar {
     gap: var(--sp-2);

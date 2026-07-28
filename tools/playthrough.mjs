@@ -450,7 +450,12 @@ log('\nDENNÍ VÝZVA A INKOUST')
   await page.locator('.daily-item', { hasText: 'Řetěz' }).click()
   await page.waitForSelector('.board', { timeout: 20000 })
   await dismissTutorial(page)
-  check(await page.locator('.chip-gold').isVisible(), 'spustí se rovnou denní kolo')
+  // Zlatý čip v liště se na telefonu schovává, aby zbylo místo na kalamář,
+  // takže se denní kolo pozná z desky, ne z hlavičky.
+  check(
+    await page.locator('.shell[data-daily="true"]').isVisible(),
+    'spustí se rovnou denní kolo',
+  )
   check(await page.locator('.profile-chip').isVisible(), 'hodnost je vidět i ve hře')
   await goHome(page)
 

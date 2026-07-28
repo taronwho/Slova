@@ -417,10 +417,10 @@ export const AWARDS: Award[] = [
 
   // Řetěz
   ...ladder('retez-par', 'feat', 'chain', 'arrow', (p) => p.counters.chainPar, [
-    { need: 10, title: 'Deset nejkratších cest', goal: 'Dohraj Řetěz na počet tahů nejkratší cesty desetkrát' },
-    { need: 50, title: 'Padesát nejkratších cest', goal: 'Dohraj Řetěz na nejkratší cestu padesátkrát' },
-    { need: 200, title: 'Dvě stě nejkratších cest', goal: 'Dohraj Řetěz na nejkratší cestu dvěstěkrát' },
-    { need: 600, title: 'Šest set nejkratších cest', goal: 'Dohraj Řetěz na nejkratší cestu šestsetkrát' },
+    { need: 10, title: 'Deset nejkratších cest', goal: 'Dojdi na nejkratší cestu bez nápovědy desetkrát' },
+    { need: 50, title: 'Padesát nejkratších cest', goal: 'Dojdi na nejkratší cestu bez nápovědy padesátkrát' },
+    { need: 200, title: 'Dvě stě nejkratších cest', goal: 'Dojdi na nejkratší cestu bez nápovědy dvěstěkrát' },
+    { need: 600, title: 'Šest set nejkratších cest', goal: 'Dojdi na nejkratší cestu bez nápovědy šestsetkrát' },
   ]),
   // Rychlost se měří jen u kol bez nápovědy — s „Celé slovo" je pod minutou
   // každý řetěz a meta by nic neznamenala.
@@ -442,9 +442,11 @@ export const AWARDS: Award[] = [
     { need: 100, title: 'Sto hotových věží', goal: 'Dostav věž až nahoru stokrát' },
     { need: 400, title: 'Čtyři sta hotových věží', goal: 'Dostav věž až nahoru čtyřistakrát' },
   ]),
+  // Stejně jako u Řetězu se čas měří jen na kole bez nápovědy — jinak by
+  // stačilo třikrát ťuknout na „Celé slovo".
   ...fastLadder('vez-rychla', 'tower', 'bolt', (p) => p.counters.towerFastMs, [
-    { ms: 180_000, title: 'Svižná stavba', goal: 'Dostav věž do tří minut' },
-    { ms: 120_000, title: 'Stavba na dvě minuty', goal: 'Dostav věž do dvou minut' },
+    { ms: 180_000, title: 'Svižná stavba', goal: 'Dostav věž bez nápovědy do tří minut' },
+    { ms: 120_000, title: 'Stavba na dvě minuty', goal: 'Dostav věž bez nápovědy do dvou minut' },
   ]),
 
   // Šibenice

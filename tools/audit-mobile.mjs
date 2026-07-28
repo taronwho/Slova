@@ -101,6 +101,26 @@ for (const size of SIZES) {
   // ztratí emulaci dotyku, takže `pointer: coarse` přestane platit. Snímek
   // domovské obrazovky proto až na konci, po všech měřeních.
 
+  // Denní kolo veze v liště čip navíc. Právě on kdysi vytlačil kalamář,
+  // sérii i přepínač témat mimo obrazovku na každém telefonu — a audit to
+  // neodhalil, protože otevíral jen běžná kola. Proto se lišta měří v obou
+  // podobách, než se pustíme do zbytku hry.
+  for (const [mode] of MODES) {
+    for (const daily of [false, true]) {
+      await page.goto(APP_URL, { waitUntil: 'networkidle' })
+      await page.locator('.splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined)
+      await openGame(page, MODE_ID[mode], { daily })
+      await page.waitForTimeout(300)
+      const clipped = await page.evaluate(offscreen)
+      if (clipped.length > 0) {
+        note(
+          `${size.name}/${mode}${daily ? '/denní' : ''}`,
+          `mimo obrazovku: ${clipped.join(', ')}`,
+        )
+      }
+    }
+  }
+
   for (const [mode, selector] of MODES) {
     await page.goto(APP_URL, { waitUntil: 'networkidle' })
   await page.locator('.splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined)

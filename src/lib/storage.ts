@@ -535,7 +535,10 @@ function updateCounters(
   }
 
   if (result.mode === 'chain') {
-    if (num(result, 'moves') <= num(result, 'par')) c.chainPar += 1
+    // Nejkratší cesta se počítá jen bez nápovědy. „Celé slovo" hráče po
+    // optimální cestě přímo vede, takže by tahle rodina neměřila, jestli ji
+    // hráč našel, ale jestli si ji nechal ukázat.
+    if (clean && num(result, 'moves') <= num(result, 'par')) c.chainPar += 1
     // Rychlost se počítá jen bez nápovědy — s „Celé slovo" je pod minutou
     // každý řetěz a meta by nic neznamenala.
     if (clean) c.chainFastMs = fastest(c.chainFastMs, result.elapsedMs)
@@ -566,8 +569,11 @@ function updateCounters(
       c.towerFull += 1
       if (clean) c.towerFullNoHint += 1
       // Rychlost dává smysl měřit jen u dostavěné věže — vzdané kolo po
-      // dvou patrech by jinak bylo „nejrychlejší" vždycky.
-      c.towerFastMs = fastest(c.towerFastMs, result.elapsedMs)
+      // dvou patrech by jinak bylo „nejrychlejší" vždycky — a jen bez
+      // nápovědy. S „Celé slovo" postaví věž do dvou minut kdokoli, takže
+      // meta bez téhle podmínky neměřila rychlost, ale trpělivost klikání.
+      // Řetěz to tak měl od začátku; Věž se opomněla.
+      if (clean) c.towerFastMs = fastest(c.towerFastMs, result.elapsedMs)
     }
   }
   return c

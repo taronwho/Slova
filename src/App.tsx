@@ -114,7 +114,14 @@ export default function App() {
 
   const rank = rankFor(profile.fame)
   const dayKey = todayKey()
-  const dayLabel = `#${dayNumber()}`
+  /**
+   * Číslo dne do sdíleného textu.
+   *
+   * Na obrazovce nemá co dělat — hráči nic neříká a v hlavičce zabíralo
+   * místo, kvůli kterému padal kalamář za okraj. Ve sdíleném výsledku smysl
+   * má: podle něj se pozná, že dva lidé řešili tutéž hádanku.
+   */
+  const dayTag = `#${dayNumber()}`
 
   useEffect(() => {
     saveProfile(profile)
@@ -470,6 +477,10 @@ export default function App() {
     <div
       className={`shell ${view.kind === 'game' ? 'playing' : ''}`}
       data-mode={view.kind === 'game' ? view.mode : undefined}
+      // Čip „Denní" se na telefonu z lišty schová, aby se vešel kalamář.
+      // Že běží denní kolo, se tím pádem nedá poznat z obrazovky — a testy
+      // to vědět potřebují, takže to nese sama deska.
+      data-daily={view.kind === 'game' && view.daily ? 'true' : undefined}
     >
       <header className="topbar">
         <button
@@ -506,7 +517,7 @@ export default function App() {
             </button>
             {view.daily && (
               <Explain term="denni" className="chip chip-gold">
-                Denní {dayLabel}
+                Denní
               </Explain>
             )}
             <button
@@ -585,7 +596,7 @@ export default function App() {
           <Home
             profile={profile}
             dayKey={dayKey}
-            dayLabel={dayLabel}
+            dayLabel={''}
             onPlay={startRound}
             onDifficulty={(mode, difficulty: Difficulty) =>
               updateProfile((previous) => ({
@@ -626,7 +637,7 @@ export default function App() {
             key={loaded.quiz.id}
             question={loaded.quiz}
             day={dayNumber() + quizOffset}
-            dayLabel={__QUIZ_ALL__ ? `#${dayNumber() + quizOffset}` : dayLabel}
+            dayLabel={__QUIZ_ALL__ ? `#${dayNumber() + quizOffset}` : ''}
             onFinish={finishQuiz}
             onHome={goHome}
             {...(__QUIZ_ALL__
@@ -641,7 +652,7 @@ export default function App() {
             graph={loaded.chain.bundle.graph}
             puzzle={loaded.chain.puzzle}
             streak={profile.streak}
-            dayLabel={view.daily ? dayLabel : ''}
+            dayLabel={view.daily ? dayTag : ''}
             onFinish={finishRound}
             onNext={() => startRound('chain', false)}
             onHome={goHome}
@@ -660,7 +671,7 @@ export default function App() {
             key={`${loaded.hive.id}-${view.nonce}`}
             puzzle={loaded.hive}
             streak={profile.streak}
-            dayLabel={view.daily ? dayLabel : ''}
+            dayLabel={view.daily ? dayTag : ''}
             onFinish={finishRound}
             onNext={() => startRound('hive', false)}
             onHome={goHome}
@@ -678,7 +689,7 @@ export default function App() {
             key={`${loaded.tower.id}-${view.nonce}`}
             puzzle={loaded.tower}
             streak={profile.streak}
-            dayLabel={view.daily ? dayLabel : ''}
+            dayLabel={view.daily ? dayTag : ''}
             onFinish={finishRound}
             onNext={() => startRound('tower', false)}
             onHome={goHome}
@@ -700,7 +711,7 @@ export default function App() {
             key={`${loaded.gallows.id}-${view.nonce}`}
             puzzle={loaded.gallows}
             streak={profile.streak}
-            dayLabel={view.daily ? dayLabel : ''}
+            dayLabel={view.daily ? dayTag : ''}
             onFinish={finishRound}
             onNext={() => startRound('gallows', false)}
             onHome={goHome}
@@ -720,7 +731,7 @@ export default function App() {
             deck={loaded.tetris.deck}
             setup={loaded.tetris.setup}
             streak={profile.streak}
-            dayLabel={view.daily ? dayLabel : ''}
+            dayLabel={view.daily ? dayTag : ''}
             onFinish={finishRound}
             onNext={() => startRound('tetris', false)}
             onHome={goHome}
@@ -744,7 +755,7 @@ export default function App() {
             key={`${loaded.detective.id}-${view.nonce}`}
             puzzle={loaded.detective}
             streak={profile.streak}
-            dayLabel={view.daily ? dayLabel : ''}
+            dayLabel={view.daily ? dayTag : ''}
             onFinish={finishRound}
             onNext={() => startRound('detective', false)}
             onHome={goHome}
