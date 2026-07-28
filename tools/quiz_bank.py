@@ -514,9 +514,9 @@ BANK["historie"] = [
         "Později se do sporu vložilo velké množství osobností a vědců, například Jan Gebauer nebo Tomáš Garrigue Masaryk.",
     )),
     ("Poznej bitvu.", "Bitva na Bílé hoře", ["Bílá hora"], (
-        "Rozhodlo o ní dopoledne jediného listopadového dne roku 1620 a trvalo to zhruba dvě hodiny.",
-        "Po ní následovala poprava sedmadvaceti českých pánů na Staroměstském náměstí.",
-        "Znamenala porážku českých stavů a začátek doby, které se říká temno.",
+        "Vojsko stavů stálo výš a mělo lepší postavení, ale žold nedostávalo měsíce — část pluků se rozutekla dřív, než se pořádně začalo střílet.",
+        "Rozhodlo se během jednoho dopoledne roku 1620 a poražený panovník dostal přezdívku podle toho, jak krátce vládl.",
+        "Po ní následovala poprava sedmadvaceti českých pánů na Staroměstském náměstí a začátek doby, které se říká temno.",
     )),
     ("Poznej událost.", "Sametová revoluce", ["sametová revoluce v Československu"], (
         "Průvod, po jehož rozehnání se všechno rozběhlo, byl původně povolený jako vzpomínka na uzavření vysokých škol roku 1939.",
@@ -534,7 +534,7 @@ BANK["historie"] = [
         "Založil pražskou univerzitu, Nové Město pražské a hrad Karlštejn.",
     )),
     ("Poznej lodní katastrofu.", "Titanic", [], (
-        "Vrak se našel až roku 1985 a leží ve dvou kusech téměř čtyři kilometry hluboko.",
+        "Hlídka na stěžni neměla ve chvíli srážky dalekohled — klíč od skříňky si omylem odvezl důstojník, kterého na poslední chvíli vyměnili.",
         "Potopila se v noci na 15. dubna 1912 na cestě ze Southamptonu do New Yorku.",
         "O katastrofě natočil roku 1997 James Cameron film s Leonardem DiCapriem.",
     )),
@@ -796,7 +796,7 @@ BANK["technika"] = [
         "Používal ji za druhé světové války Wehrmacht a luštil ji Alan Turing v Bletchley Parku.",
     )),
     ("Poznej stavbu.", "Suezský průplav", ["Suez"], (
-        "Po znárodnění roku 1956 kvůli němu vypukla válka a osm let byl úplně uzavřený; uvízlo v něm čtrnáct lodí s posádkami.",
+        "Egypt si na jeho stavbu vzal půjčky, které pak nedokázal splácet, a musel svůj podíl prodat Britům.",
         "Otevřel se roku 1869 podle projektu Ferdinanda de Lesseps.",
         "Roku 2021 ho na šest dní zablokovala loď Ever Given.",
     )),
@@ -1465,7 +1465,7 @@ BANK["kultura"] += [
         "Zpívají Bohemian Rhapsody a We Will Rock You.",
     )),
     ("Poznej film.", "Obchod na korze", [], (
-        "Získal roku 1966 prvního československého Oscara za cizojazyčný film.",
+        "Hlavní ženskou roli hraje polská herečka Ida Kamińska, která česky neuměla a text se učila foneticky.",
         "Natočili ho Ján Kadár a Elmar Klos podle povídky Ladislava Grosmana.",
         "Vypráví o árizátorovi, který má převzít krám staré hluché Židovky za slovenského štátu.",
     )),
@@ -1515,8 +1515,8 @@ BANK["kultura"] += [
         "Hrál ho Louis Armstrong a v Česku ho proslavil Jaroslav Ježek.",
     )),
     ("Poznej divadlo.", "Národní divadlo", ["Zlatá kaplička"], (
-        "Vyhořelo roku 1881, jen pár týdnů po slavnostním otevření, a znovu se otevřelo za dva roky.",
-        "Na jeho stavbu se sbíralo po celé zemi a nad jevištěm je nápis Národ sobě.",
+        "Sbírka na jeho stavbu trvala přes dvacet let a přispívaly do ní i vesnice, které za to dostávaly pamětní listy.",
+        "Nad jevištěm stojí nápis Národ sobě a strop malovali Ženíšek s Hynaisem.",
         "Stojí v Praze na břehu Vltavy a jeho pozlacené střeše vděčí za lidovou přezdívku.",
     )),
     ("Poznej film.", "Pán prstenů", ["Pán prstenů: Společenstvo prstenu"], (
@@ -1573,9 +1573,9 @@ BANK["historie"] += [
         "Začala roku 1789 dobytím Bastilly a skončila popravou krále.",
     )),
     ("Poznej dynastii.", "Přemyslovci", [], (
-        "Vymřeli po meči roku 1306 zavražděním posledního mužského člena v Olomouci.",
-        "Byl to první český panovnický rod a jejich mýtickým zakladatelem byl oráč od Stadic.",
-        "Patřili k nim svatý Václav, Otakar II. i Václav II.",
+        "Jejich rodová pověst začíná oráčem od Stadic a první z nich, kterého potvrzují prameny, se jmenoval Bořivoj.",
+        "Vládli přes čtyři sta let a pohřbívat se nechávali v rotundě a bazilice na Pražském hradě.",
+        "Patřili k nim svatý Václav i Otakar II. a vymřeli po meči roku 1306 zavražděním Václava III.",
     )),
     ("Poznej období.", "Průmyslová revoluce", [], (
         "Zahájila ji v Anglii textilní výroba; létající člunek a spřádací stroj předběhly i parní pohon.",
@@ -1583,7 +1583,7 @@ BANK["historie"] += [
         "Její pohon obstaral parní stroj a symbolem se staly komíny a železnice.",
     )),
     ("Poznej stavbu.", "Petřínská rozhledna", ["Petřín", "rozhledna na Petříně"], (
-        "Postavili ji roku 1891 za pouhé čtyři měsíce pro Jubilejní zemskou výstavu.",
+        "Vznikla proto, že se výletníci z Klubu českých turistů vrátili z Paříže nadšení a rozhodli se, že něco podobného musí být i doma.",
         "Měří 63,5 metru, ale díky poloze na kopci sahá její vrchol do stejné výšky jako pařížský vzor.",
         "Je to zmenšená napodobenina Eiffelovy věže nad Prahou.",
     )),
@@ -2484,7 +2484,7 @@ BANK["veda"] += [
 
 BANK["kultura"] += [
     ("Poznej film.", "Ostře sledované vlaky", [], (
-        "Získal roku 1968 druhého československého Oscara za cizojazyčný film.",
+        "Režisér obsadil do hlavní role neherce a natáčelo se na nádraží v Loděnicích u Berouna.",
         "Režíroval ho Jiří Menzel podle Bohumila Hrabala a hlavní roli hrál Václav Neckář.",
         "Odehrává se na nádraží za protektorátu a hrdina Miloš Hrma řeší svou nezkušenost.",
     )),
@@ -2559,7 +2559,7 @@ BANK["kultura"] += [
         "Vypráví o chlapci s jizvou na čele, který nastoupí do školy čar a kouzel v Bradavicích.",
     )),
     ("Poznej českou pohádku.", "Pyšná princezna", [], (
-        "Vznikla roku 1952 a byla to nejnavštěvovanější česká pohádka v kinech vůbec.",
+        "Zpěv je v tom království zakázaný královským dekretem a hlavní hrdina se dovnitř dostane jako zahradník.",
         "Hraje v ní Alena Vránová a Vladimír Ráž a král Miroslav se vydává na cesty v přestrojení.",
         "Hlavní hrdinka zpychne a zkrotí ji zpívající kytka.",
     )),
@@ -2642,14 +2642,14 @@ BANK["historie"] += [
         "Stavěli pyramidy a psali hieroglyfy; jejich vládcům se říká faraoni.",
     )),
     ("Poznej událost.", "Nástup Hitlera k moci", ["Hitler", "Adolf Hitler"], (
-        "Roku 1923 se pokusil o převrat v mnichovské pivnici, skončil ve vězení a tam napsal svou knihu.",
+        "Strana, která nakonec převzala moc, měla v posledních svobodných volbách o dva miliony hlasů míň než o půl roku dřív — klesala, když ji staré elity vzaly do vlády.",
         "Kancléřem se stal roku 1933 a po požáru Říšského sněmu si nechal odhlasovat zmocňovací zákon.",
         "Rozpoutal druhou světovou válku a spáchal roku 1945 sebevraždu v bunkru.",
     )),
     ("Poznej událost.", "Zrušení nevolnictví", ["nevolnictví"], (
-        "Vydal ho roku 1781 syn Marie Terezie, který v témže roce vydal i toleranční patent.",
-        "Neznamenalo to konec roboty — ta padla až o šedesát let později.",
-        "Poddaní se od té chvíle mohli stěhovat, ženit a posílat děti na studia bez svolení vrchnosti.",
+        "Neznamenalo to konec roboty ani to, že by sedlák dostal půdu — šlo hlavně o právo odejít, oženit se a dát dítě na studia bez svolení vrchnosti.",
+        "Patent vyšel roku 1781 pro Čechy, Moravu a Slezsko a vydal ho panovník, kterému se přezdívalo selský císař.",
+        "Josef II. tím zrušil osobní závislost poddaného na vrchnosti; robota padla až o šedesát sedm let později.",
     )),
     ("Poznej stavbu.", "Pyramidy v Gíze", ["Cheopsova pyramida", "pyramidy"], (
         "Nejvyšší z nich byla přes tři tisíce sedm set let nejvyšší stavbou světa.",
@@ -3107,9 +3107,9 @@ BANK["spolecnost"] += [
         "Je to nejnižší částka, kterou zaměstnavatel smí za měsíc práce vyplatit.",
     )),
     ("Poznej instituci.", "Veřejný ochránce práv", ["ombudsman"], (
-        "Úřad má původ ve Švédsku, kde vznikl už roku 1809, a jeho švédské jméno se ujalo po celém světě.",
-        "V Česku sídlí v Brně, volí ho sněmovna a nemůže rozhodovat, jen doporučovat.",
-        "Občan se na něj obrací, když se s ním úřad chová špatně.",
+        "Rozhodnutí úřadu nemůže zrušit ani změnit — jeho jedinou skutečnou zbraní je zveřejnění.",
+        "Sídlí v Brně, volí ho sněmovna na šest let a dohlíží i na místa, kde jsou lidé omezeni na svobodě.",
+        "Instituce, na kterou se občan obrátí, když s ním úřady jednají špatně; její běžné jméno je převzaté ze švédštiny.",
     )),
     ("Poznej pojem.", "Sociální stát", ["welfare"], (
         "Jeho zárodkem bylo nemocenské a důchodové pojištění, které zavedl Bismarck, aby oslabil své odpůrce zleva.",
@@ -3142,7 +3142,7 @@ BANK["spolecnost"] += [
         "Opravňuje volit a mít pas dané země.",
     )),
     ("Poznej instituci.", "Univerzita Karlova", ["Karlova univerzita", "UK"], (
-        "Její zakládací listinu vydal panovník roku 1348 a je to nejstarší vysoké učení ve střední Evropě.",
+        "Studenti se v ní zpočátku dělili do čtyř národů a Češi měli jen jeden hlas ze čtyř — dokud to Dekret kutnohorský neobrátil.",
         "Roku 1882 se rozdělila na českou a německou část a znovu se spojila po druhé světové válce.",
         "Sídlí v Praze v Karolinu a má sedmnáct fakult.",
     )),
@@ -3671,7 +3671,7 @@ BANK["historie"] += [
         "Dnes se tisknou na bavlněný papír s vodoznakem a ochranným proužkem.",
     )),
     ("Poznej událost.", "Světová hospodářská krize", ["Velká hospodářská krize"], (
-        "Spustila ji panika na newyorské burze v říjnu 1929, které se říká Černý čtvrtek a Černé úterý.",
+        "Ve Spojených státech se během ní zhroutila třetina bank a obilí se v kotlích pálilo místo uhlí, protože bylo levnější.",
         "V Německu z ní vytěžili nacisté a v USA na ni Roosevelt odpověděl Novým údělem.",
         "V Československu při ní nezaměstnanost přesáhla milion lidí a nejhůř dopadlo pohraničí.",
     )),
@@ -3686,9 +3686,9 @@ BANK["historie"] += [
         "Rozpoutalo první světovou válku.",
     )),
     ("Poznej stavbu.", "Chrám svatého Víta", ["katedrála svatého Víta", "svatý Vít"], (
-        "Stavěl se s přestávkami skoro šest set let a dostavěl se až roku 1929.",
-        "První stavitel Matyáš z Arrasu zemřel brzy a dílo dokončoval Petr Parléř se svou hutí.",
-        "Stojí na Pražském hradě a jsou v něm uloženy korunovační klenoty.",
+        "Začal ho stavět Matyáš z Arrasu a po jeho smrti převzal dílo čtyřiadvacetiletý Petr Parléř.",
+        "Uvnitř je kaple obložená polodrahokamy, za jejímiž sedmi zámky se chovají korunovační klenoty.",
+        "Gotický velechrám nad Prahou, dostavěný až roku 1929; je v něm kaple českého patrona, kterého zabil vlastní bratr.",
     )),
     ("Poznej období.", "Osvícenství", [], (
         "Jeho symbolem byla Encyklopedie, na které se pod vedením Diderota podílelo přes sto padesát autorů.",
@@ -3706,9 +3706,9 @@ BANK["historie"] += [
         "Roku 1683 marně obléhala Vídeň a jejím vládcům se říkalo sultán.",
     )),
     ("Poznej dokument.", "Toleranční patent", [], (
-        "Vydal ho roku 1781 týž panovník, který o pár týdnů dřív zrušil nevolnictví.",
-        "Povolil vedle katolictví ještě luterány, kalvinisty a pravoslavné — ne však bez omezení.",
-        "Nekatolické modlitebny podle něj nesměly mít věž ani vchod z ulice.",
+        "Nezaručoval rovnost — povolené církve nesměly stavět kostel s věží, se zvonem ani se vchodem přímo z ulice.",
+        "Přihlásilo se k němu jen několik procent obyvatel, nejvíc na Vysočině a ve východních Čechách; tajní evangelíci konečně vyšli najevo.",
+        "Listina, kterou Josef II. roku 1781 povolil vedle katolictví i luterány, kalvinisty a pravoslavné.",
     )),
     ("Poznej událost.", "Sarajevská olympiáda", ["olympiáda v Sarajevu"], (
         "Sportoviště, na kterých se závodilo, se za necelých deset let ocitla uprostřed obležení a bobová dráha sloužila jako palebné postavení.",
@@ -3847,7 +3847,7 @@ BANK["technika"] += [
         "Díky ní nikdo nepřečte, co posíláš v aplikaci nebo platíš kartou.",
     )),
     ("Poznej vozidlo.", "Tramvaj", ["tramvaje"], (
-        "Nejdřív ji tahali koně a teprve roku 1891 předvedl František Křižík v Praze její elektrickou podobu.",
+        "Rozchod kolejí je u nás užší než u železnice, aby vozidlo projelo i úzkými ulicemi historických měst.",
         "Napájí se ze stejnosměrné troleje a proud se vrací kolejnicemi.",
         "Jezdí po kolejích v ulicích a v Brně se jí říká šalina.",
     )),
@@ -4151,7 +4151,7 @@ BANK["spolecnost"] += [
         "Kvůli ní se u nás ke státní neutralitě řadí i to, že škola není konfesní.",
     )),
     ("Poznej tradici.", "Betlém", ["jesličky"], (
-        "První živý postavil roku 1223 František z Assisi v italském Grecciu.",
+        "Za Josefa II. byl v kostelích zakázaný, a právě proto se přestěhoval do domácností a stal se lidovým řemeslem.",
         "V Třebechovicích pod Orebem je dřevěný, pohyblivý a je národní kulturní památkou.",
         "Staví se pod stromeček a jsou v něm Josef, Marie a jesle.",
     )),
