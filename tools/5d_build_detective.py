@@ -437,10 +437,53 @@ def shorten(text: str) -> str:
     return out
 
 
-def difficulty(word: str) -> str:
-    if len(word) <= 5:
-        return "easy"
-    return "normal" if len(word) <= 8 else "hard"
+def frequency_ranks() -> dict[str, int]:
+    """
+    Pořadí slov podle toho, jak často se v češtině používají.
+
+    Bere se z frekvenčního seznamu staženého krokem 0. Když chybí, vrátí se
+    prázdná mapa a obtížnost spadne zpátky na délku — hra se kvůli tomu
+    nepostaví hůř, jen hruběji.
+    """
+    ranks: dict[str, int] = {}
+    for name in ("cs_50k.txt", "cs_full.txt"):
+        path = os.path.join(RAW, name)
+        if not os.path.exists(path):
+            continue
+        with open(path, encoding="utf-8") as handle:
+            for order, line in enumerate(handle):
+                parts = line.split()
+                if parts:
+                    ranks.setdefault(fold(parts[0]), order)
+        break
+    return ranks
+
+
+def assign_difficulty(puzzles: list[dict], ranks: dict[str, int]) -> None:
+    """
+    Rozdělí hádanky na třetiny podle toho, jak běžné to slovo je.
+
+    Délka byla špatné měřítko a bylo to na hře vidět: mezi „těžkými" seděla
+    *univerzita*, *absolutní* a *kreativní*, tedy slova, která zná každý,
+    zatímco *rožeň* platil za lehký, protože je krátký. Hráč si vybral těžkou
+    obtížnost a dostal dlouhé banality.
+
+    Dělí se **podle pořadí, ne podle prahu**. Většina hesel Wikislovníku ve
+    frekvenčním seznamu vůbec není — jsou vzácnější než cokoli na něm — a
+    prahová hranice by pak spadla na tuhle společnou hodnotu a shrnula skoro
+    celou sadu do jedné úrovně. U slov mimo seznam rozhoduje ještě délka:
+    z dvou stejně neznámých je těžší to delší.
+    """
+    missing = len(ranks) + 1
+    order = sorted(
+        puzzles,
+        key=lambda p: (ranks.get(fold(p["word"]), missing), len(p["word"])),
+    )
+    third = max(1, len(order) // 3)
+    for place, puzzle in enumerate(order):
+        puzzle["difficulty"] = (
+            "easy" if place < third else "normal" if place < 2 * third else "hard"
+        )
 
 
 def main():
@@ -476,9 +519,12 @@ def main():
                 "id": f"d-{len(puzzles):04d}",
                 "word": word,
                 "clue": text,
-                "difficulty": difficulty(word),
+                "difficulty": None,  # doplní se, až bude znám rozsah sady
             }
         )
+
+    # Obtížnost se rozdělí až teď, kdy je vidět celá sada.
+    assign_difficulty(puzzles, frequency_ranks())
 
     # Nejběžnější slova první — snadné úrovně mají být i ta známější.
     puzzles.sort(key=lambda p: -freq.get(p["word"], 0))
