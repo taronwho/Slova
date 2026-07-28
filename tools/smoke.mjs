@@ -247,6 +247,42 @@ log('\nMOBIL')
   await page.close()
 }
 
+/**
+ * Otázka dne skončí a všechny tři indicie jsou vidět.
+ *
+ * Hráč, který vsadil na jednu, má právo vědět, co si odepřel; a ten, kdo si
+ * koupil tři a uhodl po první, má vidět i ty dvě, které nestihl odkrýt.
+ * Dřív zůstávaly zavřené i po konci kola.
+ */
+log('\nOTÁZKA DNE')
+{
+  const page = await newPage(mobile)
+  await page.locator('.quiz-strip-go').click()
+  await page.waitForSelector('.quiz-bet-tile', { timeout: 10000 })
+  // Sázka na jedinou indicii — dvě zůstanou nekoupené.
+  await page.locator('.quiz-bet-tile').first().click()
+  await page.waitForTimeout(300)
+  for (const wrong of ['aaa', 'bbb', 'ccc']) {
+    await page.locator('.guess-input').fill(wrong)
+    await page.locator('.btn-primary', { hasText: 'Odpovědět' }).click()
+    await page.waitForTimeout(250)
+  }
+  await page.waitForSelector('.quiz-result', { timeout: 10000 })
+  const clues = await page.evaluate(() => {
+    const items = [...document.querySelectorAll('.quiz-clues li')]
+    return {
+      all: items.length,
+      open: items.filter((el) => el.classList.contains('open')).length,
+      unbought: items.filter((el) => el.classList.contains('rest')).length,
+    }
+  })
+  check(clues.all === 3, `po kole jsou vypsané všechny tři indicie (${clues.all})`)
+  check(clues.open === 3, `všechny tři jsou odkryté (${clues.open})`)
+  check(clues.unbought === 2, `nekoupené jsou odlišené (${clues.unbought})`)
+  await page.screenshot({ path: `${SHOTS}14-otazka-vysledek.png`, fullPage: true })
+  await page.close()
+}
+
 await browser.close()
 
 log(`\n${problems.length === 0 ? 'VŠE PROŠLO' : `PROBLÉMŮ: ${problems.length}`}`)

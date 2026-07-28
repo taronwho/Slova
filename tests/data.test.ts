@@ -327,6 +327,68 @@ describe('detektiv — data', () => {
     expect(problems.slice(0, 5)).toEqual([])
   })
 
+  /**
+   * Indicie nesmí obsahovat cizojazyčný protějšek hledaného slova.
+   *
+   * „Převzato z anglického hurricane, jež je odvozeno ze španělského huracán"
+   * u slova hurikán se nehádá, jen opisuje. Stejně tak „Z německého Ballast"
+   * u balastu. Maskování dřív hlídalo jen společný začátek, a ten se u
+   * přejímek často liší uvnitř slova.
+   */
+  it('indicie neobsahuje skoro stejné slovo v jiném jazyce', () => {
+    const ratio = (a: string, b: string): number => {
+      // Podíl shodných znaků v pořadí — hrubá míra podobnosti dvou slov.
+      const rows = Array.from({ length: a.length + 1 }, () =>
+        new Array<number>(b.length + 1).fill(0),
+      )
+      for (let i = 1; i <= a.length; i++) {
+        for (let j = 1; j <= b.length; j++) {
+          rows[i]![j] =
+            a[i - 1] === b[j - 1]
+              ? rows[i - 1]![j - 1]! + 1
+              : Math.max(rows[i - 1]![j]!, rows[i]![j - 1]!)
+        }
+      }
+      return (2 * rows[a.length]![b.length]!) / (a.length + b.length)
+    }
+
+    const leaky: string[] = []
+    for (const puzzle of puzzles) {
+      const target = fold(puzzle.word.toLowerCase())
+      if (target.length < 5) continue
+      for (const raw of puzzle.clue.split(/[^\p{L}]+/u)) {
+        const token = fold(raw.toLowerCase())
+        if (token.length < 5) continue
+        if (ratio(token, target) >= 0.8) leaky.push(`${puzzle.word}: „${raw}"`)
+      }
+    }
+    expect(leaky.slice(0, 8)).toEqual([])
+  })
+
+  /**
+   * Indicie nesmí skončit uprostřed myšlenky.
+   *
+   * Text se zkracuje po větách a dělič vět bral tečku za řadovou číslovkou
+   * jako konec věty — indicie pak končila „…se na začátku 17." a hráč čekal
+   * zbytek, který nikdy nepřišel.
+   */
+  it('text o původu končí dokončenou větou', () => {
+    const truncated = puzzles.filter((puzzle) => {
+      const clue = puzzle.clue.trim()
+      return (
+        !/[.!?]$/.test(clue) ||
+        // řadová číslovka bez toho, co počítá („v 18.")
+        /\s\d{1,2}\.$/.test(clue) ||
+        // Zkratka, po které musí věta pokračovat. Musí před ní stát mezera:
+        // `\b` je v JS bez příznaku `u` jen o ASCII, takže „hêr." vypadá
+        // jako zkratka „r." a test hlásil planý poplach.
+        /(?:^|\s)(?:např|resp|srov|lat|řec|něm|angl|tzv|stol|r)\.$/i.test(clue) ||
+        clue.split('(').length !== clue.split(')').length
+      )
+    })
+    expect(truncated.map((p) => `${p.word}: …${p.clue.slice(-40)}`)).toEqual([])
+  })
+
   it('text je čitelně dlouhý a bez zbytků wikitextu', () => {
     const problems: string[] = []
     for (const puzzle of puzzles) {

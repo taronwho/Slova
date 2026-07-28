@@ -3095,6 +3095,31 @@ button.rank-card:hover {
   }
 }
 
+/*
+ * Původ slova na výsledkové kartě Detektiva.
+ *
+ * Uhodnout slovo je půlka věci; druhá je vidět, že do věty opravdu sedí.
+ * Drobným písmem a zúžené, aby to nepřebilo odpověď nad ním — je to doklad,
+ * ne titulek.
+ */
+.clue-recap {
+  max-width: 30rem;
+  margin: 0 auto;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--muted);
+  text-align: left;
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.clue-recap b {
+  color: var(--text);
+  font-weight: 700;
+}
+
 /* ---------- Šibenice ---------- */
 
 /* Kresba se přizpůsobí výšce hrací plochy stejně jako žebřík nebo věž —
@@ -4132,6 +4157,19 @@ button.stat.open {
 
 .quiz-clues.rest {
   margin-top: var(--sp-3);
+}
+
+/*
+ * Indicie, kterou si hráč nekoupil, ale po dohrání ji vidí.
+ *
+ * Musí být poznat od těch koupených — jinak si po sázce na jednu indicii
+ * nespočítá, co si vlastně odepřel. Proto vybledlý rámeček bez výplně:
+ * je to dovětek k odehranému kolu, ne jeho součást.
+ */
+.quiz-clues li.rest {
+  background: none;
+  border-style: dashed;
+  color: var(--muted);
 }
 
 .quiz-answer {

@@ -152,16 +152,24 @@ export function QuizGame({ question, day, dayLabel, onFinish, onHome, onNext }: 
           </div>
         ) : (
           <>
+            {/* Po skončení kola jsou vidět všechny tři indicie, ať už si je
+                hráč koupil, nebo ne. Je to půlka radosti z otázky: „aha,
+                tohle jsem měl vědět" — a u nekoupených se navíc pozná, jestli
+                se sázka na jednu indicii vyplatila. Během kola se ukazují jen
+                koupené a z nich jen odkryté. */}
             <ol className="quiz-clues">
-              {question.clues.slice(0, state.bought).map((clue, i) => {
-                const open = i < state.shown
-                return (
-                  <li key={i} className={open ? 'open' : ''}>
-                    <Pips count={3 - i} />
-                    <span>{open ? clue : 'Zatím zavřená indicie'}</span>
-                  </li>
-                )
-              })}
+              {(over ? question.clues : question.clues.slice(0, state.bought)).map(
+                (clue, i) => {
+                  const open = over || i < state.shown
+                  const mine = i < (state.bought ?? 0)
+                  return (
+                    <li key={i} className={`${open ? 'open' : ''} ${over && !mine ? 'rest' : ''}`}>
+                      <Pips count={3 - i} />
+                      <span>{open ? clue : 'Zatím zavřená indicie'}</span>
+                    </li>
+                  )
+                },
+              )}
             </ol>
 
             {!over && state.shown < state.bought && (
@@ -236,18 +244,6 @@ export function QuizGame({ question, day, dayLabel, onFinish, onHome, onNext }: 
               </p>
             ) : (
               <p className="muted">{consolationFor(day)}</p>
-            )}
-            {/* Indicie, které si hráč nekoupil, se ukážou až teď. Je to
-                půlka radosti: „aha, tohle jsem měl vědět." */}
-            {question.clues.length > (state.bought ?? 3) && (
-              <ol className="quiz-clues rest">
-                {question.clues.slice(state.bought ?? 3).map((clue, i) => (
-                  <li key={i} className="open">
-                    <Pips count={3 - (state.bought ?? 3) - i} />
-                    <span>{clue}</span>
-                  </li>
-                ))}
-              </ol>
             )}
             <p className="faint">
               {onNext ? 'Kontrolní verze — otázky jdou procházet za sebou.' : 'Další otázka na tebe čeká zítra.'}

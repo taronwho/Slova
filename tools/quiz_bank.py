@@ -3168,7 +3168,7 @@ BANK["spolecnost"] += [
     )),
     ("Poznej pojem.", "Urbanizace", [], (
         "Od roku 2007 poprvé v dějinách žije ve městech víc lidí než na venkově.",
-        "Její důsledkem je i vznik takzvaných tepelných ostrovů, kde je o několik stupňů tepleji.",
+        "Jejím důsledkem je i vznik takzvaných tepelných ostrovů, kde je o několik stupňů tepleji než v okolí.",
         "Je to stěhování lidí z vesnic do měst.",
     )),
     ("Poznej instituci.", "Poslanecká sněmovna", ["sněmovna"], (
@@ -4205,10 +4205,10 @@ BANK["spolecnost"] += [
         "Sedmičlenná rada v ní rozhoduje o úrokových sazbách a v letech 2013 až 2017 držela kurz koruny.",
         "Vydává mince i papírová platidla a hlídá inflaci.",
     )),
-    ("Poznej pojem.", "Odpovědnost za škodu", ["náhrada škody"], (
+    ("Poznej pojem z práva.", "Odpovědnost za škodu", ["náhrada škody"], (
         "Občanský zákoník od roku 2014 rozlišuje újmu majetkovou a nemajetkovou, tedy i tu na zdraví a na duši.",
-        "Kdo ji způsobí, musí uvést věc do původního stavu, a když to nejde, zaplatit v penězích.",
-        "Kvůli ní má člověk povinné ručení u auta.",
+        "Kdo poškodí cizí věc, musí ji uvést do původního stavu, a když to nejde, zaplatit v penězích.",
+        "Právní povinnost postarat se o to, co člověk někomu pokazí nebo rozbije; právě kvůli ní má řidič povinné ručení.",
     )),
     ("Poznej pojem.", "Migrace", ["migrace obyvatel"], (
         "Rozlišuje se vnitřní a vnější a demografové ji měří saldem, tedy rozdílem příchozích a odchozích.",
@@ -6477,7 +6477,7 @@ BANK["spolecnost"] += [
         "Zákon, díky kterému jde každé dítě od šesti let do lavice.",
     )),
     ("Poznej pojem ze školství.", "Vysokoškolský titul", ["akademický titul"], (
-        "Ten bakalářský se u nás vrátil až po roce 1990; předtím se studovalo rovnou pět let v kuse.",
+        "Boloňský proces rozdělil od roku 1999 studium na dva stupně; u nás se do té doby chodilo rovnou pět let v kuse.",
         "Inženýr se píše před jménem, doktor přírodních věd za ním.",
         "Bc., Mgr. nebo Ing. — to, co člověk získá po absolvování univerzity.",
     )),

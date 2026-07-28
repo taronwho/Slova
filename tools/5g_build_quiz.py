@@ -144,9 +144,50 @@ def superlative(clue: str) -> str | None:
     return None
 
 
+# Předložky, které z odpovědi dělají spojení dvou podstatných jmen.
+PREPOSITIONS = {
+    "za", "na", "o", "v", "u", "do", "z", "ze", "pro", "k", "ke", "s", "se",
+    "po", "přes", "od", "bez", "při", "mezi", "proti",
+}
+
+# Zájmena, kterými indicie ukazuje na něco, co v ní samotné nestojí.
+LONE_PRONOUNS = re.compile(
+    r"(?<![\wá-ž])(ji|jí|ní|ním|ně|něm|ho|jej|jeho|její|jejím|nich|nimi)(?![\wá-ž])",
+    re.IGNORECASE,
+)
+
+
+def dangling(answer: str, clue: str) -> str | None:
+    """
+    Ukazuje indicie zájmenem na odpověď, která je spojením dvou jmen?
+
+    U odpovědi typu „Odpovědnost za škodu" se v indicii objevilo „Kdo **ji**
+    způsobí" — a to už je o škodě, ne o odpovědnosti. Nikdo nezpůsobí
+    odpovědnost. Hráč si toho všimne a právem: věta o odpovědi nemluví.
+
+    Zkouška je jednoduchá a dá se udělat i hlavou: **dosaď za zájmeno celou
+    odpověď**. „Kdo odpovědnost za škodu způsobí" je nesmysl, „Zvítězil
+    v bitvě u Hastingsu" dává smysl. Stroj tenhle rozdíl nepozná — je
+    významový, ne tvarový —, takže se sem jen vypíšou k přečtení ty indicie,
+    kde takové zájmeno je. U jednoslovné odpovědi se hlásit nemusí: tam
+    zájmeno nemá na co jiného ukázat.
+
+    Falešných hlášek je většina a to je v pořádku. Levnější je přečíst
+    čtyřicet vět než nechat hráče narazit na jednu, která nedává smysl.
+    """
+    words = answer.split()
+    if len(words) < 2:
+        return None
+    if not any(word.lower() in PREPOSITIONS for word in words):
+        return None
+    found = LONE_PRONOUNS.search(clue)
+    return found.group(0) if found else None
+
+
 def main() -> int:
     problems: list[str] = []
     loud: list[str] = []
+    vague: list[str] = []
     deck: dict[str, list] = {}
     ids: set[str] = set()
 
@@ -204,6 +245,11 @@ def main() -> int:
             if hint:
                 loud.append(f"{where}: 1. indicie nese superlativ („{hint}…“)")
 
+            for n, clue in enumerate(clues, start=1):
+                word = dangling(answer, clue)
+                if word:
+                    vague.append(f"{where}: {n}. indicie ukazuje zájmenem („{word}“)")
+
             entry = {
                 "id": qid,
                 "topic": topic,
@@ -230,6 +276,14 @@ def main() -> int:
     if loud:
         print(f"\nK PŘEČTENÍ ({len(loud)}) — superlativ v první indicii bývá prozrazení:")
         for note in loud:
+            print(f"  ? {note}")
+
+    if vague:
+        print(
+            f"\nK PŘEČTENÍ ({len(vague)}) — dosaď za zájmeno celou odpověď;"
+            " když věta přestane dávat smysl, mluví indicie o něčem jiném:"
+        )
+        for note in vague:
             print(f"  ? {note}")
 
     if problems:

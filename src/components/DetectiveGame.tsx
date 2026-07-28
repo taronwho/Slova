@@ -396,7 +396,22 @@ export function DetectiveGame({
           celebrate={won}
           onNext={onNext}
           onHome={onHome}
-        />
+        >
+          {/* Původ ještě jednou, ale se slovem doplněným do mezer. Uhodnout
+              slovo je půlka věci; druhá je vidět, že to sedí — a kdo neuhodl,
+              se z toho aspoň něco dozví. Drobným písmem, ať to nepřebije
+              samotnou odpověď. */}
+          <p className="clue-recap">
+            {puzzle.clue.split(GAP).flatMap((piece, i) =>
+              i === 0
+                ? [<span key={`t${i}`}>{piece}</span>]
+                : [
+                    <b key={`w${i}`}>{puzzle.word}</b>,
+                    <span key={`t${i}`}>{piece}</span>,
+                  ],
+            )}
+          </p>
+        </ResultOverlay>
       )}
     </div>
   )
