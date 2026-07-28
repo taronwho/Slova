@@ -109,6 +109,70 @@ def common_prefix(a: str, b: str) -> int:
     return n
 
 
+# Souhlásky sloučené podle toho, jak znějí. Pravopis se mezi jazyky liší,
+# výslovnost o moc míň — a hráč slovo pozná sluchem, ne písmenkem.
+SOUND = {
+    "b": "P", "p": "P",
+    "d": "T", "t": "T",
+    "v": "F", "w": "F", "f": "F",
+    "g": "K", "h": "K", "k": "K", "c": "K", "q": "K", "x": "K",
+    "s": "S", "z": "S",
+    "m": "M", "n": "N", "r": "R", "l": "L",
+    # j a y jsou v přejímkách jen výplň („majlant" proti „Mailand")
+    "j": "", "y": "",
+}
+
+
+def phonetic(word: str) -> str:
+    """
+    Jak slovo zhruba zní — jen souhlásky, sloučené do znělostních dvojic.
+
+    Tohle je jádro celé kontroly. Etymologický text ze své podstaty mluví
+    o slově, ze kterého to hledané vzniklo, takže si budou vždycky podobná.
+    Porovnávat pravopis nestačí: „souterrain" a „suterén" mají společné jen
+    první písmeno, „Mailand" a „majlant" dvě — a přesto je hráč přečte jako
+    totéž slovo, protože stejně znějí. Po převodu na SRTN a MLNT je to vidět.
+    """
+    plain = re.sub(r"[^a-z]", "", fold(word))
+    plain = re.sub(r"(.)\1+", r"\1", plain)
+    # Spřežky se přepíšou na jedno písmeno, které je pak vidět v tabulce
+    # níž. Musí zůstat malé: velké písmeno by v ní nikdo nenašel a tiše by
+    # vypadlo — „sarcophagus" pak vycházelo SRKS místo SRKFKS a s hledaným
+    # sarkofágem se nepotkalo.
+    # „qu" se v latině čte kv, proto dvě písmena.
+    for pair, sound in (("qu", "kv"), ("ch", "k"), ("th", "t"), ("ph", "f"), ("ck", "k")):
+        plain = plain.replace(pair, sound)
+    out = "".join(SOUND.get(ch, "") for ch in plain)
+    return re.sub(r"(.)\1+", r"\1", out)
+
+
+def longest_shared(a: str, b: str) -> int:
+    """Nejdelší souvislý úsek, který mají obě slova společný."""
+    best = 0
+    for i in range(len(a)):
+        for j in range(len(b)):
+            run = 0
+            while i + run < len(a) and j + run < len(b) and a[i + run] == b[j + run]:
+                run += 1
+            best = max(best, run)
+    return best
+
+
+def edits(a: str, b: str) -> int:
+    """Kolik písmen se liší (vložení, smazání, záměna)."""
+    if a == b:
+        return 0
+    previous = list(range(len(b) + 1))
+    for i, left in enumerate(a, 1):
+        current = [i]
+        for j, right in enumerate(b, 1):
+            current.append(
+                min(previous[j] + 1, current[j - 1] + 1, previous[j - 1] + (left != right))
+            )
+        previous = current
+    return previous[-1]
+
+
 def gives_away(token: str, target: str) -> bool:
     """Prozradí tenhle výraz hledané slovo?
 
@@ -134,22 +198,55 @@ def gives_away(token: str, target: str) -> bool:
     # „psaní" nebo „rovnat" u „rovnítka" je kořen, a ten hráči odpověď
     # naservíruje. Pár planých zakrytí je menší škoda než hádanka zadarmo.
     need = min(4, len(target)) if len(target) <= 6 else 4
-    if common_prefix(token, target) >= need:
+    shared_head = common_prefix(token, target)
+    if shared_head >= need:
+        return True
+
+    # Kratší společný začátek, ale u krátkého slova.
+    #
+    # „ženský" se hádá a v textu stojí „žena", „olej" a v textu „oleum" —
+    # tři písmena, jenže tvoří skoro celé to slovo, takže je to kořen se vším
+    # všudy. Proti tomu „prostitutka" a „prodávat" mají taky tři, ale jen
+    # zlomek slova; tam je to náhoda a zakrývat by se nemělo.
+    if shared_head >= 3 and shared_head >= 0.5 * min(len(token), len(target)):
         return True
 
     # Cizojazyčný protějšek, který vypadá skoro stejně.
-    #
-    # „Převzato z anglického **hurricane**, jež je odvozeno ze španělského
-    # **huracán**" — u hledaného slova hurikán se tím nehádá, jen opisuje.
-    # Společný začátek to nechytí (hurr- proti huri-) a souhlásková kostra
-    # taky ne, protože se liší uvnitř. Podobnost celých slov ano.
-    #
-    # Práh 0,70 je vybraný tak, aby prošly příbuzné tvary („rovnat" u
-    # rovnítka, 0,71) a neprošla slova, která k odpovědi jen vedou úvahou
-    # („dělítko" u rovnítka, 0,53) — ta jsou přesně to, na čem se má hádat.
     if len(token) >= 4 and len(target) >= 4:
         if difflib.SequenceMatcher(None, token, target).ratio() >= 0.70:
             return True
+
+    # Společný kus uprostřed slova.
+    #
+    # „Pochází ze slova [?], protože je **uprostřed** týdne" u středy nebo
+    # „z latinského **hapsis**" u apsidy — kořen tam je, jen není na začátku,
+    # takže ho porovnání předpon minulo. Hlídá se souvislý úsek čtyř písmen,
+    # ale jen když sedí na začátek odpovědi nebo tvoří její většinu: „-ítko"
+    # sdílí dělítko s rovnítkem taky, a to je přesně ta úvaha, na které se má
+    # hádat, ne prozrazení.
+    if len(target) >= 5:
+        shared = longest_shared(token, target)
+        if shared >= 4:
+            head = any(
+                target.startswith(token[i:i + shared]) for i in range(len(token) - shared + 1)
+            )
+            if head or shared >= 0.6 * len(target):
+                return True
+
+    # A nakonec to hlavní: **zní to stejně?**
+    #
+    # Porovnávání pravopisu se dá obejít donekonečna — „souterrain" má se
+    # „suterénem" společné jediné písmeno, „Mailand" s „majlantem" dvě, a hráč
+    # přesto obojí přečte jako odpověď. Etymologický text totiž ze své
+    # podstaty mluví o slově, ze kterého to hledané vzniklo; hláskovat se to
+    # může jakkoli, znít to bude pořád stejně.
+    #
+    # Jedno písmeno rozdílu se odpouští kvůli koncovkám („factum" proti
+    # „fakt"). Krátké kostry se trefují náhodou, proto se hlídají až od dvou
+    # souhlásek.
+    mine, yours = phonetic(token), phonetic(target)
+    if len(yours) >= 2 and len(mine) >= 2 and edits(mine, yours) <= 1:
+        return True
 
     return False
 

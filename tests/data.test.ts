@@ -308,8 +308,12 @@ describe('detektiv — data', () => {
   }
   const puzzles = readJson<Case[]>('detective', 'puzzles.json')
 
+  // Hranice byla dřív na dvanácti stech. Spadla, protože se zpřísnilo
+  // maskování: indicie, ze které jde odpověď přečíst, je horší než indicie
+  // žádná, takže tři stovky hádanek šly pryč. Devět set pořád znamená, že
+  // hráč narazí na tutéž nejdřív po devíti stech kolech.
   it('má dost případů a jedinečná id i slova', () => {
-    expect(puzzles.length).toBeGreaterThan(1200)
+    expect(puzzles.length).toBeGreaterThan(900)
     expect(new Set(puzzles.map((p) => p.id)).size).toBe(puzzles.length)
     expect(new Set(puzzles.map((p) => p.word)).size).toBe(puzzles.length)
   })
@@ -325,6 +329,55 @@ describe('detektiv — data', () => {
       }
     }
     expect(problems.slice(0, 5)).toEqual([])
+  })
+
+  /**
+   * Indicie nesmí obsahovat nic, co zní jako hledané slovo.
+   *
+   * Tohle je hlavní kontrola celého režimu a schválně je napsaná jinak než
+   * pravidlo v generátoru: kdyby se obojí měřilo stejným metrem, chyba
+   * v metru by prošla oběma. Tady se porovnávají souhláskové kostry
+   * (souterrain → STRN, suterén → STRN) a nejdelší společný úsek písmen.
+   */
+  it('v indicii není nic, co zní nebo vypadá jako hledané slovo', () => {
+    const sound: Record<string, string> = {
+      b: 'P', p: 'P', d: 'T', t: 'T', v: 'F', w: 'F', f: 'F',
+      g: 'K', h: 'K', k: 'K', c: 'K', q: 'K', x: 'K',
+      s: 'S', z: 'S', m: 'M', n: 'N', r: 'R', l: 'L', j: '', y: '',
+    }
+    const phon = (raw: string): string => {
+      let word = fold(raw.toLowerCase()).replace(/[^a-z]/g, '').replace(/(.)\1+/g, '$1')
+      for (const [pair, one] of [['qu', 'kv'], ['ch', 'k'], ['th', 't'], ['ph', 'f'], ['ck', 'k']]) {
+        word = word.split(pair!).join(one!)
+      }
+      return [...word].map((ch) => sound[ch] ?? '').join('').replace(/(.)\1+/g, '$1')
+    }
+    const shared = (a: string, b: string): number => {
+      let best = 0
+      for (let i = 0; i < a.length; i++) {
+        for (let j = 0; j < b.length; j++) {
+          let run = 0
+          while (i + run < a.length && j + run < b.length && a[i + run] === b[j + run]) run++
+          if (run > best) best = run
+        }
+      }
+      return best
+    }
+
+    const leaky: string[] = []
+    for (const puzzle of puzzles) {
+      const target = fold(puzzle.word.toLowerCase())
+      const ear = phon(puzzle.word)
+      for (const raw of puzzle.clue.split(/[^\p{L}]+/u)) {
+        if (raw.length < 3) continue
+        const token = fold(raw.toLowerCase())
+        const mine = phon(raw)
+        const sounds = ear.length >= 2 && mine.length >= 2 && mine === ear
+        const looks = target.length >= 5 && shared(token, target) >= Math.max(4, target.length - 2)
+        if (sounds || looks) leaky.push(`${puzzle.word}: „${raw}"`)
+      }
+    }
+    expect(leaky.slice(0, 8)).toEqual([])
   })
 
   /**

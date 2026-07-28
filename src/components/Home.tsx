@@ -478,8 +478,6 @@ export function Home({
             Statistiky
           </button>
         </div>
-        {/* Verze buildu — podle ní se pozná, jestli telefon drží starou cache. */}
-        <p className="faint build-mark">verze {__BUILD__}</p>
       </div>
 
       <div className="section-head">
@@ -546,6 +544,42 @@ export function Home({
           )
         })}
       </div>
+
+      {/* Úplně dole, tiše. Hra se sama drží v telefonu i bez sítě, takže po
+          nasazení opravy může ještě chvíli běžet stará verze — tohle ji
+          zahodí a stáhne novou. Když se nic nezměnilo, jen se to načte znovu. */}
+      <div className="refresh-row">
+        <button type="button" className="btn btn-sm btn-ghost refresh-btn" onClick={refresh}>
+          Aktualizovat
+        </button>
+        <span className="faint">verze {__BUILD__}</span>
+      </div>
     </>
   )
+}
+
+/**
+ * Zahodí uloženou verzi hry a načte ji znovu ze sítě.
+ *
+ * Slova fungují i bez připojení, takže si telefon drží celou hru u sebe —
+ * a po nasazení opravy ji podle toho, jak se prohlížeč zrovna rozhodne, může
+ * ještě den nabízet ze staré zásoby. Odhlášení obsluhy a smazání zásob je
+ * jediná jistota, že se hráč dívá na to, co je právě nasazené.
+ *
+ * Profil se tím nemaže — ten leží jinde a aktualizace se ho netýká.
+ */
+async function refresh(): Promise<void> {
+  try {
+    if ('serviceWorker' in navigator) {
+      const workers = await navigator.serviceWorker.getRegistrations()
+      await Promise.all(workers.map((worker) => worker.unregister()))
+    }
+    if ('caches' in window) {
+      const names = await caches.keys()
+      await Promise.all(names.map((name) => caches.delete(name)))
+    }
+  } catch {
+    // I když se úklid nepovede, načtení znovu stojí za pokus.
+  }
+  location.reload()
 }

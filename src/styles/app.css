@@ -2545,6 +2545,26 @@ button.stat-tap:hover {
   letter-spacing: 0.02em;
 }
 
+/* Aktualizace úplně dole na stránce. Je to servisní věc, ne funkce hry —
+   proto našedle a co nejdál od všeho, na co se běžně kliká. */
+.refresh-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-8);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--border);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.refresh-btn {
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  color: var(--muted);
+}
+
 /* Dvě znění téhož popisku — plné na monitoru, zkrácené na telefonu. */
 .narrow-only {
   display: none;
