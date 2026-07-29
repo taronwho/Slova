@@ -6,12 +6,12 @@
  * megabajty a hráč jich stejně potřebuje jen část.
  */
 
-const VERSION = 'slova-06346802'
+const VERSION = 'slova-4c50d19c'
 const SHELL = `${VERSION}-shell`
 const DATA = `${VERSION}-data`
 
 // Doplní se při buildu; tady jsou jen jistoty, které existují vždy.
-const SHELL_URLS = ["./","./.nojekyll","./assets/bricolage-grotesque-latin-ext-wght-normal-CcLUaPy7.woff2","./assets/bricolage-grotesque-latin-wght-normal-DLoelf7F.woff2","./assets/bricolage-grotesque-vietnamese-wght-normal-BUzh504Q.woff2","./assets/index-BBQFJeOS.js","./assets/index-BO_08ukz.css","./assets/manrope-cyrillic-wght-normal-Dvxsihut.woff2","./assets/manrope-greek-wght-normal-DL7QRZyv.woff2","./assets/manrope-latin-ext-wght-normal-Ch3YOpNY.woff2","./assets/manrope-latin-wght-normal-DHIcAJRg.woff2","./assets/manrope-vietnamese-wght-normal-usUDDRr7.woff2","./icons/apple-touch-icon.png","./icons/icon-192.png","./icons/icon-512.png","./icons/icon-maskable-192.png","./icons/icon-maskable-512.png","./index.html","./manifest.webmanifest","./slova-standalone.html"]
+const SHELL_URLS = ["./","./.nojekyll","./assets/bricolage-grotesque-latin-ext-wght-normal-CcLUaPy7.woff2","./assets/bricolage-grotesque-latin-wght-normal-DLoelf7F.woff2","./assets/bricolage-grotesque-vietnamese-wght-normal-BUzh504Q.woff2","./assets/index-DH7YZXSc.js","./assets/index-QkvZLcPY.css","./assets/manrope-cyrillic-wght-normal-Dvxsihut.woff2","./assets/manrope-greek-wght-normal-DL7QRZyv.woff2","./assets/manrope-latin-ext-wght-normal-Ch3YOpNY.woff2","./assets/manrope-latin-wght-normal-DHIcAJRg.woff2","./assets/manrope-vietnamese-wght-normal-usUDDRr7.woff2","./icons/apple-touch-icon.png","./icons/icon-192.png","./icons/icon-512.png","./icons/icon-maskable-192.png","./icons/icon-maskable-512.png","./index.html","./manifest.webmanifest","./slova-standalone.html"]
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
