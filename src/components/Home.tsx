@@ -9,11 +9,14 @@ import { MODE_SUMMARY, TUTORIALS } from '../game/tutorials'
 import {
   DIFFICULTY_LABEL,
   howToPlay,
+  MODE_GLYPH,
   MODE_LABEL,
+  MODE_ORDER,
   MODE_TAGLINE,
   type Difficulty,
   type ModeId,
 } from '../game/types'
+import { RankBadge } from './art/RankBadge'
 import { useBackGuard } from '../lib/back'
 import { InkMark } from './art/InkMark'
 import { Explain } from './Explain'
@@ -40,14 +43,11 @@ interface Props {
   onResume: (mode: ModeId) => void
 }
 
-const MODES: { id: ModeId; glyph: string; color: string }[] = [
-  { id: 'chain', glyph: '→', color: 'var(--mode-chain)' },
-  { id: 'hive', glyph: '⬡', color: 'var(--mode-hive)' },
-  { id: 'tower', glyph: '↑', color: 'var(--mode-tower)' },
-  { id: 'gallows', glyph: '?', color: 'var(--mode-gallows)' },
-  { id: 'detective', glyph: '§', color: 'var(--mode-detective)' },
-  { id: 'tetris', glyph: '▚', color: 'var(--mode-tetris)' },
-]
+const MODES: { id: ModeId; glyph: string; color: string }[] = MODE_ORDER.map((id) => ({
+  id,
+  glyph: MODE_GLYPH[id],
+  color: `var(--mode-${id})`,
+}))
 
 const DIFFICULTIES: Difficulty[] = ['easy', 'normal', 'hard']
 
@@ -443,11 +443,18 @@ export function Home({
           otevřou vlastní vysvětlivku. Nikde nemá zůstat mrtvý popisek. */}
       <div className="panel home-profile">
         <button type="button" className="rank-line" onClick={onAwards}>
-          <span className="rank">
-            {progress.rank.name} · hodnost {progress.rank.index}
+          {/* Odznak hodnosti, ne jen její jméno. Kov a tvar štítu řeknou, jak
+              daleko hráč je, dřív než se stihne přečíst číslo. */}
+          <span className="rank-line-top">
+            <RankBadge rank={progress.rank.index} size={46} compact />
+            <span className="rank-line-name">
+              <span className="rank">{progress.rank.name}</span>
+              <span className="rank-step">hodnost {progress.rank.index}</span>
+            </span>
           </span>
-          <span className="num muted">
-            {profile.fame.toLocaleString('cs-CZ')} věhlasu
+          <span className="rank-line-fame">
+            <span className="num">{profile.fame.toLocaleString('cs-CZ')}</span>
+            <span className="rank-step">věhlasu</span>
           </span>
         </button>
         <div className="fame-bar">
@@ -455,24 +462,49 @@ export function Home({
             style={{ width: `${progress.span ? (progress.into / progress.span) * 100 : 100}%` }}
           />
         </div>
-        <div className="home-profile-chips">
-          <Explain term="serie" className="chip chip-accent">
-            Série {profile.streak}
+        <p className="fame-note">
+          {progress.next
+            ? `Do hodnosti ${progress.next.index} — ${progress.next.name} — zbývá ${(
+                progress.span - progress.into
+              ).toLocaleString('cs-CZ')} věhlasu.`
+            : 'Nejvyšší hodnost. Dál už se stoupat nedá.'}
+        </p>
+        {/* Mřížka místo rozsypaných čipů: čísla stojí pod sebou ve sloupcích,
+            takže se dají porovnat očima, ne čtením. */}
+        <div className="stat-grid">
+          <Explain term="serie" className="stat-cell live">
+            <b className="num">{profile.streak}</b>
+            <span>Série</span>
           </Explain>
-          <Explain term="serie" className="chip">
-            Nejlepší série {profile.bestStreak}
+          <Explain term="serie" className="stat-cell">
+            <b className="num">{profile.bestStreak}</b>
+            <span>Nejlepší série</span>
           </Explain>
-          <Explain term="dny" className="chip">
-            Dny v řadě {profile.dayStreak}
+          <Explain term="dny" className="stat-cell">
+            <b className="num">{profile.dayStreak}</b>
+            <span>Dny v řadě</span>
           </Explain>
-          <Explain term="odehrano" className="chip">
-            Odehráno {played}
+          <Explain term="odehrano" className="stat-cell">
+            <b className="num">{played}</b>
+            <span>Odehráno</span>
           </Explain>
-          <Explain term="inkoust" className="chip chip-ink" title="Inkoust na nápovědy">
-            <InkMark size={11} /> <span className="num">{profile.ink}</span>
+          <Explain term="inkoust" className="stat-cell ink" title="Inkoust na nápovědy">
+            <b className="num">
+              <InkMark size={13} /> {profile.ink}
+            </b>
+            <span>Inkoust</span>
           </Explain>
+          <button type="button" className="stat-cell" onClick={onAwards}>
+            <b className="num">
+              {awards}
+              <i>/{AWARDS.length}</i>
+            </b>
+            <span>Ocenění</span>
+          </button>
+        </div>
+        <div className="home-profile-actions">
           <button type="button" className="btn btn-sm btn-ghost" onClick={onAwards}>
-            Ocenění {awards}/{AWARDS.length}
+            Vitrína ocenění
           </button>
           <button type="button" className="btn btn-sm btn-ghost" onClick={onStats}>
             Statistiky

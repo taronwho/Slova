@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from 'react'
 
+import { useNextUp } from '../app/nextUp'
 import type { ScoreBreakdown } from '../game/scoring'
 import { Confetti } from './Confetti'
 import { Explain } from './Explain'
@@ -43,6 +44,12 @@ function useCountUp(target: number, duration = 900): number {
   return value
 }
 
+/** Česká čísla: poslední výzva, 2–4 výzvy, 5 a víc výzev. */
+function count(left: number): string {
+  if (left === 1) return 'poslední výzva'
+  return `${left} ${left <= 4 ? 'výzvy' : 'výzev'}`
+}
+
 export function ResultOverlay({
   title,
   subtitle,
@@ -53,6 +60,7 @@ export function ResultOverlay({
   onNext,
   onHome,
 }: Props) {
+  const nextUp = useNextUp()
   const score = useCountUp(breakdown.total)
   const [copied, setCopied] = useState(false)
 
@@ -111,10 +119,44 @@ export function ResultOverlay({
             </div>
           </div>
 
+          {/* Zbytek dnešní várky. Kdo hraje denní výzvy, nemusí se kvůli
+              další vracet do menu — a hlavně vidí, kolik jich ještě zbývá. */}
+          {nextUp.length > 0 && (
+            <div className="next-up">
+              <p className="next-up-head">
+                {nextUp[0]!.id === 'quiz'
+                  ? 'Denní výzvy máš hotové. Zbývá Otázka dne:'
+                  : `Zbývá dnes ${count(nextUp.length)}:`}
+              </p>
+              <div className="next-up-list">
+                {nextUp.map((item) => (
+                  <button
+                    type="button"
+                    className="next-up-item"
+                    key={item.id}
+                    onClick={item.start}
+                    data-mode={item.id}
+                  >
+                    <span className="next-up-glyph" aria-hidden="true">
+                      {item.glyph}
+                    </span>
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="result-actions">
-            <button type="button" className="btn btn-primary" onClick={onNext}>
-              Další kolo
-            </button>
+            {nextUp.length > 0 ? (
+              <button type="button" className="btn btn-primary" onClick={nextUp[0]!.start}>
+                {nextUp[0]!.id === 'quiz' ? 'Otázka dne' : `Hrát ${nextUp[0]!.label}`}
+              </button>
+            ) : (
+              <button type="button" className="btn btn-primary" onClick={onNext}>
+                Další kolo
+              </button>
+            )}
             <button type="button" className="btn" onClick={share}>
               {copied ? 'Zkopírováno' : 'Sdílet'}
             </button>

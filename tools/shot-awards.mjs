@@ -80,7 +80,7 @@ for (const theme of ['light', 'dark']) {
 
   await shoot(page, `home-${theme}`)
 
-  await page.locator('.home-profile-chips .btn', { hasText: 'Ocenění' }).click()
+  await page.locator('.home-profile-actions .btn', { hasText: 'Vitrína' }).click()
   await page.waitForSelector('.award-grid')
   await page.waitForTimeout(400)
   await shoot(page, `awards-${theme}`)

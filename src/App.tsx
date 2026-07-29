@@ -15,6 +15,7 @@ import {
   pickUnseen,
   type ChainBundle,
 } from './app/data'
+import { NextUpContext, type NextUpItem } from './app/nextUp'
 import { AwardPopup, type Gained } from './components/AwardPopup'
 import { Awards } from './components/Awards'
 import { InkMark } from './components/art/InkMark'
@@ -42,7 +43,14 @@ import { quizFor, type QuizDeck, type QuizQuestion } from './game/quiz'
 import { RANKS, rankFor } from './game/ranks'
 import { tetrisSetup, type TetrisDeck, type TetrisSetup, type TetrisState } from './game/tetris'
 import type { TowerPuzzle, TowerState } from './game/tower'
-import { MODE_LABEL, type Difficulty, type ModeId, type RoundResult } from './game/types'
+import {
+  MODE_GLYPH,
+  MODE_LABEL,
+  MODE_ORDER,
+  type Difficulty,
+  type ModeId,
+  type RoundResult,
+} from './game/types'
 import { useBackGuard } from './lib/back'
 import { dayNumber, hashSeed, mulberry32, todayKey } from './lib/rng'
 import {
@@ -384,6 +392,32 @@ export default function App() {
     }
   }, [])
 
+  /**
+   * Co hráče čeká po dohraném kole denní výzvy.
+   *
+   * Denní várka je šest kol a Otázka dne sedmá. Dřív se po každém z nich
+   * muselo do menu a hledat, co ještě zbývá; teď to závěrečná karta ví sama.
+   * Pořadí je dané: nejdřív zbylé výzvy, pak Otázka dne. Když je hotové
+   * všechno, nabídka je prázdná a karta ukáže obyčejné „Další kolo".
+   *
+   * Platí to jen pro kola denní várky — kdo si jde zahrát na volno, chce
+   * další kolo téže hry, ne přeskočit jinam.
+   */
+  const nextUp = useMemo<NextUpItem[]>(() => {
+    if (view.kind !== 'game' || !view.daily) return []
+    const left: NextUpItem[] = MODE_ORDER.filter(
+      (mode) => profile.dailyDone[`${dayKey}:${mode}`] === undefined,
+    ).map((mode) => ({
+      id: mode,
+      glyph: MODE_GLYPH[mode],
+      label: MODE_LABEL[mode],
+      start: () => void startRound(mode, true),
+    }))
+    if (left.length > 0) return left
+    if (!__QUIZ_ALL__ && profile.quiz.lastDay === dayKey) return []
+    return [{ id: 'quiz', glyph: '?', label: 'Otázka dne', start: () => void startQuiz() }]
+  }, [dayKey, profile.dailyDone, profile.quiz.lastDay, startQuiz, startRound, view])
+
   /** Přehled všech otázek — jen v kontrolním buildu. */
   const openQuizList = useCallback(async () => {
     setLoading(true)
@@ -477,6 +511,7 @@ export default function App() {
 
   return (
     <ExplainProvider onGo={goTo}>
+    <NextUpContext.Provider value={nextUp}>
     <div
       className={`shell ${view.kind === 'game' ? 'playing' : ''}`}
       data-mode={view.kind === 'game' ? view.mode : undefined}
@@ -796,6 +831,7 @@ export default function App() {
         )}
       </main>
     </div>
+    </NextUpContext.Provider>
     </ExplainProvider>
   )
 }

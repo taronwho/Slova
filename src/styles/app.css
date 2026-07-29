@@ -334,12 +334,121 @@
   margin-top: var(--sp-6);
 }
 
-.home-profile-chips {
+/* Odznak vlevo, jméno hodnosti uprostřed, věhlas vpravo. Dřív stálo jméno
+   i číslo v jednom řádku a na telefonu se lámalo uprostřed („Písmák ·
+   hodnost / 13"); teď má každý údaj svůj sloupec a zalomit se nemá kde. */
+.rank-line-name {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rank-line-fame {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4em;
+}
+
+.rank-line-fame .num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.rank-step {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.fame-note {
+  margin-top: var(--sp-2);
+  font-size: 0.75rem;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+/* Statistiky v mřížce, ne v rozsypaných čipech. Číslo nahoře, popisek pod
+   ním — sloupce se tak dají porovnat pohledem a karta má rovnou hranu. */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: var(--sp-2);
   margin-top: var(--sp-4);
-  flex-wrap: wrap;
+}
+
+.stat-cell {
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: var(--sp-3) var(--sp-2);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color var(--t-fast) var(--ease);
+}
+
+.stat-cell:hover {
+  border-color: var(--accent);
+}
+
+.stat-cell b {
+  display: flex;
+  align-items: center;
+  gap: 0.28em;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  line-height: 1.1;
+  color: var(--text);
+}
+
+/* Jmenovatel u ocenění je doplňující údaj, ne půlka čísla. */
+.stat-cell b i {
+  font-style: normal;
+  font-size: 0.72em;
+  font-weight: 600;
+  color: var(--text-faint);
+}
+
+.stat-cell span {
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  line-height: 1.25;
+}
+
+.stat-cell.live {
+  border-color: color-mix(in oklab, var(--accent) 40%, var(--border));
+  background: color-mix(in oklab, var(--accent) 8%, var(--surface-2));
+}
+
+.stat-cell.ink b {
+  color: var(--ink-strong, var(--text));
+}
+
+.home-profile-actions {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Na úzkém displeji radši dva sloupce než tři zmáčknuté — „Nejlepší série"
+   se do třetiny šířky nevejde bez lámání na tři řádky. */
+@media (max-width: 360px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 /* ---------- Rozbalovací pravidla ---------- */
@@ -1166,12 +1275,23 @@
   transition: width var(--t-slow) var(--ease);
 }
 
+/* Celá karta profilu stojí na ose: odznak se jménem hodnosti, pod ním
+   věhlas, pruh, poznámka a mřížka. Zarovnání doleva rozhazovalo těžiště —
+   odznak vlevo, číslo vpravo a mezi nimi díra. */
 .rank-line {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+  width: 100%;
+  text-align: center;
+}
+
+.rank-line-top {
+  display: flex;
+  align-items: center;
   gap: var(--sp-3);
-  margin-bottom: var(--sp-2);
 }
 
 .rank-line .rank {
@@ -1516,6 +1636,67 @@
 .breakdown-line .pos {
   color: var(--accent-text);
 }
+
+/* Zbytek dnešní várky pod rozpisem bodů. Barevné tečky režimů drží spojení
+   s dlaždicemi v menu — hráč pozná hru dřív, než přečte její název. */
+.next-up {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-4);
+  border-top: 1px dashed var(--border);
+}
+
+.next-up-head {
+  margin-bottom: var(--sp-3);
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.next-up-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  justify-content: center;
+}
+
+.next-up-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  padding: 6px 12px 6px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+
+.next-up-item:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.next-up-glyph {
+  display: grid;
+  place-items: center;
+  width: 1.5em;
+  height: 1.5em;
+  border-radius: 50%;
+  background: var(--mode, var(--accent));
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 0.8em;
+  line-height: 1;
+}
+
+.next-up-item[data-mode='chain'] .next-up-glyph { background: var(--mode-chain); }
+.next-up-item[data-mode='hive'] .next-up-glyph { background: var(--mode-hive); }
+.next-up-item[data-mode='tower'] .next-up-glyph { background: var(--mode-tower); }
+.next-up-item[data-mode='gallows'] .next-up-glyph { background: var(--mode-gallows); }
+.next-up-item[data-mode='detective'] .next-up-glyph { background: var(--mode-detective); }
+.next-up-item[data-mode='tetris'] .next-up-glyph { background: var(--mode-tetris); }
 
 .result-actions {
   display: flex;

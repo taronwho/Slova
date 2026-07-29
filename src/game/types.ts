@@ -10,6 +10,26 @@ export const DIFFICULTY_LABEL: Record<Difficulty, string> = {
   hard: 'Těžká',
 }
 
+/** Pořadí režimů všude, kde se vypisují — v menu i v nabídce denních výzev. */
+export const MODE_ORDER: ModeId[] = [
+  'chain',
+  'hive',
+  'tower',
+  'gallows',
+  'detective',
+  'tetris',
+]
+
+/** Znak režimu na dlaždici. Kresba by se do řádku textu nevešla. */
+export const MODE_GLYPH: Record<ModeId, string> = {
+  chain: '→',
+  hive: '⬡',
+  tower: '↑',
+  gallows: '?',
+  detective: '§',
+  tetris: '▚',
+}
+
 export const MODE_LABEL: Record<ModeId, string> = {
   chain: 'Řetěz',
   hive: 'Voština',
