@@ -620,5 +620,14 @@ async function refresh(): Promise<void> {
   } catch {
     // I když se úklid nepovede, načtení znovu stojí za pokus.
   }
-  location.reload()
+  // Prosté `location.reload()` nestačí. Servisní pracovník a jeho mezipaměť
+  // jsou pryč, jenže index.html leží ještě v běžné mezipaměti prohlížeče
+  // (GitHub Pages ho posílá s desetiminutovou platností) a načtení znovu si
+  // ho odtud zase vezme — hráč pak vidí starou verzi i po kliknutí.
+  // Adresa s jednorázovým parametrem žádnou uloženou kopii nemá, takže se
+  // musí sáhnout na síť. Zbytek souborů má v názvu otisk obsahu, ten se
+  // dotáhne sám.
+  const fresh = new URL(location.href)
+  fresh.searchParams.set('v', String(Date.now()))
+  location.replace(fresh.toString())
 }
