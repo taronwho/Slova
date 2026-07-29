@@ -400,9 +400,7 @@
 }
 
 .stat-cell b {
-  display: flex;
-  align-items: center;
-  gap: 0.28em;
+  display: block;
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 1.15rem;
@@ -410,8 +408,28 @@
   color: var(--text);
 }
 
-/* Jmenovatel u ocenění je doplňující údaj, ne půlka čísla. */
-.stat-cell b i {
+/* Kapka inkoustu a jmenovatel u ocenění nejsou text, jen značka a doplněk.
+   Kdyby stály v řádku s číslem, odsunuly by ho z osy buňky a čísla by pod
+   sebou neseděla. Visí proto vedle čísla, mimo jeho sazbu. */
+.stat-figure {
+  position: relative;
+  display: inline-block;
+}
+
+.stat-aside {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+}
+
+.stat-aside.left {
+  right: calc(100% + 0.3em);
+}
+
+.stat-aside.right {
+  left: calc(100% + 0.2em);
   font-style: normal;
   font-size: 0.72em;
   font-weight: 600;
@@ -1286,12 +1304,6 @@
   margin-bottom: var(--sp-3);
   width: 100%;
   text-align: center;
-}
-
-.rank-line-top {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
 }
 
 .rank-line .rank {

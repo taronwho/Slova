@@ -445,12 +445,10 @@ export function Home({
         <button type="button" className="rank-line" onClick={onAwards}>
           {/* Odznak hodnosti, ne jen její jméno. Kov a tvar štítu řeknou, jak
               daleko hráč je, dřív než se stihne přečíst číslo. */}
-          <span className="rank-line-top">
-            <RankBadge rank={progress.rank.index} size={46} compact />
-            <span className="rank-line-name">
-              <span className="rank">{progress.rank.name}</span>
-              <span className="rank-step">hodnost {progress.rank.index}</span>
-            </span>
+          <RankBadge rank={progress.rank.index} size={46} compact />
+          <span className="rank-line-name">
+            <span className="rank">{progress.rank.name}</span>
+            <span className="rank-step">hodnost {progress.rank.index}</span>
           </span>
           <span className="rank-line-fame">
             <span className="num">{profile.fame.toLocaleString('cs-CZ')}</span>
@@ -490,14 +488,23 @@ export function Home({
           </Explain>
           <Explain term="inkoust" className="stat-cell ink" title="Inkoust na nápovědy">
             <b className="num">
-              <InkMark size={13} /> {profile.ink}
+              {/* Kapka je značka, ne text — visí vedle čísla, aby zůstalo
+                  přesně nad popiskem jako v ostatních buňkách. */}
+              <span className="stat-figure">
+                <span className="stat-aside left" aria-hidden="true">
+                  <InkMark size={13} />
+                </span>
+                {profile.ink}
+              </span>
             </b>
             <span>Inkoust</span>
           </Explain>
           <button type="button" className="stat-cell" onClick={onAwards}>
             <b className="num">
-              {awards}
-              <i>/{AWARDS.length}</i>
+              <span className="stat-figure">
+                {awards}
+                <i className="stat-aside right">/{AWARDS.length}</i>
+              </span>
             </b>
             <span>Ocenění</span>
           </button>
