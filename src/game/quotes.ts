@@ -54,7 +54,7 @@ export type QuoteHint = 'art' | 'note' | 'who' | 'word'
 
 export const QUOTE_COST = {
   /** Chybné písmeno. Dvojnásobek trefy — hádat naslepo se nemá vyplácet. */
-  miss: 30,
+  miss: 60,
   /**
    * I trefené písmeno něco stojí.
    *
@@ -62,7 +62,7 @@ export const QUOTE_COST = {
    * má hráč důvod tipnout celou větu, jakmile mu dojde smysl — a to je to,
    * co má tenhle režim odměňovat.
    */
-  hit: 15,
+  hit: 30,
   art: 25,
   note: 35,
   who: 60,
