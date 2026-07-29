@@ -103,9 +103,16 @@ export function tokens(text: string): Token[] {
     .map((piece) => ({ text: piece, word: /^\p{L}/u.test(piece) }))
 }
 
-/** Kolik slov dostane hráč zadarmo — zhruba pětina, nejmíň jedno. */
+/**
+ * Kolik slov dostane hráč zadarmo — vždycky dvě nebo tři.
+ *
+ * Poměrem (pětina) to vycházelo od jednoho slova u krátkého výroku po
+ * čtyři u dlouhého: krátký citát pak neměl z čeho vyjít a dlouhý byl skoro
+ * hotový. Pevný počet drží začátek stejný napříč sadou; u delší věty se
+ * přidá třetí slovo, aby zůstal poznat aspoň kus stavby.
+ */
 function freeCount(words: number): number {
-  return Math.max(1, Math.round(words * 0.22))
+  return words >= 8 ? 3 : 2
 }
 
 /**
