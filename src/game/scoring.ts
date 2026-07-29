@@ -18,6 +18,7 @@ import {
 } from './detective'
 import { HIVE_HINT_COST } from './hive'
 import {
+  hitCount as quoteHits,
   isSolved,
   missCount as quoteMisses,
   QUOTE_COST,
@@ -305,15 +306,28 @@ export function scoreQuote(
   const words = quoteTokens(state.quote.text).filter((token) => token.word).length
   const mine = Math.max(0, words - state.given.length)
 
+  const hits = quoteHits(state)
   const lines: { label: string; value: number }[] = []
   if (won) {
     lines.push({ label: 'Doplněný výrok', value: 240 })
     lines.push({ label: `Slova vlastní hlavou (${mine})`, value: 20 * mine })
+    if (state.solved) lines.push({ label: 'Tipnutý celý výrok', value: 120 })
   } else {
     lines.push({ label: 'Výrok nedoplněn', value: -35 })
   }
+  // Odkryté písmeno stojí body, i když sedlo — jinak by se vyplatilo
+  // vyklikat abecedu a výrok si přečíst.
+  if (hits > 0) {
+    lines.push({ label: `Odkrytá písmena (${hits})`, value: -QUOTE_COST.hit * hits })
+  }
   if (misses > 0) {
     lines.push({ label: `Písmena vedle (${misses})`, value: -QUOTE_COST.miss * misses })
+  }
+  if (state.guesses.length > 0) {
+    lines.push({
+      label: `Chybné tipy (${state.guesses.length})`,
+      value: -QUOTE_COST.miss * state.guesses.length,
+    })
   }
   if (state.hintCost > 0) {
     const paid = Math.max(0, state.hints.length - state.freeHints)
@@ -323,7 +337,7 @@ export function scoreQuote(
   const bonus = won ? speedBonus(elapsed, 75_000, 300_000, 70) : 0
   if (bonus > 0) lines.push({ label: 'Rychlost', value: bonus })
 
-  const perfect = won && misses === 0 && state.hints.length === 0
+  const perfect = won && misses === 0 && state.hints.length === 0 && state.guesses.length === 0
   const streakMul = streakMultiplier(streak)
   const multiplier = (perfect ? 1.5 : 1) * streakMul
   const labels: string[] = []

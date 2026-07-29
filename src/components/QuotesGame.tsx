@@ -7,6 +7,7 @@ import {
   artUrl,
   countLetter,
   createQuoteState,
+  guessQuote,
   hintLadder,
   isSolved,
   missCount,
@@ -71,6 +72,10 @@ export function QuotesGame({
   const [flash, setFlash] = useState<{ text: string; tone: string; key: number } | null>(null)
   const [confirmGiveUp, setConfirmGiveUp] = useState(false)
   const [artFailed, setArtFailed] = useState(false)
+  const [typing, setTyping] = useState(false)
+  const [draft, setDraft] = useState('')
+  /** Odečtené body, které chvíli poblikají u textu — ať je vidět cena tahu. */
+  const [pop, setPop] = useState<{ value: number; key: number } | null>(null)
   const [done, setDone] = useState(false)
   const reported = useRef(false)
 
@@ -86,6 +91,9 @@ export function QuotesGame({
     setState(createQuoteState(quote, seed))
     setFlash(null)
     setArtFailed(false)
+    setTyping(false)
+    setDraft('')
+    setPop(null)
     setDone(false)
     reported.current = false
   }, [quote, seed])
@@ -122,6 +130,7 @@ export function QuotesGame({
       setState((current) => {
         if (current.tried.includes(letter)) return current
         const hits = countLetter(current, letter)
+        setPop({ value: hits > 0 ? QUOTE_COST.hit : QUOTE_COST.miss, key: Date.now() })
         showFlash(
           hits > 0 ? `${letter.toUpperCase()} — ${hits}×` : `${letter.toUpperCase()} tam není`,
           hits > 0 ? 'accent' : 'warn',
@@ -132,8 +141,26 @@ export function QuotesGame({
     [over],
   )
 
+  function submitQuote() {
+    const guess = draft.trim()
+    if (!guess) return
+    setState((current) => {
+      const next = guessQuote(current, guess)
+      if (next.solved) {
+        showFlash('Sedí! Celý výrok najednou.', 'accent')
+      } else {
+        setPop({ value: QUOTE_COST.miss, key: Date.now() })
+        showFlash('To není ono.', 'warn')
+      }
+      return next
+    })
+    setDraft('')
+    setTyping(false)
+  }
+
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      if (typing) return
       if (event.metaKey || event.ctrlKey || event.altKey) return
       if (event.key.length !== 1) return
       const letter = event.key.toLowerCase()
@@ -143,7 +170,7 @@ export function QuotesGame({
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [press])
+  }, [press, typing])
 
   /** Nápovědy jdou po stupních; „odhal slovo" zbude, až dojdou ostatní. */
   const ladder = useMemo(() => hintLadder(quote), [quote])
@@ -252,17 +279,30 @@ export function QuotesGame({
                 showFlash('Podobizna nedorazila — další nápovědu máš zdarma.', 'warn')
               }}
             />
+            {/* Odkaz na stránku souboru by ve jméně nesl odpověď, takže se
+                během kola nekliká — a po dohrání už není co skrývat. */}
             <figcaption>
-              Podobizna:{' '}
-              <a
-                href={`https://commons.wikimedia.org/wiki/File:${encodeURIComponent(quote.art!)}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Wikimedia Commons
-              </a>
+              Podobizna: Wikimedia Commons
+              {over && (
+                <>
+                  {' · '}
+                  <a
+                    href={`https://commons.wikimedia.org/wiki/File:${encodeURIComponent(quote.art!)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    zdroj
+                  </a>
+                </>
+              )}
             </figcaption>
           </figure>
+        )}
+
+        {pop && (
+          <span className="score-pop" key={pop.key}>
+            −{pop.value}
+          </span>
         )}
 
         <blockquote className="quote-text">
@@ -270,13 +310,17 @@ export function QuotesGame({
             token.word ? (
               <span className="quote-word" key={index}>
                 {[...token.text].map((letter, i) => {
+                  const free = state.given.includes(index)
                   const open =
                     state.given.includes(index) ||
                     state.tried.includes(
                       letter.toLowerCase().normalize('NFD').replace(/\p{M}/gu, ''),
                     )
                   return (
-                    <span className={`quote-slot ${open ? 'open' : ''}`} key={i}>
+                    <span
+                      className={`quote-slot ${open ? 'open' : ''} ${free ? 'free' : ''}`}
+                      key={i}
+                    >
                       {open || over ? letter : '\u00A0'}
                     </span>
                   )
@@ -299,6 +343,27 @@ export function QuotesGame({
       </div>
 
       <div className="board-footer">
+        {typing ? (
+          <div className="guess-row">
+            <input
+              className="guess-input"
+              value={draft}
+              autoFocus
+              placeholder="Napiš celý výrok"
+              onChange={(event) => setDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') submitQuote()
+                if (event.key === 'Escape') setTyping(false)
+              }}
+            />
+            <button type="button" className="btn btn-primary" onClick={submitQuote} disabled={!draft}>
+              Tipnout
+            </button>
+            <button type="button" className="btn btn-ghost" onClick={() => setTyping(false)}>
+              Zpět k písmenům
+            </button>
+          </div>
+        ) : (
         <div className="letter-keys">
           {ROWS.map((row, r) => (
             <div className="letter-row" key={r}>
@@ -321,7 +386,29 @@ export function QuotesGame({
           ))}
         </div>
 
+        )}
+
+        {state.guesses.length > 0 && (
+          <div className="wrong-guesses">
+            {state.guesses.slice(-3).map((guess, i) => (
+              <span className="chip" key={`${guess}-${i}`}>
+                {guess}
+              </span>
+            ))}
+          </div>
+        )}
+
         <div className="board-actions">
+          {!typing && (
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              onClick={() => setTyping(true)}
+              disabled={over}
+            >
+              Znám ho — tipnout celý výrok
+            </button>
+          )}
           <button
             type="button"
             className="btn btn-sm btn-ghost"

@@ -53,7 +53,16 @@ export const QUOTE_KEYS = 'abcdefghijklmnopqrstuvwxyz'.split('')
 export type QuoteHint = 'art' | 'note' | 'who' | 'word'
 
 export const QUOTE_COST = {
-  miss: 15,
+  /** Chybné písmeno. Dvojnásobek trefy — hádat naslepo se nemá vyplácet. */
+  miss: 30,
+  /**
+   * I trefené písmeno něco stojí.
+   *
+   * Bez toho by se vyplatilo vyklikat abecedu a výrok si přečíst. Takhle
+   * má hráč důvod tipnout celou větu, jakmile mu dojde smysl — a to je to,
+   * co má tenhle režim odměňovat.
+   */
+  hit: 15,
   art: 25,
   note: 35,
   who: 60,
@@ -70,6 +79,10 @@ export interface QuoteState {
   /** Slova odkrytá zadarmo na začátku a nápovědou — indexy do words(). */
   given: number[]
   hints: QuoteHint[]
+  /** Chybné tipy na celý výrok — ukazují se, ať je hráč neopakuje. */
+  guesses: string[]
+  /** Uhodl hráč celý výrok najednou? */
+  solved: boolean
   freeHints: number
   hintCost: number
   startedAt: number
@@ -123,6 +136,8 @@ export function createQuoteState(quote: Quote, seed: number, now = Date.now()): 
     tried: [],
     given: openingWords(quote.text, seed),
     hints: [],
+    guesses: [],
+    solved: false,
     freeHints: 0,
     hintCost: 0,
     startedAt: now,
@@ -140,6 +155,7 @@ export function isOpen(state: QuoteState, index: number, letter: string): boolea
 
 /** Zbývá ještě něco zakrytého? */
 export function isSolved(state: QuoteState): boolean {
+  if (state.solved) return true
   return tokens(state.quote.text).every(
     (token, index) =>
       !token.word ||
@@ -160,6 +176,22 @@ export function countLetter(state: QuoteState, letter: string): number {
 
 export const missCount = (state: QuoteState): number =>
   state.tried.filter((letter) => countLetter({ ...state, tried: [] }, letter) === 0).length
+
+/** Kolik zkoušených písmen ve výroku doopravdy bylo. */
+export const hitCount = (state: QuoteState): number =>
+  state.tried.length - missCount(state)
+
+/** Porovnání tipu s výrokem — bez ohledu na diakritiku a interpunkci. */
+const plain = (text: string): string =>
+  fold(text.toLowerCase()).replace(/[^a-z0-9]+/g, ' ').trim()
+
+export function guessQuote(state: QuoteState, guess: string): QuoteState {
+  if (state.finishedAt) return state
+  if (plain(guess) === plain(state.quote.text)) {
+    return { ...state, solved: true, finishedAt: Date.now() }
+  }
+  return { ...state, guesses: [...state.guesses, guess.trim()] }
+}
 
 export function tryLetter(state: QuoteState, letter: string): QuoteState {
   const key = base(letter)
