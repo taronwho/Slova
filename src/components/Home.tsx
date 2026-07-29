@@ -500,13 +500,8 @@ export function Home({
             <span>Inkoust</span>
           </Explain>
           <button type="button" className="stat-cell" onClick={onAwards}>
-            <b className="num">
-              <span className="stat-figure">
-                {awards}
-                <i className="stat-aside right">/{AWARDS.length}</i>
-              </span>
-            </b>
-            <span>Ocenění</span>
+            <b className="num">{awards}</b>
+            <span>ze {AWARDS.length} ocenění</span>
           </button>
         </div>
         <div className="home-profile-actions">

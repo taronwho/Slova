@@ -393,10 +393,10 @@ log('\nVITRÍNA')
   await goHome(page)
   const chip = page.locator('.home-profile-actions .btn', { hasText: 'Vitrína' })
   // Počet visí v dlaždici statistik, klik do vitríny na tlačítku pod ní.
-  const label = await page.locator('.stat-cell', { hasText: 'Ocenění' }).innerText()
+  const label = await page.locator('.stat-cell', { hasText: 'ocenění' }).innerText()
   // Po třiceti odehraných kolech musí být něco odemčené — kdyby se ocenění
   // neudělovala, stálo by tu 0/30.
-  const gotSome = Number(label.match(/(\d+)\s*\//)?.[1] ?? 0) > 0
+  const gotSome = Number(label.match(/\d+/)?.[0] ?? 0) > 0
   check(gotSome, `odehraná kola odemkla ocenění (${label.replace(/\s+/g, ' ')})`)
 
   await chip.click()

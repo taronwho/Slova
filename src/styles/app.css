@@ -380,12 +380,16 @@
   margin-top: var(--sp-4);
 }
 
+/* Mřížka, ne sloupec: číslo sedí v prvním řádku a popisek ve druhém, takže
+   čísla stojí ve všech dlaždicích ve stejné výšce. Ve sloupci se obsah
+   centroval jako celek a dvouřádkový popisek („Nejlepší série") číslo nad
+   sebou vytlačil výš než v sousedních dlaždicích. */
 .stat-cell {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  align-content: start;
+  justify-items: center;
+  gap: 4px;
   padding: var(--sp-3) var(--sp-2);
   border-radius: var(--r-md);
   border: 1px solid var(--border);
@@ -428,12 +432,6 @@
   right: calc(100% + 0.3em);
 }
 
-.stat-aside.right {
-  left: calc(100% + 0.2em);
-  font-style: normal;
-  color: var(--text-faint);
-}
-
 /* `.explain` níž v souboru nastavuje `text-align: inherit`, což by u buněk
    postavených na vysvětlivce (Série, Inkoust…) přebilo zarovnání na střed —
    nadpisy na dva řádky se pak sázely doleva, zatímco Ocenění na střed. */
@@ -441,9 +439,15 @@
   text-align: center;
 }
 
-.stat-cell span {
+/* Jen přímý potomek: `span` uvnitř čísla (kapka inkoustu a její obal) by
+   jinak spadl na velikost popisku a „358" se sázelo o třetinu menší než
+   „21" vedle. */
+.stat-cell > span {
   display: block;
   width: 100%;
+  /* Místo na dva řádky drží i jednořádkový popisek, ať mají všechny
+     dlaždice stejnou výšku i bez ohledu na mřížku kolem. */
+  min-height: 2.5em;
   font-size: 0.68rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
