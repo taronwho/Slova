@@ -69,6 +69,8 @@ export function HiveGame({
 }: Props) {
   const [state, setState] = useState<HiveState>(() => resume ?? createHiveState(puzzle))
   const [draft, setDraft] = useState('')
+  /** Po dohrání: rozbalený seznam všeho, co v plástvi šlo složit. */
+  const [showAll, setShowAll] = useState(false)
   const [flash, setFlash] = useState<{ text: string; tone: string; key: number } | null>(
     null,
   )
@@ -83,6 +85,14 @@ export function HiveGame({
   const points = currentScore(state)
   const rank = rankFor(points, max)
   const complete = state.found.length >= puzzle.solutions.length
+  // Nejdelší nahoře — tam je nejvíc bodů a nejvíc lítosti.
+  const allWords = useMemo(
+    () =>
+      [...puzzle.solutions].sort(
+        (a, b) => b.length - a.length || a.localeCompare(b, 'cs'),
+      ),
+    [puzzle.solutions],
+  )
 
   // Nové kolo — všechno zpět na začátek. Na prvním renderu se přeskočí,
   // jinak by přepsalo stav načtený z rozehraného kola.
@@ -443,7 +453,37 @@ export function HiveGame({
           celebrate={complete}
           onNext={onNext}
           onHome={onHome}
-        />
+        >
+          {/* Kolo skončilo, takže prozrazovat už není co — a právě tohle
+              hráč po plástvi chce vědět: co mu uteklo. Rozbalovací, ať
+              karta zůstane přehledná i s devadesáti slovy. */}
+          <div className="all-words">
+            <button
+              type="button"
+              className="btn btn-sm"
+              onClick={() => setShowAll((open) => !open)}
+              aria-expanded={showAll}
+            >
+              {showAll
+                ? 'Skrýt slova'
+                : `Ukázat všech ${puzzle.solutions.length} slov`}
+            </button>
+            {showAll && (
+              <div className="all-words-list">
+                {allWords.map((word) => (
+                  <span
+                    className={`word-pill ${state.found.includes(word) ? 'got' : ''} ${
+                      puzzle.pangrams.includes(word) ? 'pangram' : ''
+                    }`}
+                    key={word}
+                  >
+                    {word}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </ResultOverlay>
       )}
     </div>
   )

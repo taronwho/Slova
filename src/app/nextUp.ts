@@ -24,4 +24,11 @@ export interface NextUpItem {
 
 export const NextUpContext = createContext<NextUpItem[]>([])
 
+/**
+ * Která hra právě skončila. Závěrečná karta se jím podepíše — značkou hry
+ * a drobným řádkem s režimem —, aby se sdílený snímek dal zařadit.
+ * Nese se stejnou cestou jako nabídka a ze stejného důvodu.
+ */
+export const RoundModeContext = createContext<{ glyph: string; label: string } | null>(null)
+
 export const useNextUp = (): NextUpItem[] => useContext(NextUpContext)

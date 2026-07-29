@@ -15,7 +15,7 @@ import {
   pickUnseen,
   type ChainBundle,
 } from './app/data'
-import { NextUpContext, type NextUpItem } from './app/nextUp'
+import { NextUpContext, RoundModeContext, type NextUpItem } from './app/nextUp'
 import { AwardPopup, type Gained } from './components/AwardPopup'
 import { Awards } from './components/Awards'
 import { InkMark } from './components/art/InkMark'
@@ -512,6 +512,15 @@ export default function App() {
   return (
     <ExplainProvider onGo={goTo}>
     <NextUpContext.Provider value={nextUp}>
+    <RoundModeContext.Provider
+      value={
+        view.kind === 'game'
+          ? { glyph: MODE_GLYPH[view.mode], label: MODE_LABEL[view.mode] }
+          : view.kind === 'quiz'
+            ? { glyph: '?', label: 'Otázka dne' }
+            : null
+      }
+    >
     <div
       className={`shell ${view.kind === 'game' ? 'playing' : ''}`}
       data-mode={view.kind === 'game' ? view.mode : undefined}
@@ -831,6 +840,7 @@ export default function App() {
         )}
       </main>
     </div>
+    </RoundModeContext.Provider>
     </NextUpContext.Provider>
     </ExplainProvider>
   )

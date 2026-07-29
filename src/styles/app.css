@@ -1660,6 +1660,100 @@
   color: var(--accent-text);
 }
 
+/* Podpis karty: značka hry nahoře, pod ní drobně režim. Snímek výsledku
+   putuje ven ze hry, takže musí být poznat, odkud je. */
+.result-sign {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: var(--sp-4);
+}
+
+.result-brand {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+
+.result-brand .mark {
+  color: var(--accent);
+}
+
+.result-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.result-mode-glyph {
+  display: grid;
+  place-items: center;
+  width: 1.5em;
+  height: 1.5em;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 0.9em;
+  line-height: 1;
+}
+
+/* Barva podle právě hrané hry — stejná jako na dlaždici v menu. */
+.shell[data-mode='chain'] .result-mode-glyph { background: var(--mode-chain); }
+.shell[data-mode='hive'] .result-mode-glyph { background: var(--mode-hive); }
+.shell[data-mode='tower'] .result-mode-glyph { background: var(--mode-tower); }
+.shell[data-mode='gallows'] .result-mode-glyph { background: var(--mode-gallows); }
+.shell[data-mode='detective'] .result-mode-glyph { background: var(--mode-detective); }
+.shell[data-mode='tetris'] .result-mode-glyph { background: var(--mode-tetris); }
+
+/* Všechna slova plástve po dohrání. Rozbalovací: devadesát slov by kartu
+   protáhlo přes celou obrazovku a rozpis bodů by se ztratil. */
+.all-words {
+  margin-top: var(--sp-4);
+}
+
+.all-words-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+  max-height: 220px;
+  overflow-y: auto;
+  margin-top: var(--sp-3);
+  padding: var(--sp-2);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+
+.word-pill {
+  padding: 3px 8px;
+  border-radius: var(--r-full);
+  border: 1px solid var(--border);
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+/* Co hráč našel, svítí; zbytek je to, co mu uteklo. */
+.word-pill.got {
+  border-color: transparent;
+  background: color-mix(in oklab, var(--mode-hive) 18%, transparent);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.word-pill.pangram {
+  border-color: var(--gold);
+}
+
 /* Zbytek dnešní várky pod rozpisem bodů. Barevné tečky režimů drží spojení
    s dlaždicemi v menu — hráč pozná hru dřív, než přečte její název. */
 .next-up {

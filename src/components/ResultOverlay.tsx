@@ -1,8 +1,8 @@
 /** Závěrečná karta kola — rozpis skóre, sdílení, další kolo. */
 
-import { useEffect, useState, type ReactNode } from 'react'
+import { useContext, useEffect, useState, type ReactNode } from 'react'
 
-import { useNextUp } from '../app/nextUp'
+import { RoundModeContext, useNextUp } from '../app/nextUp'
 import type { ScoreBreakdown } from '../game/scoring'
 import { Confetti } from './Confetti'
 import { Explain } from './Explain'
@@ -61,6 +61,7 @@ export function ResultOverlay({
   onHome,
 }: Props) {
   const nextUp = useNextUp()
+  const mode = useContext(RoundModeContext)
   const score = useCountUp(breakdown.total)
   const [copied, setCopied] = useState(false)
 
@@ -83,6 +84,27 @@ export function ResultOverlay({
       {celebrate && <Confetti />}
       <div className="result" role="dialog" aria-modal="true" aria-label="Výsledek kola">
         <div className="result-card">
+          {/* Karta se podepíše. Snímek výsledku putuje ven ze hry — do
+              zpráv, na sítě —, a bez značky je to jen tabulka čísel. */}
+          <div className="result-sign">
+            <span className="result-brand">
+              Sl<span className="mark">o</span>va
+              <span className="brand-triad" aria-hidden="true">
+                <i style={{ background: 'var(--mode-chain)' }} />
+                <i style={{ background: 'var(--mode-hive)' }} />
+                <i style={{ background: 'var(--mode-tower)' }} />
+              </span>
+            </span>
+            {mode && (
+              <span className="result-mode">
+                <span className="result-mode-glyph" aria-hidden="true">
+                  {mode.glyph}
+                </span>
+                {mode.label}
+              </span>
+            )}
+          </div>
+
           <h2>{title}</h2>
           {subtitle && <p className="muted" style={{ marginTop: 'var(--sp-2)' }}>{subtitle}</p>}
 
