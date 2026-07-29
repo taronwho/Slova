@@ -17,6 +17,13 @@ import {
   type DetectiveState,
 } from './detective'
 import { HIVE_HINT_COST } from './hive'
+import {
+  isSolved,
+  missCount as quoteMisses,
+  QUOTE_COST,
+  tokens as quoteTokens,
+  type QuoteState,
+} from './quotes'
 import { level as tetrisLevel, type TetrisState } from './tetris'
 import {
   GALLOWS_LIVES,
@@ -272,6 +279,53 @@ export function scoreDetective(
   const streakMul = streakMultiplier(streak)
   const multiplier = (perfect ? 1.5 : 1) * streakMul
 
+  const labels: string[] = []
+  if (perfect) labels.push('BEZ ŠKOBRTNUTÍ ×1,5')
+  if (streakMul > 1) labels.push(`Série ×${streakMul.toFixed(2).replace('.', ',')}`)
+
+  return finish(lines, multiplier, labels.join('  ·  ') || null, perfect, 0)
+}
+
+/**
+ * Citát — platí se za chyby, ne za písmena.
+ *
+ * Odměna roste s tím, kolik textu hráč odkryl vlastní hlavou: základ je za
+ * dokončený výrok a k němu se počítají slova, která nedostal zadarmo ani
+ * nápovědou. Chybné písmeno u dlouhé věty bolí míň než u jednoho slova,
+ * proto je sazba nižší než v Detektivovi.
+ */
+export function scoreQuote(
+  state: QuoteState,
+  streak: number,
+  now = Date.now(),
+): ScoreBreakdown {
+  const elapsed = (state.finishedAt ?? now) - state.startedAt
+  const misses = quoteMisses(state)
+  const won = isSolved(state)
+  const words = quoteTokens(state.quote.text).filter((token) => token.word).length
+  const mine = Math.max(0, words - state.given.length)
+
+  const lines: { label: string; value: number }[] = []
+  if (won) {
+    lines.push({ label: 'Doplněný výrok', value: 240 })
+    lines.push({ label: `Slova vlastní hlavou (${mine})`, value: 20 * mine })
+  } else {
+    lines.push({ label: 'Výrok nedoplněn', value: -35 })
+  }
+  if (misses > 0) {
+    lines.push({ label: `Písmena vedle (${misses})`, value: -QUOTE_COST.miss * misses })
+  }
+  if (state.hintCost > 0) {
+    const paid = Math.max(0, state.hints.length - state.freeHints)
+    lines.push({ label: `Nápovědy (${paid})`, value: -state.hintCost })
+  }
+
+  const bonus = won ? speedBonus(elapsed, 75_000, 300_000, 70) : 0
+  if (bonus > 0) lines.push({ label: 'Rychlost', value: bonus })
+
+  const perfect = won && misses === 0 && state.hints.length === 0
+  const streakMul = streakMultiplier(streak)
+  const multiplier = (perfect ? 1.5 : 1) * streakMul
   const labels: string[] = []
   if (perfect) labels.push('BEZ ŠKOBRTNUTÍ ×1,5')
   if (streakMul > 1) labels.push(`Série ×${streakMul.toFixed(2).replace('.', ',')}`)

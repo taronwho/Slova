@@ -53,6 +53,7 @@ const EXTRA_LABEL: Record<ModeId, string> = {
   gallows: 'Průměr zbylých životů',
   detective: 'Průměr nevyužitých pokusů',
   tetris: 'Průměr složených slov',
+  quotes: 'Průměr nevyužitých pokusů',
 }
 
 /** Co znamená „perfektní" — v každé hře něco jiného. */
@@ -63,6 +64,7 @@ const PERFECT_NOTE: Record<ModeId, string> = {
   gallows: 'Slova uhodnutá bez jediné chyby a bez nápovědy.',
   detective: 'Případy rozluštěné bez chybného písmene a bez nápovědy.',
   tetris: 'Kola aspoň s tuctem slov a bez nápovědy.',
+  quotes: 'Výroky doplněné bez chybného písmene a bez nápovědy.',
 }
 
 /**

@@ -842,7 +842,10 @@
  * podruhé (stojí i v panelu po ťuknutí a v návodu). Název a barva zůstávají,
  * podle nich se hra pozná.
  */
-@media (max-height: 730px) {
+/* Hranice povyskočila ze 730 na 940 px, když přibyla sedmá hra: sedm
+   dlaždic ve dvou sloupcích jsou čtyři řádky a ty se bez popisků nevejdou
+   ani na velký telefon. */
+@media (max-height: 940px) {
   .mode-tile {
     padding: var(--sp-3);
   }
@@ -882,11 +885,11 @@
   }
 
   .mode-tile {
-    padding: 8px var(--sp-3);
+    padding: 3px var(--sp-3);
   }
 
   .mode-name {
-    font-size: 1rem;
+    font-size: 0.95rem;
   }
 
   /* Praporek „Nové" nebo „Rozehráno" se na takhle malé dlaždici vejde jen
@@ -4661,4 +4664,101 @@ button.stat.open {
   font-family: var(--font-display);
   font-size: 1.05rem;
   font-weight: 700;
+}
+
+
+/* ---------- Citát ---------- */
+
+/* Text výroku je tady to hlavní. Sází se čtenářsky velký, se slovy jako
+   celky — políčko po políčku, ale slovo se nikdy nezlomí uprostřed. */
+.quote-text {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: baseline;
+  gap: 5px 0;
+  width: min(640px, 100%);
+  margin-inline: auto;
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 4.2vw, 1.35rem);
+  line-height: 1.9;
+  color: var(--text);
+}
+
+.quote-word {
+  display: inline-flex;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+/* Prázdné políčko je linka pod písmenem, ne rámeček — rámečků by při
+   dvanácti slovech byla stránka plná a text by se v nich ztratil. */
+/* Každé písmeno má vlastní políčko stejné velikosti. Podtržítka pod textem
+   splývala: nebylo poznat, kde končí jedno slovo a začíná druhé, ani kolik
+   písmen ještě chybí. Políčka to říkají na první pohled. */
+.quote-slot {
+  display: grid;
+  place-items: center;
+  width: 1.15em;
+  height: 1.5em;
+  border-radius: 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-size: 0.92em;
+  text-transform: uppercase;
+}
+
+/* Odkryté písmeno svítí zeleně — stejnou řečí jako trefená klávesa pod
+   textem. Barva režimu je růžová a v políčku vypadala jako chyba. */
+.quote-slot.open {
+  background: var(--ok-soft);
+  border-color: color-mix(in oklab, var(--ok) 45%, var(--border));
+  color: var(--ok-text);
+  font-weight: 700;
+}
+
+/* Mezera mezi slovy musí být širší než mezera mezi písmeny, jinak text
+   splyne v jednu řadu políček. */
+.quote-gap.space {
+  width: 1.1em;
+}
+
+.quote-gap.punct {
+  align-self: center;
+  padding-inline: 1px;
+}
+
+.quote-who {
+  margin-top: var(--sp-4);
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+/* Podobizna z Commons. Licence vyžaduje uvést autora — odkaz na stránku
+   souboru, kde autor i licence stojí, je způsob, který CC BY-SA výslovně
+   připouští. */
+.quote-art {
+  margin: 0 auto var(--sp-4);
+  text-align: center;
+}
+
+.quote-art img {
+  max-width: min(220px, 60%);
+  max-height: 30vh;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+}
+
+.quote-art figcaption {
+  margin-top: 4px;
+  font-size: 0.66rem;
+  color: var(--text-faint);
+}
+
+.board-actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
 }

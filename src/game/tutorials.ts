@@ -276,6 +276,24 @@ export const TUTORIALS: Record<ModeId, TutorialStep[]> = {
       ],
     },
   ],
+  quotes: [
+    {
+      title: 'Doplň výrok',
+      body: [
+        'Dostaneš citát, ve kterém je vidět jen část slov. Zbytek odkrýváš po písmenech jako v Šibenici.',
+        'Hádá se celá věta, ne jedno slovo — odkryté kousky napoví smysl a od něj se dá k ostatním slovům dojít.',
+      ],
+      key: 'Chyba kolo neukončí, jen stojí body. Po čtrnácti chybách ale kolo skončí.',
+    },
+    {
+      title: 'Nápovědy po stupních',
+      body: [
+        'První nápověda ukáže podobiznu autora, druhá jeho zařazení („český spisovatel"), třetí rovnou jméno.',
+        'Teprve pak se odkrývají celá slova — a vždycky to nejdelší, protože to pomůže nejvíc.',
+      ],
+      key: 'Podobizna se stahuje z internetu. Bez připojení se přeskočí a inkoust se nestrhne.',
+    },
+  ],
   detective: [
     {
       title: 'Poznej slovo podle spisu o něm',
@@ -490,5 +508,10 @@ export const MODE_SUMMARY: Record<ModeId, string[]> = {
     'Otoč dvojici, ať dá slovo.',
     'Vodorovně zleva, svisle zdola nahoru.',
     'Jen 1. pád a infinitiv.',
+  ],
+  quotes: [
+    'Část slov výroku dostaneš zadarmo.',
+    'Zbytek odkrývej po písmenech.',
+    'Nápovědy jdou od podobizny ke jménu autora.',
   ],
 }

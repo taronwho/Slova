@@ -1,6 +1,13 @@
 /** Sdílené typy napříč všemi třemi režimy. */
 
-export type ModeId = 'chain' | 'hive' | 'tower' | 'gallows' | 'detective' | 'tetris'
+export type ModeId =
+  | 'chain'
+  | 'hive'
+  | 'tower'
+  | 'gallows'
+  | 'detective'
+  | 'tetris'
+  | 'quotes'
 
 export type Difficulty = 'easy' | 'normal' | 'hard'
 
@@ -18,6 +25,7 @@ export const MODE_ORDER: ModeId[] = [
   'gallows',
   'detective',
   'tetris',
+  'quotes',
 ]
 
 /** Znak režimu na dlaždici. Kresba by se do řádku textu nevešla. */
@@ -28,6 +36,7 @@ export const MODE_GLYPH: Record<ModeId, string> = {
   gallows: '?',
   detective: '§',
   tetris: '▚',
+  quotes: '❝',
 }
 
 export const MODE_LABEL: Record<ModeId, string> = {
@@ -37,6 +46,7 @@ export const MODE_LABEL: Record<ModeId, string> = {
   gallows: 'Šibenice',
   detective: 'Detektiv',
   tetris: 'Slabiky',
+  quotes: 'Citát',
 }
 
 /**
@@ -59,6 +69,7 @@ export const MODE_TAGLINE: Record<ModeId, string> = {
   gallows: 'Uhodni slovo po písmenech',
   detective: 'Poznej slovo podle indicií',
   tetris: 'Skládej padající slabiky ve slova',
+  quotes: 'Doplň výrok po písmenech',
 }
 
 /** Výsledek dokončeného kola — vstup do bodování i statistik. */

@@ -6,6 +6,7 @@ import {
   loadChain,
   loadHive,
   loadDetective,
+  loadQuotes,
   loadTetris,
   loadGallows,
   loadHiveIndex,
@@ -28,6 +29,7 @@ import { Guide } from './components/Guide'
 import { HiveGame } from './components/HiveGame'
 import { Home } from './components/Home'
 import { QuizGame } from './components/QuizGame'
+import { QuotesGame } from './components/QuotesGame'
 import { QuizReview } from './components/QuizReview'
 import { Splash } from './components/Splash'
 import { Stats } from './components/Stats'
@@ -40,6 +42,7 @@ import type { ExplainTarget } from './game/glossary'
 import type { GallowsPuzzle, GallowsState } from './game/gallows'
 import type { HivePuzzle, HiveState } from './game/hive'
 import { quizFor, type QuizDeck, type QuizQuestion } from './game/quiz'
+import type { Quote, QuoteState } from './game/quotes'
 import { RANKS, rankFor } from './game/ranks'
 import { tetrisSetup, type TetrisDeck, type TetrisSetup, type TetrisState } from './game/tetris'
 import type { TowerPuzzle, TowerState } from './game/tower'
@@ -85,6 +88,7 @@ interface Loaded {
   tower?: TowerPuzzle
   gallows?: GallowsPuzzle
   detective?: DetectivePuzzle
+  quotes?: { quote: Quote; seed: number }
   tetris?: { deck: TetrisDeck; setup: TetrisSetup }
   quiz?: QuizQuestion
   quizDeck?: QuizDeck
@@ -207,6 +211,26 @@ export default function App() {
             ? entries[Math.floor(random() * entries.length)]!
             : pickUnseen(entries, (e) => e.id, profile.seen.detective, random)
           setLoaded({ detective: entry })
+        } else if (mode === 'quotes') {
+          const all = await loadQuotes()
+          const pool = all.filter((q) => q.difficulty === difficulty)
+          const entries = pool.length > 0 ? pool : all
+          // Bez připojení nemá smysl nabízet výrok, jehož jediná obrazová
+          // nápověda by se stejně nestáhla — u volné hry se proto dá
+          // přednost těm bez podobizny. Denní výzva musí padnout všem
+          // stejná, takže tam se nevybírá.
+          const offline = typeof navigator !== 'undefined' && navigator.onLine === false
+          const usable = offline && !daily ? entries.filter((q) => !q.art) : entries
+          const from = usable.length > 0 ? usable : entries
+          const entry = daily
+            ? from[Math.floor(random() * from.length)]!
+            : pickUnseen(from, (e) => e.id, profile.seen.quotes, random)
+          setLoaded({
+            quotes: {
+              quote: entry,
+              seed: daily ? hashSeed(`${dayKey}:quotes`) : (Math.random() * 2 ** 32) >>> 0,
+            },
+          })
         } else if (mode === 'tetris') {
           // Tenhle režim nemá připravené hádanky — rozdává se náhodně, takže
           // stačí zrnko. Denní výzva ho má odvozené ze dne, takže všem padá
@@ -793,6 +817,26 @@ export default function App() {
                 state,
                 finished,
               )
+            }
+          />
+        )}
+
+        {!loading && view.kind === 'game' && view.mode === 'quotes' && loaded.quotes && (
+          <QuotesGame
+            key={`${loaded.quotes.quote.id}-${view.nonce}`}
+            quote={loaded.quotes.quote}
+            seed={loaded.quotes.seed}
+            streak={profile.streak}
+            dayLabel={view.daily ? dayTag : ''}
+            onFinish={finishRound}
+            onNext={() => startRound('quotes', false)}
+            onHome={goHome}
+            onGiveUp={giveUp}
+            resume={resume as QuoteState | null}
+            ink={profile.ink}
+            onSpendInk={spendInkOn}
+            onProgress={(state, finished) =>
+              keepProgress('quotes', state.quote.id, state.quote.difficulty, state, finished)
             }
           />
         )}

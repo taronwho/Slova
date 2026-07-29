@@ -435,7 +435,7 @@ log('\nDENNÍ VÝZVA A INKOUST')
 {
   await goHome(page)
   check(
-    (await page.locator('.daily-strip .daily-item').count()) === 6,
+    (await page.locator('.daily-strip .daily-item').count()) === 7,
     'denní výzva je vidět rovnou v menu, jedna dlaždice na hru',
   )
   const strip = await page.locator('.daily-strip').boundingBox()
