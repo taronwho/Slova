@@ -82,6 +82,13 @@ def main() -> int:
             said = re.sub(r"^[A-ZÁ-Ž][^:]{1,28}:\s+", "", said)
             if said[-1:] not in ".!?" or re.search(r"[|=\[\]{}<>]", said):
                 continue
+            # Odkaz na literaturu, ne výrok: „Fenomén Baťa, ISBN 80-208-0025-5,
+            # 1990." Bibliografie se do seznamu výroků plete pravidelně a pozná
+            # se podle číslic a uvozovek s názvem díla.
+            if re.search(r"\d|ISBN|s\.\s*\d|str\.", said):
+                continue
+            if '„' in said or '"' in said or '»' in said:
+                continue
             if not (MIN_LEN <= len(said) <= MAX_LEN):
                 continue
             if not (MIN_WORDS <= len(said.split()) <= MAX_WORDS):

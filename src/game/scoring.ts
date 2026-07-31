@@ -19,9 +19,9 @@ import {
 import { HIVE_HINT_COST } from './hive'
 import {
   hitCount as quoteHits,
+  LETTER_COST,
   isSolved,
   missCount as quoteMisses,
-  QUOTE_COST,
   tokens as quoteTokens,
   type QuoteState,
 } from './quotes'
@@ -318,15 +318,15 @@ export function scoreQuote(
   // Odkryté písmeno stojí body, i když sedlo — jinak by se vyplatilo
   // vyklikat abecedu a výrok si přečíst.
   if (hits > 0) {
-    lines.push({ label: `Odkrytá písmena (${hits})`, value: -QUOTE_COST.hit * hits })
+    lines.push({ label: `Odkrytá písmena (${hits})`, value: -LETTER_COST[state.quote.difficulty].hit * hits })
   }
   if (misses > 0) {
-    lines.push({ label: `Písmena vedle (${misses})`, value: -QUOTE_COST.miss * misses })
+    lines.push({ label: `Písmena vedle (${misses})`, value: -LETTER_COST[state.quote.difficulty].miss * misses })
   }
   if (state.guesses.length > 0) {
     lines.push({
       label: `Chybné tipy (${state.guesses.length})`,
-      value: -QUOTE_COST.miss * state.guesses.length,
+      value: -LETTER_COST[state.quote.difficulty].miss * state.guesses.length,
     })
   }
   if (state.hintCost > 0) {

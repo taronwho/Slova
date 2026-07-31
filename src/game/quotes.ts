@@ -52,6 +52,19 @@ export const QUOTE_KEYS = 'abcdefghijklmnopqrstuvwxyz'.split('')
 /** Stupně nápovědy. Pořadí je pevné — od nejmlhavější k nejkonkrétnější. */
 export type QuoteHint = 'art' | 'note' | 'who' | 'word'
 
+/**
+ * Cena za odkryté písmeno podle obtížnosti.
+ *
+ * Chyba stojí vždycky dvojnásobek trefy. Těžká úroveň platí nejvíc, protože
+ * na ní hráč dostane nejmíň slov zadarmo — a má se vyplatit tipnout větu,
+ * ne ji vyklikat.
+ */
+export const LETTER_COST: Record<Difficulty, { hit: number; miss: number }> = {
+  easy: { hit: 15, miss: 30 },
+  normal: { hit: 20, miss: 40 },
+  hard: { hit: 30, miss: 60 },
+}
+
 export const QUOTE_COST = {
   /** Chybné písmeno. Dvojnásobek trefy — hádat naslepo se nemá vyplácet. */
   miss: 60,
@@ -111,8 +124,16 @@ export function tokens(text: string): Token[] {
  * hotový. Pevný počet drží začátek stejný napříč sadou; u delší věty se
  * přidá třetí slovo, aby zůstal poznat aspoň kus stavby.
  */
-function freeCount(words: number): number {
-  return words >= 8 ? 3 : 2
+function freeCount(words: number, difficulty: Difficulty, seed: number): number {
+  const bands: Record<Difficulty, [number, number]> = {
+    easy: [4, 5],
+    normal: [3, 5],
+    hard: [3, 4],
+  }
+  const [low, high] = bands[difficulty]
+  const count = low + (seed % (high - low + 1))
+  // U krátkého výroku se nesmí rozdat skoro celý.
+  return Math.min(count, Math.max(2, words - 2))
 }
 
 /**
@@ -122,11 +143,15 @@ function freeCount(words: number): number {
  * nepomůže, ale „a", „se", „že" mezi neznámými slovy drží větu pohromadě,
  * aby z ní šlo něco vyčíst.
  */
-export function openingWords(text: string, seed: number): number[] {
+export function openingWords(
+  text: string,
+  seed: number,
+  difficulty: Difficulty = 'normal',
+): number[] {
   const all = tokens(text)
     .map((token, index) => ({ token, index }))
     .filter((item) => item.token.word)
-  const want = freeCount(all.length)
+  const want = freeCount(all.length, difficulty, seed)
   const order = all
     .map((item, place) => ({ ...item, place }))
     .sort(
@@ -141,7 +166,7 @@ export function createQuoteState(quote: Quote, seed: number, now = Date.now()): 
   return {
     quote,
     tried: [],
-    given: openingWords(quote.text, seed),
+    given: openingWords(quote.text, seed, quote.difficulty),
     hints: [],
     guesses: [],
     solved: false,

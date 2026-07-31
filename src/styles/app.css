@@ -4673,6 +4673,29 @@ button.stat.open {
    být vidět naráz, jinak hráč při hledání písmene ztratí větu z očí. */
 .shell.playing[data-mode='quotes'] .board {
   gap: var(--sp-2);
+  position: relative;
+}
+
+/* Hlášky plavou nad plochou, ne v ní. Když se vsunuly do toku, celý výrok
+   i s klávesnicí poskočil dolů a nápověda, kvůli které hláška vyskočila,
+   zmizela pod okrajem — hráč k ní musel rolovat. */
+.shell.playing[data-mode='quotes'] .board > .banner,
+.shell.playing[data-mode='quotes'] .score-pop {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  width: max-content;
+  max-width: 100%;
+  pointer-events: none;
+}
+
+.shell.playing[data-mode='quotes'] .board > .banner {
+  top: 0;
+}
+
+.shell.playing[data-mode='quotes'] .score-pop {
+  top: 2.4rem;
 }
 
 .shell.playing[data-mode='quotes'] .quote-who {

@@ -11,6 +11,7 @@ import {
   hintLadder,
   isSolved,
   missCount,
+  LETTER_COST,
   QUOTE_COST,
   QUOTE_MISS_LIMIT,
   revealWord,
@@ -130,7 +131,8 @@ export function QuotesGame({
       setState((current) => {
         if (current.tried.includes(letter)) return current
         const hits = countLetter(current, letter)
-        setPop({ value: hits > 0 ? QUOTE_COST.hit : QUOTE_COST.miss, key: Date.now() })
+        const cost = LETTER_COST[quote.difficulty]
+        setPop({ value: hits > 0 ? cost.hit : cost.miss, key: Date.now() })
         showFlash(
           hits > 0 ? `${letter.toUpperCase()} — ${hits}×` : `${letter.toUpperCase()} tam není`,
           hits > 0 ? 'accent' : 'warn',
@@ -149,7 +151,7 @@ export function QuotesGame({
       if (next.solved) {
         showFlash('Sedí! Celý výrok najednou.', 'accent')
       } else {
-        setPop({ value: QUOTE_COST.miss, key: Date.now() })
+        setPop({ value: LETTER_COST[quote.difficulty].miss, key: Date.now() })
         showFlash('To není ono.', 'warn')
       }
       return next
