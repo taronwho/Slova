@@ -87,8 +87,8 @@ export function ResultOverlay({
           {/* Karta se podepíše. Snímek výsledku putuje ven ze hry — do
               zpráv, na sítě —, a bez značky je to jen tabulka čísel. */}
           <div className="result-sign">
-            <span className="result-brand">
-              Sl<span className="mark">o</span>va
+            <span className="result-brand" aria-label="Slova">
+              SL<span className="brand-o">O</span>VA
               <span className="brand-triad" aria-hidden="true">
                 <i style={{ background: 'var(--mode-chain)' }} />
                 <i style={{ background: 'var(--mode-hive)' }} />
