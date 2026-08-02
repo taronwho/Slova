@@ -64,7 +64,7 @@ ASPECTS = ("nedokonavé", "dokonavé")
 FORMS = (
     ("zdrobnělina", r"zdrobněl"),
     ("přechýlené jméno", r"přechýlen"),
-    ("složenina", r"složen|ze spojení|spojením slov"),
+    ("složenina", r"složenin|ze spojení|spojením slov|složením slov"),
     ("odvozenina předponou", r"předpon"),
     ("odvozenina příponou", r"přípon"),
 )
@@ -121,17 +121,9 @@ def load() -> list[dict]:
     return words
 
 
-# Na čem se musí pětice shodnout, aby byl vetřelec právě jeden: vždycky
-# na tom, co se zrovna nehádá.
-KEYS = {
-    "lang": ("pos", "syl"),
-    "syl": ("pos", "lang"),
-    "pos": ("syl", "lang"),
-    "gender": ("syl", "lang"),
-    "aspect": ("syl", "lang"),
-    "form": ("pos", "syl"),
-    "century": ("pos", "syl"),
-}
+# Znaky, které se posuzují. Souvislostí je tolik co znaků; zbytek slouží
+# ke kontrole, že pětice nenabízí druhou stejně dobrou odpověď.
+TRAITS = ("lang", "syl", "pos", "gender", "aspect", "form", "century")
 
 # Jak nápadný ten rozdíl je. Slovní druh a rod se poznají skoro na první
 # pohled; jazyk původu a doba přejetí až po zamyšlení.
@@ -156,60 +148,75 @@ LABEL = {
 }
 
 
-def build(words: list[dict], kind: str, rng: random.Random) -> list[dict]:
-    """Pětice pro jeden druh souvislosti.
-
-    `kind` říká, čím se vetřelec liší; na zbylých dvou znacích se všech pět
-    shoduje, aby byla odpověď jednoznačná.
+def only_answer(five: list[dict], kind: str) -> bool:
     """
-    keys = KEYS[kind]
-    buckets: dict[tuple, list[dict]] = {}
-    for item in words:
-        if item[kind] is None or any(item[k] is None for k in keys):
-            continue
-        buckets.setdefault(tuple(item[k] for k in keys), []).append(item)
+    Nabízí pětice **jedinou** správnou odpověď?
 
-    out = []
-    for shared, group in buckets.items():
-        by_value: dict[object, list[dict]] = {}
-        for item in group:
+    Ostatní znaky se shodovat nemusí — slova klidně můžou mít každé jiný
+    počet slabik. Nesmí se ale stát, že by čtyři z nich sdílely hodnotu
+    ještě nějakého jiného znaku: pak by šlo ukázat na páté slovo a mít taky
+    pravdu. Když ji sdílí všech pět, nikoho to nevyděluje a vadí to.
+    """
+    for trait in TRAITS:
+        if trait == kind:
+            continue
+        counts: dict[object, int] = {}
+        for item in five:
+            if item[trait] is not None:
+                counts[item[trait]] = counts.get(item[trait], 0) + 1
+        if any(count == 4 for count in counts.values()):
+            return False
+    return True
+
+
+def build(words: list[dict], kind: str, rng: random.Random) -> list[dict]:
+    """Pětice pro jeden druh souvislosti."""
+    by_value: dict[object, list[dict]] = {}
+    for item in words:
+        if item[kind] is not None:
             by_value.setdefault(item[kind], []).append(item)
-        for value, four in by_value.items():
-            others = [i for i in group if i[kind] != value]
-            if len(four) < 4 or not others:
-                continue
-            rng.shuffle(four)
-            rng.shuffle(others)
-            for start in range(0, len(four) - 3, 4):
-                odd = others[(start // 4) % len(others)]
-                pick = four[start:start + 4]
-                # Varianty téhož slova („kanoe" a „kánoe") vedle sebe stát
-                # nesmí — vypadá to jako chyba a hráče to plete.
-                stems = {re.sub(r"[^a-z]", "", fold(i["word"]))[:5] for i in pick + [odd]}
-                if len(stems) < 5:
-                    continue
-                # Vetřelec nesmí trčet délkou — jinak se pozná od pohledu,
-                # aniž by hráč o slovech přemýšlel.
-                lengths = [len(i["word"]) for i in pick + [odd]]
-                if max(lengths) - min(lengths) > 3:
-                    continue
-                out.append({
-                    "kind": kind,
-                    "words": [i["word"] for i in pick] + [odd["word"]],
-                    "odd": odd["word"],
-                    "shared": POS_NAME[value] if kind == "pos" else value,
-                    "oddValue": POS_NAME[odd[kind]] if kind == "pos" else odd[kind],
-                    "note": dict(zip(keys, shared)),
-                })
-    rng.shuffle(out)
-    return out[:PER_KIND]
+    values = [v for v, group in by_value.items() if len(group) >= 4]
+    if len(values) < 2:
+        return []
+
+    out: list[dict] = []
+    seen: set[tuple] = set()
+    for _ in range(PER_KIND * 120):
+        if len(out) >= PER_KIND:
+            break
+        value = rng.choice(values)
+        other = rng.choice([v for v in by_value if v != value])
+        four = rng.sample(by_value[value], 4)
+        odd = rng.choice(by_value[other])
+        five = four + [odd]
+
+        # Varianty téhož slova („kanoe" a „kánoe") vedle sebe stát nesmí,
+        # a vetřelec nesmí trčet délkou — jinak se pozná od pohledu.
+        stems = {re.sub(r"[^a-z]", "", fold(i["word"]))[:5] for i in five}
+        lengths = [len(i["word"]) for i in five]
+        if len(stems) < 5 or max(lengths) - min(lengths) > 3:
+            continue
+        if not only_answer(five, kind):
+            continue
+        key = tuple(sorted(i["word"] for i in five))
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append({
+            "kind": kind,
+            "words": [i["word"] for i in five],
+            "odd": odd["word"],
+            "shared": POS_NAME[value] if kind == "pos" else value,
+            "oddValue": POS_NAME[odd[kind]] if kind == "pos" else odd[kind],
+        })
+    return out
 
 
 def main() -> int:
     rng = random.Random(7)
     words = load()
     puzzles = []
-    for kind in KEYS:
+    for kind in TRAITS:
         made = build(words, kind, rng)
         print(f"  {kind}: {len(made)}")
         puzzles += made
