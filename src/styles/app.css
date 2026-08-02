@@ -4830,3 +4830,68 @@ button.stat.open {
   font-variant-numeric: tabular-nums;
   color: var(--muted);
 }
+
+/* ---------- Závěrečná karta na telefonu ---------- */
+
+/* Karta má vlastní rolování, ale rolovat se v ní nemá: hráč po dohrání
+   čeká odměnu, ne posouvání. Na úzkém displeji se proto všechno stáhne —
+   texty i tlačítka zůstávají, jen se sází hustěji. */
+@media (max-width: 520px) {
+  .result {
+    padding: var(--sp-2);
+  }
+
+  .result-card {
+    padding: var(--sp-4);
+    max-height: 94dvh;
+  }
+
+  .result-card h2 {
+    font-size: 1.45rem;
+  }
+
+  .result-sign {
+    margin-bottom: var(--sp-2);
+  }
+
+  .score-big {
+    font-size: 2.4rem;
+    margin: var(--sp-2) 0 var(--sp-1);
+  }
+
+  .breakdown {
+    margin-top: var(--sp-3);
+  }
+
+  .breakdown-line {
+    padding-block: 3px;
+    font-size: 0.85rem;
+  }
+
+  .clue-recap {
+    font-size: 0.72rem;
+    padding: var(--sp-2);
+  }
+
+  .next-up {
+    margin-top: var(--sp-3);
+    padding-top: var(--sp-3);
+  }
+
+  .next-up-head {
+    margin-bottom: var(--sp-2);
+  }
+
+  .all-words-list {
+    max-height: 130px;
+  }
+
+  .result-actions {
+    margin-top: var(--sp-3);
+    gap: 6px;
+  }
+
+  .result-actions .btn {
+    padding-block: 9px;
+  }
+}
