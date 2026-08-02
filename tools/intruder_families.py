@@ -208,3 +208,17 @@ FAMILIES = [
         "asks": ["táhnou po přímé nebo šikmé řadě", "stojí na šachovnici", "dají se vyměnit"],
     },
 ]
+
+# Druhá dávka: doplňky do rodin výše a rodiny nové. Drží se zvlášť, aby
+# se první dávka nemusela přepisovat pokaždé, když něco přibude.
+from intruder_families2 import EXTRA, MORE  # noqa: E402
+
+for _family in FAMILIES:
+    _more = MORE.get(_family["id"])
+    if not _more:
+        continue
+    for _side in ("inside", "outside"):
+        _seen = set(_family[_side])
+        _family[_side] += [w for w in _more.get(_side, []) if w not in _seen]
+
+FAMILIES += EXTRA
