@@ -7,8 +7,6 @@ import {
   createIntruderState,
   foundOdd,
   INTRUDER_HINT_COST,
-  KIND_LABEL,
-  reasonChoices,
   name as nameReason,
   namedReason,
   pick as pickWord,
@@ -53,7 +51,7 @@ export function IntruderGame({
   const [done, setDone] = useState(false)
   const reported = useRef(false)
   const over = state.finishedAt !== null
-  const choices = useMemo(() => reasonChoices(puzzle), [puzzle])
+  const choices = puzzle.choices
   const right = foundOdd(state)
   const named = namedReason(state)
 
@@ -179,15 +177,15 @@ export function IntruderGame({
 
         {state.picked && (
           <div className="intruder-reasons">
-            {choices.map((kind) => (
+            {choices.map((choice) => (
               <button
                 type="button"
-                key={kind}
-                className={`btn ${state.reason === kind ? 'btn-primary' : ''}`}
+                key={choice}
+                className={`btn ${state.reason === choice ? 'btn-primary' : ''}`}
                 disabled={state.reason !== null}
-                onClick={() => setState((current) => nameReason(current, kind))}
+                onClick={() => setState((current) => nameReason(current, choice))}
               >
-                {KIND_LABEL[kind]}
+                {choice}
               </button>
             ))}
           </div>
@@ -215,10 +213,7 @@ export function IntruderGame({
           {/* Dvojtečka místo věty se spojkou: „jazyk původu: angličtina"
               je správně česky u všech sedmi souvislostí, kdežto „vetřelec
               má angličtina" nedávalo smysl u žádné. */}
-          <p className="clue-recap">
-            Čtyři slova spojuje <b>{KIND_LABEL[puzzle.kind]}</b> — {puzzle.shared}.
-            {' '}U vetřelce: {puzzle.oddValue}.
-          </p>
+          <p className="clue-recap">{puzzle.recap}</p>
         </ResultOverlay>
       )}
     </div>

@@ -13,60 +13,17 @@
 
 import type { Difficulty } from './types'
 
-export type IntruderKind =
-  | 'lang'
-  | 'syl'
-  | 'pos'
-  | 'gender'
-  | 'aspect'
-  | 'form'
-  | 'century'
-
-export const KIND_LABEL: Record<IntruderKind, string> = {
-  lang: 'jazyk původu',
-  syl: 'počet slabik',
-  pos: 'slovní druh',
-  gender: 'jmenný rod',
-  aspect: 'vid slovesa',
-  form: 'způsob vzniku',
-  century: 'doba přejetí',
-}
-
-const KINDS = Object.keys(KIND_LABEL) as IntruderKind[]
-
-/**
- * Tři možnosti do druhého kroku: ta správná a dvě na oklamání.
- *
- * Vybírají se **podle hádanky**, ne náhodně za běhu — jinak by se
- * nabídka měnila při každém překreslení. A hlavně jich není sedm: číst
- * sedm možností po každém tipu je otrava, tři jsou tak akorát.
- */
-export function reasonChoices(puzzle: IntruderPuzzle): IntruderKind[] {
-  let seed = 0
-  for (const ch of puzzle.id) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0
-  const rest = KINDS.filter((kind) => kind !== puzzle.kind)
-  const decoys: IntruderKind[] = []
-  while (decoys.length < 2 && rest.length > 0) {
-    seed = (seed * 1103515245 + 12345) >>> 0
-    decoys.push(rest.splice(seed % rest.length, 1)[0]!)
-  }
-  const all = [puzzle.kind, ...decoys]
-  // Správná možnost nesmí být pořád první.
-  return all.sort(
-    (a, b) => ((KINDS.indexOf(a) + seed) % 7) - ((KINDS.indexOf(b) + seed) % 7),
-  )
-}
-
 export interface IntruderPuzzle {
   id: string
   words: string[]
   /** Slovo, které do pětice nepatří. */
   odd: string
-  kind: IntruderKind
-  /** Hodnota, na které se shoduje čtveřice — „latina", 3, „sloveso". */
-  shared: string | number
-  /** Táž hodnota u vetřelce. */
-  oddValue: string | number
+  /** Tři věty do druhého kroku, už zamíchané. */
+  choices: string[]
+  /** Ta z nich, která čtveřici od vetřelce opravdu odděluje. */
+  answer: string
+  /** Věta do vyhodnocení — co pětici spojovalo a co s vetřelcem. */
+  recap: string
   difficulty: Difficulty
 }
 
@@ -77,7 +34,7 @@ export interface IntruderState {
   /** Slovo, na které hráč ukázal. */
   picked: string | null
   /** Souvislost, kterou pojmenoval. */
-  reason: IntruderKind | null
+  reason: string | null
   /** Slova vyloučená nápovědou. */
   ruled: string[]
   hintsUsed: number
@@ -108,16 +65,16 @@ export const foundOdd = (state: IntruderState): boolean =>
   state.picked === state.puzzle.odd
 
 export const namedReason = (state: IntruderState): boolean =>
-  state.reason === state.puzzle.kind
+  state.reason === state.puzzle.answer
 
 export function pick(state: IntruderState, word: string): IntruderState {
   if (state.picked || state.finishedAt) return state
   return { ...state, picked: word }
 }
 
-export function name(state: IntruderState, kind: IntruderKind): IntruderState {
+export function name(state: IntruderState, choice: string): IntruderState {
   if (!state.picked || state.reason || state.finishedAt) return state
-  return { ...state, reason: kind, finishedAt: Date.now() }
+  return { ...state, reason: choice, finishedAt: Date.now() }
 }
 
 /** Nápověda vyloučí jedno slovo, které vetřelec není. */

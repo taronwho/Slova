@@ -20,6 +20,7 @@ import json
 import os
 import random
 import re
+import sys
 import unicodedata
 
 def fold(word: str) -> str:
@@ -28,6 +29,8 @@ def fold(word: str) -> str:
 
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+from intruder_families import FAMILIES  # noqa: E402
 RAW = os.path.join(HERE, "raw")
 OUT = os.path.join(HERE, "..", "public", "data", "intruder")
 
@@ -202,13 +205,55 @@ def build(words: list[dict], kind: str, rng: random.Random) -> list[dict]:
         if key in seen:
             continue
         seen.add(key)
+        shared = POS_NAME[value] if kind == "pos" else value
+        other = POS_NAME[odd[kind]] if kind == "pos" else odd[kind]
+        answer = LABEL[kind]
+        choices = [answer] + rng.sample([LABEL[k] for k in TRAITS if k != kind], 2)
+        rng.shuffle(choices)
         out.append({
-            "kind": kind,
             "words": [i["word"] for i in five],
             "odd": odd["word"],
-            "shared": POS_NAME[value] if kind == "pos" else value,
-            "oddValue": POS_NAME[odd[kind]] if kind == "pos" else odd[kind],
+            "choices": choices,
+            "answer": answer,
+            "recap": f"Souvislost: {LABEL[kind]} — {shared}. U vetřelce: {other}.",
+            "difficulty": LEVEL[kind],
         })
+    return out
+
+
+def from_families(rng: random.Random) -> list[dict]:
+    """Hádanky z ručně psaných rodin — páteř režimu.
+
+    Čtyři slova zevnitř, jedno zvenku. Otázky do druhého kroku jsou psané
+    k rodině: ta správná dělí čtveřici od vetřelce, zbylé dvě platí pro
+    všech pět, takže nic nevydělují.
+    """
+    out = []
+    for family in FAMILIES:
+        want = min(60, len(family["inside"]) * len(family["outside"]))
+        seen = set()
+        for _ in range(want * 20):
+            if len(seen) >= want:
+                break
+            four = rng.sample(family["inside"], 4)
+            odd = rng.choice(family["outside"])
+            key = tuple(sorted(four)) + (odd,)
+            if key in seen:
+                continue
+            seen.add(key)
+            choices = list(family["asks"])
+            rng.shuffle(choices)
+            out.append({
+                "words": rng.sample(four + [odd], 5),
+                "odd": odd,
+                "choices": choices,
+                "answer": family["asks"][0],
+                "recap": (
+                    f"Všech pět: {family['roof']}. Čtyři z nich "
+                    f"{family['asks'][0]} — {odd} ne."
+                ),
+                "difficulty": family["level"],
+            })
     return out
 
 
@@ -224,9 +269,13 @@ def main() -> int:
 
     # Obtížnost podle toho, jak nápadný je rozdíl: slovní druh se pozná
     # nejsnáz, jazyk původu nejhůř.
+    # Psané rodiny jsou páteř; jazykové pětice zůstávají jako koření.
+    made = from_families(rng)
+    print(f"  z rodin: {len(made)}")
+    puzzles = made + puzzles[: len(made) // 3]
+    rng.shuffle(puzzles)
     for i, puzzle in enumerate(puzzles):
         puzzle["id"] = f"i-{i:04d}"
-        puzzle["difficulty"] = LEVEL[puzzle["kind"]]
         rng.shuffle(puzzle["words"])
 
     os.makedirs(OUT, exist_ok=True)
