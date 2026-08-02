@@ -211,7 +211,7 @@ FAMILIES = [
 
 # Druhá dávka: doplňky do rodin výše a rodiny nové. Drží se zvlášť, aby
 # se první dávka nemusela přepisovat pokaždé, když něco přibude.
-from intruder_families2 import EXTRA, MORE  # noqa: E402
+from intruder_families2 import EXTRA, MORE, MORE_ASKS  # noqa: E402
 
 for _family in FAMILIES:
     _more = MORE.get(_family["id"])
@@ -222,3 +222,9 @@ for _family in FAMILIES:
         _family[_side] += [w for w in _more.get(_side, []) if w not in _seen]
 
 FAMILIES += EXTRA
+
+# Zavádějící věty se přidávají ke všem rodinám, i k těm z druhé dávky.
+for _family in FAMILIES:
+    _family["asks"] = _family["asks"] + [
+        a for a in MORE_ASKS.get(_family["id"], []) if a not in _family["asks"]
+    ]

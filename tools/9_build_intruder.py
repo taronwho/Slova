@@ -241,7 +241,9 @@ def from_families(rng: random.Random) -> list[dict]:
             if key in seen:
                 continue
             seen.add(key)
-            choices = list(family["asks"])
+            # Ze zásoby zavádějících vět se berou dvě — nabídka se tím mění
+            # kolo od kola a nedá se zapamatovat, že správná bývá ta první.
+            choices = [family["asks"][0]] + rng.sample(family["asks"][1:], 2)
             rng.shuffle(choices)
             out.append({
                 "words": rng.sample(four + [odd], 5),
