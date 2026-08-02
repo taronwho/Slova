@@ -1845,6 +1845,7 @@
 .next-up-item[data-mode='gallows'] .next-up-glyph { background: var(--mode-gallows); }
 .next-up-item[data-mode='detective'] .next-up-glyph { background: var(--mode-detective); }
 .next-up-item[data-mode='tetris'] .next-up-glyph { background: var(--mode-tetris); }
+.next-up-item[data-mode='quotes'] .next-up-glyph { background: var(--mode-quotes); }
 
 .result-actions {
   display: flex;
