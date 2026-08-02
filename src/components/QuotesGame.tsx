@@ -250,11 +250,20 @@ export function QuotesGame({
       </aside>
 
       <div className="board">
-        {flash && (
-          <div className={`banner banner-${flash.tone}`} key={flash.key}>
-            <span>{flash.text}</span>
-          </div>
-        )}
+        {/* Pruh na hlášky je tu pořád, i prázdný — jinak by text pod ním
+            při každé nápovědě poskočil. */}
+        <div className="quote-strip">
+          {flash && (
+            <div className={`banner banner-${flash.tone}`} key={flash.key}>
+              <span>{flash.text}</span>
+            </div>
+          )}
+          {pop && (
+            <span className="score-pop" key={pop.key}>
+              −{pop.value}
+            </span>
+          )}
+        </div>
 
         {/* Podobizna se stahuje z Commons, takže nemusí dorazit — bez sítě
             ani jednou. Když se nenačte, tiše zmizí a hráči zbude zařazení
@@ -299,12 +308,6 @@ export function QuotesGame({
               )}
             </figcaption>
           </figure>
-        )}
-
-        {pop && (
-          <span className="score-pop" key={pop.key}>
-            −{pop.value}
-          </span>
         )}
 
         <blockquote className="quote-text">

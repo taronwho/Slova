@@ -45,6 +45,8 @@ def clean(text: str) -> str:
     text = re.sub(r"\[\[([^\]|]*\|)?([^\]]*)\]\]", r"\2", text)
     text = text.replace("''", "").replace("&quot;", '"').replace("&amp;", "&")
     text = text.replace("&nbsp;", " ").replace("\u00a0", " ")
+    # Po vyhození kurzívy zůstávaly osamocené apostrofy („'tělo'").
+    text = re.sub(r"(?<![A-Za-zÀ-ž])'|'(?![A-Za-zÀ-ž])", "", text)
     return re.sub(r"\s+", " ", text).strip()
 
 

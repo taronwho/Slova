@@ -426,7 +426,7 @@ describe('bodování', () => {
     expect(score.perfect).toBe(true)
     expect(score.multiplier).toBeCloseTo(1.5)
     // 1000 základ + 150 nevyužité nápovědy + 300 rychlost = 1450, ×1,5
-    expect(score.total).toBe(713)
+    expect(score.total).toBe(863)
   })
 
   it('tahy nad par ubírají body', () => {
@@ -437,7 +437,7 @@ describe('bodování', () => {
     }
     const score = scoreChain(state, 1, 30_000)
     expect(score.perfect).toBe(false)
-    expect(score.total).toBe(440)
+    expect(score.total).toBe(540)
   })
 
   it('skóre nikdy nespadne pod minimum', () => {

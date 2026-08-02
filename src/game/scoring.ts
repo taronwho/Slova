@@ -49,10 +49,31 @@ export function streakMultiplier(streak: number): number {
   return Math.min(1 + 0.05 * Math.max(streak - 1, 0), 1.5)
 }
 
-function speedBonus(elapsedMs: number, fullMs: number, zeroMs: number, max: number): number {
-  if (elapsedMs <= fullMs) return max
-  if (elapsedMs >= zeroMs) return 0
-  const ratio = 1 - (elapsedMs - fullMs) / (zeroMs - fullMs)
+/** Za každou nápovědu se k času připočte dvacet vteřin. */
+export const HINT_TIME_MS = 20_000
+/** Do půl minuty a bez nápovědy se bonus zdvojnásobí. */
+export const BLITZ_MS = 30_000
+
+/**
+ * Bonus za rychlost.
+ *
+ * Plný do `fullMs`, nulový od `zeroMs`, mezi tím lineárně. Nápovědy čas
+ * uměle prodlužují — kdo si nechá poradit, není rychlý, jen napovězený.
+ * A kdo to zvládne do půl minuty úplně sám, dostane dvojnásobek: má to být
+ * poznat, ne se ztratit v zaokrouhlení.
+ */
+function speedBonus(
+  elapsedMs: number,
+  fullMs: number,
+  zeroMs: number,
+  max: number,
+  hints = 0,
+): number {
+  const time = elapsedMs + hints * HINT_TIME_MS
+  if (time <= BLITZ_MS && hints === 0) return max * 2
+  if (time <= fullMs) return max
+  if (time >= zeroMs) return 0
+  const ratio = 1 - (time - fullMs) / (zeroMs - fullMs)
   return Math.round((max * ratio) / 10) * 10
 }
 
@@ -94,7 +115,7 @@ export function scoreChain(
     lines.push({ label: `Nápovědy (${paidHints})`, value: -state.hintCost })
   }
 
-  const bonus = speedBonus(elapsed, 60_000, 240_000, 100)
+  const bonus = speedBonus(elapsed, 45_000, 180_000, 100, state.hintsUsed)
   if (bonus > 0) lines.push({ label: 'Rychlost', value: bonus })
 
   const perfect = over === 0 && state.hintsUsed === 0
@@ -128,7 +149,7 @@ export function scoreTower(
     lines.push({ label: `Nápovědy (${paid})`, value: -state.hintCost })
   }
 
-  const bonus = speedBonus(elapsed, 90_000, 360_000, 80)
+  const bonus = speedBonus(elapsed, 75_000, 270_000, 80, state.hintsUsed)
   if (bonus > 0) lines.push({ label: 'Rychlost', value: bonus })
 
   const perfect = state.hintsUsed === 0
@@ -211,7 +232,7 @@ export function scoreGallows(
     lines.push({ label: `Nápovědy (${paid})`, value: -state.hintCost })
   }
 
-  const bonus = won ? speedBonus(elapsed, 45_000, 180_000, 70) : 0
+  const bonus = won ? speedBonus(elapsed, 40_000, 150_000, 70, state.hintsUsed) : 0
   if (bonus > 0) lines.push({ label: 'Rychlost', value: bonus })
 
   const perfect = won && wrong === 0 && state.hintsUsed === 0
@@ -273,7 +294,7 @@ export function scoreDetective(
     lines.push({ label: `Nápovědy (${paid})`, value: -state.hintCost })
   }
 
-  const bonus = won ? speedBonus(elapsed, 60_000, 240_000, 70) : 0
+  const bonus = won ? speedBonus(elapsed, 45_000, 180_000, 70, state.hintsUsed) : 0
   if (bonus > 0) lines.push({ label: 'Rychlost', value: bonus })
 
   const perfect = won && misses === 0 && state.hintsUsed === 0 && state.guesses.length === 0
@@ -334,7 +355,7 @@ export function scoreQuote(
     lines.push({ label: `Nápovědy (${paid})`, value: -state.hintCost })
   }
 
-  const bonus = won ? speedBonus(elapsed, 75_000, 300_000, 70) : 0
+  const bonus = won ? speedBonus(elapsed, 60_000, 210_000, 70, state.hints.length) : 0
   if (bonus > 0) lines.push({ label: 'Rychlost', value: bonus })
 
   const perfect = won && misses === 0 && state.hints.length === 0 && state.guesses.length === 0

@@ -396,6 +396,29 @@ export default function App() {
   const goHome = useCallback(() => setView({ kind: 'home' }), [])
 
   /**
+   * Hodiny kola v liště.
+   *
+   * Bonus za rychlost se dřív počítal ze skrytého času — hráč viděl až
+   * v rozpisu, že o něj přišel. Ťuknutím se otevře, jak se počítá.
+   * Měří se od otevření kola; po návratu k rozehranému kolu začíná znovu,
+   * protože skóre se stejně počítá z času uloženého ve stavu hry.
+   */
+  const [tick, setTick] = useState(0)
+  const roundStart = useRef(Date.now())
+  const roundKey = view.kind === 'game' ? `${view.mode}-${view.nonce}` : view.kind
+  useEffect(() => {
+    roundStart.current = Date.now()
+    setTick(0)
+  }, [roundKey])
+  useEffect(() => {
+    if (view.kind !== 'game' && view.kind !== 'quiz') return
+    const id = setInterval(() => setTick((count) => count + 1), 1000)
+    return () => clearInterval(id)
+  }, [view.kind])
+  const seconds = tick
+  const clock = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
+
+  /**
    * Otázka dne. Balík otázek je největší datový soubor ve hře a v ostatních
    * režimech není k ničemu, takže se stahuje až tady.
    */
@@ -631,6 +654,15 @@ export default function App() {
           >
             <InkMark size={11} />
             <span className="num">{profile.ink}</span>
+          </Explain>
+        )}
+        {(view.kind === 'game' || view.kind === 'quiz') && (
+          <Explain
+            term="rychlost"
+            className="chip chip-time"
+            label={`Kolo běží ${clock}. Jak se počítají body za rychlost`}
+          >
+            <span className="num">{clock}</span>
           </Explain>
         )}
         <Explain

@@ -4676,26 +4676,26 @@ button.stat.open {
   position: relative;
 }
 
-/* Hlášky plavou nad plochou, ne v ní. Když se vsunuly do toku, celý výrok
-   i s klávesnicí poskočil dolů a nápověda, kvůli které hláška vyskočila,
-   zmizela pod okrajem — hráč k ní musel rolovat. */
-.shell.playing[data-mode='quotes'] .board > .banner,
-.shell.playing[data-mode='quotes'] .score-pop {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 3;
-  width: max-content;
-  max-width: 100%;
-  pointer-events: none;
+/* Hláška má nahoře vlastní pruh, který tam je pořád — i prázdný.
+   Vsunutá do toku posouvala celý výrok i s klávesnicí dolů; plovoucí zase
+   překrývala podobiznu. Vyhrazené místo nedělá ani jedno. */
+.shell.playing[data-mode='quotes'] .quote-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  min-height: 2.1rem;
+  flex: 0 0 auto;
 }
 
-.shell.playing[data-mode='quotes'] .board > .banner {
-  top: 0;
+.shell.playing[data-mode='quotes'] .quote-strip .banner {
+  margin: 0;
+  padding: 3px 10px;
+  font-size: 0.8rem;
 }
 
 .shell.playing[data-mode='quotes'] .score-pop {
-  top: 2.4rem;
+  font-size: 0.95rem;
 }
 
 .shell.playing[data-mode='quotes'] .quote-who {
@@ -4825,4 +4825,10 @@ button.stat.open {
   justify-content: center;
   gap: var(--sp-2);
   margin-top: var(--sp-3);
+}
+
+/* Hodiny kola v liště. Drobné a tiché — je to údaj, ne soutěž. */
+.chip-time {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
 }
