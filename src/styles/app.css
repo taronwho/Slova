@@ -4698,9 +4698,7 @@ button.stat.open {
   font-size: 0.95rem;
 }
 
-.shell.playing[data-mode='quotes'] .quote-who {
-  margin-top: var(--sp-2);
-}
+
 
 /* Text výroku je tady to hlavní. Sází se čtenářsky velký, se slovy jako
    celky — políčko po políčku, ale slovo se nikdy nezlomí uprostřed. */
@@ -4793,7 +4791,7 @@ button.stat.open {
 }
 
 .quote-who {
-  margin-top: var(--sp-4);
+  margin-bottom: var(--sp-2);
   text-align: center;
   font-size: 0.9rem;
   color: var(--muted);
@@ -4808,8 +4806,8 @@ button.stat.open {
 }
 
 .quote-art img {
-  max-width: min(180px, 45%);
-  max-height: 22vh;
+  max-width: min(140px, 38%);
+  max-height: 17vh;
   border-radius: var(--r-md);
   border: 1px solid var(--border);
 }

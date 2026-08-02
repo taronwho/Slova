@@ -310,6 +310,12 @@ export function QuotesGame({
           </figure>
         )}
 
+        {/* Co nápověda odkryla, patří nad výrok — pod ním se to schovalo
+            za klávesnici a hráč k tomu musel rolovat. */}
+        <p className="quote-who">
+          {seenWho ? quote.who : seenNote && quote.note ? quote.note : '— ?'}
+        </p>
+
         <blockquote className="quote-text">
           {parts.map((token, index) =>
             token.word ? (
@@ -342,9 +348,6 @@ export function QuotesGame({
           )}
         </blockquote>
 
-        <p className="quote-who">
-          {seenWho ? quote.who : seenNote && quote.note ? quote.note : '— ?'}
-        </p>
       </div>
 
       <div className="board-footer">
