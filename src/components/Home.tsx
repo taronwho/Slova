@@ -88,9 +88,9 @@ const DIFFICULTY_NOTE: Record<ModeId, Record<Difficulty, string>> = {
     hard: 'dlouhá souvětí',
   },
   intruder: {
-    easy: 'liší se slovním druhem',
-    normal: 'liší se počtem slabik',
-    hard: 'liší se jazykem původu',
+    easy: 'rozdíl je vidět hned',
+    normal: 'rozdíl chce zamyšlení',
+    hard: 'rozdíl je skrytý',
   },
 }
 

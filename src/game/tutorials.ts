@@ -280,7 +280,7 @@ export const TUTORIALS: Record<ModeId, TutorialStep[]> = {
     {
       title: 'Najdi slovo, které nepatří',
       body: [
-        'Dostaneš pět slov. Čtyři z nich něco spojuje — jazyk, ze kterého přišla, počet slabik, nebo slovní druh. Páté je vetřelec.',
+        'Dostaneš pět slov. Čtyři z nich něco spojuje. Páté je vetřelec.',
         'Vetřelec je vždycky **právě jeden**: na zbylých dvou znacích se pětice shoduje, takže ukázat jinam a mít taky pravdu nejde.',
       ],
       key: 'Nehádá se tu slovo, ale co k sobě patří.',
@@ -288,7 +288,7 @@ export const TUTORIALS: Record<ModeId, TutorialStep[]> = {
     {
       title: 'A pak řekni proč',
       body: [
-        'Když na vetřelce ukážeš, vybereš ještě ze tří možností, co ta ostatní čtyři spojovalo.',
+        'Když na vetřelce ukážeš, vybereš ještě ze tří nabídnutých možností, co ta ostatní čtyři spojovalo.',
         'Trefit slovo se dá i náhodou, jedna ku pěti. Pojmenovat souvislost už ne — proto je za důvod skoro tolik bodů co za samotnou trefu.',
       ],
       key: 'Nápověda umí odklidit jedno slovo, které vetřelec není. Jde ale jen do chvíle, než ukážeš.',

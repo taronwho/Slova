@@ -8,7 +8,7 @@ import {
   foundOdd,
   INTRUDER_HINT_COST,
   KIND_LABEL,
-  KIND_ORDER,
+  reasonChoices,
   name as nameReason,
   namedReason,
   pick as pickWord,
@@ -53,6 +53,7 @@ export function IntruderGame({
   const [done, setDone] = useState(false)
   const reported = useRef(false)
   const over = state.finishedAt !== null
+  const choices = useMemo(() => reasonChoices(puzzle), [puzzle])
   const right = foundOdd(state)
   const named = namedReason(state)
 
@@ -178,7 +179,7 @@ export function IntruderGame({
 
         {state.picked && (
           <div className="intruder-reasons">
-            {KIND_ORDER.map((kind) => (
+            {choices.map((kind) => (
               <button
                 type="button"
                 key={kind}
@@ -211,9 +212,12 @@ export function IntruderGame({
           onNext={onNext}
           onHome={onHome}
         >
+          {/* Dvojtečka místo věty se spojkou: „jazyk původu: angličtina"
+              je správně česky u všech sedmi souvislostí, kdežto „vetřelec
+              má angličtina" nedávalo smysl u žádné. */}
           <p className="clue-recap">
             Čtyři slova spojuje <b>{KIND_LABEL[puzzle.kind]}</b> — {puzzle.shared}.
-            {' '}Vetřelec má {puzzle.oddValue}.
+            {' '}U vetřelce: {puzzle.oddValue}.
           </p>
         </ResultOverlay>
       )}

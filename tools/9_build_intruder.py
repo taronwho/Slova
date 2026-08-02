@@ -54,6 +54,21 @@ LANGS = {
 POS_NAME = {"noun": "podstatné jméno", "adj": "přídavné jméno",
             "verb": "sloveso", "adv": "příslovce"}
 
+# Rod a vid stojí v hesle jako kurzivní odrážka pod slovním druhem, takže
+# se daly stáhnout už v kroku 5c. Jsou to tvrdé mluvnické údaje, ne odhad.
+GENDERS = ("rod mužský neživotný", "rod mužský životný", "rod ženský", "rod střední")
+ASPECTS = ("nedokonavé", "dokonavé")
+
+# Jak slovo vzniklo. Pozná se z ustálených formulek na začátku etymologie
+# a je to souvislost, kterou hráč vidí až po zamyšlení — ne z pravopisu.
+FORMS = (
+    ("zdrobnělina", r"zdrobněl"),
+    ("přechýlené jméno", r"přechýlen"),
+    ("složenina", r"složen|ze spojení|spojením slov"),
+    ("odvozenina předponou", r"předpon"),
+    ("odvozenina příponou", r"přípon"),
+)
+
 MIN_LEN, MAX_LEN = 4, 13
 PER_KIND = 400
 
@@ -70,6 +85,13 @@ def origin(text: str) -> str | None:
     return best[1] if best else None
 
 
+def century(text: str) -> str | None:
+    """Století, ve kterém se slovo v češtině objevuje. Jen když ho heslo
+    vysloveně uvádí — dohadovat se nebude."""
+    found = re.search(r"\b(\d{1,2})\.\s*stolet", text[:200])
+    return f"{found.group(1)}. století" if found else None
+
+
 def load() -> list[dict]:
     cache = json.load(open(os.path.join(RAW, "etymology.json"), encoding="utf-8"))
     allowed = set(json.load(
@@ -83,13 +105,55 @@ def load() -> list[dict]:
         syl = entry.get("syl")
         if pos not in POS_NAME or not syl or not re.fullmatch(r"[^\W\d_]+(-[^\W\d_]+)+", syl):
             continue
+        kind = entry.get("kind") or ""
+        story = entry.get("e") or ""
+        low = story[:90].lower()
         words.append({
             "word": word,
             "pos": pos,
             "syl": syl.count("-") + 1,
-            "lang": origin(entry["e"]) if entry.get("e") else None,
+            "lang": origin(story) if story else None,
+            "gender": next((g for g in GENDERS if g in kind), None),
+            "aspect": next((a for a in ASPECTS if a in kind), None),
+            "form": next((name for name, mark in FORMS if re.search(mark, low)), None),
+            "century": century(story) if story else None,
         })
     return words
+
+
+# Na čem se musí pětice shodnout, aby byl vetřelec právě jeden: vždycky
+# na tom, co se zrovna nehádá.
+KEYS = {
+    "lang": ("pos", "syl"),
+    "syl": ("pos", "lang"),
+    "pos": ("syl", "lang"),
+    "gender": ("syl", "lang"),
+    "aspect": ("syl", "lang"),
+    "form": ("pos", "syl"),
+    "century": ("pos", "syl"),
+}
+
+# Jak nápadný ten rozdíl je. Slovní druh a rod se poznají skoro na první
+# pohled; jazyk původu a doba přejetí až po zamyšlení.
+LEVEL = {
+    "pos": "easy",
+    "gender": "easy",
+    "syl": "normal",
+    "aspect": "normal",
+    "form": "normal",
+    "lang": "hard",
+    "century": "hard",
+}
+
+LABEL = {
+    "lang": "jazyk původu",
+    "syl": "počet slabik",
+    "pos": "slovní druh",
+    "gender": "jmenný rod",
+    "aspect": "vid slovesa",
+    "form": "způsob vzniku",
+    "century": "doba přejetí",
+}
 
 
 def build(words: list[dict], kind: str, rng: random.Random) -> list[dict]:
@@ -98,7 +162,7 @@ def build(words: list[dict], kind: str, rng: random.Random) -> list[dict]:
     `kind` říká, čím se vetřelec liší; na zbylých dvou znacích se všech pět
     shoduje, aby byla odpověď jednoznačná.
     """
-    keys = {"lang": ("pos", "syl"), "syl": ("pos", "lang"), "pos": ("syl", "lang")}[kind]
+    keys = KEYS[kind]
     buckets: dict[tuple, list[dict]] = {}
     for item in words:
         if item[kind] is None or any(item[k] is None for k in keys):
@@ -124,12 +188,17 @@ def build(words: list[dict], kind: str, rng: random.Random) -> list[dict]:
                 stems = {re.sub(r"[^a-z]", "", fold(i["word"]))[:5] for i in pick + [odd]}
                 if len(stems) < 5:
                     continue
+                # Vetřelec nesmí trčet délkou — jinak se pozná od pohledu,
+                # aniž by hráč o slovech přemýšlel.
+                lengths = [len(i["word"]) for i in pick + [odd]]
+                if max(lengths) - min(lengths) > 3:
+                    continue
                 out.append({
                     "kind": kind,
                     "words": [i["word"] for i in pick] + [odd["word"]],
                     "odd": odd["word"],
-                    "shared": value if kind != "pos" else POS_NAME[value],
-                    "oddValue": odd[kind] if kind != "pos" else POS_NAME[odd[kind]],
+                    "shared": POS_NAME[value] if kind == "pos" else value,
+                    "oddValue": POS_NAME[odd[kind]] if kind == "pos" else odd[kind],
                     "note": dict(zip(keys, shared)),
                 })
     rng.shuffle(out)
@@ -140,7 +209,7 @@ def main() -> int:
     rng = random.Random(7)
     words = load()
     puzzles = []
-    for kind in ("lang", "syl", "pos"):
+    for kind in KEYS:
         made = build(words, kind, rng)
         print(f"  {kind}: {len(made)}")
         puzzles += made
@@ -148,10 +217,9 @@ def main() -> int:
 
     # Obtížnost podle toho, jak nápadný je rozdíl: slovní druh se pozná
     # nejsnáz, jazyk původu nejhůř.
-    rank = {"pos": "easy", "syl": "normal", "lang": "hard"}
     for i, puzzle in enumerate(puzzles):
         puzzle["id"] = f"i-{i:04d}"
-        puzzle["difficulty"] = rank[puzzle["kind"]]
+        puzzle["difficulty"] = LEVEL[puzzle["kind"]]
         rng.shuffle(puzzle["words"])
 
     os.makedirs(OUT, exist_ok=True)

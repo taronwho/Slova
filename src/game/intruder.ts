@@ -13,15 +13,49 @@
 
 import type { Difficulty } from './types'
 
-export type IntruderKind = 'lang' | 'syl' | 'pos'
+export type IntruderKind =
+  | 'lang'
+  | 'syl'
+  | 'pos'
+  | 'gender'
+  | 'aspect'
+  | 'form'
+  | 'century'
 
 export const KIND_LABEL: Record<IntruderKind, string> = {
   lang: 'jazyk původu',
   syl: 'počet slabik',
   pos: 'slovní druh',
+  gender: 'jmenný rod',
+  aspect: 'vid slovesa',
+  form: 'způsob vzniku',
+  century: 'doba přejetí',
 }
 
-export const KIND_ORDER: IntruderKind[] = ['lang', 'syl', 'pos']
+const KINDS = Object.keys(KIND_LABEL) as IntruderKind[]
+
+/**
+ * Tři možnosti do druhého kroku: ta správná a dvě na oklamání.
+ *
+ * Vybírají se **podle hádanky**, ne náhodně za běhu — jinak by se
+ * nabídka měnila při každém překreslení. A hlavně jich není sedm: číst
+ * sedm možností po každém tipu je otrava, tři jsou tak akorát.
+ */
+export function reasonChoices(puzzle: IntruderPuzzle): IntruderKind[] {
+  let seed = 0
+  for (const ch of puzzle.id) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0
+  const rest = KINDS.filter((kind) => kind !== puzzle.kind)
+  const decoys: IntruderKind[] = []
+  while (decoys.length < 2 && rest.length > 0) {
+    seed = (seed * 1103515245 + 12345) >>> 0
+    decoys.push(rest.splice(seed % rest.length, 1)[0]!)
+  }
+  const all = [puzzle.kind, ...decoys]
+  // Správná možnost nesmí být pořád první.
+  return all.sort(
+    (a, b) => ((KINDS.indexOf(a) + seed) % 7) - ((KINDS.indexOf(b) + seed) % 7),
+  )
+}
 
 export interface IntruderPuzzle {
   id: string
