@@ -6,6 +6,7 @@ import {
   loadChain,
   loadHive,
   loadDetective,
+  loadIntruder,
   loadQuotes,
   loadTetris,
   loadGallows,
@@ -29,6 +30,7 @@ import { Guide } from './components/Guide'
 import { HiveGame } from './components/HiveGame'
 import { Home } from './components/Home'
 import { QuizGame } from './components/QuizGame'
+import { IntruderGame } from './components/IntruderGame'
 import { QuotesGame } from './components/QuotesGame'
 import { QuizReview } from './components/QuizReview'
 import { Splash } from './components/Splash'
@@ -42,6 +44,7 @@ import type { ExplainTarget } from './game/glossary'
 import type { GallowsPuzzle, GallowsState } from './game/gallows'
 import type { HivePuzzle, HiveState } from './game/hive'
 import { quizFor, type QuizDeck, type QuizQuestion } from './game/quiz'
+import type { IntruderPuzzle, IntruderState } from './game/intruder'
 import type { Quote, QuoteState } from './game/quotes'
 import { RANKS, rankFor } from './game/ranks'
 import { tetrisSetup, type TetrisDeck, type TetrisSetup, type TetrisState } from './game/tetris'
@@ -89,6 +92,7 @@ interface Loaded {
   gallows?: GallowsPuzzle
   detective?: DetectivePuzzle
   quotes?: { quote: Quote; seed: number }
+  intruder?: IntruderPuzzle
   tetris?: { deck: TetrisDeck; setup: TetrisSetup }
   quiz?: QuizQuestion
   quizDeck?: QuizDeck
@@ -211,6 +215,14 @@ export default function App() {
             ? entries[Math.floor(random() * entries.length)]!
             : pickUnseen(entries, (e) => e.id, profile.seen.detective, random)
           setLoaded({ detective: entry })
+        } else if (mode === 'intruder') {
+          const all = await loadIntruder()
+          const pool = all.filter((p) => p.difficulty === difficulty)
+          const entries = pool.length > 0 ? pool : all
+          const entry = daily
+            ? entries[Math.floor(random() * entries.length)]!
+            : pickUnseen(entries, (e) => e.id, profile.seen.intruder, random)
+          setLoaded({ intruder: entry })
         } else if (mode === 'quotes') {
           const all = await loadQuotes()
           const pool = all.filter((q) => q.difficulty === difficulty)
@@ -849,6 +861,24 @@ export default function App() {
                 state,
                 finished,
               )
+            }
+          />
+        )}
+
+        {!loading && view.kind === 'game' && view.mode === 'intruder' && loaded.intruder && (
+          <IntruderGame
+            key={`${loaded.intruder.id}-${view.nonce}`}
+            puzzle={loaded.intruder}
+            streak={profile.streak}
+            dayLabel={view.daily ? dayTag : ''}
+            onFinish={finishRound}
+            onNext={() => startRound('intruder', false)}
+            onHome={goHome}
+            resume={resume as IntruderState | null}
+            ink={profile.ink}
+            onSpendInk={spendInkOn}
+            onProgress={(state, finished) =>
+              keepProgress('intruder', state.puzzle.id, state.puzzle.difficulty, state, finished)
             }
           />
         )}

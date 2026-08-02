@@ -215,7 +215,7 @@ export function emptyProfile(): Profile {
     daysPlayed: 0,
     lastPlayedDay: null,
     seen: {
-      chain: [], hive: [], tower: [], gallows: [], detective: [], tetris: [], quotes: [],
+      chain: [], hive: [], tower: [], gallows: [], detective: [], tetris: [], quotes: [], intruder: [],
     },
     stats: {
       chain: emptyStats(),
@@ -225,6 +225,7 @@ export function emptyProfile(): Profile {
       detective: emptyStats(),
       tetris: emptyStats(),
       quotes: emptyStats(),
+      intruder: emptyStats(),
     },
     counters: emptyCounters(),
     ink: START_INK,
@@ -239,6 +240,7 @@ export function emptyProfile(): Profile {
       detective: 'normal',
       tetris: 'normal',
       quotes: 'normal',
+      intruder: 'normal',
     },
     theme: 'system',
     dailyDone: {},
@@ -250,6 +252,7 @@ export function emptyProfile(): Profile {
       detective: false,
       tetris: false,
       quotes: false,
+      intruder: false,
     },
     guideSeen: false,
     quiz: emptyQuiz(),

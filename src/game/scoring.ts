@@ -17,6 +17,7 @@ import {
   type DetectiveState,
 } from './detective'
 import { HIVE_HINT_COST } from './hive'
+import { foundOdd, namedReason, type IntruderState } from './intruder'
 import {
   hitCount as quoteHits,
   LETTER_COST,
@@ -366,6 +367,51 @@ export function scoreQuote(
   if (streakMul > 1) labels.push(`Série ×${streakMul.toFixed(2).replace('.', ',')}`)
 
   return finish(lines, multiplier, labels.join('  ·  ') || null, perfect, 0)
+}
+
+/**
+ * Vetřelec — dvě odměny za dva různé výkony.
+ *
+ * Ukázat na slovo se dá i náhodou (jedna ku pěti), pojmenovat souvislost
+ * už ne. Proto je za důvod skoro tolik co za samotného vetřelce.
+ */
+export function scoreIntruder(
+  state: IntruderState,
+  streak: number,
+  now = Date.now(),
+): ScoreBreakdown {
+  const elapsed = (state.finishedAt ?? now) - state.startedAt
+  const right = foundOdd(state)
+  const named = namedReason(state)
+
+  const lines: { label: string; value: number }[] = []
+  lines.push(
+    right
+      ? { label: 'Vetřelec odhalen', value: 200 }
+      : { label: 'Vetřelec unikl', value: -40 },
+  )
+  if (named) lines.push({ label: 'Správný důvod', value: 140 })
+  if (state.hintCost > 0) {
+    const paid = Math.max(0, state.hintsUsed - state.freeHints)
+    lines.push({ label: `Nápovědy (${paid})`, value: -state.hintCost })
+  }
+
+  const bonus = right ? speedBonus(elapsed, 20_000, 90_000, 60, state.hintsUsed) : 0
+  if (bonus > 0) lines.push({ label: 'Rychlost', value: bonus })
+
+  const perfect = right && named && state.hintsUsed === 0
+  const streakMul = streakMultiplier(streak)
+  const labels: string[] = []
+  if (perfect) labels.push('ČISTÁ TREFA ×1,5')
+  if (streakMul > 1) labels.push(`Série ×${streakMul.toFixed(2).replace('.', ',')}`)
+
+  return finish(
+    lines,
+    (perfect ? 1.5 : 1) * streakMul,
+    labels.join('  ·  ') || null,
+    perfect,
+    0,
+  )
 }
 
 /**

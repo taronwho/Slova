@@ -87,6 +87,11 @@ const DIFFICULTY_NOTE: Record<ModeId, Record<Difficulty, string>> = {
     normal: 'delší výroky',
     hard: 'dlouhá souvětí',
   },
+  intruder: {
+    easy: 'liší se slovním druhem',
+    normal: 'liší se počtem slabik',
+    hard: 'liší se jazykem původu',
+  },
 }
 
 /** Česká čísla: 1 tah, 2–4 tahy, 5 a víc tahů. */

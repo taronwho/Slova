@@ -8,6 +8,7 @@ export type ModeId =
   | 'detective'
   | 'tetris'
   | 'quotes'
+  | 'intruder'
 
 export type Difficulty = 'easy' | 'normal' | 'hard'
 
@@ -26,6 +27,7 @@ export const MODE_ORDER: ModeId[] = [
   'detective',
   'tetris',
   'quotes',
+  'intruder',
 ]
 
 /** Znak režimu na dlaždici. Kresba by se do řádku textu nevešla. */
@@ -37,6 +39,7 @@ export const MODE_GLYPH: Record<ModeId, string> = {
   detective: '§',
   tetris: '▚',
   quotes: '❝',
+  intruder: '≠',
 }
 
 export const MODE_LABEL: Record<ModeId, string> = {
@@ -47,6 +50,7 @@ export const MODE_LABEL: Record<ModeId, string> = {
   detective: 'Detektiv',
   tetris: 'Slabiky',
   quotes: 'Citát',
+  intruder: 'Vetřelec',
 }
 
 /**
@@ -70,6 +74,7 @@ export const MODE_TAGLINE: Record<ModeId, string> = {
   detective: 'Poznej slovo podle indicií',
   tetris: 'Skládej padající slabiky ve slova',
   quotes: 'Doplň výrok po písmenech',
+  intruder: 'Najdi slovo, které nepatří',
 }
 
 /** Výsledek dokončeného kola — vstup do bodování i statistik. */

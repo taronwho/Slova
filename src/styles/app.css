@@ -1708,6 +1708,8 @@
 .shell[data-mode='gallows'] .result-mode-glyph { background: var(--mode-gallows); }
 .shell[data-mode='detective'] .result-mode-glyph { background: var(--mode-detective); }
 .shell[data-mode='tetris'] .result-mode-glyph { background: var(--mode-tetris); }
+.shell[data-mode='quotes'] .result-mode-glyph { background: var(--mode-quotes); }
+.shell[data-mode='intruder'] .result-mode-glyph { background: var(--mode-intruder); }
 
 /* Všechna slova plástve po dohrání. Rozbalovací: devadesát slov by kartu
    protáhlo přes celou obrazovku a rozpis bodů by se ztratil. */
@@ -1809,6 +1811,7 @@
 .next-up-item[data-mode='detective'] .next-up-glyph { background: var(--mode-detective); }
 .next-up-item[data-mode='tetris'] .next-up-glyph { background: var(--mode-tetris); }
 .next-up-item[data-mode='quotes'] .next-up-glyph { background: var(--mode-quotes); }
+.next-up-item[data-mode='intruder'] .next-up-glyph { background: var(--mode-intruder); }
 
 .result-actions {
   display: flex;
@@ -4886,4 +4889,72 @@ button.stat.open {
   .result-actions .btn {
     padding-block: 9px;
   }
+}
+
+
+/* ---------- Vetřelec ---------- */
+
+.intruder-ask {
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 4vw, 1.2rem);
+  color: var(--text);
+  margin-bottom: var(--sp-4);
+}
+
+/* Slova pod sebou, ne v mřížce: porovnávají se čtením shora dolů. */
+.intruder-words {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  width: min(420px, 100%);
+  margin-inline: auto;
+}
+
+.intruder-word {
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+}
+
+.intruder-word:hover:not(:disabled) {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+/* Vyloučené nápovědou — zůstává vidět, ať je poznat, co už je odklizené. */
+.intruder-word.ruled {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+
+.intruder-word.mine {
+  border-color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 12%, var(--surface));
+}
+
+.intruder-word.truth {
+  border-color: var(--ok);
+  background: var(--ok-soft);
+  color: var(--ok-text);
+}
+
+.intruder-word.wrong {
+  border-color: var(--error);
+  background: var(--error-soft);
+}
+
+.intruder-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-5);
 }

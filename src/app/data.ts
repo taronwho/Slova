@@ -5,6 +5,7 @@ import type { HivePuzzle } from '../game/hive'
 import type { DetectivePuzzle } from '../game/detective'
 import type { GallowsPuzzle } from '../game/gallows'
 import type { QuizDeck } from '../game/quiz'
+import type { IntruderPuzzle } from '../game/intruder'
 import type { Quote } from '../game/quotes'
 import type { TetrisDeck } from '../game/tetris'
 import type { TowerPuzzle } from '../game/tower'
@@ -141,6 +142,13 @@ export function loadGallows(): Promise<GallowsPuzzle[]> {
 /* Hádanek je pár set a nesou navíc jen krátký text, takže jeden soubor stačí. */
 export function loadDetective(): Promise<DetectivePuzzle[]> {
   return fetchJson<DetectivePuzzle[]>('detective/puzzles.json')
+}
+
+/* ---------- Vetřelec ---------- */
+
+/* Pětic je pár set a nesou jen slova a klíč — jeden soubor stačí. */
+export function loadIntruder(): Promise<IntruderPuzzle[]> {
+  return fetchJson<IntruderPuzzle[]>('intruder/puzzles.json')
 }
 
 /* ---------- Citát ---------- */
