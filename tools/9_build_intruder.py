@@ -287,6 +287,10 @@ def main() -> int:
     print(f"  z rodin: {len(made)}")
     puzzles = made + puzzles[: len(made) // 3]
     rng.shuffle(puzzles)
+    # Data se balí do aplikace celá a v jednosouborové verzi navíc bobtnají
+    # na dvojnásobek. Tři tisíce hádanek je osm let denního hraní — víc
+    # není k čemu, a soubor zůstane pod megabajtem.
+    puzzles = puzzles[:3000]
     for i, puzzle in enumerate(puzzles):
         puzzle["id"] = f"i-{i:04d}"
         rng.shuffle(puzzle["words"])

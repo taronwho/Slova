@@ -222,8 +222,9 @@ for _family in FAMILIES:
         _family[_side] += [w for w in _more.get(_side, []) if w not in _seen]
 
 from intruder_families3 import EXTRA3  # noqa: E402
+from intruder_families4 import EXTRA4  # noqa: E402
 
-FAMILIES += EXTRA + EXTRA3
+FAMILIES += EXTRA + EXTRA3 + EXTRA4
 
 # Zavádějící věty se přidávají ke všem rodinám, i k těm z druhé dávky.
 for _family in FAMILIES:
