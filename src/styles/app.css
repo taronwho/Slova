@@ -1673,46 +1673,9 @@
   margin-bottom: var(--sp-4);
 }
 
-/* Hlavní značka hry, tatáž jako na úvodní obrazovce: verzálky a „O"
-   posazené do plného kruhu. */
+/* Značka na kartě je tatáž jako v liště menu — jen o kus větší. */
 .result-brand {
-  display: inline-flex;
-  align-items: center;
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 1.35rem;
-  letter-spacing: 0.06em;
-  color: var(--text);
-}
-
-.result-brand .brand-o {
-  position: relative;
-  color: #fff;
-  z-index: 0;
-}
-
-.result-brand .brand-o::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  left: 50%;
-  top: 50%;
-  width: 1.35em;
-  height: 1.35em;
-  border-radius: 50%;
-  /* Značka má vlastní fialovou, ne barvu právě hrané hry — jinak by logo
-     měnilo barvu podle režimu. */
-  background: var(--mode-chain);
-  transform: translate(-50%, -50%);
-}
-
-.result-brand .brand-triad {
-  margin-left: 0.5em;
-}
-
-.result-brand .brand-triad i {
-  width: 7px;
-  height: 7px;
+  font-size: 1.3rem;
 }
 
 .result-mode {
