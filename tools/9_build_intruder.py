@@ -243,7 +243,18 @@ def from_families(rng: random.Random) -> list[dict]:
             seen.add(key)
             # Ze zásoby zavádějících vět se berou dvě — nabídka se tím mění
             # kolo od kola a nedá se zapamatovat, že správná bývá ta první.
-            choices = [family["asks"][0]] + rng.sample(family["asks"][1:], 2)
+            #
+            # Věta nemusí platit pro všech pět slov. Vadí jediný případ:
+            # kdyby platila pro právě čtyři, vydělila by pátého sama a
+            # hádanka by měla dvě řešení. Tři z pěti ani dva z pěti nikoho
+            # nevydělují, zato nutí hráče věty doopravdy zvažovat.
+            five = set(four + [odd])
+            pool = family["asks"][1:] + [
+                loose["text"]
+                for loose in family.get("loose", [])
+                if len(five & set(loose["words"])) != 4
+            ]
+            choices = [family["asks"][0]] + rng.sample(pool, 2)
             rng.shuffle(choices)
             out.append({
                 "words": rng.sample(four + [odd], 5),
