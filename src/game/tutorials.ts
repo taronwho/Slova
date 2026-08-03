@@ -69,8 +69,7 @@ export const TUTORIALS: Record<ModeId, TutorialStep[]> = {
     {
       title: 'Jak tah zadáš',
       body: [
-        '**Na telefonu:** klepni na písmeno, které chceš změnit — barevně se orámuje. Pak ťukni na nové písmeno na klávesnici a dej **Zahrát**.',
-        '**Na počítači:** rovnou piš. Šipkami se posuneš mezi písmeny, Enter tah potvrdí.',
+        'Klepni na písmeno, které chceš změnit — barevně se orámuje. Pak ťukni na nové písmeno na klávesnici a dej **Zahrát**.',
         'Písmena s háčky a čárkami vytáhneš **podržením** základního písmene — v rohu klávesy vidíš náhled.',
       ],
       key: 'Špatný tah nic nestojí. Hra ti řekne, co je špatně, a zkusíš to znovu.',
@@ -153,8 +152,7 @@ export const TUTORIALS: Record<ModeId, TutorialStep[]> = {
     {
       title: 'Jak zadávat slova',
       body: [
-        '**Na telefonu:** ťukej přímo do šestiúhelníků. **Smazat** odebere poslední písmeno, **Potvrdit** slovo odešle.',
-        '**Na počítači:** piš na klávesnici, Enter potvrdí, mezerník zamíchá plástev.',
+        'Ťukej přímo do šestiúhelníků. **Smazat** odebere poslední písmeno, **Potvrdit** slovo odešle.',
         'Tlačítko **Zamíchat** přehází okrajová písmena — pomáhá, když se pohled zasekne.',
       ],
     },
@@ -208,8 +206,7 @@ export const TUTORIALS: Record<ModeId, TutorialStep[]> = {
     {
       title: 'Jak slovo složíš',
       body: [
-        '**Na telefonu:** ťukej do dlaždic v zásobníku, skládají se zleva doprava. **Smazat** vezme poslední zpět.',
-        '**Na počítači:** piš na klávesnici, Enter postaví patro, mezerník zamíchá dlaždice.',
+        'Ťukej do dlaždic v zásobníku, skládají se zleva doprava. **Smazat** vezme poslední zpět.',
         '**Zamíchat** přehází dlaždice — často to samo napoví, jak slovo poskládat.',
       ],
     },
