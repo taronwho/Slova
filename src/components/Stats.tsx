@@ -53,7 +53,7 @@ const EXTRA_LABEL: Record<ModeId, string> = {
   gallows: 'Průměr zbylých životů',
   detective: 'Průměr nevyužitých pokusů',
   tetris: 'Průměr složených slov',
-  quotes: 'Průměr nevyužitých pokusů',
+  quotes: 'Průměr zbylých pokusů',
   intruder: 'Průměr odklizených slov',
 }
 

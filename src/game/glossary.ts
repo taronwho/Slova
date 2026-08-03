@@ -100,10 +100,10 @@ export const TERMS: Record<string, Term> = {
   rychlost: {
     title: 'Body za rychlost',
     body: [
-      'Za dohrané kolo se přičítá bonus podle času. **Plný** dostaneš, když se vejdeš do prvního mezníku, **nulový** po druhém; mezi nimi ubývá rovnoměrně.',
-      'Mezníky má každá hra vlastní: Šibenice 40 s a 2,5 minuty, Řetěz a Detektiv 45 s a 3 minuty, Citát 1 a 3,5 minuty, Věž 1,25 a 4,5 minuty.',
+      'Za dohrané kolo se přičítá bonus podle času. **Plný bonus** dostaneš, když se vejdeš do prvního mezníku, po druhém už není žádný; mezi nimi ubývá rovnoměrně.',
+      'Mezníky má každá hra vlastní: Šibenice 40 sekund a 2,5 minuty, Řetěz s Detektivem 45 sekund a 3 minuty, Citát minutu a 3,5 minuty, Věž minutu a čtvrt a 4,5 minuty.',
       '**Do půl minuty a bez jediné nápovědy se bonus zdvojnásobí.** To je odměna za kolo, které jsi zvládl sám a hned.',
-      'Každá použitá nápověda přičte k času **20 vteřin**. Kdo si nechá poradit, není rychlý — jen napovězený.',
+      'Každá použitá nápověda přičte k času **20 sekund**. Kdo si nechá poradit, není rychlý — jen napovězený.',
       'Bonus se počítá jen z dohraného kola a přičítá se před vynásobením sérií.',
     ],
     links: [{ label: 'Jak se počítají body', to: 'term:body' }],

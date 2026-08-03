@@ -208,7 +208,7 @@ export function QuizGame({ question, day, dayLabel, onFinish, onHome, onNext }: 
                 </div>
                 <div className="quiz-meta">
                   <span className="faint">
-                    {left === 1 ? 'Poslední pokus' : `Zbývají ${left} pokusy`}
+                    {left === 1 ? 'Poslední pokus' : left < 5 ? `Zbývají ${left} pokusy` : `Zbývá ${left} pokusů`}
                   </span>
                   <span className="chip chip-ink">
                     <InkMark size={11} /> <span className="num">{reward}</span>

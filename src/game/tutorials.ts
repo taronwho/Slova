@@ -96,9 +96,9 @@ export const TUTORIALS: Record<ModeId, TutorialStep[]> = {
       title: 'Body',
       visual: { kind: 'chain-score' },
       body: [
-        'Začínáš na 1000 bodech. Za každý tah navíc oproti nejkratší cestě ztratíš 100.',
-        'Přidá se bonus za rychlost a za nápovědy, které jsi nepoužil.',
-        'Dojít nejkratší cestou a bez nápovědy je **perfektní kolo** — skóre se násobí jedna a půl krát.',
+        'Základ za dohraný řetěz je 330 bodů. Za každý tah navíc oproti nejkratší cestě se 35 bodů odečte.',
+        'Přičte se bonus za rychlost a za nápovědy, které jsi nevyužil.',
+        'Dojít nejkratší cestou a bez nápovědy je **perfektní kolo** — skóre se pak násobí jedenapůlkrát.',
       ],
       key: 'Nápovědy jsou k dispozici vždy, jen stojí body. Dohrát se vyplatí za všech okolností.',
     },
@@ -175,7 +175,7 @@ export const TUTORIALS: Record<ModeId, TutorialStep[]> = {
       visual: { kind: 'tower' },
       body: [
         'Dole začínáš třípísmenným slovem. Nad ním postavíš čtyřpísmenné, pak pětipísmenné a tak dál až na vrchol.',
-        'Každé patro je nové slovo — a věž roste vzhůru pod tvýma rukama.',
+        'Každé patro je nové slovo — a věž ti pod rukama roste vzhůru.',
       ],
     },
     {
@@ -281,14 +281,14 @@ export const TUTORIALS: Record<ModeId, TutorialStep[]> = {
       title: 'Najdi slovo, které nepatří',
       body: [
         'Dostaneš pět slov. Čtyři z nich něco spojuje. Páté je vetřelec.',
-        'Vetřelec je vždycky **právě jeden**: na zbylých dvou znacích se pětice shoduje, takže ukázat jinam a mít taky pravdu nejde.',
+        'Vetřelec je vždycky **právě jeden**. Hra hlídá, aby se pětice nedala rozdělit ještě nějak jinak — ukázat na jiné slovo a mít taky pravdu tedy nejde.',
       ],
       key: 'Nehádá se tu slovo, ale co k sobě patří.',
     },
     {
       title: 'Souvislost se dozvíš až potom',
       body: [
-        'Někdy jde o význam, jindy o něco, co na slovech není vidět. Čtveřici může spojovat i to, že jsou v názvech stejných filmů nebo že se čtou stejně pozpátku.',
+        'Někdy jde o význam, jindy o něco, co na slovech vidět není. Čtveřici může spojovat třeba to, že se všechna čtyři slova objevují v názvech filmů — nebo že se čtou stejně pozpátku.',
         'Hra ti dopředu neřekne, co hledat — přijít na to je celá zábava. Co pětici spojovalo, se ukáže po dohrání.',
       ],
       key: 'Nápověda umí odklidit jedno slovo, které vetřelec není.',
@@ -309,7 +309,7 @@ export const TUTORIALS: Record<ModeId, TutorialStep[]> = {
         'První nápověda ukáže podobiznu autora, druhá jeho zařazení („český spisovatel"), třetí rovnou jméno.',
         'Teprve pak se odkrývají celá slova — a vždycky to nejdelší, protože to pomůže nejvíc.',
       ],
-      key: 'Podobizna se stahuje z internetu. Bez připojení se přeskočí a inkoust se nestrhne.',
+      key: 'Podobizna se stahuje z internetu. Když nedorazí — třeba bez připojení — dostaneš místo ní další nápovědu zdarma.',
     },
   ],
   detective: [
@@ -482,7 +482,7 @@ export const GUIDE: GuideSection[] = [
     title: 'Otázka dne',
     body: [
       'Mimo slovní hry je tu ještě jedna, která se hraje **jednou za den** a neptá se na češtinu, ale na cokoli: osobnosti, zeměpis, vědu, kulturu, historii, přírodu, techniku, sport, jazyk i společnost.',
-      'Uvidíš jen nadpis a předem se rozhodneš, kolik indicií si vezmeš. První je pro znalce oboru, třetí skoro prozradí — a čím míň jich vezmeš, tím větší odměna v inkoustu.',
+      'Uvidíš jen nadpis a předem se rozhodneš, kolik indicií si vezmeš. První je pro znalce oboru, třetí skoro prozradí — a čím méně jich vezmeš, tím větší odměna v inkoustu.',
       'Body ani věhlas nedává, zato je to nejštědřejší zdroj inkoustu ve hře. Za neuhodnutou otázku není nic, jen povzbuzení na zítřek.',
     ],
     term: 'otazka',

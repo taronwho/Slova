@@ -345,7 +345,7 @@ export const QUIZ_CONSOLATIONS = [
   'Zapamatuj si ji — dobré otázky se v hlavě usadí.',
   'Trefa to nebyla, ale zítra máš další pokus.',
   'Občas se nedaří. Zítra to zkusíme spolu znovu.',
-  'Konec dobrý, všechno dobré — a konec je až zítra.',
+  'Dnešek se nepovedl, zítřek ještě není rozehraný.',
   'Tuhle měl ve sbírce málokdo. Zítra bude líp.',
   'Dneska bez inkoustu. Zítra si ho vybereš zpátky.',
 ] as const

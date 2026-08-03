@@ -50,7 +50,7 @@ export function streakMultiplier(streak: number): number {
   return Math.min(1 + 0.05 * Math.max(streak - 1, 0), 1.5)
 }
 
-/** Za každou nápovědu se k času připočte dvacet vteřin. */
+/** Za každou nápovědu se k času připočte dvacet sekund. */
 export const HINT_TIME_MS = 20_000
 /** Do půl minuty a bez nápovědy se bonus zdvojnásobí. */
 export const BLITZ_MS = 30_000
