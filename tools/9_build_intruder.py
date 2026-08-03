@@ -230,7 +230,9 @@ def from_families(rng: random.Random) -> list[dict]:
     """
     out = []
     for family in FAMILIES:
-        want = min(60, len(family["inside"]) * len(family["outside"]))
+        # Skryté rodiny mají v sadě vyšší podíl — jsou to ty zajímavé.
+        want = min(150 if family.get("hidden") else 45,
+                   len(family["inside"]) * len(family["outside"]))
         seen = set()
         for _ in range(want * 20):
             if len(seen) >= want:
@@ -266,6 +268,7 @@ def from_families(rng: random.Random) -> list[dict]:
                     f"{family['asks'][0]} — {odd} ne."
                 ),
                 "difficulty": family["level"],
+                "hidden": bool(family.get("hidden")),
             })
     return out
 
@@ -285,7 +288,14 @@ def main() -> int:
     # Psané rodiny jsou páteř; jazykové pětice zůstávají jako koření.
     made = from_families(rng)
     print(f"  z rodin: {len(made)}")
-    puzzles = made + puzzles[: len(made) // 3]
+    # Půl na půl: skryté souvislosti proti těm, které jdou vidět. Jazykové
+    # pětice zůstávají jen jako koření.
+    hidden = [p for p in made if p.pop("hidden", False)]
+    plain = [p for p in made if not p.get("hidden")]
+    rng.shuffle(hidden)
+    rng.shuffle(plain)
+    print(f"  z toho skrytých: {len(hidden)}")
+    puzzles = hidden[:1500] + plain[:1200] + puzzles[:300]
     rng.shuffle(puzzles)
     # Data se balí do aplikace celá a v jednosouborové verzi navíc bobtnají
     # na dvojnásobek. Tři tisíce hádanek je osm let denního hraní — víc
