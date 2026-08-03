@@ -460,8 +460,8 @@ describe('bodování', () => {
 })
 
 describe('hodnosti', () => {
-  it('má padesát stupňů, které jdou vzestupně', () => {
-    expect(PROFILE_RANKS).toHaveLength(50)
+  it('má osmapadesát stupňů, které jdou vzestupně', () => {
+    expect(PROFILE_RANKS).toHaveLength(58)
     for (let i = 1; i < PROFILE_RANKS.length; i++) {
       expect(PROFILE_RANKS[i]!.at).toBeGreaterThan(PROFILE_RANKS[i - 1]!.at)
     }
@@ -471,7 +471,7 @@ describe('hodnosti', () => {
     expect(profileRankFor(0).rank.index).toBe(1)
     expect(profileRankFor(PROFILE_RANKS[1]!.at).rank.index).toBe(2)
     expect(profileRankFor(PROFILE_RANKS[1]!.at - 1).rank.index).toBe(1)
-    expect(profileRankFor(99_000_000).rank.index).toBe(50)
+    expect(profileRankFor(99_000_000).rank.index).toBe(PROFILE_RANKS.length)
   })
 
   it('jména hodností se neopakují', () => {

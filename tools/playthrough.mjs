@@ -416,8 +416,8 @@ log('\nVITRÍNA')
   await page.locator('.award-summary .btn').click()
   await page.waitForSelector('.ladder-list')
   check(
-    (await page.locator('.ladder-row').count()) === 50,
-    'žebříček má padesát hodností',
+    (await page.locator('.ladder-row').count()) === 58,
+    'žebříček má osmapadesát hodností',
   )
   check(
     (await page.locator('.ladder-row.has').count()) > 0,

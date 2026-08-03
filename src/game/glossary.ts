@@ -51,7 +51,7 @@ export const TERMS: Record<string, Term> = {
     title: 'Věhlas',
     body: [
       'Věhlas je součet **všech bodů**, které jsi kdy ve Slovech získal. Nikdy neklesá a nedá se utratit — je to čára, kterou máš za sebou.',
-      `Podle věhlasu roste hodnost. Prvních pár stupňů padne hned první večer, pak se rozestupy natahují; na padesátou a poslední hodnost je potřeba přes ${(RANKS[RANKS.length - 1]!.at / 1_000_000).toLocaleString('cs-CZ')} milionu věhlasu.`,
+      `Podle věhlasu roste hodnost. Prvních pár stupňů padne hned první večer, pak se rozestupy natahují; na poslední, ${RANKS.length}. hodnost je potřeba ${(RANKS[RANKS.length - 1]!.at / 1_000_000).toLocaleString('cs-CZ')} milionů věhlasu.`,
       'Body se počítají v každé hře trochu jinak, ale do věhlasu jdou všechny stejně — je jedno, kterou z her si zahraješ.',
     ],
     links: [
@@ -63,7 +63,7 @@ export const TERMS: Record<string, Term> = {
   hodnost: {
     title: 'Hodnost',
     body: [
-      `Padesát stupňů od Nováčka po Vládce slov. Postupuje se za věhlas, tedy za nasbírané body — a jen za ně, na ničem jiném hodnost nezávisí.`,
+      `${RANKS.length} stupňů od Nováčka po ${RANKS[RANKS.length - 1]!.name}. Postupuje se za věhlas, tedy za nasbírané body — a jen za ně, na ničem jiném hodnost nezávisí.`,
       `Odznak se mění po pěti hodnostech: jiný kov, jiný tvar štítu. Uvnitř pětice se stupně poznají podle počtu krokví pod odznakem.`,
       `Za každou novou hodnost padne inkoust — u prvních ${rankInk(2)}, u nejvyšších ${rankInk(50)}.`,
     ],

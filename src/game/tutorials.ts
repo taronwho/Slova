@@ -429,7 +429,7 @@ export const GUIDE: GuideSection[] = [
   {
     title: 'Hodnost',
     body: [
-      'Padesát stupňů od Nováčka po Vládce slov. První tři hodnosti padnou hned první večer, dál se rozestupy natahují — na tu poslední se hraje roky.',
+      'Osmapadesát stupňů od Nováčka po Nesmrtelného písaře. První tři hodnosti padnou hned první večer, dál se rozestupy natahují — na tu poslední se hraje roky.',
       'Odznak se mění po každých pěti hodnostech. Uvnitř pětice poznáš stupeň podle počtu krokví pod odznakem.',
     ],
     term: 'hodnost',

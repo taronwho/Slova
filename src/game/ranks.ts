@@ -80,6 +80,14 @@ const NAMES = [
   'Císař češtiny',
   'Génius jazyka',
   'Vládce slov',
+  'Strážce jazyka',
+  'Kníže slovníku',
+  'Věčný luštitel',
+  'Slovní kronikář',
+  'Patriarcha češtiny',
+  'Živoucí slovník',
+  'Legenda Slov',
+  'Nesmrtelný písař',
 ]
 
 const THRESHOLDS = [
@@ -88,6 +96,10 @@ const THRESHOLDS = [
   76_600, 89_100, 102_600, 120_100, 138_100, 160_600, 185_600, 213_100, 248_100, 285_600,
   328_100, 378_100, 438_100, 503_100, 580_600, 668_100, 768_100, 883_100, 1_020_600, 1_170_600,
   1_350_600, 1_550_600, 1_780_600, 2_050_600, 2_360_600, 2_720_600, 3_130_600, 3_590_600, 4_130_600, 4_750_600,
+  // Padesátá osmá hodnost stojí přesně deset milionů věhlasu. Rozestupy se
+  // dál natahují, takže poslední stupně jsou na roky hraní.
+  5_380_600, 6_018_000, 6_662_800, 7_315_000,
+  7_974_600, 8_641_600, 9_316_000, 10_000_000,
 ]
 
 export const RANKS: Rank[] = NAMES.map((name, i) => ({

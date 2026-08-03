@@ -215,7 +215,28 @@ const MODE_INFO: ModeInfo[] = [
   { id: 'detective', name: 'Detektiv', of: 'Detektiva', tone: 'detective', art: 'glass', score: [380, 520, 700] },
   // Slabiky mají bodovou stupnici na desetině ostatních her, viz scoreTetris.
   { id: 'tetris', name: 'Slabiky', of: 'Slabik', tone: 'tetris', art: 'deck', score: [45, 80, 140] },
+  { id: 'quotes', name: 'Citát', of: 'Citátu', tone: 'quotes', art: 'quote', score: [420, 600, 820] },
+  { id: 'intruder', name: 'Vetřelec', of: 'Vetřelce', tone: 'intruder', art: 'odd', score: [330, 450, 620] },
 ]
+
+/** Kolik kol hráč v té které hře odehrál — bez ohledu na to, jak dopadla. */
+const PLAYED_TITLES = ['Deset kol', 'Padesát kol', 'Dvě stě kol', 'Osm set kol', 'Dva tisíce kol']
+const PLAYED_NEEDS = [10, 50, 200, 800, 2000]
+
+function playedLadder(mode: ModeInfo): Award[] {
+  return ladder(
+    `odehrano-${mode.id}`,
+    'grit',
+    mode.tone,
+    'list',
+    (p) => p.stats[mode.id].played,
+    PLAYED_NEEDS.map((need, i) => ({
+      need,
+      title: `${mode.name}: ${PLAYED_TITLES[i]!.toLowerCase()}`,
+      goal: `Odehraj ${fmt(need)} kol hry ${mode.name}`,
+    })),
+  )
+}
 
 /** Stupně mistrovství. Cechovní řeč — pasuje ke hře o slovech a řemesle. */
 const MASTER_TITLES = ['Učeň', 'Tovaryš', 'Mistr', 'Velmistr', 'Legenda']
@@ -394,8 +415,11 @@ export const AWARDS: Award[] = [
     { need: 300_000, title: 'Tři sta tisíc', goal: 'Nasbírej 300 000 věhlasu' },
     { need: 1_000_000, title: 'Milion', goal: 'Nasbírej milion věhlasu' },
     { need: 3_000_000, title: 'Tři miliony', goal: 'Nasbírej tři miliony věhlasu' },
+    { need: 5_000_000, title: 'Pět milionů', goal: 'Nasbírej pět milionů věhlasu' },
+    { need: 10_000_000, title: 'Deset milionů', goal: 'Nasbírej deset milionů věhlasu — vrchol žebříčku' },
   ]),
   ...MODE_INFO.flatMap(scoreLadder),
+  ...MODE_INFO.flatMap(playedLadder),
 
   // --- Mistrovské kousky ------------------------------------------------
   // Voština
@@ -559,6 +583,43 @@ export const AWARDS: Award[] = [
     { need: 1000, title: 'Tisíc kol', goal: `Odehraj celkem ${rounds(1000)}` },
     { need: 3000, title: 'Tři tisíce kol', goal: `Odehraj celkem ${rounds(3000)}` },
     { need: 10_000, title: 'Deset tisíc kol', goal: `Odehraj celkem ${rounds(10_000)}` },
+    { need: 25_000, title: 'Pětadvacet tisíc kol', goal: `Odehraj celkem ${rounds(25_000)}` },
+  ]),
+
+  // --- Čistá kola v Citátu a ve Vetřelci --------------------------------
+  ...ladder('citat-ciste', 'clean', 'quotes', 'quote', (p) => p.stats.quotes.perfect, [
+    { need: 1, title: 'Výrok načisto', goal: 'Doplň výrok bez chybného písmene a bez nápovědy' },
+    { need: 10, title: 'Deset výroků načisto', goal: 'Zvládni to desetkrát' },
+    { need: 50, title: 'Padesát výroků načisto', goal: 'Zvládni to padesátkrát' },
+    { need: 200, title: 'Dvě stě výroků načisto', goal: 'Zvládni to dvěstěkrát' },
+  ]),
+  ...ladder('vetrelec-ciste', 'clean', 'intruder', 'odd', (p) => p.stats.intruder.perfect, [
+    { need: 1, title: 'Trefa napoprvé', goal: 'Odhal vetřelce napoprvé a bez nápovědy' },
+    { need: 10, title: 'Deset trefených napoprvé', goal: 'Zvládni to desetkrát' },
+    { need: 50, title: 'Padesát trefených napoprvé', goal: 'Zvládni to padesátkrát' },
+    { need: 200, title: 'Dvě stě trefených napoprvé', goal: 'Zvládni to dvěstěkrát' },
+  ]),
+
+  // --- Vytrvalost, které se nedá ujít ------------------------------------
+  ...ladder('dny-dlouhe', 'habit', 'warn', 'flame', (p) => p.bestDayStreak, [
+    { need: 500, title: 'Rok a půl v řadě', goal: 'Hraj pět set dní po sobě' },
+    { need: 1000, title: 'Tisíc dní v řadě', goal: 'Hraj tisíc dní po sobě' },
+  ]),
+  ...ladder('vyzvy-dlouhe', 'habit', 'brand', 'day', (p) => p.counters.dailies, [
+    { need: 2500, title: 'Dva a půl tisíce výzev', goal: 'Dohraj dva a půl tisíce denních výzev' },
+    { need: 5000, title: 'Pět tisíc výzev', goal: 'Dohraj pět tisíc denních výzev' },
+  ]),
+  ...ladder('varky-dlouhe', 'habit', 'ok', 'triad', (p) => p.counters.dailySets, [
+    { need: 500, title: 'Pět set várek', goal: 'Zvládni celou denní várku pětsetkrát' },
+    { need: 1000, title: 'Tisíc várek', goal: 'Zvládni celou denní várku tisíckrát' },
+  ]),
+  ...ladder('otazky-dlouhe', 'habit', 'gold', 'glass', (p) => p.quiz.solved, [
+    { need: 1500, title: 'Patnáct set otázek', goal: 'Uhodni patnáct set Otázek dne' },
+    { need: 3000, title: 'Tři tisíce otázek', goal: 'Uhodni tři tisíce Otázek dne' },
+  ]),
+  ...ladder('serie-dlouhe', 'grit', 'ok', 'gem', (p) => p.bestStreak, [
+    { need: 150, title: 'Sto padesát načisto v řadě', goal: 'Dohraj sto padesát kol za sebou bez nápovědy' },
+    { need: 300, title: 'Tři sta načisto v řadě', goal: 'Dohraj tři sta kol za sebou bez nápovědy' },
   ]),
 ]
 
