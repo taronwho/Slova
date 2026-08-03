@@ -283,14 +283,6 @@ export const TUTORIALS: Record<ModeId, TutorialStep[]> = {
         'Dostaneš pět slov. Čtyři z nich něco spojuje. Páté je vetřelec.',
         'Vetřelec je vždycky **právě jeden**. Hra hlídá, aby se pětice nedala rozdělit ještě nějak jinak — ukázat na jiné slovo a mít taky pravdu tedy nejde.',
       ],
-      key: 'Nehádá se tu slovo, ale co k sobě patří.',
-    },
-    {
-      title: 'Souvislost se dozvíš až potom',
-      body: [
-        'Někdy jde o význam, jindy o něco, co na slovech vidět není. Čtveřici může spojovat třeba to, že se všechna čtyři slova objevují v názvech filmů — nebo že se čtou stejně pozpátku.',
-        'Hra ti dopředu neřekne, co hledat — přijít na to je celá zábava. Co pětici spojovalo, se ukáže po dohrání.',
-      ],
       key: 'Nápověda umí odklidit jedno slovo, které vetřelec není.',
     },
   ],
