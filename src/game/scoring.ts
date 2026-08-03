@@ -17,7 +17,7 @@ import {
   type DetectiveState,
 } from './detective'
 import { HIVE_HINT_COST } from './hive'
-import { foundOdd, namedReason, type IntruderState } from './intruder'
+import { foundOdd, type IntruderState } from './intruder'
 import {
   hitCount as quoteHits,
   LETTER_COST,
@@ -382,15 +382,16 @@ export function scoreIntruder(
 ): ScoreBreakdown {
   const elapsed = (state.finishedAt ?? now) - state.startedAt
   const right = foundOdd(state)
-  const named = namedReason(state)
 
+  // Základ je vyšší, než býval: odpadl druhý krok se třemi větami, za který
+  // se přidávalo zvlášť. Trefa naslepo je jedna ku pěti, takže hodnotu
+  // kolu dává hlavně rychlost a to, že se hráč obešel bez nápovědy.
   const lines: { label: string; value: number }[] = []
   lines.push(
     right
-      ? { label: 'Vetřelec odhalen', value: 200 }
-      : { label: 'Vetřelec unikl', value: -40 },
+      ? { label: 'Vetřelec odhalen', value: 300 }
+      : { label: 'Vetřelec unikl', value: -60 },
   )
-  if (named) lines.push({ label: 'Správný důvod', value: 140 })
   if (state.hintCost > 0) {
     const paid = Math.max(0, state.hintsUsed - state.freeHints)
     lines.push({ label: `Nápovědy (${paid})`, value: -state.hintCost })
@@ -399,7 +400,7 @@ export function scoreIntruder(
   const bonus = right ? speedBonus(elapsed, 20_000, 90_000, 60, state.hintsUsed) : 0
   if (bonus > 0) lines.push({ label: 'Rychlost', value: bonus })
 
-  const perfect = right && named && state.hintsUsed === 0
+  const perfect = right && state.hintsUsed === 0
   const streakMul = streakMultiplier(streak)
   const labels: string[] = []
   if (perfect) labels.push('ČISTÁ TREFA ×1,5')

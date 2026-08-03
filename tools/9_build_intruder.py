@@ -263,9 +263,14 @@ def from_families(rng: random.Random) -> list[dict]:
                 "odd": odd,
                 "choices": choices,
                 "answer": family["asks"][0],
+                # U skryté rodiny je střecha totéž co osa, takže by se věta
+                # opakovala („slova, která jsou znamením zvěrokruhu. Čtyři
+                # z nich jsou to znamení zvěrokruhu").
                 "recap": (
-                    f"Všech pět: {family['roof']}. Čtyři z nich "
-                    f"{family['asks'][0]} — {odd} ne."
+                    f"Čtyři z nich {family['asks'][0]} — {odd} ne."
+                    if family.get("hidden")
+                    else f"Všech pět: {family['roof']}. Čtyři z nich "
+                         f"{family['asks'][0]} — {odd} ne."
                 ),
                 "difficulty": family["level"],
                 "hidden": bool(family.get("hidden")),

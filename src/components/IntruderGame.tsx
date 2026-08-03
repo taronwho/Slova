@@ -7,8 +7,6 @@ import {
   createIntruderState,
   foundOdd,
   INTRUDER_HINT_COST,
-  name as nameReason,
-  namedReason,
   pick as pickWord,
   takeHint,
   type IntruderPuzzle,
@@ -51,9 +49,7 @@ export function IntruderGame({
   const [done, setDone] = useState(false)
   const reported = useRef(false)
   const over = state.finishedAt !== null
-  const choices = puzzle.choices
   const right = foundOdd(state)
-  const named = namedReason(state)
 
   const shown = useRef(puzzle.id)
   useEffect(() => {
@@ -83,9 +79,9 @@ export function IntruderGame({
       success: right,
       elapsedMs: (state.finishedAt ?? Date.now()) - state.startedAt,
       hintsUsed: state.hintsUsed,
-      detail: { solved: right ? 1 : 0, extra: named ? 1 : 0 },
+      detail: { solved: right ? 1 : 0, extra: state.ruled.length },
     })
-  }, [over, breakdown, onFinish, puzzle, state, right, named])
+  }, [over, breakdown, onFinish, puzzle, state, right])
 
   function hint() {
     const price = inkPrice(INTRUDER_HINT_COST)
@@ -106,9 +102,9 @@ export function IntruderGame({
       [
         `SLOVA — Vetřelec ${dayLabel}`,
         right ? `${puzzle.odd.toUpperCase()} ✓` : `${puzzle.odd.toUpperCase()} unikl`,
-        `${named ? 'i důvod' : 'bez důvodu'} · ★ ${breakdown.total}`,
+        `★ ${breakdown.total}`,
       ].join('\n'),
-    [breakdown.total, dayLabel, named, puzzle.odd, right],
+    [breakdown.total, dayLabel, puzzle.odd, right],
   )
 
   return (
@@ -117,10 +113,10 @@ export function IntruderGame({
         <div className="hud">
           <div className="stat-row">
             <StatTile
-              label="Krok"
-              value={state.picked ? '2 ze 2' : '1 ze 2'}
+              label="Slov"
+              value={puzzle.words.length}
               tone="accent"
-              note="Nejdřív ukaž na slovo, které do pětice nepatří. Pak řekni, co ta ostatní čtyři spojuje — za důvod je skoro tolik bodů co za samotného vetřelce."
+              note="Čtyři z nich něco spojuje, páté ne. Co to bylo, se dozvíš po dohrání — přijít na to je celá hra."
             />
             <StatTile
               label="Vyloučeno"
@@ -149,9 +145,7 @@ export function IntruderGame({
 
       <div className="board">
         <p className="intruder-ask">
-          {state.picked
-            ? 'A co spojuje ta ostatní čtyři?'
-            : 'Které slovo do pětice nepatří?'}
+          Které slovo do pětice nepatří?
         </p>
 
         <div className="intruder-words">
@@ -175,21 +169,6 @@ export function IntruderGame({
           })}
         </div>
 
-        {state.picked && (
-          <div className="intruder-reasons">
-            {choices.map((choice) => (
-              <button
-                type="button"
-                key={choice}
-                className={`btn ${state.reason === choice ? 'btn-primary' : ''}`}
-                disabled={state.reason !== null}
-                onClick={() => setState((current) => nameReason(current, choice))}
-              >
-                {choice}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       <aside className="rail rail-right">
@@ -202,7 +181,7 @@ export function IntruderGame({
 
       {done && (
         <ResultOverlay
-          title={right ? (named ? 'Trefa i důvod!' : 'Vetřelec odhalen') : 'Vetřelec unikl'}
+          title={right ? 'Vetřelec odhalen!' : 'Vetřelec unikl'}
           subtitle={puzzle.odd.toUpperCase()}
           breakdown={breakdown}
           shareText={shareText}

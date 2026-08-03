@@ -67,9 +67,17 @@ export const foundOdd = (state: IntruderState): boolean =>
 export const namedReason = (state: IntruderState): boolean =>
   state.reason === state.puzzle.answer
 
+/**
+ * Ukázání na slovo kolo rovnou ukončí.
+ *
+ * Druhý krok — vybrat ze tří vět tu správnou — z Vetřelce vypadl schválně.
+ * U skrytých souvislostí byl největší nápovědou ve hře: hráč nemusel na nic
+ * přijít, stačilo mu přečíst nabídku a ověřit ji. Souvislost se teď dozví
+ * až ve vyhodnocení, kde už prozrazovat nemá co.
+ */
 export function pick(state: IntruderState, word: string): IntruderState {
   if (state.picked || state.finishedAt) return state
-  return { ...state, picked: word }
+  return { ...state, picked: word, finishedAt: Date.now() }
 }
 
 export function name(state: IntruderState, choice: string): IntruderState {

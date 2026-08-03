@@ -286,12 +286,12 @@ export const TUTORIALS: Record<ModeId, TutorialStep[]> = {
       key: 'Nehádá se tu slovo, ale co k sobě patří.',
     },
     {
-      title: 'A pak řekni proč',
+      title: 'Souvislost se dozvíš až potom',
       body: [
-        'Když na vetřelce ukážeš, vybereš ještě ze tří nabídnutých možností, co ta ostatní čtyři spojovalo.',
-        'Trefit slovo se dá i náhodou, jedna ku pěti. Pojmenovat souvislost už ne — proto je za důvod skoro tolik bodů co za samotnou trefu.',
+        'Někdy jde o význam, jindy o něco, co na slovech není vidět. Čtveřici může spojovat i to, že jsou v názvech stejných filmů nebo že se čtou stejně pozpátku.',
+        'Hra ti dopředu neřekne, co hledat — přijít na to je celá zábava. Co pětici spojovalo, se ukáže po dohrání.',
       ],
-      key: 'Nápověda umí odklidit jedno slovo, které vetřelec není. Jde ale jen do chvíle, než ukážeš.',
+      key: 'Nápověda umí odklidit jedno slovo, které vetřelec není.',
     },
   ],
   quotes: [
@@ -529,8 +529,8 @@ export const MODE_SUMMARY: Record<ModeId, string[]> = {
   ],
   intruder: [
     'Čtyři slova něco spojuje, páté ne.',
-    'Nejdřív ukaž na vetřelce, pak řekni proč.',
-    'Za důvod je skoro tolik bodů co za trefu.',
+    'Souvislost se dozvíš až po dohrání.',
+    'Nápověda odklidí jedno slovo, které to není.',
   ],
   quotes: [
     'Část slov výroku dostaneš zadarmo.',
