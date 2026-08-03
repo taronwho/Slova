@@ -10,10 +10,10 @@
 import { describe, expect, it } from 'vitest'
 
 import { AWARDS, GROUP_LABEL } from '../src/game/awards'
-import type { ModeId, RoundResult } from '../src/game/types'
+import { MODE_ORDER, type ModeId, type RoundResult } from '../src/game/types'
 import { emptyProfile, recordRound } from '../src/lib/storage'
 
-const MODES: ModeId[] = ['chain', 'hive', 'tower', 'gallows', 'detective', 'tetris']
+const MODES: ModeId[] = MODE_ORDER
 const DAY = '2026-07-28'
 
 /** Kolo, které se povedlo. `hints` říká, kolik nápověd si hráč vzal. */
@@ -156,7 +156,7 @@ describe('denní výzva jde jen jednou denně', () => {
       profile = done(profile, mode)
     }
     const afterFirst = { dailies: profile.counters.dailies, sets: profile.counters.dailySets, ink: profile.ink }
-    expect(afterFirst.dailies).toBe(6)
+    expect(afterFirst.dailies).toBe(MODES.length)
     expect(afterFirst.sets).toBe(1)
 
     // Znovu totéž — nesmí přibýt ani výzva, ani várka.

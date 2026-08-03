@@ -169,6 +169,30 @@ function Glyph({ art }: { art: string }) {
         </>
       )
 
+    // --- Citát ----------------------------------------------------------
+    // Uvozovky a pod nimi řádek textu.
+    case 'quote':
+      return (
+        <>
+          <path d="M14 14h8v8a8 8 0 0 1-8 8Z" className="tn" />
+          <path d="M30 14h8v8a8 8 0 0 1-8 8Z" className="tn" />
+          <path d="M10 38h28" className="ln" />
+        </>
+      )
+
+    // --- Vetřelec -------------------------------------------------------
+    // Čtyři stejné kroužky a pátý stranou.
+    case 'odd':
+      return (
+        <>
+          <circle cx="14" cy="18" r="5" className="ln" />
+          <circle cx="28" cy="18" r="5" className="ln" />
+          <circle cx="14" cy="32" r="5" className="ln" />
+          <circle cx="28" cy="32" r="5" className="ln" />
+          <circle cx="42" cy="25" r="6" className="tn" />
+        </>
+      )
+
     // --- Voština --------------------------------------------------------
     case 'star-cell':
       return (

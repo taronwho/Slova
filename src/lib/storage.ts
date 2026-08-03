@@ -3,12 +3,16 @@
 import { AWARDS } from '../game/awards'
 import { awardInk, DAILY_INK, LEGACY_HINT_INK, rankInk, START_INK } from '../game/economy'
 import { rankFor } from '../game/ranks'
-import type { Difficulty, ModeId, RoundResult } from '../game/types'
+import { MODE_ORDER, type Difficulty, type ModeId, type RoundResult } from '../game/types'
 
 const KEY = 'slova.profile.v1'
 
 /** Všechny hry v pořadí, ve kterém se ukazují. Jediný seznam pro celý soubor. */
-const MODES: ModeId[] = ['chain', 'hive', 'tower', 'gallows', 'detective', 'tetris']
+// Seznam režimů se bere z jednoho místa. Když se sem psal ručně, přibyly
+// Citát s Vetřelcem a profil o nich nevěděl: rozehraná kola se po návratu
+// ztrácela a inkoust za kompletní denní várku padal už po šesti výzvách
+// z osmi.
+const MODES: ModeId[] = MODE_ORDER
 const ROUNDS_KEY = 'slova.rounds.v1'
 
 export interface ModeStats {

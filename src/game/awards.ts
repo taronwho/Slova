@@ -31,9 +31,9 @@
  */
 
 import type { Profile } from '../lib/storage'
-import type { ModeId } from './types'
+import { MODE_ORDER, type ModeId } from './types'
 
-const MODES: ModeId[] = ['chain', 'hive', 'tower', 'gallows', 'detective', 'tetris']
+const MODES: ModeId[] = MODE_ORDER
 
 export type AwardGroup =
   | 'start'
@@ -53,6 +53,8 @@ export type AwardTone =
   | 'gallows'
   | 'detective'
   | 'tetris'
+  | 'quotes'
+  | 'intruder'
   | 'ok'
   | 'gold'
   | 'warn'
@@ -321,6 +323,10 @@ export const AWARDS: Award[] = [
     'Rozlušti slovo podle jeho původu', 'glass', 1, (p) => p.counters.detectiveSolved),
   count('prvni-davka', 'start', 'tetris', 'První slabiky', 'Slož slovo z padajících slabik',
     'blocks', 1, (p) => p.counters.tetrisWords),
+  count('prvni-vyrok', 'start', 'quotes', 'První výrok', 'Doplň citát v Citátu',
+    'quote', 1, (p) => p.stats.quotes.played),
+  count('prvni-vetrelec', 'start', 'intruder', 'První vetřelec', 'Odhal vetřelce v pětici',
+    'odd', 1, (p) => p.stats.intruder.played),
   {
     id: 'petiboj',
     group: 'start',

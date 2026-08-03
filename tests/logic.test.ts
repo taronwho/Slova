@@ -997,6 +997,8 @@ describe('nápovědy zdarma', () => {
         [`${day}:gallows`]: 1,
         [`${day}:detective`]: 1,
         [`${day}:tetris`]: 1,
+        [`${day}:quotes`]: 1,
+        [`${day}:intruder`]: 1,
       },
     }
     // Rozdíl je aspoň DAILY_INK. Kompletní várka navíc rovnou odemkne první
@@ -1022,6 +1024,8 @@ describe('nápovědy zdarma', () => {
         [`${day}:gallows`]: 1,
         [`${day}:detective`]: 1,
         [`${day}:tetris`]: 1,
+        [`${day}:quotes`]: 1,
+        [`${day}:intruder`]: 1,
       },
     }
     expect(recordRound(almost, round(), day, true).counters.dailySets).toBe(1)
