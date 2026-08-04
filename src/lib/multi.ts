@@ -41,7 +41,7 @@ export interface Duel {
   won: boolean | null
 }
 
-export interface Record {
+export interface Tally {
   wins: number
   losses: number
   draws: number
@@ -176,8 +176,8 @@ export async function playRound(
 }
 
 /** Připíše výsledek souboje do vlastní tabulky. */
-export async function recordDuel(duel: Duel, before: Record): Promise<Record> {
-  const next: Record = {
+export async function recordDuel(duel: Duel, before: Tally): Promise<Tally> {
+  const next: Tally = {
     wins: before.wins + (duel.won === true ? 1 : 0),
     losses: before.losses + (duel.won === false ? 1 : 0),
     draws: before.draws + (duel.won === null ? 1 : 0),
@@ -189,4 +189,34 @@ export async function recordDuel(duel: Duel, before: Record): Promise<Record> {
     // Tabulka je jen ozdoba; když se nezapíše, hra běží dál.
   }
   return next
+}
+
+/* ---------- co si hra pamatuje sama ---------- */
+
+const KEY = 'slova.multi.v1'
+
+export interface Me extends Tally {
+  nick: string
+}
+
+const EMPTY: Me = { nick: '', wins: 0, losses: 0, draws: 0 }
+
+/** Přezdívka a tabulka výher. Drží se zvlášť od profilu, protože se
+ *  souboje nepočítají do věhlasu ani do ocenění. */
+export function loadMe(): Me {
+  try {
+    const raw = localStorage.getItem(KEY)
+    if (!raw) return EMPTY
+    return { ...EMPTY, ...(JSON.parse(raw) as Partial<Me>) }
+  } catch {
+    return EMPTY
+  }
+}
+
+export function saveMe(me: Me): void {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(me))
+  } catch {
+    // Soukromé okno bez úložiště — souboje prostě nebudou.
+  }
 }

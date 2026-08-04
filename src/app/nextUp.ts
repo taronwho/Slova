@@ -31,4 +31,9 @@ export const NextUpContext = createContext<NextUpItem[]>([])
  */
 export const RoundModeContext = createContext<{ glyph: string; label: string } | null>(null)
 
+/** Souboj právě dohraného kola. Karta výsledku ho ukáže pod skóre. */
+export const DuelContext = createContext<{ nick: string; score: number; won: boolean | null } | null>(
+  null,
+)
+
 export const useNextUp = (): NextUpItem[] => useContext(NextUpContext)

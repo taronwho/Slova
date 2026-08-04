@@ -17,7 +17,7 @@ import {
   pickUnseen,
   type ChainBundle,
 } from './app/data'
-import { NextUpContext, RoundModeContext, type NextUpItem } from './app/nextUp'
+import { DuelContext, NextUpContext, RoundModeContext, type NextUpItem } from './app/nextUp'
 import { AwardPopup, type Gained } from './components/AwardPopup'
 import { Awards } from './components/Awards'
 import { InkMark } from './components/art/InkMark'
@@ -31,6 +31,7 @@ import { HiveGame } from './components/HiveGame'
 import { Home } from './components/Home'
 import { QuizGame } from './components/QuizGame'
 import { IntruderGame } from './components/IntruderGame'
+import { DuelStrip } from './components/DuelStrip'
 import { QuotesGame } from './components/QuotesGame'
 import { QuizReview } from './components/QuizReview'
 import { Splash } from './components/Splash'
@@ -45,6 +46,15 @@ import type { GallowsPuzzle, GallowsState } from './game/gallows'
 import type { HivePuzzle, HiveState } from './game/hive'
 import { quizFor, type QuizDeck, type QuizQuestion } from './game/quiz'
 import type { IntruderPuzzle, IntruderState } from './game/intruder'
+import {
+  loadMe,
+  MULTI_ON,
+  playRound,
+  recordDuel,
+  saveMe,
+  type Duel,
+  type Me,
+} from './lib/multi'
 import type { Quote, QuoteState } from './game/quotes'
 import { RANKS, rankFor } from './game/ranks'
 import { tetrisSetup, type TetrisDeck, type TetrisSetup, type TetrisState } from './game/tetris'
@@ -100,6 +110,12 @@ interface Loaded {
 
 export default function App() {
   const [profile, setProfile] = useState<Profile>(() => loadProfile())
+  /**
+   * Souboje. Drží se stranou od profilu, protože se nepočítají do věhlasu
+   * ani do ocenění — dvojice kamarádů by si jinak hodnosti vyfarmila.
+   */
+  const [me, setMe] = useState<Me>(() => loadMe())
+  const [duel, setDuel] = useState<Duel | null>(null)
   const [view, setView] = useState<View>({ kind: 'home' })
   const [loaded, setLoaded] = useState<Loaded>({})
   const [loading, setLoading] = useState(false)
@@ -365,6 +381,29 @@ export default function App() {
     [view],
   )
 
+  /**
+   * Souboj o denní výzvu.
+   *
+   * Odesílá se až po dohraném kole, takže na server nikdy nečeká hra, jen
+   * karta výsledku. Soupeř nemusí být online — hledá se mezi těmi, kdo
+   * hráli tutéž hádanku, třeba včera.
+   */
+  const duelRound = useCallback(
+    (result: RoundResult, band: number) => {
+      if (!MULTI_ON || !me.nick) return
+      void playRound(result.mode, result.puzzleId, result.score, band)
+        .then(async (found) => {
+          if (!found) return
+          setDuel(found)
+          const next = { ...me, ...(await recordDuel(found, me)) }
+          saveMe(next)
+          setMe(next)
+        })
+        .catch(() => undefined)
+    },
+    [me],
+  )
+
   const finishRound = useCallback(
     (result: RoundResult) => {
       setSaved((previous) => {
@@ -372,6 +411,10 @@ export default function App() {
         saveRounds(rest)
         return rest
       })
+      setDuel(null)
+      if (view.kind === 'game' && view.daily) {
+        duelRound(result, rankFor(profile.fame).rank.index)
+      }
       updateProfile((previous) => {
         const isDaily = view.kind === 'game' && view.daily
         // Zapsat výsledek smí jen první dnešní pokus. Druhý by přepsal skóre
@@ -385,7 +428,7 @@ export default function App() {
         }
       })
     },
-    [dayKey, updateProfile, view],
+    [dayKey, duelRound, profile.fame, updateProfile, view],
   )
 
   const giveUp = useCallback(() => {
@@ -571,6 +614,7 @@ export default function App() {
   return (
     <ExplainProvider onGo={goTo}>
     <NextUpContext.Provider value={nextUp}>
+    <DuelContext.Provider value={duel}>
     <RoundModeContext.Provider
       value={
         view.kind === 'game'
@@ -725,6 +769,7 @@ export default function App() {
             onGuide={() => setGuide(true)}
             onQuiz={() => void startQuiz()}
             {...(__QUIZ_ALL__ ? { onQuizList: () => void openQuizList() } : {})}
+            duels={MULTI_ON ? <DuelStrip me={me} onMe={setMe} /> : null}
             saved={saved}
             onResume={(mode) => {
               const round = saved[mode]
@@ -947,6 +992,7 @@ export default function App() {
       </main>
     </div>
     </RoundModeContext.Provider>
+    </DuelContext.Provider>
     </NextUpContext.Provider>
     </ExplainProvider>
   )

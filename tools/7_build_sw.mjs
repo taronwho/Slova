@@ -26,13 +26,16 @@ function walk(dir) {
 
 const files = walk(DIST).map((f) => './' + relative(DIST, f).split('\\').join('/'))
 
-// Skořápka = všechno kromě herních dat a samotného workeru. Data se ukládají
-// až za běhu, jsou jich megabajty a hráč potřebuje jen část.
+// Skořápka = všechno kromě herních dat, samotného workeru a knihovny pro
+// souboje. Data se ukládají až za běhu, jsou jich megabajty a hráč potřebuje
+// jen část; Firebase se stahuje, teprve když hráč do soubojů vleze — kdo je
+// nehraje, ať kvůli nim nečeká na první spuštění.
 const shell = files.filter(
   (f) =>
     !f.startsWith('./data/') &&
     !f.endsWith('/sw.js') &&
     f !== './sw.js' &&
+    !f.includes('/index.esm-') &&
     !f.endsWith('.map'),
 )
 

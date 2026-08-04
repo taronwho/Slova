@@ -2,7 +2,7 @@
 
 import { useContext, useEffect, useState, type ReactNode } from 'react'
 
-import { RoundModeContext, useNextUp } from '../app/nextUp'
+import { DuelContext, RoundModeContext, useNextUp } from '../app/nextUp'
 import type { ScoreBreakdown } from '../game/scoring'
 import { Confetti } from './Confetti'
 import { Explain } from './Explain'
@@ -62,6 +62,7 @@ export function ResultOverlay({
 }: Props) {
   const nextUp = useNextUp()
   const mode = useContext(RoundModeContext)
+  const duel = useContext(DuelContext)
   const score = useCountUp(breakdown.total)
   const [copied, setCopied] = useState(false)
 
@@ -117,6 +118,21 @@ export function ResultOverlay({
             <Explain term="serie" className="chip chip-gold">
               {breakdown.multiplierLabel}
             </Explain>
+          )}
+
+          {/* Souboj: tvoje skóre proti někomu, kdo hrál tutéž hádanku. */}
+          {duel && (
+            <div className={`duel-card ${duel.won === true ? 'won' : duel.won === false ? 'lost' : ''}`}>
+              <span className="duel-verdict">
+                {duel.won === null ? 'Remíza' : duel.won ? 'Vyhrál jsi!' : 'Tentokrát ne'}
+              </span>
+              <span className="duel-line">
+                <b className="num">{breakdown.total.toLocaleString('cs-CZ')}</b>
+                <span className="faint">:</span>
+                <b className="num">{duel.score.toLocaleString('cs-CZ')}</b>
+                <span className="faint">{duel.nick}</span>
+              </span>
+            </div>
           )}
 
           {children}

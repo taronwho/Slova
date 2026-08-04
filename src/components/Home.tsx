@@ -1,6 +1,6 @@
 /** Domovská obrazovka — mřížka her nahoře, pod ní profil a pravidla. */
 
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 
 import { AWARDS } from '../game/awards'
 import { QUIZ_REWARD } from '../game/quiz'
@@ -41,6 +41,8 @@ interface Props {
   /** Kola přerušená odchodem do menu nebo zavřením hry, po jednom od režimu. */
   saved: SavedRounds
   onResume: (mode: ModeId) => void
+  /** Proužek soubojů. Nese ho App, protože potřebuje síť. */
+  duels?: ReactNode
 }
 
 const MODES: { id: ModeId; glyph: string; color: string }[] = MODE_ORDER.map((id) => ({
@@ -141,6 +143,7 @@ export function Home({
   onQuizList,
   saved,
   onResume,
+  duels,
 }: Props) {
   const progress = rankFor(profile.fame)
   const awards = AWARDS.filter((award) => profile.awards[award.id] !== undefined).length
@@ -447,6 +450,8 @@ export function Home({
           </div>
         </div>
       )}
+
+      {duels}
 
       {/* Profil až pod výběrem hry — je to doplněk, ne to hlavní. Na každý
           údaj se dá ťuknout: hodnost a věhlas vedou do vitríny, čipy si
