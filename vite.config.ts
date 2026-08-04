@@ -18,11 +18,19 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ')
  */
 const QUIZ_ALL = process.env.QUIZ_ALL === '1'
 
+/**
+ * Jednosouborová verze se skládá do jediného HTML a nesmí sáhnout na síť —
+ * testuje se to. Souboje se v ní proto vypnou celé, ať se do balíku vůbec
+ * nedostane knihovna, kterou by stejně nemohla použít.
+ */
+const STANDALONE = process.env.STANDALONE === '1'
+
 export default defineConfig({
   base: './',
   define: {
     __BUILD__: JSON.stringify(QUIZ_ALL ? `${BUILD} · kontrolní` : BUILD),
     __QUIZ_ALL__: JSON.stringify(QUIZ_ALL),
+    __STANDALONE__: JSON.stringify(STANDALONE),
   },
   plugins: [react()],
   build: {

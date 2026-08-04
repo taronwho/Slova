@@ -28,7 +28,7 @@ const HIVE_PACKS = 14
 const TOWER_PACKS = 16
 
 console.log('Build…')
-execSync('npx vite build', { cwd: ROOT, stdio: 'inherit' })
+execSync('npx vite build', { cwd: ROOT, stdio: 'inherit', env: { ...process.env, STANDALONE: '1' } })
 
 const html = readFileSync(join(DIST, 'index.html'), 'utf-8')
 
