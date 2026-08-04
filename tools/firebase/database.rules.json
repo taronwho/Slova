@@ -1,0 +1,66 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "nicks": {
+      "$nick": {
+        ".read": "auth != null",
+        ".write": "auth != null && !data.exists() && newData.val() === auth.uid",
+        ".validate": "newData.isString() && $nick.length >= 3 && $nick.length <= 16"
+      }
+    },
+
+    "players": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['nick', 'key'])",
+        "nick": { ".validate": "newData.isString() && newData.val().length >= 3 && newData.val().length <= 16" },
+        "key": { ".validate": "newData.isString() && root.child('nicks').child(newData.val()).val() === $uid" },
+        "band": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 60" },
+        "wins": { ".validate": "newData.isNumber()" },
+        "losses": { ".validate": "newData.isNumber()" },
+        "draws": { ".validate": "newData.isNumber()" },
+        "seenAt": { ".validate": "newData.val() <= now" },
+        "$other": { ".validate": false }
+      }
+    },
+
+    "results": {
+      "$mode": {
+        "$puzzle": {
+          ".read": "auth != null",
+          ".indexOn": ["band"],
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid && !data.exists()",
+            ".validate": "newData.hasChildren(['nick', 'score', 'band', 'at'])",
+            "nick": { ".validate": "newData.isString() && newData.val() === root.child('players').child($uid).child('nick').val()" },
+            "score": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000" },
+            "band": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 60" },
+            "detail": { ".validate": "newData.isNumber()" },
+            "at": { ".validate": "newData.val() === now" },
+            "$other": { ".validate": false }
+          }
+        }
+      }
+    },
+
+    "challenges": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$id": {
+          ".write": "auth != null && (auth.uid === $uid || (!data.exists() && newData.child('from').val() === auth.uid))",
+          ".validate": "newData.hasChildren(['from', 'nick', 'mode', 'puzzle', 'score', 'at'])",
+          "from": { ".validate": "newData.val() === auth.uid" },
+          "nick": { ".validate": "newData.isString()" },
+          "mode": { ".validate": "newData.isString() && newData.val().length <= 12" },
+          "puzzle": { ".validate": "newData.isString() && newData.val().length <= 24" },
+          "score": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000" },
+          "at": { ".validate": "newData.val() === now" },
+          "$other": { ".validate": false }
+        }
+      }
+    }
+  }
+}
