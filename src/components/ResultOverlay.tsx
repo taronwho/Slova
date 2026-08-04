@@ -202,6 +202,7 @@ export function ResultOverlay({
               Domů
             </button>
           </div>
+
         </div>
       </div>
     </>

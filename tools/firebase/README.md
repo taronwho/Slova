@@ -15,7 +15,10 @@ obsah, vložit `database.rules.json` → **Publish**.
 | `nicks/{přezdívka}` | zabrané přezdívky → id hráče |
 | `players/{id}` | přezdívka, pásmo hodnosti, výhry a prohry |
 | `results/{hra}/{hádanka}/{id}` | výsledek jednoho hráče v jedné hádance |
-| `challenges/{komu}/{id}` | došlé výzvy |
+| `challenges/{komu}/{id}` | došlé výzvy — kdo vyzval a na který zápas |
+| `duels/{zápas}` | zápas dvou jmenovitých hráčů: co se hraje a s kým |
+| `duels/{zápas}/words/{slovo}` | komu patří které slovo v soubojové Voštině |
+| `duels/{zápas}/done/{id}` | hotový výsledek jedné strany |
 
 ## Na čem stojí bezpečnost
 
@@ -30,6 +33,10 @@ tam, kde je to nutné. Tři pravidla dělají většinu práce:
   skóre nedá po prohře vylepšit. Hráč navíc smí zapsat jen pod svoje id.
 * **Čas si neurčuje telefon.** `at` musí být přesně `now`, což je čas
   serveru. Jinak by šlo předstírat, že odpověď padla dřív.
+* **Slovo v souboji patří tomu, kdo byl dřív.** `duels/{zápas}/words`
+  má tutéž podmínku `!data.exists()`, takže se druhý zápis odmítne a hra
+  z toho pozná, že slovo mezitím sebral soupeř. Do zápasu navíc smí sáhnout
+  jen ti dva, kterých se týká.
 
 Přezdívka ve výsledku se ověřuje proti `players/{id}/nick`, takže se
 nedá vydávat za někoho jiného.

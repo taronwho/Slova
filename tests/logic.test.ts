@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  claimKey,
+  duelRoundScore,
+  INTRUDER_DUEL_MAX,
+  INTRUDER_ROUNDS,
+  verdictOf,
+} from '../src/game/duel'
+import { forgetMatch, rememberMatch, tallyWith } from '../src/lib/multi'
+import {
   buildChainGraph,
   bfsDistances,
   createChainState,
@@ -1391,5 +1399,54 @@ describe('otázka dne', () => {
     const after = recordQuiz(start, '2026-03-01', { solved: true, clues: 1, ink: 30 })
     expect(after.fame).toBe(1234)
     expect(after.streak).toBe(7)
+  })
+})
+
+describe('souboje', () => {
+  // Vedle se rozhoduje jen mezi dvěma lidmi, takže musí platit dvě věci:
+  // trefa je vždycky víc než minutí a mezi dvěma trefami rozhoduje čas.
+  it('bodování Vetřelce odměňuje trefu a rychlost', () => {
+    expect(duelRoundScore(false, 1000)).toBe(0)
+    expect(duelRoundScore(true, 0)).toBe(200)
+    expect(duelRoundScore(true, 10_000)).toBe(160)
+    expect(duelRoundScore(true, 4000)).toBeGreaterThan(duelRoundScore(true, 12_000))
+    // Kdo přemýšlí dlouho a trefí se, pořád má víc než ten, kdo střelil vedle.
+    expect(duelRoundScore(true, 10 * 60_000)).toBe(40)
+    expect(duelRoundScore(true, 10 * 60_000)).toBeGreaterThan(duelRoundScore(false, 0))
+  })
+
+  it('tři kola dají nejvýš tolik, kolik hra slibuje', () => {
+    expect(INTRUDER_ROUNDS * duelRoundScore(true, 0)).toBe(INTRUDER_DUEL_MAX)
+  })
+
+  it('výsledek souboje zná jen tři možnosti', () => {
+    expect(verdictOf(500, 400)).toBe('win')
+    expect(verdictOf(400, 500)).toBe('loss')
+    expect(verdictOf(400, 400)).toBe('draw')
+  })
+
+  // Plástev uznává „cili" i „cíli"; ve společné mapě proto musí obě padnout
+  // na tentýž klíč, jinak by je dva hráči mohli sebrat každý zvlášť.
+  it('slova se stejným tvarem bez diakritiky mají jeden klíč', () => {
+    expect(claimKey('cíli')).toBe(claimKey('cili'))
+    expect(claimKey('kůň')).not.toBe(claimKey('koně'))
+  })
+
+  // Bilance se připisuje na jedno místo — kdyby ji připsal i zápas, i proužek
+  // v menu, jedna výhra by se počítala dvakrát.
+  it('bilance se posune právě o jeden zápas', () => {
+    const start = { nick: 'já', wins: 2, losses: 1, draws: 0, matches: [] }
+    expect(tallyWith(start, true).wins).toBe(3)
+    expect(tallyWith(start, false).losses).toBe(2)
+    expect(tallyWith(start, null).draws).toBe(1)
+    expect(tallyWith(start, true).losses).toBe(1)
+  })
+
+  it('vyřízený zápas ze seznamu zmizí a nový se přidá jen jednou', () => {
+    const start = { nick: 'já', wins: 0, losses: 0, draws: 0, matches: [] }
+    const one = rememberMatch(start, 'a')
+    expect(rememberMatch(one, 'a').matches).toEqual(['a'])
+    expect(rememberMatch(one, 'b').matches).toEqual(['b', 'a'])
+    expect(forgetMatch(one, 'a').matches).toEqual([])
   })
 })

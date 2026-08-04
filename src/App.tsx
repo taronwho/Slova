@@ -17,7 +17,12 @@ import {
   pickUnseen,
   type ChainBundle,
 } from './app/data'
-import { DuelContext, NextUpContext, RoundModeContext, type NextUpItem } from './app/nextUp'
+import {
+  DuelContext,
+  NextUpContext,
+  RoundModeContext,
+  type NextUpItem,
+} from './app/nextUp'
 import { AwardPopup, type Gained } from './components/AwardPopup'
 import { Awards } from './components/Awards'
 import { InkMark } from './components/art/InkMark'
@@ -31,7 +36,10 @@ import { HiveGame } from './components/HiveGame'
 import { Home } from './components/Home'
 import { QuizGame } from './components/QuizGame'
 import { IntruderGame } from './components/IntruderGame'
-import { DuelStrip } from './components/DuelStrip'
+import { DuelHive } from './components/DuelHive'
+import { DuelIntruder } from './components/DuelIntruder'
+import { DuelSetup } from './components/DuelSetup'
+import { DuelStrip, type DuelReport } from './components/DuelStrip'
 import { QuotesGame } from './components/QuotesGame'
 import { QuizReview } from './components/QuizReview'
 import { Splash } from './components/Splash'
@@ -46,15 +54,29 @@ import type { GallowsPuzzle, GallowsState } from './game/gallows'
 import type { HivePuzzle, HiveState } from './game/hive'
 import { quizFor, type QuizDeck, type QuizQuestion } from './game/quiz'
 import type { IntruderPuzzle, IntruderState } from './game/intruder'
+import type { Challenge, Match } from './lib/multi'
 import {
+  createMatch,
+  dropChallenge,
+  forgetMatch,
+  loadMatch,
   loadMe,
+  matchDone,
   MULTI_ON,
+  myUid,
   playRound,
   recordDuel,
+  rememberMatch,
   saveMe,
+  saveTally,
+  serverNow,
+  startMatch,
+  tallyWith,
+  watchChallenges,
   type Duel,
   type Me,
 } from './lib/multi'
+import { DUEL_MODE, INTRUDER_ROUNDS, type DuelKind, type Verdict } from './game/duel'
 import type { Quote, QuoteState } from './game/quotes'
 import { RANKS, rankFor } from './game/ranks'
 import { tetrisSetup, type TetrisDeck, type TetrisSetup, type TetrisState } from './game/tetris'
@@ -89,6 +111,9 @@ type View =
   | { kind: 'stats' }
   | { kind: 'awards' }
   | { kind: 'game'; mode: ModeId; daily: boolean; nonce: number }
+  // Souboj dvou jmenovitých hráčů. Nemá obtížnost ani denní várku a body
+  // z něj nejdou do věhlasu, takže s `game` nemá společného skoro nic.
+  | { kind: 'duel' }
   // Otázka dne stojí mimo šestici — nemá obtížnost ani rozehrané kolo,
   // takže se do `game` nevejde.
   | { kind: 'quiz' }
@@ -116,6 +141,15 @@ export default function App() {
    */
   const [me, setMe] = useState<Me>(() => loadMe())
   const [duel, setDuel] = useState<Duel | null>(null)
+  const [challenges, setChallenges] = useState<Challenge[]>([])
+  /** Rozehraný zápas a hádanky, které si nese. */
+  const [match, setMatch] = useState<Match | null>(null)
+  const [matchHive, setMatchHive] = useState<HivePuzzle | null>(null)
+  const [matchIntruder, setMatchIntruder] = useState<IntruderPuzzle[] | null>(null)
+  /** Vlastní skryté id. Potřebuje ho jen souboj, tak se zjistí až s ním. */
+  const [uid, setUid] = useState('')
+  const [setup, setSetup] = useState(false)
+  const [reports, setReports] = useState<DuelReport[]>([])
   const [view, setView] = useState<View>({ kind: 'home' })
   const [loaded, setLoaded] = useState<Loaded>({})
   const [loading, setLoading] = useState(false)
@@ -404,6 +438,115 @@ export default function App() {
     [me],
   )
 
+  /* ---------- souboje na jmenovitého soupeře ---------- */
+
+  /**
+   * Hádanky pro souboj.
+   *
+   * Vybírá je vyzývatel a zápas si je nese s sebou; soupeř pak hraje přesně
+   * to samé. Obtížnost se bere z vyzývatelova nastavení — hraje ji stejně
+   * oba, takže nikoho nezvýhodní.
+   */
+  const duelPuzzles = useCallback(
+    async (kind: DuelKind) => {
+      if (kind === 'hive') {
+        const index = await loadHiveIndex()
+        const pool = index.hives.filter((h) => h.difficulty === profile.difficulty.hive)
+        const entries = pool.length > 0 ? pool : index.hives
+        const entry = entries[Math.floor(Math.random() * entries.length)]!
+        return { ids: [entry.id], hive: await loadHive(entry), intruder: null }
+      }
+      const all = await loadIntruder()
+      const pool = all.filter((p) => p.difficulty === profile.difficulty.intruder)
+      const entries = pool.length >= INTRUDER_ROUNDS ? pool : all
+      const chosen: IntruderPuzzle[] = []
+      const used = new Set<string>()
+      while (chosen.length < INTRUDER_ROUNDS && used.size < entries.length) {
+        const one = entries[Math.floor(Math.random() * entries.length)]!
+        if (used.has(one.id)) continue
+        used.add(one.id)
+        chosen.push(one)
+      }
+      return { ids: chosen.map((one) => one.id), hive: null, intruder: chosen }
+    },
+    [profile.difficulty.hive, profile.difficulty.intruder],
+  )
+
+  /** Tytéž hádanky na straně soupeře — hledají se podle id ze zápasu. */
+  const duelPuzzlesOf = useCallback(async (found: Match) => {
+    if (found.kind === 'hive') {
+      const index = await loadHiveIndex()
+      const entry = index.hives.find((h) => h.id === found.puzzles[0])
+      if (!entry) throw new Error('Plástev ze souboje se nenašla')
+      return { hive: await loadHive(entry), intruder: null }
+    }
+    const all = await loadIntruder()
+    const chosen = found.puzzles
+      .map((id) => all.find((one) => one.id === id))
+      .filter((one): one is IntruderPuzzle => Boolean(one))
+    if (chosen.length === 0) throw new Error('Pětice ze souboje se nenašly')
+    return { hive: null, intruder: chosen }
+  }, [])
+
+  /** Odešle výzvu a rovnou se do souboje pustí. */
+  const sendDuel = useCallback(
+    async (kind: DuelKind, nick: string): Promise<boolean> => {
+      const picked = await duelPuzzles(kind)
+      const created = await createMatch(kind, picked.ids, nick)
+      if (!created) return false
+      setUid(await myUid())
+      setMatchHive(picked.hive)
+      setMatchIntruder(picked.intruder)
+      setMatch(created)
+      setMe((previous) => rememberMatch(previous, created.id))
+      setSetup(false)
+      setView({ kind: 'duel' })
+      return true
+    },
+    [duelPuzzles],
+  )
+
+  /** Přijme došlou výzvu. */
+  const acceptDuel = useCallback(
+    async (item: Challenge) => {
+      setLoading(true)
+      setError(null)
+      void dropChallenge(item.id)
+      setChallenges((list) => list.filter((one) => one.id !== item.id))
+      try {
+        const found = await loadMatch(item.match)
+        if (!found) throw new Error('Souboj už neexistuje')
+        // Voština se hraje naráz, takže má smysl jen dokud vyzývatel čeká.
+        // Že u ní sedí, hlásí každých pět vteřin.
+        if (found.kind === 'hive' && (found.live !== 0 || serverNow() - found.ping > 15_000)) {
+          throw new Error(`${found.hostNick} už u výzvy nesedí. Vyzvi ho zpátky.`)
+        }
+        const picked = await duelPuzzlesOf(found)
+        await startMatch(found.id)
+        setUid(await myUid())
+        setMatchHive(picked.hive)
+        setMatchIntruder(picked.intruder)
+        setMatch({ ...found, live: serverNow() })
+        setView({ kind: 'duel' })
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : 'Souboj se nepodařilo otevřít')
+      } finally {
+        setLoading(false)
+      }
+    },
+    [duelPuzzlesOf],
+  )
+
+  /** Souboj je rozhodnutý — připíše se do bilance a zmizí z rozehraných. */
+  const closeDuel = useCallback((id: string, verdict: Verdict) => {
+    setMe((previous) => {
+      const next = tallyWith(forgetMatch(previous, id), verdict === 'draw' ? null : verdict === 'win')
+      saveMe(next)
+      void saveTally(next)
+      return next
+    })
+  }, [])
+
   const finishRound = useCallback(
     (result: RoundResult) => {
       setSaved((previous) => {
@@ -449,6 +592,49 @@ export default function App() {
   )
 
   const goHome = useCallback(() => setView({ kind: 'home' }), [])
+
+  /*
+   * Došlé výzvy se poslouchají, dokud je otevřené menu.
+   *
+   * Voština v souboji se hraje naráz, takže výzva musí dorazit hned — kdyby
+   * se jen jednou přečetla při vstupu do menu, vyzývatel by čekal u něčeho,
+   * o čem soupeř neví. Uvnitř hry se posloucháni ukončí; tam by jen ubíralo
+   * spojení, které hra sama nepotřebuje.
+   */
+  useEffect(() => {
+    if (!MULTI_ON || !me.nick || view.kind !== 'home') return
+    return watchChallenges(setChallenges)
+  }, [me.nick, view.kind])
+
+  /*
+   * Dohrané zápasy, o kterých hráč ještě neví.
+   *
+   * U Vetřelce si vyzývatel odehraje svoje tři kola hned a soupeř třeba až
+   * druhý den; výsledek se proto vyzvedává tady, při návratu do menu.
+   */
+  useEffect(() => {
+    const waiting = me.matches ?? []
+    if (!MULTI_ON || !me.nick || view.kind !== 'home' || waiting.length === 0) return
+    let dead = false
+    void (async () => {
+      const mine = await myUid()
+      const out: DuelReport[] = []
+      for (const id of waiting) {
+        const found = await loadMatch(id)
+        if (!found) continue
+        const done = await matchDone(id)
+        const own = done[mine]
+        const theirs = done[found.host === mine ? found.guest : found.host]
+        if (own && theirs) {
+          out.push({ id, kind: found.kind, rival: theirs.nick, mine: own.score, theirs: theirs.score })
+        }
+      }
+      if (!dead) setReports(out)
+    })().catch(() => undefined)
+    return () => {
+      dead = true
+    }
+  }, [me.matches, me.nick, view.kind])
 
   /**
    * Hodiny kola v liště.
@@ -584,6 +770,7 @@ export default function App() {
   // Až na domovské obrazovce se chová normálně a hru opustí.
   useBackGuard(view.kind !== 'home', goHome)
   useBackGuard(tutorial !== null, closeTutorial)
+  useBackGuard(setup, () => setSetup(false))
 
   const themeButton = useMemo(() => {
     const order: Profile['theme'][] = ['system', 'light', 'dark']
@@ -625,8 +812,14 @@ export default function App() {
       }
     >
     <div
-      className={`shell ${view.kind === 'game' ? 'playing' : ''}`}
-      data-mode={view.kind === 'game' ? view.mode : undefined}
+      className={`shell ${view.kind === 'game' || view.kind === 'duel' ? 'playing' : ''}`}
+      data-mode={
+        view.kind === 'game'
+          ? view.mode
+          : view.kind === 'duel' && match
+            ? DUEL_MODE[match.kind]
+            : undefined
+      }
       // Čip „Denní" se na telefonu z lišty schová, aby se vešel kalamář.
       // Že běží denní kolo, se tím pádem nedá poznat z obrazovky — a testy
       // to vědět potřebují, takže to nese sama deska.
@@ -769,12 +962,61 @@ export default function App() {
             onGuide={() => setGuide(true)}
             onQuiz={() => void startQuiz()}
             {...(__QUIZ_ALL__ ? { onQuizList: () => void openQuizList() } : {})}
-            duels={MULTI_ON ? <DuelStrip me={me} onMe={setMe} /> : null}
+            duels={
+              MULTI_ON ? (
+                <DuelStrip
+                  me={me}
+                  onMe={setMe}
+                  challenges={challenges}
+                  onAccept={(item) => void acceptDuel(item)}
+                  reports={reports}
+                  onChallenge={() => setSetup(true)}
+                  onSeen={(id) => {
+                    const report = reports.find((one) => one.id === id)
+                    setReports((list) => list.filter((one) => one.id !== id))
+                    if (report) {
+                      closeDuel(
+                        id,
+                        report.mine === report.theirs
+                          ? 'draw'
+                          : report.mine > report.theirs
+                            ? 'win'
+                            : 'loss',
+                      )
+                    }
+                  }}
+                />
+              ) : null
+            }
             saved={saved}
             onResume={(mode) => {
               const round = saved[mode]
               if (round) void resumeRound(round)
             }}
+          />
+        )}
+
+        {/* Souboj. Vlastní obrazovka bez inkoustu, nápověd a věhlasu —
+            proti sobě stojí dva lidé a nic jiného se do toho neplete. */}
+        {!loading && view.kind === 'duel' && match && matchHive && (
+          <DuelHive
+            match={match}
+            puzzle={matchHive}
+            uid={uid}
+            nick={me.nick}
+            onHome={goHome}
+            onVerdict={(verdict) => closeDuel(match.id, verdict)}
+          />
+        )}
+
+        {!loading && view.kind === 'duel' && match && matchIntruder && (
+          <DuelIntruder
+            match={match}
+            puzzles={matchIntruder}
+            uid={uid}
+            nick={me.nick}
+            onHome={goHome}
+            onVerdict={(verdict) => closeDuel(match.id, verdict)}
           />
         )}
 
@@ -966,6 +1208,8 @@ export default function App() {
             }
           />
         )}
+
+        {setup && <DuelSetup onClose={() => setSetup(false)} onSend={sendDuel} />}
 
         {splash && <Splash onDone={() => setSplash(false)} />}
 
