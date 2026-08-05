@@ -39,7 +39,8 @@ import { IntruderGame } from './components/IntruderGame'
 import { DuelHive } from './components/DuelHive'
 import { DuelIntruder } from './components/DuelIntruder'
 import { DuelSetup } from './components/DuelSetup'
-import { DuelStrip, type DuelReport } from './components/DuelStrip'
+import { Friends, type DuelReport } from './components/Friends'
+import { FriendsEntry } from './components/FriendsEntry'
 import { QuotesGame } from './components/QuotesGame'
 import { QuizReview } from './components/QuizReview'
 import { Splash } from './components/Splash'
@@ -114,6 +115,9 @@ type View =
   // Souboj dvou jmenovitých hráčů. Nemá obtížnost ani denní várku a body
   // z něj nejdou do věhlasu, takže s `game` nemá společného skoro nic.
   | { kind: 'duel' }
+  // Nabídka soubojů. Stojí mimo hry — nedává věhlas, nebere inkoust
+  // a nepočítá se do denní várky.
+  | { kind: 'friends' }
   // Otázka dne stojí mimo šestici — nemá obtížnost ani rozehrané kolo,
   // takže se do `game` nevejde.
   | { kind: 'quiz' }
@@ -601,10 +605,11 @@ export default function App() {
    * o čem soupeř neví. Uvnitř hry se posloucháni ukončí; tam by jen ubíralo
    * spojení, které hra sama nepotřebuje.
    */
+  const outside = view.kind === 'home' || view.kind === 'friends'
   useEffect(() => {
-    if (!MULTI_ON || !me.nick || view.kind !== 'home') return
+    if (!MULTI_ON || !me.nick || !outside) return
     return watchChallenges(setChallenges)
-  }, [me.nick, view.kind])
+  }, [me.nick, outside])
 
   /*
    * Dohrané zápasy, o kterých hráč ještě neví.
@@ -614,7 +619,7 @@ export default function App() {
    */
   useEffect(() => {
     const waiting = me.matches ?? []
-    if (!MULTI_ON || !me.nick || view.kind !== 'home' || waiting.length === 0) return
+    if (!MULTI_ON || !me.nick || !outside || waiting.length === 0) return
     let dead = false
     void (async () => {
       const mine = await myUid()
@@ -634,7 +639,7 @@ export default function App() {
     return () => {
       dead = true
     }
-  }, [me.matches, me.nick, view.kind])
+  }, [me.matches, me.nick, outside])
 
   /**
    * Hodiny kola v liště.
@@ -964,27 +969,10 @@ export default function App() {
             {...(__QUIZ_ALL__ ? { onQuizList: () => void openQuizList() } : {})}
             duels={
               MULTI_ON ? (
-                <DuelStrip
-                  me={me}
-                  onMe={setMe}
-                  challenges={challenges}
-                  onAccept={(item) => void acceptDuel(item)}
-                  reports={reports}
-                  onChallenge={() => setSetup(true)}
-                  onSeen={(id) => {
-                    const report = reports.find((one) => one.id === id)
-                    setReports((list) => list.filter((one) => one.id !== id))
-                    if (report) {
-                      closeDuel(
-                        id,
-                        report.mine === report.theirs
-                          ? 'draw'
-                          : report.mine > report.theirs
-                            ? 'win'
-                            : 'loss',
-                      )
-                    }
-                  }}
+                <FriendsEntry
+                  nick={me.nick}
+                  waiting={challenges.length + reports.length}
+                  onOpen={() => setView({ kind: 'friends' })}
                 />
               ) : null
             }
@@ -993,6 +981,32 @@ export default function App() {
               const round = saved[mode]
               if (round) void resumeRound(round)
             }}
+          />
+        )}
+
+        {!loading && view.kind === 'friends' && MULTI_ON && (
+          <Friends
+            me={me}
+            onMe={setMe}
+            challenges={challenges}
+            onAccept={(item) => void acceptDuel(item)}
+            reports={reports}
+            onChallenge={() => setSetup(true)}
+            onSeen={(id) => {
+              const report = reports.find((one) => one.id === id)
+              setReports((list) => list.filter((one) => one.id !== id))
+              if (report) {
+                closeDuel(
+                  id,
+                  report.mine === report.theirs
+                    ? 'draw'
+                    : report.mine > report.theirs
+                      ? 'win'
+                      : 'loss',
+                )
+              }
+            }}
+            onBack={goHome}
           />
         )}
 

@@ -253,6 +253,10 @@ export function Home({
           a nedohrané denní výzvy. Obojí zmizí, jakmile je hotovo — a mřížka
           her se musí vejít na displej i s oběma, viz `.home-top` ve stylech. */}
       <div className="home-top">
+        {/* Souboje stojí nad vším ostatním: živá Voština se hraje naráz, takže
+            výzva má cenu jen ve chvíli, kdy dorazí — ne až si jí někdo všimne
+            pod výběrem hry. */}
+        {duels}
         {!quizDone && quizStrip}
         {dailyAlert}
       </div>
@@ -450,8 +454,6 @@ export function Home({
           </div>
         </div>
       )}
-
-      {duels}
 
       {/* Profil až pod výběrem hry — je to doplněk, ne to hlavní. Na každý
           údaj se dá ťuknout: hodnost a věhlas vedou do vitríny, čipy si

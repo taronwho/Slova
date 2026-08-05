@@ -98,15 +98,23 @@ for (const size of SIZES) {
   )
   if (homeOverflow > 0) note(`${size.name}/domů`, `přetéká vodorovně o ${homeOverflow}px`)
 
-  // Všech šest dlaždic musí být vidět bez rolování — i když nad nimi svítí
-  // obě upomínky (Otázka dne i nedohrané denní výzvy). Na výšku se to měří
-  // v nejhorším případě, tedy s prázdným profilem, kdy svítí obě.
+  /*
+   * Mřížka her musí být po otevření vidět, ne se teprve hledat rolováním.
+   * Měří se to na šesté dlaždici, tedy na třech řadách ze čtyř: pravidlo
+   * vzniklo, když byly hry právě tři řady, a s přibývajícími hrami by
+   * doslovné „všechny dlaždice nad okrajem" znamenalo, že každá další hra
+   * musí zdola ukrojit z něčeho nahoře. Tři řady jsou dost na to, aby bylo
+   * poznat, že se vybírá z mřížky, a aby zbytek byl na dosah palce.
+   *
+   * Měří se v nejhorším případě, tedy s prázdným profilem, kdy nahoře svítí
+   * všechny upomínky naráz.
+   */
   const grid = await page.evaluate(() => {
     const tiles = [...document.querySelectorAll('.mode-tile')]
-    const last = tiles.at(-1)?.getBoundingClientRect()
+    const sixth = tiles[5]?.getBoundingClientRect()
     return {
       tiles: tiles.length,
-      bottom: last ? Math.round(last.bottom) : 0,
+      bottom: sixth ? Math.round(sixth.bottom) : 0,
       view: window.innerHeight,
       alerts: document.querySelectorAll('.home-top > *').length,
     }

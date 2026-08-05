@@ -911,6 +911,27 @@
   .daily-alert-text {
     font-size: 0.8rem;
   }
+
+  /* Vstup do soubojů je na malém displeji třetí upomínka v řadě a sám o sobě
+     by mřížku posunul pod okraj. Stáhne se proto na jednu řádku — název
+     a odznak stačí, zbytek se hráč dozví uvnitř. */
+  .friends-entry {
+    padding: 5px var(--sp-3);
+  }
+
+  .friends-entry-mark {
+    width: 1.6rem;
+    height: 1.6rem;
+    font-size: 0.85rem;
+  }
+
+  .friends-entry-title {
+    font-size: 0.9rem;
+  }
+
+  .friends-entry-body .faint {
+    display: none;
+  }
 }
 
 .mode-tile[data-mode='hive'] {
@@ -5077,6 +5098,210 @@ button.stat.open {
 .duel-strip.done .btn {
   margin-left: auto;
   flex: none;
+}
+
+/* ---------- vstup do soubojů ---------- */
+
+/* Stojí nahoře nad výběrem hry a musí být poznat na první pohled, že to
+   není další režim. Proto vlastní barva přes celou šířku, ne dlaždice. */
+.friends-entry {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-lg);
+  border: 1px solid color-mix(in oklab, var(--mode-hive) 45%, var(--border));
+  background: linear-gradient(
+    100deg,
+    color-mix(in oklab, var(--mode-hive) 16%, var(--surface)),
+    color-mix(in oklab, var(--mode-intruder) 14%, var(--surface))
+  );
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 120ms ease;
+}
+
+.friends-entry:active {
+  transform: scale(0.99);
+}
+
+.friends-entry-mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  border: 1px solid color-mix(in oklab, var(--mode-hive) 50%, transparent);
+  background: var(--surface);
+  color: var(--mode-hive);
+  font-size: 1.1rem;
+}
+
+.friends-entry-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.friends-entry-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.02rem;
+}
+
+.friends-entry-body .faint {
+  font-size: 0.8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.friends-entry-go {
+  flex: none;
+  color: var(--muted);
+  font-size: 1.1rem;
+}
+
+/* Odznak s počtem. Pulzuje stejným rytmem jako Otázka dne, ať se ty dvě
+   upomínky nahoře nepřekřikují. */
+.friends-entry-badge {
+  flex: none;
+  min-width: 1.5rem;
+  padding: 2px 0.45rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent, #fff);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.friends-entry.live {
+  animation: friends-breathe 3.4s ease-in-out infinite;
+}
+
+@keyframes friends-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--accent) 28%, transparent);
+    border-color: color-mix(in oklab, var(--accent) 45%, var(--border));
+  }
+  50% {
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--accent) 14%, transparent);
+    border-color: color-mix(in oklab, var(--accent) 80%, var(--border));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .friends-entry.live {
+    animation: none;
+  }
+}
+
+/* ---------- obrazovka soubojů ---------- */
+
+.friends {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  max-width: 34rem;
+  margin: 0 auto;
+}
+
+.friends-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  text-align: center;
+}
+
+.friends-head h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.friends-head .muted {
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.friends-claim {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+}
+
+.friends-claim h2,
+.friends-list h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.friends-claim .guess-input {
+  flex: none;
+  width: 100%;
+  max-width: none;
+}
+
+/* Vlastní přezdívka a bilance. Je to první, co hráč na obrazovce hledá —
+   podle přezdívky ho totiž soupeř vyzývá a musí ji umět nadiktovat. */
+.friends-me {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  text-align: center;
+}
+
+.friends-nick {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.friends-tally {
+  font-size: 0.86rem;
+  color: var(--muted);
+}
+
+.friends-me .btn {
+  margin-top: var(--sp-2);
+}
+
+.friends-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.friends-list .duel-strip,
+.friends-list .duel-pick {
+  margin-top: 0;
+}
+
+/* Ve výkladu dole se nevybírá, jen čte — kurzor to nesmí slibovat. Znak
+   si i tak nese barvu své hry, ať je vidět, o kterou jde. */
+.friends-list div.duel-pick {
+  cursor: default;
+}
+
+.friends-list .duel-pick .duel-mark {
+  background: color-mix(in oklab, var(--mode, var(--accent)) 16%, transparent);
+  color: var(--mode, var(--accent));
+}
+
+.friends-actions {
+  display: flex;
+  justify-content: center;
+  padding-bottom: var(--sp-4);
 }
 
 /* ---------- výběr souboje ---------- */
