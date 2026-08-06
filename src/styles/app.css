@@ -2882,6 +2882,22 @@ button.stat-tap:hover {
   color: var(--muted);
 }
 
+/* Když hra sama pozná, že jede ze staré verze, přestává být servisní řádek
+   servisní: je to jediné místo, kde se to hráč dozví. */
+.refresh-row.stale {
+  flex-wrap: wrap;
+  border-top-color: var(--accent);
+}
+
+.refresh-row.stale .refresh-btn {
+  color: var(--on-accent);
+}
+
+.refresh-note {
+  color: var(--accent);
+  font-weight: 600;
+}
+
 /* Dvě znění téhož popisku — plné na monitoru, zkrácené na telefonu. */
 .narrow-only {
   display: none;

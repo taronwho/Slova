@@ -31,9 +31,14 @@ createRoot(document.getElementById('root')!).render(
  *
  * Bez tohohle by zaseknutá cache mohla starou hru držet i po vymazání dat
  * a jediná cesta ven by byla odinstalovat aplikaci.
+ * Když se ani po dvou pokusech nepodaří starou verzi setřást, hra to řekne
+ * nahlas: na úvodní obrazovce se rozsvítí řádek s tlačítkem Aktualizovat.
+ * Tiché vzdání bylo horší než chyba — hráč pak roky hraje starou verzi
+ * a nemá jak se to dozvědět.
  */
+const TRIES = 'slova.refreshTries'
+
 async function ensureLatestBuild() {
-  if (sessionStorage.getItem('slova.refreshed') === '1') return
   try {
     // Dotaz s časovým razítkem — jinak by ho odchytil service worker
     // z cache a porovnávalo by se staré se starým.
@@ -43,16 +48,36 @@ async function ensureLatestBuild() {
     )
     if (!response.ok) return
     const live = (await response.text()).match(/assets\/index-[A-Za-z0-9_-]+\.js/)
-    if (!live || import.meta.url.includes(live[0])) return
+    if (!live) return
+    if (import.meta.url.includes(live[0])) {
+      // Sedí to. Počitadlo pokusů se smaže, aby se příští aktualizace
+      // neposuzovala podle toho, jak dopadla ta minulá.
+      sessionStorage.removeItem(TRIES)
+      return
+    }
 
-    sessionStorage.setItem('slova.refreshed', '1')
+    const tries = Number(sessionStorage.getItem(TRIES) ?? '0')
+    if (tries >= 2) {
+      // Dvakrát jsme zkusili všechno a pořád jede stará verze. Dál to samo
+      // nepůjde — nejspíš drží mezipaměť někde po cestě, ne v telefonu.
+      document.documentElement.dataset.stale = 'true'
+      window.dispatchEvent(new Event('slova:stale'))
+      return
+    }
+
+    sessionStorage.setItem(TRIES, String(tries + 1))
     const registrations = await navigator.serviceWorker.getRegistrations()
     await Promise.all(registrations.map((registration) => registration.unregister()))
     if ('caches' in window) {
       const keys = await caches.keys()
       await Promise.all(keys.map((key) => caches.delete(key)))
     }
-    window.location.reload()
+    // Ne `reload()`: ten by index.html vytáhl z běžné mezipaměti prohlížeče
+    // a přenačetl by se týž starý soubor. Adresa s jednorázovým parametrem
+    // žádnou uloženou kopii nemá.
+    const fresh = new URL(location.href)
+    fresh.searchParams.set('v', String(Date.now()))
+    location.replace(fresh.toString())
   } catch {
     // Bez sítě se nedá nic ověřit — hra běží dál z toho, co má.
   }

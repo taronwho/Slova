@@ -1,6 +1,6 @@
 /** Domovská obrazovka — mřížka her nahoře, pod ní profil a pravidla. */
 
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 
 import { AWARDS } from '../game/awards'
 import { QUIZ_REWARD } from '../game/quiz'
@@ -153,6 +153,22 @@ export function Home({
   const [openRules, setOpenRules] = useState<ModeId | null>(null)
   /** Otevřená dlaždice — volba obtížnosti a spuštění se dějí až v ní. */
   const [picked, setPicked] = useState<ModeId | null>(null)
+  /**
+   * Drží telefon starou verzi hry, kterou se nedaří setřást?
+   *
+   * Hlásí to `ensureLatestBuild` v `main.tsx` — ten se o výměnu pokusí sám
+   * a ozve se, teprve když to dvakrát nevyjde. Pak už to musí vzít do ruky
+   * hráč, a musí se to k němu dostat: bez tohohle řádku by hrál starou verzi
+   * dál a neměl jak na to přijít.
+   */
+  const [stale, setStale] = useState(
+    () => document.documentElement.dataset.stale === 'true',
+  )
+  useEffect(() => {
+    const notice = () => setStale(true)
+    window.addEventListener('slova:stale', notice)
+    return () => window.removeEventListener('slova:stale', notice)
+  }, [])
   // Všech šest her, ne jen ty tři původní — jinak by „Odehráno" hlásilo míň,
   // než kolik má hráč doopravdy za sebou.
   const played = MODES.reduce((sum, mode) => sum + profile.stats[mode.id].played, 0)
@@ -598,11 +614,18 @@ export function Home({
 
       {/* Úplně dole, tiše. Hra se sama drží v telefonu i bez sítě, takže po
           nasazení opravy může ještě chvíli běžet stará verze — tohle ji
-          zahodí a stáhne novou. Když se nic nezměnilo, jen se to načte znovu. */}
-      <div className="refresh-row">
-        <button type="button" className="btn btn-sm btn-ghost refresh-btn" onClick={refresh}>
+          zahodí a stáhne novou. Když se nic nezměnilo, jen se to načte znovu.
+          Tiše ale jen do chvíle, než se ukáže, že hra opravdu drží starou
+          verzi a sama se jí nezbaví; pak se řádek rozsvítí. */}
+      <div className={`refresh-row ${stale ? 'stale' : ''}`}>
+        <button
+          type="button"
+          className={`btn btn-sm ${stale ? 'btn-primary' : 'btn-ghost'} refresh-btn`}
+          onClick={refresh}
+        >
           Aktualizovat
         </button>
+        {stale && <span className="refresh-note">Je k dispozici novější verze</span>}
         <span className="faint">verze {__BUILD__}</span>
       </div>
     </>
@@ -621,6 +644,9 @@ export function Home({
  */
 async function refresh(): Promise<void> {
   try {
+    // Ruční pokus začíná nanovo — počitadlo automatických pokusů se smaže,
+    // ať se hra po přenačtení ještě jednou pokusí sama.
+    sessionStorage.removeItem('slova.refreshTries')
     if ('serviceWorker' in navigator) {
       const workers = await navigator.serviceWorker.getRegistrations()
       await Promise.all(workers.map((worker) => worker.unregister()))
