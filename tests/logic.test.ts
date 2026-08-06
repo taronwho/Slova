@@ -63,6 +63,7 @@ import { fold, letterMask, normalizeInput, signature } from '../src/lib/czech'
 import { mulberry32, shuffled } from '../src/lib/rng'
 // Hodnost v plástvi (rankFor z game/hive) a hodnost profilu jsou dvě různé
 // věci se stejným jménem — v testu se proto rozlišují předponou.
+import { CREST_FROM, CRESTS } from '../src/components/art/crests'
 import { RANKS as PROFILE_RANKS, rankFor as profileRankFor } from '../src/game/ranks'
 import { AWARDS, AWARD_GROUPS, visibleAwards } from '../src/game/awards'
 import {
@@ -1448,5 +1449,20 @@ describe('souboje', () => {
     expect(rememberMatch(one, 'a').matches).toEqual(['a'])
     expect(rememberMatch(one, 'b').matches).toEqual(['b', 'a'])
     expect(forgetMatch(one, 'a').matches).toEqual([])
+  })
+})
+
+describe('odznaky hodností', () => {
+  // Přesně tahle věc se rozbila: žebříček povyrostl na osmapadesát stupňů,
+  // ale kresba počítala s padesáti, takže od Knížete slova výš dostali
+  // všichni týž odznak.
+  it('vrcholné odznaky pokrývají žebříček až do konce', () => {
+    expect(CREST_FROM - 1 + CRESTS.length).toBe(PROFILE_RANKS.length)
+  })
+
+  it('žádný vrcholný odznak se neopakuje', () => {
+    expect(new Set(CRESTS.map((crest) => crest.plate)).size).toBe(CRESTS.length)
+    // Kov se pozná podle nejtmavšího odstínu; ten je v každém jiný.
+    expect(new Set(CRESTS.map((crest) => crest.metal.dark)).size).toBe(CRESTS.length)
   })
 })

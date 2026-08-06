@@ -8,19 +8,29 @@
  *      deseti hodnostech. Šestiúhelník je zároveň buňka Voštiny, takže i tady
  *      zůstává hra ve svém tvarosloví.
  *   2. **Kov** se mění po pěti hodnostech, takže každý tvar má dvě podoby:
- *      chudší a bohatší. Padesát hodností tak vystačí s pěti tvary a deseti
- *      kovy, místo aby se rozpadlo do padesáti nesouvisejících obrázků.
+ *      chudší a bohatší. Pětačtyřicet hodností tak vystačí s pěti tvary
+ *      a devíti kovy, místo aby se rozpadlo do pětačtyřiceti nesouvisejících
+ *      obrázků.
  *   3. **Znamení uvnitř** je vždycky prstenec ze tří oblouků — totéž „O"
  *      jako ve značce a v úvodní animaci. Tři barvy, tři hry.
  *   4. **Krokve pod štítem** říkají, kolikátá hodnost uvnitř pětice to je.
+ *
+ * Od šestačtyřicáté hodnosti výš soustava končí a nastupují **vrcholné
+ * odznaky** z `crests.tsx`: každý má vlastní tvar, vlastní kov a vlastní
+ * znamení podle svého jména. Na těch stupních se hraje roky a odznak
+ * „stejný jako minule, jen o krokev navíc" by za tu cestu byl málo. Místo
+ * krokví jim pod štítem leží vavřínová snítka — společné znamení pro celou
+ * vrcholnou třináctku.
  *
  * Barvy kovů jsou napevno, ne z tokenů: odznak má vypadat jako ražený kus,
  * ne jako plocha uživatelského rozhraní, a musí být týž ve světlém i tmavém
  * tématu. Prstenec uvnitř naopak barvy režimů dědí, takže se ladí se zbytkem.
  */
 
+import { CREST_FROM, CRESTS, rosette, type Metal } from './crests'
+
 interface Props {
-  /** Pořadí hodnosti 1–50. */
+  /** Pořadí hodnosti 1–58. */
   rank: number
   /** Hrana v pixelech. */
   size?: number
@@ -36,14 +46,7 @@ interface Props {
   compact?: boolean
 }
 
-interface Metal {
-  light: string
-  dark: string
-  rim: string
-  glow: string
-}
-
-/** Deset kovů, po pěti hodnostech jeden. Pořadí je vzestup od bronzu k démantu. */
+/** Devět kovů, po pěti hodnostech jeden. Pořadí je vzestup od bronzu k démantu. */
 const METALS: Metal[] = [
   { light: '#e3a86a', dark: '#9a5a22', rim: '#c07c38', glow: '#ffd9ab' }, // bronz
   { light: '#f0b98c', dark: '#a8471b', rim: '#d1743a', glow: '#ffe2c4' }, // měď
@@ -54,7 +57,6 @@ const METALS: Metal[] = [
   { light: '#e6f0f4', dark: '#7d95a0', rim: '#a6bcc6', glow: '#ffffff' }, // platina
   { light: '#b9a6ff', dark: '#5b3df5', rim: '#7c60ff', glow: '#e4dbff' }, // ametyst
   { light: '#8ff0e6', dark: '#0d7f86', rim: '#2aa9ae', glow: '#d6fffa' }, // plazma
-  { light: '#ffffff', dark: '#7f93c9', rim: '#b3c4ea', glow: '#ffffff' }, // démant
 ]
 
 const LOCKED: Metal = {
@@ -62,27 +64,6 @@ const LOCKED: Metal = {
   dark: '#6f6b84',
   rim: '#8d89a0',
   glow: '#d7d5e0',
-}
-
-/**
- * Rozeta — kruh z vypouklých oblouků, jako ražená růžice na medaili.
- *
- * Počítá se, ne píše ručně: dvanáct obloučků se stejným poloměrem je přesně
- * ta věc, u které se ruční `d` rozjede a tvar se scvrkne do beztvarého fleku.
- */
-function rosette(cx: number, cy: number, r: number, lobes: number): string {
-  const step = (Math.PI * 2) / lobes
-  const arc = r * 0.3
-  let d = ''
-  for (let i = 0; i < lobes; i++) {
-    const a0 = i * step - Math.PI / 2
-    const a1 = a0 + step
-    const x1 = (cx + r * Math.cos(a1)).toFixed(2)
-    const y1 = (cy + r * Math.sin(a1)).toFixed(2)
-    if (i === 0) d += `M${(cx + r * Math.cos(a0)).toFixed(2)} ${(cy + r * Math.sin(a0)).toFixed(2)}`
-    d += `A${arc.toFixed(2)} ${arc.toFixed(2)} 0 0 1 ${x1} ${y1}`
-  }
-  return `${d}Z`
 }
 
 /** Pět obrysů štítu, každý pro dva sousední kovy. Vejdou se do pole 100×100. */
@@ -111,12 +92,15 @@ const ARCS = [
 ]
 
 export function RankBadge({ rank, size = 56, locked = false, compact = false }: Props) {
-  const index = Math.max(1, Math.min(rank, 50)) - 1
-  // Kov se mění po pěti hodnostech, tvar štítu po deseti.
+  const index = Math.max(1, Math.min(rank, CREST_FROM - 1 + CRESTS.length)) - 1
+  // Vrcholné hodnosti mají každá svůj vlastní odznak; nižší se skládají
+  // z kovu (po pěti hodnostech) a tvaru štítu (po deseti).
+  const crest = index + 1 >= CREST_FROM ? CRESTS[index + 1 - CREST_FROM]! : null
   const tier = Math.floor(index / 5)
   const shape = Math.floor(tier / 2)
-  const step = index % 5
-  const metal = locked ? LOCKED : METALS[tier]!
+  const step = crest ? 0 : index % 5
+  const metal: Metal = locked ? LOCKED : (crest?.metal ?? METALS[tier]!)
+  const plate = crest ? crest.plate : PLATES[shape]!
   const id = `rank-${rank}${locked ? '-off' : ''}`
 
   return (
@@ -141,30 +125,54 @@ export function RankBadge({ rank, size = 56, locked = false, compact = false }: 
         </linearGradient>
       </defs>
 
-      <path d={PLATES[shape]} fill={`url(#${id}-plate)`} stroke={metal.dark} strokeWidth="2.5" />
-      <path d={PLATES[shape]} fill={`url(#${id}-shine)`} />
+      <path d={plate} fill={`url(#${id}-plate)`} stroke={metal.dark} strokeWidth="2.5" />
+      <path d={plate} fill={`url(#${id}-shine)`} />
 
       {/* Zapuštěné pole, ve kterém sedí znamení. */}
-      <circle cx="50" cy="50" r="27" fill={metal.dark} opacity="0.28" />
-      <circle cx="50" cy="50" r="27" fill="none" stroke={metal.dark} strokeWidth="2" />
+      <circle cx="50" cy="50" r={crest ? 30 : 27} fill={metal.dark} opacity="0.28" />
+      <circle
+        cx="50"
+        cy="50"
+        r={crest ? 30 : 27}
+        fill="none"
+        stroke={metal.dark}
+        strokeWidth="2"
+      />
 
-      <g opacity={locked ? 0.45 : 1}>
-        {ARCS.map((arc) => (
-          <circle
-            key={arc.angle}
-            cx="50"
-            cy="50"
-            r={R}
-            fill="none"
-            stroke={locked ? '#4a4760' : arc.color}
-            strokeWidth="8"
-            strokeLinecap="butt"
-            strokeDasharray={`${ARC} ${CIRCUMFERENCE - ARC}`}
-            transform={`rotate(${arc.angle} 50 50)`}
-          />
-        ))}
-        <circle cx="50" cy="50" r="7" fill={metal.light} />
+      <g opacity={locked ? 0.55 : 1}>
+        {crest ? (
+          crest.emblem(metal)
+        ) : (
+          <>
+            {ARCS.map((arc) => (
+              <circle
+                key={arc.angle}
+                cx="50"
+                cy="50"
+                r={R}
+                fill="none"
+                stroke={locked ? '#4a4760' : arc.color}
+                strokeWidth="8"
+                strokeLinecap="butt"
+                strokeDasharray={`${ARC} ${CIRCUMFERENCE - ARC}`}
+                transform={`rotate(${arc.angle} 50 50)`}
+              />
+            ))}
+            <circle cx="50" cy="50" r="7" fill={metal.light} />
+          </>
+        )}
       </g>
+
+      {/* Vavřínová snítka pod vrcholnými odznaky. Zastupuje krokve — ty by
+          u hodností, které stojí každá sama za sebe, počítaly něco, co se
+          už nepočítá. */}
+      {crest && !compact && (
+        <g fill="none" stroke={metal.rim} strokeWidth="3.5" strokeLinecap="round">
+          <path d="M50 112c-9 0-15-4-18-11 8-2 14 1 18 6" />
+          <path d="M50 112c9 0 15-4 18-11-8-2-14 1-18 6" />
+          <path d="M50 101v13" />
+        </g>
+      )}
 
       {/* Krokve = pořadí uvnitř kovu. Nula u první hodnosti každého kovu.
           Drží se těsně pod štítem, aby patřily k němu a neplavaly zvlášť. */}

@@ -1,29 +1,32 @@
 /**
  * Hodnosti profilu.
  *
- * Padesát stupňů od Nováčka po Vládce slov. Hodnost roste s **věhlasem** —
+ * Osmapadesát stupňů od Nováčka po Nesmrtelného písaře. Hodnost roste
+ * s **věhlasem** —
  * jediným číslem, do kterého se sčítají body ze všech her. Hráč tak
  * vidí, že se mu počítá všechno, ať si zrovna zahrál cokoli.
  *
  * Prahy jsou naschvál nerovnoměrné. První tři hodnosti odsýpají, ať má nový
  * hráč co slavit hned první večer: druhá padne po jednom kole, třetí po
  * druhém, čtvrtá po pátém. Od té chvíle se rozestupy natahují o patnáct
- * procent na každém stupni, takže dvacátá hodnost je na dvě stě kol a
- * padesátá na dobrých jedenáct tisíc — na tu se hraje roky, ne měsíce.
+ * procent na každém stupni, takže dvacátá hodnost je na dvě stě kol
+ * a poslední na deset milionů věhlasu — na tu se hraje roky, ne měsíce.
  *
- * Odznak (RankBadge.tsx) se mění po pěti hodnostech: deset kovů a k nim pět
- * tvarů štítu, každý pro dva sousední kovy. Uvnitř pětice se hodnosti liší
- * počtem krokví. Za každou novou hodnost padne inkoust — kolik, říká
- * `rankInk` v economy.ts.
+ * Odznak (RankBadge.tsx) se do pětačtyřicáté hodnosti mění po pěti stupních:
+ * devět kovů a k nim pět tvarů štítu, každý pro dva sousední kovy; uvnitř
+ * pětice se hodnosti liší počtem krokví. Posledních třináct hodností má
+ * vlastní kresbu (crests.tsx) — na těch stupních se hraje roky a odznak
+ * odlišený jen krokví by za tu cestu byl málo. Za každou novou hodnost padne
+ * inkoust — kolik, říká `rankInk` v economy.ts.
  */
 
 export interface Rank {
-  /** Pořadí 1–50, používá se i jako klíč do kresby odznaku. */
+  /** Pořadí 1–58, používá se i jako klíč do kresby odznaku. */
   index: number
   name: string
   /** Kolik věhlasu je potřeba nasbírat. */
   at: number
-  /** 0–9; určuje kov odznaku a po dvou i tvar štítu. */
+  /** Určuje kov odznaku a po dvou i tvar štítu. Od 46. hodnosti se nepoužije. */
   tier: number
   /** Kolikátá hodnost uvnitř své pětice (0–4) — počet krokví pod odznakem. */
   step: number
