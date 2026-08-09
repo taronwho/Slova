@@ -7,11 +7,18 @@
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "display_override": ["standalone", "fullscreen"],
+  "display_override": [
+    "standalone",
+    "fullscreen"
+  ],
   "orientation": "portrait-primary",
   "background_color": "#121028",
   "theme_color": "#5b3df5",
-  "categories": ["games", "education", "word"],
+  "categories": [
+    "games",
+    "education",
+    "word"
+  ],
   "icons": [
     {
       "src": "./icons/icon-192.png",
@@ -36,6 +43,12 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    },
+    {
+      "src": "./icons/icon-mono-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "monochrome"
     }
   ],
   "shortcuts": [
