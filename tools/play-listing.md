@@ -177,11 +177,19 @@ Hra má tohle:
 | `6-hodnosti.png` | Žebříček hodností s odznaky |
 | `7-souboje.png` | Hra s přáteli |
 | `feature-1024x500.png` | Hlavní grafika |
-
-Ikona do obchodu (512×512) je `public/icons/icon-512.png`.
+| `tablet7-*.png` | Tři snímky pro sedmipalcový tablet (1200×1920) |
+| `tablet10-*.png` | Tři snímky pro desetipalcový tablet (1600×2560) |
+| `icon-512-store.png` | Ikona do obchodu |
 
 Play chce aspoň dva telefonní snímky; sedm je lepší, protože v obchodě se
-listuje a osm her se na dvou obrázcích ukázat nedá.
+listuje a osm her se na dvou obrázcích ukázat nedá. Snímky pro tablety Play
+vyžaduje zvlášť — bez nich hlásí neúplný záznam a aplikace se neukáže na
+tabletech ani na Chromebooku.
+
+**Ikona do obchodu je `play/icon-512-store.png`, ne ta z `public/icons/`.**
+Ikona pro web má zaoblené rohy a průhledné okolí; Play si rohy zaobluje sám,
+takže by se zaoblily podruhé a okraje by vypadaly okousaně. Do obchodu proto
+jde plný neprůhledný čtverec.
 
 ---
 

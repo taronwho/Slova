@@ -87,6 +87,39 @@ def draw_icon(size: int, maskable: bool) -> Image.Image:
     return out
 
 
+def mono_icon(size):
+    """
+    Jednobarevná ikona pro témata Androidu.
+
+    Android 13 a novější si ikonu přebarvuje podle tapety — dostane jen tvar
+    a barvu si dodá sám. Barevná ikona se pro to nedá použít: systém z ní udělá
+    beztvarou placku. Kreslí se proto bílý tvar na průhledném pozadí a v téže
+    bezpečné zóně jako maskable, protože i tuhle ikonu systém ořezává.
+    """
+    big = size * 4
+    image = Image.new("RGBA", (big, big), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(image)
+
+    radius = big * MASKABLE_SCALE / 2
+    width = int(radius * 0.42)
+    box = (
+        big / 2 - radius,
+        big / 2 - radius,
+        big / 2 + radius,
+        big / 2 + radius,
+    )
+    # Týž prstenec ze tří oblouků jako v barevné ikoně, jen jednou barvou.
+    for index in range(3):
+        start = -90 + index * 120 + 4
+        draw.arc(box, start, start + 112, fill=PAPER, width=width)
+
+    dot = radius * 0.34
+    draw.ellipse(
+        (big / 2 - dot, big / 2 - dot, big / 2 + dot, big / 2 + dot), fill=PAPER
+    )
+    return image.resize((size, size), Image.LANCZOS)
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     made = []
@@ -95,6 +128,20 @@ def main():
             name = f"icon-maskable-{size}.png" if maskable else f"icon-{size}.png"
             draw_icon(size, maskable).save(os.path.join(OUT, name))
             made.append(name)
+
+    # Jednobarevná varianta pro témata Androidu.
+    mono_icon(512).save(os.path.join(OUT, "icon-mono-512.png"))
+    made.append("icon-mono-512.png")
+
+    # Ikona do obchodu. Google Play si rohy zaobluje sám a průhlednost nechce:
+    # ikona s vlastními zaoblenými rohy se v obchodě zaoblí podruhé a vzniknou
+    # z toho okousané okraje. Do obchodu proto jde plný čtverec bez průhlednosti.
+    store_dir = os.path.join(ROOT, "play")
+    os.makedirs(store_dir, exist_ok=True)
+    store = Image.new("RGB", (512, 512), INK)
+    store.paste(draw_icon(512, True), (0, 0), draw_icon(512, True))
+    store.save(os.path.join(store_dir, "icon-512-store.png"))
+    print("  play/icon-512-store.png")
 
     # Apple touch icon nesmí být průhledná ani zaoblená — iOS si ji zaoblí sám.
     apple = Image.new("RGB", (180, 180), INK)

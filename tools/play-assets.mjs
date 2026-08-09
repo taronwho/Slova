@@ -39,6 +39,16 @@ const URL = process.env.URL ?? 'http://localhost:4173/'
 const PHONE = { width: 405, height: 720 }
 const DENSITY = 1920 / 720
 
+/**
+ * Tablety. Play je chce zvlášť a bez nich hlásí neúplný záznam; aplikace se
+ * navíc bez nich neukáže na tabletech ani na Chromebooku. Rozvržení hry se
+ * s šířkou samo roztáhne, takže stačí fotit v širším okně.
+ */
+const TABLETS = [
+  { name: '7', viewport: { width: 600, height: 960 }, density: 2 },
+  { name: '10', viewport: { width: 800, height: 1280 }, density: 2 },
+]
+
 mkdirSync(OUT, { recursive: true })
 
 /**
@@ -78,10 +88,10 @@ const browser = await chromium.launch({
   executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
 })
 
-async function open() {
+async function open(viewport = PHONE, density = DENSITY) {
   const page = await browser.newPage({
-    viewport: PHONE,
-    deviceScaleFactor: DENSITY,
+    viewport,
+    deviceScaleFactor: density,
     isMobile: true,
     hasTouch: true,
     locale: 'cs-CZ',
@@ -171,6 +181,33 @@ console.log('\nSNÍMKY OBRAZOVKY')
   await page.waitForTimeout(500)
   await shoot(page, '7-souboje')
   await page.close()
+}
+
+// Tablety: stačí nabídka her, jedna rozehraná deska a žebříček. Víc jich
+// v obchodě stejně nikdo neprolistuje.
+console.log('\nTABLETY')
+for (const tablet of TABLETS) {
+  {
+    const page = await open(tablet.viewport, tablet.density)
+    await shoot(page, `tablet${tablet.name}-1-menu`)
+    await page.close()
+  }
+  {
+    const page = await open(tablet.viewport, tablet.density)
+    await openGame(page, 'hive')
+    await shoot(page, `tablet${tablet.name}-2-vostina`)
+    await page.close()
+  }
+  {
+    const page = await open(tablet.viewport, tablet.density)
+    await page.locator('.profile-chip').click()
+    await page.waitForTimeout(400)
+    await page.locator('.rank-card').click()
+    await page.waitForTimeout(500)
+    await page.locator('.ladder-row').nth(28).scrollIntoViewIfNeeded()
+    await shoot(page, `tablet${tablet.name}-3-hodnosti`)
+    await page.close()
+  }
 }
 
 /**

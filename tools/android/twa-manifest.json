@@ -16,7 +16,7 @@
   "startUrl": "/Slova/",
   "iconUrl": "https://taronwho.github.io/Slova/icons/icon-512.png",
   "maskableIconUrl": "https://taronwho.github.io/Slova/icons/icon-maskable-512.png",
-  "monochromeIconUrl": "https://taronwho.github.io/Slova/icons/icon-maskable-512.png",
+  "monochromeIconUrl": "https://taronwho.github.io/Slova/icons/icon-mono-512.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
     "path": "./android.keystore",
