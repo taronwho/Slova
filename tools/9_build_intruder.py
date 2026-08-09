@@ -75,9 +75,12 @@ FORMS = (
 MIN_LEN, MAX_LEN = 4, 13
 PER_KIND = 400
 
-# Kolik pětic nejvýš z jedné rodiny. Devadesát dva rodin krát tenhle strop
-# vydá zhruba tři tisíce, tedy přesně tolik, kolik se do hry balí.
-PER_FAMILY = 34
+# Kolik pětic připadne na kterou obtížnost. Rozpočet se pak rozdělí rovným
+# dílem mezi rodiny, které do té obtížnosti patří — uvnitř jedné obtížnosti
+# tak mají všechny rodiny přesně stejný podíl a žádná se nemůže tlačit
+# dopředu. Součet je tři tisíce, tedy tolik, kolik se do hry balí: data se
+# balí celá a v jednosouborové verzi navíc bobtnají na dvojnásobek.
+LEVEL_BUDGET = {"easy": 1200, "normal": 800, "hard": 1000}
 
 
 def origin(text: str) -> str | None:
@@ -226,7 +229,100 @@ def build(words: list[dict], kind: str, rng: random.Random) -> list[dict]:
     return out
 
 
-def from_families(rng: random.Random) -> list[dict]:
+def level_of(family: dict) -> str:
+    """Obtížnost rodiny — a je to jediné místo, kde se o ní rozhoduje.
+
+    Pravidlo je jednoduché a drží celý režim pohromadě: **rodina se střechou
+    je lehká**. Pětice, u které je na první pohled vidět, že jsou to všechno
+    houby, dává hráči polovinu práce zadarmo — zbývá najít osu mezi pěti
+    slovy jedné třídy. To je hezký rozcvičovací úkol, ale není to vetřelec.
+
+    Střední a těžkou nesou jen **skryté** rodiny, kde pětice vypadá jako
+    náhodná hromada a hráč nemá se čeho chytit, dokud souvislost nenajde.
+    Mezi nimi obtížnost určuje, jak dlouho se hledá: zvěrokruh a karty zná
+    každý, takže spadly na lehkou, kdežto Formanovy filmy nebo souhvězdí
+    chtějí znalost.
+    """
+    return family["level"] if family.get("hidden") else "easy"
+
+
+# Otázky, které se za „Čtyři z nich" nedají přilepit tak, jak jsou.
+#
+# Otázky u rodin jsou psané jako samostatné věty o jednom slově („je to
+# polévka", „sedá se na ně"). Ve vyhodnocení ale stojí za podmětem „Čtyři
+# z nich" a tam přestanou sedět ze tří důvodů:
+#
+# * **číslo.** „Čtyři z nich je to polévka" — sloveso i jmenná část musí do
+#   množného čísla: „jsou polévky".
+# * **příklonka.** V češtině se „se" váže na druhé místo ve větě, takže po
+#   podmětu jde hned ono: ne „Čtyři z nich čtou se stejně", ale „Čtyři
+#   z nich se čtou stejně".
+# * **zdvojený odkaz.** „sedá se na ně", „vaří se v tom", „máme je v páru" —
+#   to „ně / to / je" je zástupka za táž slova, která už stojí v podmětu,
+#   takže se ve větě říká dvakrát. Tyhle otázky se musí přepsat celé.
+#
+# Vlevo je otázka tak, jak ji má rodina, vpravo tvar do věty. Ostatní
+# otázky projdou beze změny, jen se jim ubere „to" po „jsou".
+RECAP = {
+    # příklonka patří hned za podmět
+    "chovají se pro užitek": "se chovají pro užitek",
+    "hodí se do zimy a mokra": "se hodí do zimy a mokra",
+    "hraje se s míčem": "se hrají s míčem",
+    "hraje se s raketou nebo pálkou": "se hrají s raketou nebo pálkou",
+    "hrají se s kartami": "se hrají s kartami",
+    "nosí se na hlavě": "se nosí na hlavě",
+    "pečou se v troubě": "se pečou v troubě",
+    "používá se dodnes": "se používají dodnes",
+    "tančí se ve dvojici": "se tančí ve dvojici",
+    "vyrábějí se z mléka": "se vyrábějí z mléka",
+    "čtou se stejně zepředu i zezadu": "se čtou stejně zepředu i zezadu",
+    # jednotné číslo do množného
+    "je to dobrá vlastnost": "jsou dobré vlastnosti",
+    "je to mince, ne bankovka": "jsou mince, ne bankovky",
+    "je to obytná místnost uvnitř": "jsou obytné místnosti uvnitř",
+    "je to plod nebo semeno": "jsou plody nebo semena",
+    "je to polévka": "jsou polévky",
+    "je to poušť": "jsou pouště",
+    "je to přírodní vlákno": "jsou přírodní vlákna",
+    "má přes sto tisíc obyvatel": "mají přes sto tisíc obyvatel",
+    "nosí se to na dolní polovině těla": "se nosí na dolní polovině těla",
+    "něco to zakazuje nebo přikazuje": "něco zakazují nebo přikazují",
+    "pečuje to o tělo a vzhled": "pečují o tělo a vzhled",
+    "vychází to tištěné na papíře": "vycházejí tištěné na papíře",
+    # zástupka navíc — otázka se říká jinak
+    "hraje se na ně dechem": "jsou dechové",
+    "hraje se na ně smyčcem": "jsou smyčcové",
+    "hraje se na to pomocí kláves": "jsou klávesové",
+    "je to celá stovka nebo víc": "znamenají sto a víc",
+    "je to voda v pevném stavu": "jsou zmrzlá voda",
+    "jí se z nich podzemní část": "mají jedlou podzemní část",
+    "loví a pohybují se v noci": "jsou aktivní v noci",
+    "máme je v páru": "máme v páru",
+    "nahradilo je euro nebo jím jsou": "patří do eurozóny",
+    "najdeš je v duze": "najdeš v duze",
+    "napsal je český autor": "napsal český autor",
+    "sedá se na ně": "jsou na sezení",
+    "vaří se v tom na sporáku": "se dávají na sporák",
+    "voda v nich stojí, neteče": "mají stojatou vodu",
+    "způsobuje je virus": "způsobuje virus",
+}
+
+
+def in_sentence(ask: str) -> str:
+    """Otázka přeskládaná do věty „Čtyři z nich …".
+
+    Otázky jsou psané tak, aby stály samy o sobě („jsou to zároveň jména
+    českých měst"), jenže ve vyhodnocení se lepí za „Čtyři z nich" a z toho
+    vyleze „Čtyři z nich jsou to zároveň jména". To „to" tam po podmětu
+    nemá co dělat, takže se cestou do věty zahodí. Otázky, kterým nestačí
+    tohle jedno škrtnutí, mají tvar napsaný v tabulce RECAP.
+    """
+    if ask in RECAP:
+        return RECAP[ask]
+    return "jsou " + ask[len("jsou to "):] if ask.startswith("jsou to ") else ask
+
+
+def from_families(rng: random.Random, per_family: dict[str, int]) -> list[dict]:
     """Hádanky z ručně psaných rodin — páteř režimu.
 
     Čtyři slova zevnitř, jedno zvenku. Otázky do druhého kroku jsou psané
@@ -235,14 +331,14 @@ def from_families(rng: random.Random) -> list[dict]:
     """
     out = []
     for family in FAMILIES:
-        # Na každou rodinu stejný strop.
+        # Strop je pro všechny rodiny téže obtížnosti stejný.
         #
-        # Dřív dostávaly skryté rodiny sto padesát pětic a ostatní pětačtyřicet.
-        # Skrytých je dvanáct a psaných osmdesát, takže z hotové sady byla
-        # každá osmá pětice zvěrokruh nebo karty — hráč je potkával pořád
-        # dokola a hlásil to. Rovný strop tomu bere půdu pod nohama;
-        # o rozestup mezi stejnými rodinami se pak stará ještě hra sama.
-        want = min(PER_FAMILY, len(family["inside"]) * len(family["outside"]))
+        # Dřív dostávaly skryté rodiny sto padesát pětic a ostatní pětačtyřicet,
+        # takže z hotové sady byla každá osmá pětice zvěrokruh nebo karty —
+        # hráč je potkával pořád dokola a hlásil to. O rozestup mezi stejnými
+        # rodinami se pak stará ještě hra sama.
+        want = min(per_family[level_of(family)],
+                   len(family["inside"]) * len(family["outside"]))
         seen = set()
         for _ in range(want * 20):
             if len(seen) >= want:
@@ -277,12 +373,12 @@ def from_families(rng: random.Random) -> list[dict]:
                 # opakovala („slova, která jsou znamením zvěrokruhu. Čtyři
                 # z nich jsou to znamení zvěrokruhu").
                 "recap": (
-                    f"Čtyři z nich {family['asks'][0]} — {odd} ne."
+                    f"Čtyři z nich {in_sentence(family['asks'][0])} — {odd} ne."
                     if family.get("hidden")
                     else f"Všech pět: {family['roof']}. Čtyři z nich "
-                         f"{family['asks'][0]} — {odd} ne."
+                         f"{in_sentence(family['asks'][0])} — {odd} ne."
                 ),
-                "difficulty": family["level"],
+                "difficulty": level_of(family),
                 "hidden": bool(family.get("hidden")),
                 # Klíč rodiny. První otázka je napříč rodinami jedinečná,
                 # takže z ní jde udělat značku, aniž by ji někdo psal ručně.
@@ -294,52 +390,43 @@ def from_families(rng: random.Random) -> list[dict]:
 def main() -> int:
     rng = random.Random(7)
     words = load()
-    puzzles = []
-    for kind in TRAITS:
-        made = build(words, kind, rng)
-        print(f"  {kind}: {len(made)}")
-        puzzles += made
-    rng.shuffle(puzzles)
 
-    # Obtížnost podle toho, jak nápadný je rozdíl: slovní druh se pozná
-    # nejsnáz, jazyk původu nejhůř.
-    # Psané rodiny jsou páteř; jazykové pětice zůstávají jako koření.
-    made = from_families(rng)
-    for one in made:
-        one.pop("hidden", None)
-    print(f"  z rodin: {len(made)}")
+    # Tabulka přepisů má hlídat sama sebe: kdyby se otázka v rodině
+    # přeformulovala a v RECAP zůstal starý tvar, tichounce by se přestal
+    # používat a ve vyhodnocení by se zase objevila rozbitá věta.
+    stale = set(RECAP) - {family["asks"][0] for family in FAMILIES}
+    if stale:
+        print("RECAP míří na otázky, které už nikde nejsou: " + ", ".join(sorted(stale)))
+        return 1
 
-    # Ořez po rodinách, ne přes celou hromadu.
+    # Kolik pětic připadne na jednu rodinu.
     #
-    # Dřív se sada uřízla na tři tisíce po zamíchání a rodiny do ní spadly
-    # v poměru, ve kterém se vyrobily — tedy nerovně. Teď se z rodin bere
-    # kolem dokola po jedné, takže když se strop tří tisíc dotkne, ubere
-    # všem rodinám stejně. Jazykové pětice jdou dovnitř jako další „rodiny",
-    # jedna za každý znak, takže se ředí spolu s ostatními.
-    by_family: dict[str, list[dict]] = {}
-    for one in made + puzzles:
-        by_family.setdefault(one["family"], []).append(one)
-    for group in by_family.values():
-        rng.shuffle(group)
+    # Rozpočet obtížnosti se dělí rovným dílem mezi rodiny, které do ní
+    # patří. Lehkou nese osmdesát rodin se střechou, takže na každou vyjde
+    # pár desítek; střední a těžkou nese hrstka skrytých, takže každá z nich
+    # dostane víc. Uvnitř jedné obtížnosti mají ale všechny stejně — a to je
+    # jediné, na čem hráči záleží, protože obtížnost si vybírá sám.
+    families: dict[str, int] = {}
+    for family in FAMILIES:
+        families[level_of(family)] = families.get(level_of(family), 0) + 1
+    for kind in TRAITS:
+        families[LEVEL[kind]] = families.get(LEVEL[kind], 0) + 1
+    per_family = {level: LEVEL_BUDGET[level] // count for level, count in families.items()}
+    for level in sorted(per_family):
+        print(f"  {level}: {families[level]} rodin po {per_family[level]} pěticích")
 
-    # Data se balí do aplikace celá a v jednosouborové verzi navíc bobtnají
-    # na dvojnásobek. Tři tisíce hádanek je osm let denního hraní — víc
-    # není k čemu, a soubor zůstane pod megabajtem.
-    order = sorted(by_family, key=lambda key: (-len(by_family[key]), key))
-    puzzles = []
-    round_no = 0
-    while len(puzzles) < 3000:
-        added = 0
-        for key in order:
-            group = by_family[key]
-            if round_no < len(group):
-                puzzles.append(group[round_no])
-                added += 1
-                if len(puzzles) >= 3000:
-                    break
-        if added == 0:
-            break
-        round_no += 1
+    made = []
+    for kind in TRAITS:
+        rows = build(words, kind, rng)[: per_family[LEVEL[kind]]]
+        print(f"  {kind}: {len(rows)}")
+        made += rows
+
+    from_fam = from_families(rng, per_family)
+    for one in from_fam:
+        one.pop("hidden", None)
+    print(f"  z rodin: {len(from_fam)}")
+
+    puzzles = made + from_fam
     rng.shuffle(puzzles)
     for i, puzzle in enumerate(puzzles):
         puzzle["id"] = f"i-{i:04d}"

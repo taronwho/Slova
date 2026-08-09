@@ -224,8 +224,9 @@ for _family in FAMILIES:
 from intruder_families3 import EXTRA3  # noqa: E402
 from intruder_families4 import EXTRA4  # noqa: E402
 from intruder_families5 import HIDDEN  # noqa: E402
+from intruder_families6 import FAMILIES6  # noqa: E402
 
-FAMILIES += EXTRA + EXTRA3 + EXTRA4 + HIDDEN
+FAMILIES += EXTRA + EXTRA3 + EXTRA4 + HIDDEN + FAMILIES6
 
 # Zavádějící věty se přidávají ke všem rodinám, i k těm z druhé dávky.
 for _family in FAMILIES:

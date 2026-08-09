@@ -184,7 +184,10 @@ HIDDEN = [
     {
         "id": "skryte-karty",
         "roof": "slova, která jsou zároveň barvou nebo figurou v kartách",
-        "level": "normal",
+        # Srdce, kule, žaludy, listy — mariáš zná každý a čtveřice se pozná
+        # dřív, než ji hráč stihne přečíst. Skrytá souvislost sama o sobě
+        # obtížnost nedělá; dělá ji to, jak dlouho se hledá.
+        "level": "easy",
         "hidden": True,
         "inside": ["srdce", "kule", "žaludy", "listy", "eso", "král", "dáma",
                    "spodek", "kříže", "piky"],

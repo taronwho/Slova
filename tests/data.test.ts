@@ -755,7 +755,11 @@ describe('vetřelec — vyváženost sady', () => {
       // Dřív měl zvěrokruh pětinu střední obtížnosti a hráč potkával tutéž
       // souvislost pořád dokola. Desetina je strop s rezervou.
       expect(worst / pool.length).toBeLessThan(0.1)
-      expect(counts.size).toBeGreaterThanOrEqual(15)
+      // Střední a těžkou nesou jen skryté rodiny, a těch je z podstaty míň
+      // než rodin se střechou — vymyslet pětici bez viditelné střechy dá
+      // práci. Deset je spodní mez, pod kterou by se sada začala opakovat
+      // i přes rozestup, který drží hra sama.
+      expect(counts.size).toBeGreaterThanOrEqual(10)
     }
   })
 

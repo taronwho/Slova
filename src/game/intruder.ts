@@ -2,10 +2,17 @@
  * Režim VETŘELEC — čtyři slova něco spojuje, páté ne.
  *
  * Hráč nehádá slovo, **třídí** je: ukáže na vetřelce a pak řekne proč.
- * Souvislost je vždycky jedna ze tří — jazyk původu, počet slabik, slovní
- * druh —, a aby byl vetřelec právě jeden, shoduje se pětice na obou
- * zbylých znacích. Generátor v `tools/9_build_intruder.py` jinou pětici
- * nepustí ven.
+ * Aby byl vetřelec právě jeden, hlídá generátor v `tools/9_build_intruder.py`,
+ * že souvislost dělí pětici přesně na čtyři a jednoho; pětici, kde by to
+ * vycházelo dvěma způsoby, ven nepustí.
+ *
+ * Obtížnost nedělá délka slov, ale to, jestli je nad pěticí vidět střecha:
+ *
+ * * **Lehká.** Střecha je vidět hned — jsou to houby, jsou to znamení
+ *   zvěrokruhu. Hráč hledá už jen osu uvnitř.
+ * * **Střední a těžká.** Pětice vypadá jako náhodná hromada a hráč nemá se
+ *   čeho chytit, dokud souvislost nenajde sám. Mezi nimi rozhoduje, jak
+ *   dlouho se hledá: schované zvíře v slově proti názvům Formanových filmů.
  *
  * Druhý krok je schválně placený zvlášť: trefit slovo se dá i náhodou,
  * pojmenovat souvislost už ne.
