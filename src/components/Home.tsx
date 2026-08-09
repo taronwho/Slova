@@ -627,6 +627,12 @@ export function Home({
         </button>
         {stale && <span className="refresh-note">Je k dispozici novější verze</span>}
         <span className="faint">verze {__BUILD__}</span>
+        {/* Zásady ochrany soukromí musí být po ruce i tomu, kdo souboje
+            nikdy neotevře — obchody s aplikacemi to vyžadují a je to
+            správně i bez nich. */}
+        <a className="faint refresh-privacy" href="./soukromi.html" target="_blank" rel="noreferrer">
+          Soukromí
+        </a>
       </div>
     </>
   )

@@ -18,6 +18,7 @@
  */
 
 import type { DuelKind } from '../game/duel'
+import { foulNick } from '../game/nickCheck'
 import type { ModeId } from '../game/types'
 
 /** Konfigurace projektu. Není to tajemství — ochranu dělají pravidla. */
@@ -35,6 +36,8 @@ const CONFIG = {
 export const MULTI_ON = !__STANDALONE__
 
 export interface Duel {
+  /** Skryté id soupeře — potřebné k nahlášení a zablokování. */
+  uid: string
   /** Přezdívka soupeře. */
   nick: string
   score: number
@@ -66,7 +69,8 @@ export function nickError(nick: string): string | null {
   if (key.length < NICK_MIN) return `Aspoň ${NICK_MIN} znaky.`
   if (key.length > NICK_MAX) return `Nejvýš ${NICK_MAX} znaků.`
   if (nick.trim() !== nick) return 'Bez mezer na začátku a na konci.'
-  return null
+  // Závadná jména se zastaví tady, tedy dřív, než je kdokoli uvidí.
+  return foulNick(nick)
 }
 
 /* ---------- spojení ---------- */
@@ -174,6 +178,7 @@ export async function playRound(
   puzzle: string,
   score: number,
   band: number,
+  blocked: string[] = [],
 ): Promise<Duel | null> {
   const { db, base, uid } = await open()
   const path = `results/${mode}/${puzzle}`
@@ -182,7 +187,11 @@ export async function playRound(
   const rows: { uid: string; nick: string; score: number; band: number }[] = []
   all.forEach((row) => {
     const value = row.val() as { nick: string; score: number; band: number }
-    if (row.key && row.key !== uid) rows.push({ uid: row.key, ...value })
+    // Zablokovaný hráč se nesmí vrátit ani jako náhodný soupeř — jinak by
+    // blokování znamenalo jen „neuvidím tvoje výzvy" a to je málo.
+    if (row.key && row.key !== uid && !blocked.includes(row.key)) {
+      rows.push({ uid: row.key, ...value })
+    }
   })
 
   // Vlastní výsledek se zapisuje až po přečtení, aby se hráč nepotkal sám
@@ -200,6 +209,7 @@ export async function playRound(
   const pool = near.length > 0 ? near : rows
   const rival = pool[Math.floor(Math.random() * pool.length)]!
   return {
+    uid: rival.uid,
     nick: rival.nick,
     score: rival.score,
     won: score === rival.score ? null : score > rival.score,
@@ -236,9 +246,79 @@ export interface Me extends Tally {
    * u sebe a při návratu do menu se na něj podívá.
    */
   matches: string[]
+  /**
+   * Zablokovaní hráči — jejich skrytá id.
+   *
+   * Drží se v telefonu, ne na serveru: blokování je moje věc a nikdo jiný
+   * se nemá dozvědět, koho jsem si odklidil. Filtruje se jím všechno, co
+   * ode mě může přijít i ke mně — náhodní soupeři i došlé výzvy.
+   */
+  blocked: string[]
 }
 
-const EMPTY: Me = { nick: '', wins: 0, losses: 0, draws: 0, matches: [] }
+const EMPTY: Me = { nick: '', wins: 0, losses: 0, draws: 0, matches: [], blocked: [] }
+
+/** Zablokuje hráče a rovnou uloží. */
+export function blockPlayer(me: Me, uid: string): Me {
+  const next: Me = { ...me, blocked: [...new Set([...(me.blocked ?? []), uid])] }
+  saveMe(next)
+  return next
+}
+
+/**
+ * Nahlásí hráče.
+ *
+ * Hlášení se zapisuje jen jedním směrem — přečíst si je může jen obsluha
+ * v konzoli Firebase. Kdo koho nahlásil, se tedy k nahlášenému nedostane.
+ */
+export async function reportPlayer(
+  uid: string,
+  nick: string,
+  reason: string,
+): Promise<void> {
+  try {
+    const { db, base, uid: mine } = await open()
+    await db.set(db.push(db.ref(base, 'reports')), {
+      about: uid,
+      nick,
+      reason,
+      from: mine,
+      at: db.serverTimestamp(),
+    })
+  } catch {
+    // Nahlášení, které se nedoručilo, nesmí shodit obrazovku. Zablokování,
+    // které se děje spolu s ním, je místní a platí tak jako tak.
+  }
+}
+
+/**
+ * Smaže všechno, co si o hráči drží server.
+ *
+ * Vyžadují to pravidla obchodů: kdo si u hry založí jméno, musí ho umět
+ * zase zrušit, a to přímo z aplikace. Maže se přezdívka, záznam hráče
+ * i všechny došlé výzvy. Výsledky odehraných kol zůstávají — jsou uložené
+ * pod skrytým id bez jména a jsou to čísla, ne osobní údaj.
+ */
+export async function eraseMe(): Promise<void> {
+  try {
+    const { db, base, uid } = await open()
+    const key = String((await db.get(db.ref(base, `players/${uid}/key`))).val() ?? '')
+    await Promise.all([
+      key ? db.remove(db.ref(base, `nicks/${key}`)) : Promise.resolve(),
+      db.remove(db.ref(base, `players/${uid}`)),
+      db.remove(db.ref(base, `challenges/${uid}`)),
+    ])
+  } finally {
+    // Z telefonu se maže vždycky, i když server odmítne. Kdo o smazání
+    // požádal, nemá dál koukat na svoji přezdívku jen proto, že vypadla síť —
+    // a chyba se mu i tak ukáže, protože se výjimka pouští dál.
+    try {
+      localStorage.removeItem(KEY)
+    } catch {
+      // Soukromé okno bez úložiště — není co mazat.
+    }
+  }
+}
 
 /** Přidá zápas mezi rozehrané a rovnou uloží. */
 export function rememberMatch(me: Me, id: string): Me {
@@ -319,6 +399,8 @@ export interface MatchScore {
 
 export interface Challenge {
   id: string
+  /** Skryté id vyzývatele. */
+  from: string
   /** Kdo vyzval. */
   nick: string
   kind: DuelKind
@@ -509,14 +591,22 @@ export function watchDone(
 }
 
 /** Došlé výzvy. Poslouchá se, dokud je otevřené menu — výzva tak dorazí hned. */
-export function watchChallenges(onChange: (list: Challenge[]) => void): () => void {
+export function watchChallenges(
+  onChange: (list: Challenge[]) => void,
+  blocked: string[] = [],
+): () => void {
   let stop: (() => void) | null = null
   let dead = false
   void open().then(({ uid }) => {
     if (dead) return
     stop = subscribe(`challenges/${uid}`, (value) => {
       const rows = (value as Record<string, Omit<Challenge, 'id'>> | null) ?? {}
-      onChange(Object.entries(rows).map(([id, row]) => ({ id, ...row })).reverse())
+      onChange(
+        Object.entries(rows)
+          .map(([id, row]) => ({ id, ...row }))
+          .filter((row) => !blocked.includes(row.from))
+          .reverse(),
+      )
     })
   })
   return () => {

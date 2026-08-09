@@ -2893,6 +2893,11 @@ button.stat-tap:hover {
   color: var(--on-accent);
 }
 
+.refresh-privacy {
+  color: var(--muted);
+  text-decoration: underline;
+}
+
 .refresh-note {
   color: var(--accent);
   font-weight: 600;
@@ -5318,6 +5323,79 @@ button.stat.open {
   display: flex;
   justify-content: center;
   padding-bottom: var(--sp-4);
+}
+
+/* ---------- nahlášení a blokování ---------- */
+
+/* Došlá výzva se spouštěčem a vykřičníkem vedle. Není to jeden `<button>`:
+   nahlášení uvnitř spouštěče by bylo tlačítko v tlačítku. */
+.duel-strip-go {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  padding: 0;
+}
+
+.duel-strip-report {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.duel-strip-report:hover {
+  border-color: var(--error);
+  color: var(--error);
+}
+
+/* Odkaz na nahlášení ve výsledku. Musí být po ruce, ale nesmí přebít
+   skóre — proto drobně a našedle. */
+.report-link {
+  margin-top: var(--sp-2);
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--muted);
+  font-size: 0.74rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.report-link:hover {
+  color: var(--error);
+}
+
+.report-reasons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: var(--sp-3) 0;
+}
+
+.report-reason {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.friends-erase {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
 }
 
 /* ---------- výběr souboje ---------- */

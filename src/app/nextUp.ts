@@ -32,7 +32,23 @@ export const NextUpContext = createContext<NextUpItem[]>([])
 export const RoundModeContext = createContext<{ glyph: string; label: string } | null>(null)
 
 /** Souboj právě dohraného kola. Karta výsledku ho ukáže pod skóre. */
-export const DuelContext = createContext<{ nick: string; score: number; won: boolean | null } | null>(
+export const DuelContext = createContext<{
+  uid: string
+  nick: string
+  score: number
+  won: boolean | null
+} | null>(null)
+
+/**
+ * Nahlášení soupeře.
+ *
+ * Přezdívku píše hráč sám a vidí ji ostatní, takže musí jít odkudkoli, kde
+ * se cizí jméno objeví, poslat hlášení a soupeře zablokovat. Panel drží App;
+ * sem se nese jen to, koho se to týká — stejnou cestou jako zbytek, protože
+ * karta výsledku sedí uvnitř osmi her a protahovat tudy další prop by
+ * znamenalo osm stejných úprav v osmi souborech.
+ */
+export const ReportContext = createContext<((uid: string, nick: string) => void) | null>(
   null,
 )
 

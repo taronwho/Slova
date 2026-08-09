@@ -7,7 +7,8 @@ import {
   INTRUDER_ROUNDS,
   verdictOf,
 } from '../src/game/duel'
-import { forgetMatch, rememberMatch, tallyWith } from '../src/lib/multi'
+import { foldNick } from '../src/game/nickCheck'
+import { blockPlayer, forgetMatch, nickError, rememberMatch, tallyWith } from '../src/lib/multi'
 import {
   buildChainGraph,
   bfsDistances,
@@ -1436,7 +1437,7 @@ describe('souboje', () => {
   // Bilance se připisuje na jedno místo — kdyby ji připsal i zápas, i proužek
   // v menu, jedna výhra by se počítala dvakrát.
   it('bilance se posune právě o jeden zápas', () => {
-    const start = { nick: 'já', wins: 2, losses: 1, draws: 0, matches: [] }
+    const start = { nick: 'já', wins: 2, losses: 1, draws: 0, matches: [], blocked: [] }
     expect(tallyWith(start, true).wins).toBe(3)
     expect(tallyWith(start, false).losses).toBe(2)
     expect(tallyWith(start, null).draws).toBe(1)
@@ -1444,7 +1445,7 @@ describe('souboje', () => {
   })
 
   it('vyřízený zápas ze seznamu zmizí a nový se přidá jen jednou', () => {
-    const start = { nick: 'já', wins: 0, losses: 0, draws: 0, matches: [] }
+    const start = { nick: 'já', wins: 0, losses: 0, draws: 0, matches: [], blocked: [] }
     const one = rememberMatch(start, 'a')
     expect(rememberMatch(one, 'a').matches).toEqual(['a'])
     expect(rememberMatch(one, 'b').matches).toEqual(['b', 'a'])
@@ -1464,5 +1465,38 @@ describe('odznaky hodností', () => {
     expect(new Set(CRESTS.map((crest) => crest.plate)).size).toBe(CRESTS.length)
     // Kov se pozná podle nejtmavšího odstínu; ten je v každém jiný.
     expect(new Set(CRESTS.map((crest) => crest.metal.dark)).size).toBe(CRESTS.length)
+  })
+})
+
+describe('přezdívky a hlášení', () => {
+  // Filtr je první síto: závadné jméno se nesmí dostat ani k zabrání,
+  // natož k soupeři.
+  it('nepustí vulgární přezdívku ani s obměnami', () => {
+    expect(nickError('kokot')).not.toBeNull()
+    expect(nickError('K0K0T')).not.toBeNull()
+    expect(nickError('kkuurrvvaa')).not.toBeNull()
+    expect(nickError('sh1t')).not.toBeNull()
+    expect(nickError('admin')).not.toBeNull()
+    expect(nickError('Moderátor')).not.toBeNull()
+  })
+
+  // A hlavně: nesmí být tak přísný, aby nepustil běžná jména a slova.
+  it('běžné přezdívky projdou', () => {
+    for (const nick of ['Taron', 'Kokořín', 'Anička', 'Sprostějov', 'Pepa42', 'Šikula']) {
+      expect(nickError(nick)).toBeNull()
+    }
+  })
+
+  it('složený tvar srovná diakritiku, číslice i zdvojená písmena', () => {
+    expect(foldNick('Anička')).toBe('anicka')
+    expect(foldNick('P3P4')).toBe('pepa')
+    expect(foldNick('aaabbb')).toBe('ab')
+  })
+
+  it('zablokovaný hráč se do seznamu dostane jen jednou', () => {
+    const start = { nick: 'já', wins: 0, losses: 0, draws: 0, matches: [], blocked: [] }
+    const once = blockPlayer(start, 'uid-a')
+    expect(blockPlayer(once, 'uid-a').blocked).toEqual(['uid-a'])
+    expect(blockPlayer(once, 'uid-b').blocked).toEqual(['uid-a', 'uid-b'])
   })
 })

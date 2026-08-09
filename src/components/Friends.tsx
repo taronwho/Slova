@@ -41,6 +41,9 @@ interface Props {
   reports: DuelReport[]
   onSeen: (id: string) => void
   onChallenge: () => void
+  onReport: (uid: string, nick: string) => void
+  onUnblock: (uid: string) => void
+  onErase: () => void
   onBack: () => void
 }
 
@@ -52,6 +55,9 @@ export function Friends({
   reports,
   onSeen,
   onChallenge,
+  onReport,
+  onUnblock,
+  onErase,
   onBack,
 }: Props) {
   const [draft, setDraft] = useState('')
@@ -186,22 +192,82 @@ export function Friends({
               </p>
             ) : (
               challenges.map((item) => (
-                <button
-                  type="button"
-                  className="duel-strip challenge"
-                  key={item.id}
-                  onClick={() => onAccept(item)}
-                >
-                  <span className="duel-mark" aria-hidden="true">
-                    {MODE_GLYPH[DUEL_MODE[item.kind]]}
-                  </span>
-                  <span className="duel-body">
-                    <span className="duel-title">{item.nick} tě vyzval</span>
-                    <span className="faint">{DUEL_TITLE[item.kind]}</span>
-                  </span>
-                </button>
+                /* Není to jeden `<button>`: nahlášení uvnitř spouštěče by bylo
+                   tlačítko v tlačítku, což prohlížeč ani čtečka neunesou. */
+                <div className="duel-strip challenge" key={item.id}>
+                  <button
+                    type="button"
+                    className="duel-strip-go"
+                    onClick={() => onAccept(item)}
+                  >
+                    <span className="duel-mark" aria-hidden="true">
+                      {MODE_GLYPH[DUEL_MODE[item.kind]]}
+                    </span>
+                    <span className="duel-body">
+                      <span className="duel-title">{item.nick} tě vyzval</span>
+                      <span className="faint">{DUEL_TITLE[item.kind]}</span>
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="duel-strip-report"
+                    aria-label={`Nahlásit hráče ${item.nick}`}
+                    title="Nahlásit"
+                    onClick={() => onReport(item.from, item.nick)}
+                  >
+                    !
+                  </button>
+                </div>
               ))
             )}
+          </div>
+
+          {(me.blocked ?? []).length > 0 && (
+            <div className="friends-list">
+              <h2>Zablokovaní</h2>
+              <p className="faint">
+                Tyhle hráče ti nepodstrčíme jako soupeře a jejich výzvy ti
+                nedorazí. Odblokovat je můžeš kdykoli.
+              </p>
+              {(me.blocked ?? []).map((uid) => (
+                <div className="duel-strip done" key={uid}>
+                  <span className="duel-mark" aria-hidden="true">
+                    ⊘
+                  </span>
+                  <span className="duel-body">
+                    <span className="duel-title">Zablokovaný hráč</span>
+                    <span className="faint">{uid.slice(0, 8)}…</span>
+                  </span>
+                  <button type="button" className="btn btn-sm" onClick={() => onUnblock(uid)}>
+                    Odblokovat
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          {/* Kdo si u hry založil jméno, musí ho umět zase zrušit — a přímo
+              odsud, ne mailem někam do prázdna. Maže se všechno, co o hráči
+              ví server: přezdívka, záznam hráče i došlé výzvy. */}
+          <div className="friends-list">
+            <h2>Moje data</h2>
+            <p className="faint">
+              Hra o tobě ukládá přezdívku, výsledky odehraných kol a bilanci
+              soubojů. Nic z toho není spojené se jménem, e‑mailem ani
+              telefonním číslem — jen se skrytým id, které ti hra přidělila.
+            </p>
+            <div className="friends-erase">
+              <button type="button" className="btn btn-sm" onClick={onErase}>
+                Smazat přezdívku a data
+              </button>
+              <a
+                className="btn btn-sm btn-ghost"
+                href="./soukromi.html"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Ochrana soukromí
+              </a>
+            </div>
           </div>
         </>
       )}

@@ -20,6 +20,7 @@ import {
 import {
   DuelContext,
   NextUpContext,
+  ReportContext,
   RoundModeContext,
   type NextUpItem,
 } from './app/nextUp'
@@ -29,6 +30,7 @@ import { InkMark } from './components/art/InkMark'
 import { RankBadge } from './components/art/RankBadge'
 import { ChainGame } from './components/ChainGame'
 import { DetectiveGame } from './components/DetectiveGame'
+import { Confirm } from './components/Confirm'
 import { Explain, ExplainProvider } from './components/Explain'
 import { GallowsGame } from './components/GallowsGame'
 import { Guide } from './components/Guide'
@@ -40,6 +42,7 @@ import { DuelHive } from './components/DuelHive'
 import { DuelIntruder } from './components/DuelIntruder'
 import { DuelSetup } from './components/DuelSetup'
 import { Friends, type DuelReport } from './components/Friends'
+import { ReportSheet } from './components/ReportSheet'
 import { FriendsEntry } from './components/FriendsEntry'
 import { QuotesGame } from './components/QuotesGame'
 import { QuizReview } from './components/QuizReview'
@@ -57,8 +60,11 @@ import { quizFor, type QuizDeck, type QuizQuestion } from './game/quiz'
 import type { IntruderPuzzle, IntruderState } from './game/intruder'
 import type { Challenge, Match } from './lib/multi'
 import {
+  blockPlayer,
   createMatch,
   dropChallenge,
+  eraseMe,
+  reportPlayer,
   forgetMatch,
   loadMatch,
   loadMe,
@@ -154,6 +160,10 @@ export default function App() {
   const [uid, setUid] = useState('')
   const [setup, setSetup] = useState(false)
   const [reports, setReports] = useState<DuelReport[]>([])
+  /** Koho hráč právě nahlašuje. Panel drží App, ať se dá otevřít odkudkoli. */
+  const [reporting, setReporting] = useState<{ uid: string; nick: string } | null>(null)
+  /** Otevřené potvrzení mazání dat. */
+  const [erasing, setErasing] = useState(false)
   const [view, setView] = useState<View>({ kind: 'home' })
   const [loaded, setLoaded] = useState<Loaded>({})
   const [loading, setLoading] = useState(false)
@@ -429,7 +439,7 @@ export default function App() {
   const duelRound = useCallback(
     (result: RoundResult, band: number) => {
       if (!MULTI_ON || !me.nick) return
-      void playRound(result.mode, result.puzzleId, result.score, band)
+      void playRound(result.mode, result.puzzleId, result.score, band, me.blocked ?? [])
         .then(async (found) => {
           if (!found) return
           setDuel(found)
@@ -541,6 +551,20 @@ export default function App() {
     [duelPuzzlesOf],
   )
 
+  /**
+   * Nahlášení a zablokování.
+   *
+   * Obojí se děje naráz: kdo si dal práci s nahlášením, nechce toho člověka
+   * vidět dál. Zablokování je místní a platí i tehdy, když se hlášení
+   * nepodaří odeslat — na síti tedy nezávisí.
+   */
+  const reportAndBlock = useCallback((uid: string, nick: string, reason: string) => {
+    void reportPlayer(uid, nick, reason)
+    setMe((previous) => blockPlayer(previous, uid))
+    setChallenges((list) => list.filter((one) => one.from !== uid))
+    setDuel((current) => (current?.uid === uid ? null : current))
+  }, [])
+
   /** Souboj je rozhodnutý — připíše se do bilance a zmizí z rozehraných. */
   const closeDuel = useCallback((id: string, verdict: Verdict) => {
     setMe((previous) => {
@@ -608,7 +632,7 @@ export default function App() {
   const outside = view.kind === 'home' || view.kind === 'friends'
   useEffect(() => {
     if (!MULTI_ON || !me.nick || !outside) return
-    return watchChallenges(setChallenges)
+    return watchChallenges(setChallenges, me.blocked ?? [])
   }, [me.nick, outside])
 
   /*
@@ -807,6 +831,9 @@ export default function App() {
     <ExplainProvider onGo={goTo}>
     <NextUpContext.Provider value={nextUp}>
     <DuelContext.Provider value={duel}>
+    <ReportContext.Provider
+      value={MULTI_ON ? (uid, nick) => setReporting({ uid, nick }) : null}
+    >
     <RoundModeContext.Provider
       value={
         view.kind === 'game'
@@ -1006,6 +1033,18 @@ export default function App() {
                 )
               }
             }}
+            onReport={(uid, nick) => setReporting({ uid, nick })}
+            onUnblock={(uid) =>
+              setMe((previous) => {
+                const next = {
+                  ...previous,
+                  blocked: (previous.blocked ?? []).filter((one) => one !== uid),
+                }
+                saveMe(next)
+                return next
+              })
+            }
+            onErase={() => setErasing(true)}
             onBack={goHome}
           />
         )}
@@ -1225,6 +1264,35 @@ export default function App() {
 
         {setup && <DuelSetup onClose={() => setSetup(false)} onSend={sendDuel} />}
 
+        {erasing && (
+          <Confirm
+            title="Smazat přezdívku a data?"
+            body="Ze serveru zmizí tvoje přezdívka, bilance soubojů i došlé výzvy a přezdívku si bude moci zabrat někdo jiný. Postup ve hrách, hodnost a ocenění ti zůstanou — ty leží jen v telefonu. Vrátit to nejde."
+            confirmLabel="Smazat"
+            onConfirm={() => {
+              setErasing(false)
+              setChallenges([])
+              setReports([])
+              void eraseMe()
+                .catch(() =>
+                  setError(
+                    'Data se ze serveru nepodařilo smazat. Zkus to znovu, až budeš online.',
+                  ),
+                )
+                .finally(() => setMe(loadMe()))
+            }}
+            onCancel={() => setErasing(false)}
+          />
+        )}
+
+        {reporting && (
+          <ReportSheet
+            nick={reporting.nick}
+            onClose={() => setReporting(null)}
+            onSend={(reason) => reportAndBlock(reporting.uid, reporting.nick, reason)}
+          />
+        )}
+
         {splash && <Splash onDone={() => setSplash(false)} />}
 
         {tutorial && (
@@ -1250,6 +1318,7 @@ export default function App() {
       </main>
     </div>
     </RoundModeContext.Provider>
+    </ReportContext.Provider>
     </DuelContext.Provider>
     </NextUpContext.Provider>
     </ExplainProvider>

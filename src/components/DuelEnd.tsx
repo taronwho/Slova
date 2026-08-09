@@ -7,8 +7,9 @@
  * se sama; kdo mezitím odejde do menu, najde ho tam v proužku soubojů.
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
 
+import { ReportContext } from '../app/nextUp'
 import { VERDICT_TITLE, verdictOf, type Verdict } from '../game/duel'
 import { watchDone, type Match, type MatchScore } from '../lib/multi'
 import { Confetti } from './Confetti'
@@ -27,6 +28,7 @@ interface Props {
 
 export function DuelEnd({ match, uid, mine, fallback, note, onHome, onVerdict }: Props) {
   const [rows, setRows] = useState<Record<string, MatchScore>>({})
+  const report = useContext(ReportContext)
   const rivalUid = match.host === uid ? match.guest : match.host
   const rivalNick = match.host === uid ? match.guestNick : match.hostNick
 
@@ -89,6 +91,16 @@ export function DuelEnd({ match, uid, mine, fallback, note, onHome, onVerdict }:
               Zpět do menu
             </button>
           </div>
+
+          {report && (
+            <button
+              type="button"
+              className="report-link"
+              onClick={() => report(rivalUid, row?.nick ?? rivalNick)}
+            >
+              Nahlásit přezdívku
+            </button>
+          )}
         </div>
       </div>
     </>

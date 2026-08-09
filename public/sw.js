@@ -63,8 +63,11 @@ self.addEventListener('fetch', (event) => {
           return response
         })
         .catch(() =>
+          // Nejdřív ta stránka sama: vedle hry leží i zásady ochrany
+          // soukromí a offline by z nich jinak byla hra.
           caches
-            .match('./index.html')
+            .match(request)
+            .then((cached) => cached ?? caches.match('./index.html'))
             .then((cached) => cached ?? caches.match('./')),
         ),
     )

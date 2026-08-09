@@ -2,7 +2,7 @@
 
 import { useContext, useEffect, useState, type ReactNode } from 'react'
 
-import { DuelContext, RoundModeContext, useNextUp } from '../app/nextUp'
+import { DuelContext, ReportContext, RoundModeContext, useNextUp } from '../app/nextUp'
 import type { ScoreBreakdown } from '../game/scoring'
 import { Confetti } from './Confetti'
 import { Explain } from './Explain'
@@ -63,6 +63,7 @@ export function ResultOverlay({
   const nextUp = useNextUp()
   const mode = useContext(RoundModeContext)
   const duel = useContext(DuelContext)
+  const report = useContext(ReportContext)
   const score = useCountUp(breakdown.total)
   const [copied, setCopied] = useState(false)
 
@@ -132,6 +133,18 @@ export function ResultOverlay({
                 <b className="num">{duel.score.toLocaleString('cs-CZ')}</b>
                 <span className="faint">{duel.nick}</span>
               </span>
+              {/* Přezdívku soupeře si psal on sám. Musí jít nahlásit odsud,
+                  tedy z místa, kde ji hráč vidí — jinam se pro to vracet
+                  nebude. */}
+              {report && (
+                <button
+                  type="button"
+                  className="report-link"
+                  onClick={() => report(duel.uid, duel.nick)}
+                >
+                  Nahlásit přezdívku
+                </button>
+              )}
             </div>
           )}
 

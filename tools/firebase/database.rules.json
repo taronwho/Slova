@@ -62,6 +62,19 @@
       }
     },
 
+    "reports": {
+      "$id": {
+        ".write": "auth != null && !data.exists() && newData.child('from').val() === auth.uid",
+        ".validate": "newData.hasChildren(['about', 'nick', 'reason', 'from', 'at'])",
+        "about": { ".validate": "newData.isString() && newData.val().length <= 64" },
+        "nick": { ".validate": "newData.isString() && newData.val().length <= 32" },
+        "reason": { ".validate": "newData.isString() && newData.val().length <= 64" },
+        "from": { ".validate": "newData.val() === auth.uid" },
+        "at": { ".validate": "newData.val() === now" },
+        "$other": { ".validate": false }
+      }
+    },
+
     "duels": {
       "$id": {
         ".read": "auth != null && (data.child('host').val() === auth.uid || data.child('guest').val() === auth.uid)",
