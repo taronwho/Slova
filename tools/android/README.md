@@ -57,8 +57,8 @@ Vypiš otisk podpisového klíče:
 bubblewrap fingerprint list
 ```
 
-Vezmi hodnotu **SHA-256** a vlož ji do `assetlinks.json` vedle tohohle souboru
-místo `SEM_PATŘÍ_OTISK`.
+Vezmi hodnotu **SHA-256** a vlož ji místo `SEM_PATŘÍ_OTISK` do souboru
+`root-site/.well-known/assetlinks.json` vedle tohohle návodu.
 
 Ten soubor pak musí být dostupný na adrese:
 
@@ -68,8 +68,29 @@ https://taronwho.github.io/.well-known/assetlinks.json
 
 Pozor na to, že je to **kořen domény**, ne adresář hry. Hra leží
 v `taronwho.github.io/Slova/`, ale ověřuje se `taronwho.github.io`. Musíš tedy
-založit repozitář pojmenovaný přesně **`taronwho.github.io`**, zapnout u něj
-Pages a dát do něj soubor `.well-known/assetlinks.json`.
+založit repozitář pojmenovaný přesně **`taronwho.github.io`** — jméno musí
+sedět na písmeno, jinak z něj GitHub neudělá kořen domény.
+
+Obsah toho repozitáře je připravený ve složce **`root-site/`**. Zkopíruj ji
+celou včetně skrytých souborů:
+
+```bash
+# v prázdném naklonovaném repozitáři taronwho.github.io
+cp -r /cesta/k/Slova/tools/android/root-site/. .
+git add -A && git commit -m "Ověření aplikace Slova" && git push
+```
+
+Pak v jeho nastavení zapni **Settings → Pages → Deploy from a branch → main**.
+
+> **Past, na kterou se naráží nejčastěji:** GitHub Pages prohání obsah přes
+> Jekyll a ten **zahazuje všechno, co začíná tečkou** — tedy i celou složku
+> `.well-known/`. Soubor by se nahrál, ale na webu by nebyl a ověření by
+> mlčky selhalo. Proto je ve složce prázdný soubor `.nojekyll`; bez něj to
+> nefunguje. Ověř si po nasazení, že adresa výš opravdu vrací ten JSON,
+> a ne stránku s chybou 404.
+
+Prázdná adresa `taronwho.github.io` by vypadala jako zapomenutý projekt,
+takže je ve složce i drobný rozcestník `index.html` s odkazem do hry.
 
 > **Lepší cesta: vlastní doména.** Ověřuješ tím celou svoji github.io doménu,
 > o kterou se dělí všechny tvoje projekty. S vlastní doménou (třeba
