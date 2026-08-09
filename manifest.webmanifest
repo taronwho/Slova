@@ -1,7 +1,7 @@
 {
   "name": "Slova — české slovní hry",
   "short_name": "Slova",
-  "description": "Tři české slovní hry: Řetěz, Voština a Věž. Každá hádanka je ověřeně dohratelná.",
+  "description": "Osm českých slovních her a Otázka dne. Řetěz, Voština, Věž, Šibenice, Detektiv, Slabiky, Citát a Vetřelec — každá hádanka je ověřeně dohratelná. Hraje se i bez signálu.",
   "lang": "cs",
   "dir": "ltr",
   "start_url": "./",

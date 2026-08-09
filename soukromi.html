@@ -1,0 +1,223 @@
+<!doctype html>
+<!--
+  Zásady ochrany soukromí.
+
+  Samostatná stránka, ne obrazovka ve hře: obchody s aplikacemi ji vyžadují
+  jako veřejnou adresu, kterou si člověk otevře, aniž by hru instaloval.
+  Proto nemá žádné závislosti — je to jeden soubor bez skriptu a bez fontů
+  odjinud, aby fungovala i tam, kde zbytek hry ne.
+-->
+<html lang="cs">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Slova — ochrana soukromí</title>
+    <meta name="description" content="Jaká data hra Slova ukládá, proč, jak dlouho a jak je smazat." />
+    <link rel="icon" href="./icons/icon-192.png" />
+    <style>
+      :root {
+        --bg: #f6f5fb;
+        --surface: #ffffff;
+        --text: #1a1830;
+        --muted: #5c5878;
+        --accent: #5b3df5;
+        --border: #e2e0ee;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #121028;
+          --surface: #1b1938;
+          --text: #f2f1fa;
+          --muted: #a5a1c4;
+          --accent: #9b8cff;
+          --border: #2e2b52;
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 2rem 1.25rem 4rem;
+        background: var(--bg);
+        color: var(--text);
+        font: 16px/1.65 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      }
+      main { max-width: 44rem; margin: 0 auto; }
+      h1 { font-size: 1.7rem; line-height: 1.2; margin: 0 0 0.35rem; }
+      h2 { font-size: 1.15rem; margin: 2.2rem 0 0.6rem; }
+      h3 { font-size: 1rem; margin: 1.4rem 0 0.4rem; }
+      p, li { color: var(--text); }
+      .lead { color: var(--muted); margin-top: 0; }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 1.1rem 1.25rem;
+        margin: 1.2rem 0;
+      }
+      .card.strong { border-color: var(--accent); }
+      table { border-collapse: collapse; width: 100%; margin: 0.6rem 0; }
+      th, td {
+        text-align: left;
+        vertical-align: top;
+        padding: 0.5rem 0.6rem;
+        border-bottom: 1px solid var(--border);
+        font-size: 0.94rem;
+      }
+      th { color: var(--muted); font-weight: 600; }
+      a { color: var(--accent); }
+      .back { display: inline-block; margin-top: 2.5rem; }
+      footer { margin-top: 2.5rem; color: var(--muted); font-size: 0.85rem; }
+      code { font-size: 0.9em; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Ochrana soukromí</h1>
+      <p class="lead">Hra <strong>Slova</strong> — platné od 9. srpna 2026</p>
+
+      <div class="card strong">
+        <p style="margin: 0">
+          <strong>Krátce:</strong> hraní samo o sobě neposílá nikam nic. Všechno,
+          co si hra pamatuje — postup, hodnost, ocenění, rozehraná kola —, leží
+          jen ve tvém telefonu. Na server se něco dostane, teprve když si zvolíš
+          přezdívku a začneš hrát souboje. Reklamy, měření návštěvnosti ani
+          sledovací nástroje hra nemá žádné a data nikomu neprodáváme.
+        </p>
+      </div>
+
+      <h2>Kdo hru provozuje</h2>
+      <p>
+        Slova provozuje fyzická osoba, kontakt
+        <a href="mailto:taronwho@gmail.com">taronwho@gmail.com</a>. Na tuhle
+        adresu piš cokoli ohledně svých dat; odpovídáme nejpozději do 30 dnů.
+      </p>
+
+      <h2>Co hra ukládá do telefonu</h2>
+      <p>
+        V úložišti prohlížeče (<code>localStorage</code>) leží tvůj postup ve
+        hrách, věhlas a hodnost, získaná ocenění, nastavení obtížnosti a témat,
+        rozehraná kola a — pokud hraješ souboje — tvoje přezdívka a bilance
+        výher. Tyhle údaje nikam neodcházejí a smažou se, když aplikaci
+        odinstaluješ nebo vymažeš data prohlížeče.
+      </p>
+
+      <h2>Co se dostane na server</h2>
+      <p>
+        Jen tehdy, když si v nabídce <em>Hra s přáteli</em> zvolíš přezdívku.
+        Do té doby hra na síť sáhne pouze pro vlastní data hádanek.
+      </p>
+      <table>
+        <tr>
+          <th>Údaj</th>
+          <th>K čemu</th>
+        </tr>
+        <tr>
+          <td>Skryté id (anonymní přihlášení)</td>
+          <td>
+            Náhodný řetězec, který ti přidělí Firebase. Není v něm jméno,
+            e‑mail ani telefonní číslo. Slouží k tomu, aby hra poznala, čí je
+            která přezdívka a který výsledek.
+          </td>
+        </tr>
+        <tr>
+          <td>Přezdívka</td>
+          <td>Aby tě soupeři poznali a mohli tě vyzvat. Vidí ji ostatní hráči.</td>
+        </tr>
+        <tr>
+          <td>Výsledky kol a soubojů</td>
+          <td>Skóre, čas a pásmo hodnosti — aby se dalo najít, kdo hrál tutéž hádanku.</td>
+        </tr>
+        <tr>
+          <td>Došlé a odeslané výzvy</td>
+          <td>Aby soupeř dostal tvoji výzvu a mohl ji přijmout.</td>
+        </tr>
+        <tr>
+          <td>Nahlášení</td>
+          <td>
+            Když někoho nahlásíš, uloží se jeho id, přezdívka, důvod a tvoje id.
+            Čte to jen obsluha hry, nahlášený se k tomu nedostane.
+          </td>
+        </tr>
+        <tr>
+          <td>Technické údaje</td>
+          <td>
+            IP adresu a čas připojení zpracovává v pozadí Google Firebase kvůli
+            provozu a zabezpečení služby.
+          </td>
+        </tr>
+      </table>
+
+      <h2>Komu se data dostanou</h2>
+      <p>
+        Data leží v <strong>Google Firebase Realtime Database</strong> (Google
+        Ireland Limited), v datovém centru v Evropské unii — region
+        <code>europe-west1</code>. Google je v tomhle zpracovatel; kromě něj
+        data nikomu nepředáváme, neprodáváme je a nepoužíváme k reklamě.
+        Ostatní hráči uvidí jen tvoji přezdívku a skóre.
+      </p>
+
+      <h2>Jak dlouho</h2>
+      <p>
+        Přezdívka a bilance zůstávají, dokud je nesmažeš. Výsledky kol
+        a soubojů zůstávají jako součást herních tabulek, ale po smazání účtu
+        už u nich není přezdívka — zbývá z nich anonymní číslo. Nahlášení
+        držíme nejdéle rok.
+      </p>
+
+      <h2 id="mazani">Smazání dat</h2>
+      <div class="card strong">
+        <h3 style="margin-top: 0">Přímo v aplikaci</h3>
+        <p>
+          Otevři <strong>Hra s přáteli → Moje data → Smazat přezdívku a data</strong>.
+          Ze serveru okamžitě zmizí tvoje přezdívka, záznam hráče i všechny došlé
+          výzvy a přezdívku si bude moci zabrat někdo jiný. Zároveň se vymaže
+          i to, co si o soubojích drží telefon.
+        </p>
+        <h3>Nebo e‑mailem</h3>
+        <p>
+          Napiš na <a href="mailto:taronwho@gmail.com">taronwho@gmail.com</a>
+          s předmětem <em>Smazání dat</em> a uveď svoji přezdívku. Smažeme je
+          nejpozději do 30 dnů a potvrdíme ti to.
+        </p>
+        <p style="margin-bottom: 0">
+          Postup ve hrách, hodnost a ocenění se smazáním nezmizí — ty nikdy
+          neopustily tvůj telefon. Zbavíš se jich odinstalováním hry nebo
+          v nabídce Statistiky, kde jde profil vynulovat.
+        </p>
+      </div>
+
+      <h2>Tvoje práva</h2>
+      <p>
+        Podle GDPR máš právo vědět, jaké údaje o tobě zpracováváme, dostat
+        jejich kopii, nechat je opravit nebo smazat, omezit jejich zpracování
+        a vznést námitku. Stačí napsat na uvedenou adresu. Když bys měl za to,
+        že s tvými údaji nakládáme špatně, můžeš si stěžovat u Úřadu pro
+        ochranu osobních údajů (<a href="https://uoou.gov.cz">uoou.gov.cz</a>).
+      </p>
+
+      <h2>Děti</h2>
+      <p>
+        Hra není určena dětem mladším 13 let a nesbírá o nich žádné údaje
+        záměrně. Pokud zjistíme, že jsme takové údaje dostali, smažeme je.
+      </p>
+
+      <h2>Co hra nedělá</h2>
+      <ul>
+        <li>Neukazuje reklamy a neobsahuje žádné reklamní knihovny.</li>
+        <li>Neměří návštěvnost ani chování — žádná analytika, žádné cookies třetích stran.</li>
+        <li>Nežádá o polohu, kontakty, fotky, mikrofon ani kameru.</li>
+        <li>Nemá platby ani nákupy uvnitř aplikace.</li>
+      </ul>
+
+      <h2>Změny</h2>
+      <p>
+        Když se tyhle zásady změní, upravíme datum nahoře. Podstatné změny
+        oznámíme přímo ve hře.
+      </p>
+
+      <a class="back" href="./">← Zpět do hry</a>
+
+      <footer>Slova — české slovní hry</footer>
+    </main>
+  </body>
+</html>
