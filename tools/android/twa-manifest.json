@@ -1,0 +1,61 @@
+{
+  "packageId": "io.github.taronwho.slova",
+  "host": "taronwho.github.io",
+  "name": "Slova — české slovní hry",
+  "launcherName": "Slova",
+  "display": "standalone",
+  "orientation": "portrait",
+  "themeColor": "#5b3df5",
+  "themeColorDark": "#121028",
+  "navigationColor": "#121028",
+  "navigationColorDark": "#121028",
+  "navigationDividerColor": "#121028",
+  "navigationDividerColorDark": "#121028",
+  "backgroundColor": "#121028",
+  "enableNotifications": false,
+  "startUrl": "/Slova/",
+  "iconUrl": "https://taronwho.github.io/Slova/icons/icon-512.png",
+  "maskableIconUrl": "https://taronwho.github.io/Slova/icons/icon-maskable-512.png",
+  "monochromeIconUrl": "https://taronwho.github.io/Slova/icons/icon-maskable-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "slova"
+  },
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [
+    {
+      "name": "Řetěz",
+      "short_name": "Řetěz",
+      "url": "/Slova/?mode=chain",
+      "chosenIconUrl": "https://taronwho.github.io/Slova/icons/icon-192.png"
+    },
+    {
+      "name": "Voština",
+      "short_name": "Voština",
+      "url": "/Slova/?mode=hive",
+      "chosenIconUrl": "https://taronwho.github.io/Slova/icons/icon-192.png"
+    },
+    {
+      "name": "Věž",
+      "short_name": "Věž",
+      "url": "/Slova/?mode=tower",
+      "chosenIconUrl": "https://taronwho.github.io/Slova/icons/icon-192.png"
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://taronwho.github.io/Slova/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://taronwho.github.io/Slova/",
+  "minSdkVersion": 23,
+  "appVersion": "1.0.0",
+  "additionalTrustedOrigins": []
+}
