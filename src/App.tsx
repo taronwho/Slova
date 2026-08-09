@@ -57,7 +57,12 @@ import type { ExplainTarget } from './game/glossary'
 import type { GallowsPuzzle, GallowsState } from './game/gallows'
 import type { HivePuzzle, HiveState } from './game/hive'
 import { quizFor, type QuizDeck, type QuizQuestion } from './game/quiz'
-import type { IntruderPuzzle, IntruderState } from './game/intruder'
+import {
+  dailyIntruder,
+  pickIntruder,
+  type IntruderPuzzle,
+  type IntruderState,
+} from './game/intruder'
 import type { Challenge, Match } from './lib/multi'
 import {
   blockPlayer,
@@ -294,9 +299,13 @@ export default function App() {
           const all = await loadIntruder()
           const pool = all.filter((p) => p.difficulty === difficulty)
           const entries = pool.length > 0 ? pool : all
+          // Vetřelec se nevybírá jako ostatní hry. Kdyby se bralo jen „co
+          // hráč ještě neviděl", chodily by pětice ze stejné rodiny za sebou
+          // — pořád jiná slova, pořád tentýž nápad. Střídání rodin má proto
+          // vlastní pravidla, viz `pickIntruder` a `dailyIntruder`.
           const entry = daily
-            ? entries[Math.floor(random() * entries.length)]!
-            : pickUnseen(entries, (e) => e.id, profile.seen.intruder, random)
+            ? dailyIntruder(entries, dayNumber(), random)
+            : pickIntruder(entries, profile.seen.intruder, random)
           setLoaded({ intruder: entry })
         } else if (mode === 'quotes') {
           const all = await loadQuotes()
@@ -484,12 +493,13 @@ export default function App() {
       const all = await loadIntruder()
       const pool = all.filter((p) => p.difficulty === profile.difficulty.intruder)
       const entries = pool.length >= INTRUDER_ROUNDS ? pool : all
+      // Tři kola souboje po sobě, takže se rodiny musí střídat i tady —
+      // tři pětice ze zvěrokruhu za sebou by byl jeden nápad třikrát.
       const chosen: IntruderPuzzle[] = []
-      const used = new Set<string>()
-      while (chosen.length < INTRUDER_ROUNDS && used.size < entries.length) {
-        const one = entries[Math.floor(Math.random() * entries.length)]!
-        if (used.has(one.id)) continue
-        used.add(one.id)
+      const used: string[] = []
+      for (let round = 0; round < INTRUDER_ROUNDS; round += 1) {
+        const one = pickIntruder(entries, used, Math.random)
+        used.push(one.id)
         chosen.push(one)
       }
       return { ids: chosen.map((one) => one.id), hive: null, intruder: chosen }

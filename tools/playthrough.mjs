@@ -435,8 +435,12 @@ log('\nDENNÍ VÝZVA A INKOUST')
 {
   await goHome(page)
   check(
-    (await page.locator('.daily-strip .daily-item').count()) === 8,
+    (await page.locator('.daily-strip .daily-item:not(.daily-quiz)').count()) === 8,
     'denní výzva je vidět rovnou v menu, jedna dlaždice na hru',
+  )
+  check(
+    (await page.locator('.daily-strip .daily-quiz').count()) === 1,
+    'devátá dlaždice je Otázka dne — mřížka je celá',
   )
   const strip = await page.locator('.daily-strip').boundingBox()
   const grid = await page.locator('.mode-grid').boundingBox()

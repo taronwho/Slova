@@ -108,7 +108,11 @@ HIDDEN = [
     {
         "id": "skryte-zverokruh",
         "roof": "slova, která jsou zároveň znamením zvěrokruhu",
-        "level": "normal",
+        # Zvěrokruh zná každý. Mezi zvířaty trčí „panna" a „váhy" na první
+        # pohled, takže to není střední obtížnost, ať je souvislost jakkoli
+        # skrytá — skrytá znamená „nevidíš ji z toho, co ta slova znamenají",
+        # ne „je těžká".
+        "level": "easy",
         "hidden": True,
         "inside": ["býk", "rak", "lev", "panna", "štír", "váhy", "blíženci",
                    "ryby", "beran", "kozoroh", "vodnář", "střelec"],

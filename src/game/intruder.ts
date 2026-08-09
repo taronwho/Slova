@@ -25,6 +25,71 @@ export interface IntruderPuzzle {
   /** Věta do vyhodnocení — co pětici spojovalo a co s vetřelcem. */
   recap: string
   difficulty: Difficulty
+  /**
+   * Rodina, ze které pětice pochází — zhruba „střecha", pod kterou slova patří.
+   *
+   * Je to jediné, podle čeho jde poznat, že dvě pětice jsou si podobné, i když
+   * nemají společné ani jedno slovo. Hra podle toho rodiny střídá.
+   */
+  family: string
+}
+
+/**
+ * Kolik posledních kol se hlídá, aby se rodina neopakovala.
+ *
+ * Hráč hlásil, že z deseti kol byly pětkrát karty a třikrát zvěrokruh. Půlku
+ * toho měla na svědomí sada, ve které měly některé rodiny osminásobný podíl;
+ * to je spravené u zdroje. Druhá půlka je náhoda sama: i z rovnoměrné sady
+ * padne totéž dvakrát za sebou překvapivě často. Šest kol zpátky je dost
+ * na to, aby se to nestávalo, a málo na to, aby došly rodiny k výběru.
+ */
+export const FAMILY_GAP = 6
+
+/**
+ * Pětice, která navazuje na to, co hráč nedávno hrál.
+ *
+ * Vybírá se z těch, které ještě nehrál **a** nejsou z rodiny posledních šesti
+ * kol. Když by tím nezbylo nic, podmínky se pouštějí po jedné — nejdřív
+ * rodina, potom i to, že hádanku už viděl. Prázdný výběr vrátit nesmí,
+ * hra by neměla co spustit.
+ */
+export function pickIntruder(
+  pool: IntruderPuzzle[],
+  seen: string[],
+  random: () => number,
+): IntruderPuzzle {
+  const byId = new Map(pool.map((puzzle) => [puzzle.id, puzzle]))
+  const recent = new Set<string>()
+  for (const id of seen.slice(-FAMILY_GAP)) {
+    const found = byId.get(id)
+    if (found) recent.add(found.family)
+  }
+  const played = new Set(seen)
+  const fresh = pool.filter((one) => !played.has(one.id) && !recent.has(one.family))
+  const unplayed = pool.filter((one) => !played.has(one.id))
+  const use = fresh.length > 0 ? fresh : unplayed.length > 0 ? unplayed : pool
+  return use[Math.floor(random() * use.length)]!
+}
+
+/**
+ * Pětice na denní výzvu.
+ *
+ * Musí být pro všechny stejná a pro daný den pevná, takže se nedá vybírat
+ * podle toho, co kdo hrál. Rodina se proto určí číslem dne: den po dni se
+ * projde celý seznam rodin a teprve pak se začne nanovo. Dva dny po sobě
+ * tak nikdy nepřijde totéž a hráč projde všechny rodiny dřív, než uvidí
+ * jednu podruhé.
+ */
+export function dailyIntruder(
+  pool: IntruderPuzzle[],
+  day: number,
+  random: () => number,
+): IntruderPuzzle {
+  const families = [...new Set(pool.map((one) => one.family))].sort()
+  if (families.length === 0) return pool[Math.floor(random() * pool.length)]!
+  const family = families[((day % families.length) + families.length) % families.length]!
+  const group = pool.filter((one) => one.family === family)
+  return group[Math.floor(random() * group.length)]!
 }
 
 export const INTRUDER_HINT_COST = 40

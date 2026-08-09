@@ -122,6 +122,11 @@ import {
   type Profile,
 } from '../src/lib/storage'
 import type { ModeId } from '../src/game/types'
+import {
+  dailyIntruder,
+  pickIntruder,
+  type IntruderPuzzle,
+} from '../src/game/intruder'
 
 describe('české utility', () => {
   it('skládá diakritiku', () => {
@@ -1609,5 +1614,65 @@ describe('denní série po hrách', () => {
   it('starý profil bez denních sérií se načte s prázdnými', () => {
     const old = migrateProfile({ version: 3, fame: 1000 })
     expect(old.dailyStreak.hive).toEqual({ lastDay: null, streak: 0, best: 0 })
+  })
+})
+
+describe('vetřelec — střídání rodin', () => {
+  const puzzle = (id: string, family: string): IntruderPuzzle => ({
+    id,
+    family,
+    words: ['a', 'b', 'c', 'd', 'e'],
+    odd: 'e',
+    choices: ['x', 'y', 'z'],
+    answer: 'x',
+    recap: '',
+    difficulty: 'normal',
+  })
+
+  const pool = [
+    ...['k1', 'k2', 'k3'].map((id) => puzzle(id, 'karty')),
+    ...['z1', 'z2', 'z3'].map((id) => puzzle(id, 'zvěrokruh')),
+    ...['h1', 'h2', 'h3'].map((id) => puzzle(id, 'houby')),
+  ]
+
+  // Přesně to hráč nahlásil: z deseti kol pětkrát karty a třikrát zvěrokruh.
+  it('nevybere pětici z rodiny, která byla nedávno', () => {
+    for (let seed = 0; seed < 40; seed += 1) {
+      const random = mulberry32(seed)
+      const got = pickIntruder(pool, ['k1', 'z1'], random)
+      expect(got.family).toBe('houby')
+    }
+  })
+
+  it('rodinu pustí zpátky, až vypadne z posledních kol', () => {
+    // FAMILY_GAP posledních id; karty leží dál, takže se smí vrátit.
+    const long = ['k1', 'z1', 'h1', 'h2', 'h3', 'z2', 'z3']
+    const families = new Set(
+      Array.from({ length: 40 }, (_, seed) => pickIntruder(pool, long, mulberry32(seed)).family),
+    )
+    expect(families).toContain('karty')
+  })
+
+  it('když nezbývá nic nehraného, vrátí aspoň něco', () => {
+    const all = pool.map((one) => one.id)
+    const got = pickIntruder(pool, all, mulberry32(1))
+    expect(pool).toContain(got)
+  })
+
+  // Denní výzva musí být pro všechny stejná, takže se nedá vybírat podle
+  // toho, co kdo hrál — rodinu proto určuje číslo dne.
+  it('denní pětice projde všechny rodiny, než se některá zopakuje', () => {
+    const families = Array.from({ length: 3 }, (_, day) =>
+      dailyIntruder(pool, day, mulberry32(day)).family,
+    )
+    expect(new Set(families).size).toBe(3)
+    // Čtvrtý den se cyklus vrací na začátek.
+    expect(dailyIntruder(pool, 3, mulberry32(3)).family).toBe(families[0])
+  })
+
+  it('týž den dá vždycky tutéž rodinu', () => {
+    expect(dailyIntruder(pool, 12, mulberry32(1)).family).toBe(
+      dailyIntruder(pool, 12, mulberry32(2)).family,
+    )
   })
 })

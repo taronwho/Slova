@@ -75,6 +75,10 @@ FORMS = (
 MIN_LEN, MAX_LEN = 4, 13
 PER_KIND = 400
 
+# Kolik pětic nejvýš z jedné rodiny. Devadesát dva rodin krát tenhle strop
+# vydá zhruba tři tisíce, tedy přesně tolik, kolik se do hry balí.
+PER_FAMILY = 34
+
 
 def origin(text: str) -> str | None:
     # Jen úplný začátek hesla. Dál v textu se jmenují jazyky, přes které
@@ -217,6 +221,7 @@ def build(words: list[dict], kind: str, rng: random.Random) -> list[dict]:
             "answer": answer,
             "recap": f"Souvislost: {LABEL[kind]} — {shared}. U vetřelce: {other}.",
             "difficulty": LEVEL[kind],
+            "family": f"jaz:{kind}",
         })
     return out
 
@@ -230,9 +235,14 @@ def from_families(rng: random.Random) -> list[dict]:
     """
     out = []
     for family in FAMILIES:
-        # Skryté rodiny mají v sadě vyšší podíl — jsou to ty zajímavé.
-        want = min(150 if family.get("hidden") else 45,
-                   len(family["inside"]) * len(family["outside"]))
+        # Na každou rodinu stejný strop.
+        #
+        # Dřív dostávaly skryté rodiny sto padesát pětic a ostatní pětačtyřicet.
+        # Skrytých je dvanáct a psaných osmdesát, takže z hotové sady byla
+        # každá osmá pětice zvěrokruh nebo karty — hráč je potkával pořád
+        # dokola a hlásil to. Rovný strop tomu bere půdu pod nohama;
+        # o rozestup mezi stejnými rodinami se pak stará ještě hra sama.
+        want = min(PER_FAMILY, len(family["inside"]) * len(family["outside"]))
         seen = set()
         for _ in range(want * 20):
             if len(seen) >= want:
@@ -274,6 +284,9 @@ def from_families(rng: random.Random) -> list[dict]:
                 ),
                 "difficulty": family["level"],
                 "hidden": bool(family.get("hidden")),
+                # Klíč rodiny. První otázka je napříč rodinami jedinečná,
+                # takže z ní jde udělat značku, aniž by ji někdo psal ručně.
+                "family": family["asks"][0],
             })
     return out
 
@@ -292,20 +305,42 @@ def main() -> int:
     # nejsnáz, jazyk původu nejhůř.
     # Psané rodiny jsou páteř; jazykové pětice zůstávají jako koření.
     made = from_families(rng)
+    for one in made:
+        one.pop("hidden", None)
     print(f"  z rodin: {len(made)}")
-    # Půl na půl: skryté souvislosti proti těm, které jdou vidět. Jazykové
-    # pětice zůstávají jen jako koření.
-    hidden = [p for p in made if p.pop("hidden", False)]
-    plain = [p for p in made if not p.get("hidden")]
-    rng.shuffle(hidden)
-    rng.shuffle(plain)
-    print(f"  z toho skrytých: {len(hidden)}")
-    puzzles = hidden[:1500] + plain[:1200] + puzzles[:300]
-    rng.shuffle(puzzles)
+
+    # Ořez po rodinách, ne přes celou hromadu.
+    #
+    # Dřív se sada uřízla na tři tisíce po zamíchání a rodiny do ní spadly
+    # v poměru, ve kterém se vyrobily — tedy nerovně. Teď se z rodin bere
+    # kolem dokola po jedné, takže když se strop tří tisíc dotkne, ubere
+    # všem rodinám stejně. Jazykové pětice jdou dovnitř jako další „rodiny",
+    # jedna za každý znak, takže se ředí spolu s ostatními.
+    by_family: dict[str, list[dict]] = {}
+    for one in made + puzzles:
+        by_family.setdefault(one["family"], []).append(one)
+    for group in by_family.values():
+        rng.shuffle(group)
+
     # Data se balí do aplikace celá a v jednosouborové verzi navíc bobtnají
     # na dvojnásobek. Tři tisíce hádanek je osm let denního hraní — víc
     # není k čemu, a soubor zůstane pod megabajtem.
-    puzzles = puzzles[:3000]
+    order = sorted(by_family, key=lambda key: (-len(by_family[key]), key))
+    puzzles = []
+    round_no = 0
+    while len(puzzles) < 3000:
+        added = 0
+        for key in order:
+            group = by_family[key]
+            if round_no < len(group):
+                puzzles.append(group[round_no])
+                added += 1
+                if len(puzzles) >= 3000:
+                    break
+        if added == 0:
+            break
+        round_no += 1
+    rng.shuffle(puzzles)
     for i, puzzle in enumerate(puzzles):
         puzzle["id"] = f"i-{i:04d}"
         rng.shuffle(puzzle["words"])

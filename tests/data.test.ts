@@ -740,3 +740,29 @@ describe('slovník — jen základní tvary', () => {
     expect(problems.slice(0, 10)).toEqual([])
   })
 })
+
+describe('vetřelec — vyváženost sady', () => {
+  it('žádná rodina nezabírá víc než desetinu své obtížnosti', () => {
+    const puzzles = JSON.parse(
+      readFileSync('public/data/intruder/puzzles.json', 'utf-8'),
+    ) as { difficulty: string; family: string }[]
+
+    for (const level of ['easy', 'normal', 'hard']) {
+      const pool = puzzles.filter((one) => one.difficulty === level)
+      const counts = new Map<string, number>()
+      for (const one of pool) counts.set(one.family, (counts.get(one.family) ?? 0) + 1)
+      const worst = Math.max(...counts.values())
+      // Dřív měl zvěrokruh pětinu střední obtížnosti a hráč potkával tutéž
+      // souvislost pořád dokola. Desetina je strop s rezervou.
+      expect(worst / pool.length).toBeLessThan(0.1)
+      expect(counts.size).toBeGreaterThanOrEqual(15)
+    }
+  })
+
+  it('každá pětice ví, z jaké je rodiny', () => {
+    const puzzles = JSON.parse(
+      readFileSync('public/data/intruder/puzzles.json', 'utf-8'),
+    ) as { family?: string }[]
+    expect(puzzles.every((one) => typeof one.family === 'string' && one.family.length > 0)).toBe(true)
+  })
+})
