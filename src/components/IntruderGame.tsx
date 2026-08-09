@@ -182,13 +182,28 @@ export function IntruderGame({
       {done && (
         <ResultOverlay
           title={right ? 'Vetřelec odhalen!' : 'Vetřelec unikl'}
-          subtitle={puzzle.odd.toUpperCase()}
           breakdown={breakdown}
           shareText={shareText}
           celebrate={right}
           onNext={onNext}
           onHome={onHome}
         >
+          {/* Celá pětice znovu, tentokrát s odpovědí. Samotné jméno vetřelce
+              pod nadpisem bylo málo: hráč chce vidět, které čtyři k sobě
+              patřily, ne jen to páté. Barva to řekne dřív než text. */}
+          <div className="verdict-words">
+            {puzzle.words.map((word) => (
+              <span
+                key={word}
+                className={`verdict-word ${word === puzzle.odd ? 'odd' : 'fits'}`}
+              >
+                <span className="verdict-mark" aria-hidden="true">
+                  {word === puzzle.odd ? '≠' : '✓'}
+                </span>
+                {word}
+              </span>
+            ))}
+          </div>
           {/* Dvojtečka místo věty se spojkou: „jazyk původu: angličtina"
               je správně česky u všech sedmi souvislostí, kdežto „vetřelec
               má angličtina" nedávalo smysl u žádné. */}

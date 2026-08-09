@@ -180,6 +180,22 @@ export function Home({
   // Kontrolní build zámek nemá — jinak by po první otázce nešlo pokračovat.
   const quizDone = !__QUIZ_ALL__ && profile.quiz.lastDay === dayKey
 
+  /**
+   * Řada Otázky dne, ale jen dokud platí.
+   *
+   * Uložené číslo se nuluje až další odpovědí, takže po týdnu ticha by pořád
+   * tvrdilo šest dnů v řadě. Stejné síto jako u her — jen tady sedí data
+   * ve vlastní přihrádce, protože Otázka dne je měla dřív než ony.
+   */
+  const quizStreak = liveStreak(
+    {
+      lastDay: profile.quiz.lastDay,
+      streak: profile.quiz.streak,
+      best: profile.quiz.bestStreak,
+    },
+    dayKey,
+  )
+
   const pickedMode = picked ? MODES.find((m) => m.id === picked)! : null
   const pickedSaved = picked ? saved[picked] : undefined
 
@@ -372,6 +388,32 @@ export function Home({
               </button>
             )
           })}
+
+          {/* Devátá dlaždice: Otázka dne. Osm her nechávalo v mřížce po třech
+              sloupcích prázdné místo a otázka se přitom hraje ze stejného
+              důvodu jako ony — jednou denně, zítra je jiná. Do várky, za
+              kterou padá inkoust, se ale nepočítá, proto je zlatá a ne
+              v barvě hry. */}
+          <button
+            type="button"
+            className={`daily-item daily-quiz ${quizDone ? 'done' : ''}`}
+            style={{ ['--mode-color' as string]: 'var(--gold)' }}
+            disabled={quizDone}
+            title={quizDone ? 'Dnešní otázku už máš zodpovězenou' : undefined}
+            onClick={onQuiz}
+          >
+            <span className="mode-glyph" aria-hidden="true">
+              ?
+            </span>
+            <span className="daily-name">Otázka dne</span>
+            <span className="daily-note num">{quizDone ? '✓ hotovo' : 'Hrát'}</span>
+            {quizStreak > 0 && (
+              <span className="daily-flame num">
+                <span aria-hidden="true">🔥</span>
+                {quizStreak}
+              </span>
+            )}
+          </button>
         </div>
       </div>
 
@@ -433,13 +475,13 @@ export function Home({
                   </div>
                 )
               })}
-              <div className={`streak-row ${profile.quiz.streak > 0 ? 'live' : ''}`}>
+              <div className={`streak-row ${quizStreak > 0 ? 'live' : ''}`}>
                 <span className="streak-glyph" aria-hidden="true">
                   ?
                 </span>
                 <span className="streak-name">Otázka dne</span>
                 <span className="streak-now num">
-                  {profile.quiz.streak > 0 ? `🔥 ${profile.quiz.streak}` : '—'}
+                  {quizStreak > 0 ? `🔥 ${quizStreak}` : '—'}
                 </span>
                 <span className="streak-best num faint">
                   nejvíc {profile.quiz.bestStreak}

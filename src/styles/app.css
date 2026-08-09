@@ -5121,6 +5121,113 @@ button.stat.open {
   flex: none;
 }
 
+/* ---------- vyhodnocení Vetřelce ---------- */
+
+/* Pětice slov znovu, obarvená podle toho, co kam patřilo. Stojí nad
+   vysvětlením, protože se čte první — teprve pak dává věta pod tím smysl. */
+.verdict-words {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+.verdict-word {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.92rem;
+  letter-spacing: 0.01em;
+}
+
+.verdict-word.fits {
+  border-color: color-mix(in oklab, var(--ok) 45%, var(--border));
+  background: var(--ok-soft);
+  color: color-mix(in oklab, var(--ok) 80%, var(--text));
+}
+
+.verdict-word.odd {
+  border-color: color-mix(in oklab, var(--error) 55%, var(--border));
+  background: var(--error-soft);
+  color: color-mix(in oklab, var(--error) 80%, var(--text));
+}
+
+.verdict-mark {
+  font-size: 0.78em;
+  opacity: 0.75;
+}
+
+/* ---------- vyhodnocení Vetřelce ---------- */
+
+/* Celá pětice s odpovědí. Čte se to barvou, ne textem: čtyři zelené drží
+   pohromadě a jedna červená z nich vystupuje — přesně to, co měl hráč
+   uvidět na desce a neuviděl. */
+.verdict-words {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sp-2);
+  margin: var(--sp-3) 0 var(--sp-2);
+}
+
+.verdict-word {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.34rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.92rem;
+  line-height: 1.2;
+}
+
+.verdict-word.fits {
+  border-color: color-mix(in oklab, var(--ok) 40%, transparent);
+  background: var(--ok-soft);
+  color: color-mix(in oklab, var(--ok) 72%, var(--text));
+}
+
+/* Vetřelec je jediný, kvůli kterému se kolo hrálo — dostane plnou barvu,
+   ne jen nádech, aby ho oko našlo první. */
+.verdict-word.odd {
+  border-color: color-mix(in oklab, var(--error) 55%, transparent);
+  background: color-mix(in oklab, var(--error) 14%, var(--surface));
+  color: color-mix(in oklab, var(--error) 82%, var(--text));
+  font-weight: 700;
+}
+
+.verdict-mark {
+  font-size: 0.82em;
+  opacity: 0.75;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .verdict-word {
+    animation: verdict-in 260ms var(--ease) both;
+  }
+
+  /* Zelené naskočí zleva doprava a vetřelec až po nich — je to pointa kola
+     a pointa nesmí přijít současně se vším ostatním. */
+  .verdict-word.odd {
+    animation-delay: 260ms;
+  }
+}
+
+@keyframes verdict-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.94);
+  }
+}
+
 /* ---------- denní série ---------- */
 
 /* Plamínek s číslem. Je to jediná věc, kterou hráč dnešním kolem může
@@ -5141,6 +5248,18 @@ button.stat.open {
 
 .topbar .chip-daily {
   gap: 0.3rem;
+}
+
+/* Otázka dne v mřížce denní výzvy. Zlatá, aby bylo poznat, že do várky za
+   inkoust nepatří — hraje se ze stejného důvodu, ale počítá se jinam. */
+.daily-item.daily-quiz {
+  border-color: color-mix(in oklab, var(--gold) 40%, var(--border));
+  background: color-mix(in oklab, var(--gold) 7%, var(--surface-2));
+}
+
+.daily-item.daily-quiz .mode-glyph {
+  background: var(--gold);
+  color: #2b1b00;
 }
 
 .streaks-open {
