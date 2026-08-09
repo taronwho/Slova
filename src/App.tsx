@@ -101,6 +101,7 @@ import { dayNumber, hashSeed, mulberry32, todayKey } from './lib/rng'
 import {
   breakStreak,
   emptyProfile,
+  liveStreak,
   loadProfile,
   loadRounds,
   recordQuiz,
@@ -194,6 +195,16 @@ export default function App() {
 
   const rank = rankFor(profile.fame)
   const dayKey = todayKey()
+  /**
+   * Denní série hry, která je právě rozehraná.
+   *
+   * Bere se z profilu, ne z výsledku kola: dokud hráč dnešní výzvu nedohraje,
+   * ukazuje se řada, kterou má za sebou, a teprve po dohrání povyroste.
+   */
+  const dailyStreak =
+    view.kind === 'game' && view.daily
+      ? liveStreak(profile.dailyStreak[view.mode], dayKey)
+      : 0
   /**
    * Číslo dne do sdíleného textu.
    *
@@ -890,9 +901,28 @@ export default function App() {
             >
               {MODE_LABEL[view.mode]}
             </button>
+            {/* Denní výzva a k ní řada dnů, které hráč v téhle hře drží.
+                Číslo je ta část, která na telefonu zůstává — slovo „Denní"
+                se schová, plamínek s číslem ne. Je to jediné místo uvnitř
+                hry, kde se řada dá vidět, a je to zároveň to jediné, co
+                může hráč dnešním kolem ztratit. */}
             {view.daily && (
-              <Explain term="denni" className="chip chip-gold">
-                Denní
+              <Explain
+                term="denni"
+                className="chip chip-gold chip-daily"
+                label={
+                  dailyStreak > 0
+                    ? `Denní výzva. ${dailyStreak}. den v řadě`
+                    : 'Denní výzva. Co to je'
+                }
+              >
+                <span className="chip-label">Denní</span>
+                {dailyStreak > 0 && (
+                  <span className="daily-flame num">
+                    <span aria-hidden="true">🔥</span>
+                    {dailyStreak}
+                  </span>
+                )}
               </Explain>
             )}
             <button

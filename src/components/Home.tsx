@@ -20,7 +20,7 @@ import { RankBadge } from './art/RankBadge'
 import { useBackGuard } from '../lib/back'
 import { InkMark } from './art/InkMark'
 import { Explain } from './Explain'
-import type { Profile, SavedRound, SavedRounds } from '../lib/storage'
+import { liveStreak, type Profile, type SavedRound, type SavedRounds } from '../lib/storage'
 
 interface Props {
   profile: Profile
@@ -153,6 +153,8 @@ export function Home({
   const [openRules, setOpenRules] = useState<ModeId | null>(null)
   /** Otevřená dlaždice — volba obtížnosti a spuštění se dějí až v ní. */
   const [picked, setPicked] = useState<ModeId | null>(null)
+  /** Otevřený přehled denních sérií. */
+  const [streaks, setStreaks] = useState(false)
   /**
    * Drží telefon starou verzi hry, kterou se nedaří setřást?
    *
@@ -183,6 +185,7 @@ export function Home({
 
   // Systémové zpět zavře panel, ne celou hru.
   useBackGuard(picked !== null, () => setPicked(null))
+  useBackGuard(streaks, () => setStreaks(false))
 
   /**
    * Proužek Otázky dne.
@@ -324,6 +327,15 @@ export function Home({
               ? 'Hotovo — celou várku dneska máš'
               : `Zbývá ${plural(dailyLeft, 'výzva', 'výzvy', 'výzev')}`}
           </span>
+          {/* Řady se vejdou k dlaždicím jen jako číslo. Kdo chce vědět víc —
+              nejdelší řadu, jak na tom je Otázka dne —, otevře si přehled. */}
+          <button
+            type="button"
+            className="btn btn-sm streaks-open"
+            onClick={() => setStreaks(true)}
+          >
+            <span aria-hidden="true">🔥</span> Denní série
+          </button>
         </div>
         <div className="daily-row">
           {MODES.map((mode) => {
@@ -349,6 +361,14 @@ export function Home({
                 <span className="daily-note num">
                   {done ? `✓ ${score.toLocaleString('cs-CZ')}` : 'Hrát'}
                 </span>
+                {/* Řada dnů u téhle hry. Ukazuje se, jen když nějaká je —
+                    nula u sedmi dlaždic by z mřížky udělala tabulku nul. */}
+                {liveStreak(profile.dailyStreak[mode.id], dayKey) > 0 && (
+                  <span className="daily-flame num">
+                    <span aria-hidden="true">🔥</span>
+                    {liveStreak(profile.dailyStreak[mode.id], dayKey)}
+                  </span>
+                )}
               </button>
             )
           })}
@@ -369,6 +389,65 @@ export function Home({
         >
           Projít všechny otázky
         </button>
+      )}
+
+      {/* Přehled všech řad naráz. Osm her a Otázka dne, u každé kolik dnů
+          drží a kolik nejvíc kdy držela. Vejde se sem i to, co u dlaždice
+          nemá kam — proto je to panel a ne další čísílko v mřížce. */}
+      {streaks && (
+        <div className="sheet-scrim" onClick={() => setStreaks(false)}>
+          <div className="sheet" onClick={(event) => event.stopPropagation()}>
+            <div className="sheet-head">
+              <h2>Denní série</h2>
+              <button
+                type="button"
+                className="btn btn-sm btn-ghost"
+                onClick={() => setStreaks(false)}
+              >
+                Zavřít
+              </button>
+            </div>
+            <p className="muted" style={{ fontSize: '0.86rem' }}>
+              Kolik dní po sobě jsi tu kterou denní výzvu dohrál. Počítá se
+              účast, ne výhra — vynechaný den řadu utne, prohrané kolo ne.
+              U Otázky dne je to naopak řada správných odpovědí.
+            </p>
+            <div className="streak-list">
+              {MODES.map((mode) => {
+                const row = profile.dailyStreak[mode.id]
+                const live = liveStreak(row, dayKey)
+                return (
+                  <div className={`streak-row ${live > 0 ? 'live' : ''}`} key={mode.id}>
+                    <span
+                      className="streak-glyph"
+                      aria-hidden="true"
+                      style={{ ['--mode-color' as string]: mode.color }}
+                    >
+                      {mode.glyph}
+                    </span>
+                    <span className="streak-name">{MODE_LABEL[mode.id]}</span>
+                    <span className="streak-now num">
+                      {live > 0 ? `🔥 ${live}` : '—'}
+                    </span>
+                    <span className="streak-best num faint">nejvíc {row.best}</span>
+                  </div>
+                )
+              })}
+              <div className={`streak-row ${profile.quiz.streak > 0 ? 'live' : ''}`}>
+                <span className="streak-glyph" aria-hidden="true">
+                  ?
+                </span>
+                <span className="streak-name">Otázka dne</span>
+                <span className="streak-now num">
+                  {profile.quiz.streak > 0 ? `🔥 ${profile.quiz.streak}` : '—'}
+                </span>
+                <span className="streak-best num faint">
+                  nejvíc {profile.quiz.bestStreak}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {pickedMode && (

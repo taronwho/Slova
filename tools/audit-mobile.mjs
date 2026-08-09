@@ -90,6 +90,34 @@ for (const size of SIZES) {
     ...devices['Pixel 5'].userAgent ? { userAgent: devices['Pixel 5'].userAgent } : {},
   })
   const page = await context.newPage()
+  /*
+   * Do profilu se předem vloží dlouhá denní série.
+   *
+   * Lišta je nejširší právě s ní: čip s plamínkem se ukazuje jen tomu, kdo
+   * nějakou řadu drží, takže s prázdným profilem by se měřila lišta, kterou
+   * takový hráč nikdy neuvidí. Dvouciferné číslo je nejhorší případ, který
+   * se v praxi potká.
+   */
+  await page.addInitScript((day) => {
+    const streak = { lastDay: day, streak: 12, best: 20 }
+    localStorage.setItem(
+      'slova.profile.v1',
+      JSON.stringify({
+        version: 3,
+        // Průvodce i návody se odbavovaly klikáním; s uloženým profilem se
+        // musí vypnout rovnou, jinak leží přes hru a měření nedává smysl.
+        guideSeen: true,
+        tutorialSeen: {
+          chain: true, hive: true, tower: true, gallows: true,
+          detective: true, tetris: true, quotes: true, intruder: true,
+        },
+        dailyStreak: {
+          chain: streak, hive: streak, tower: streak, gallows: streak,
+          detective: streak, tetris: streak, quotes: streak, intruder: streak,
+        },
+      }),
+    )
+  }, new Date().toISOString().slice(0, 10))
   await page.goto(APP_URL, { waitUntil: 'networkidle' })
   await page.locator('.splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined)
 

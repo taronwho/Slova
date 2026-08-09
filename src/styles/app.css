@@ -5121,6 +5121,104 @@ button.stat.open {
   flex: none;
 }
 
+/* ---------- denní série ---------- */
+
+/* Plamínek s číslem. Je to jediná věc, kterou hráč dnešním kolem může
+   ztratit, takže musí být vidět — ale nesmí přebít skóre ani hodnost. */
+.daily-flame {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 700;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.daily-item .daily-flame {
+  color: var(--mode-color, var(--accent));
+  font-size: 0.7rem;
+}
+
+.topbar .chip-daily {
+  gap: 0.3rem;
+}
+
+.streaks-open {
+  font-size: 0.74rem;
+  padding: 3px 10px;
+}
+
+.streak-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+/* Řádek přehledu: znak hry, jméno, dnešní řada, nejdelší. Čísla drží vpravo
+   pod sebou, aby se daly porovnat pohledem shora dolů, ne čtením. */
+.streak-row {
+  display: grid;
+  grid-template-columns: 1.9rem 1fr auto auto;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.streak-row.live {
+  border-color: color-mix(in oklab, var(--gold) 45%, var(--border));
+  background: color-mix(in oklab, var(--gold) 8%, var(--surface-2));
+}
+
+.streak-glyph {
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--mode-color, var(--accent)) 18%, transparent);
+  color: var(--mode-color, var(--accent));
+  font-size: 0.9rem;
+}
+
+.streak-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.streak-now {
+  font-family: var(--font-display);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.streak-best {
+  font-size: 0.74rem;
+  white-space: nowrap;
+}
+
+/* Na úzkém displeji se z lišty schová jen slovo, ne číslo: řada je to jediné,
+   co v denním kole hráč sleduje, a čip bez ní by nesl jen ozdobu. */
+@media (max-width: 560px) {
+  .shell.playing .topbar .chip-daily {
+    display: inline-flex;
+  }
+
+  .shell.playing .topbar .chip-daily .chip-label {
+    display: none;
+  }
+
+  /* Když řada ještě není, nemá čip co ukázat a místo si nezaslouží. */
+  .shell.playing .topbar .chip-daily:not(:has(.daily-flame)) {
+    display: none;
+  }
+}
+
 /* ---------- vstup do soubojů ---------- */
 
 /* Stojí nahoře nad výběrem hry a musí být poznat na první pohled, že to

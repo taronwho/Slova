@@ -122,6 +122,29 @@ export function emptyQuiz(): QuizRecord {
   }
 }
 
+/**
+ * Denní série jedné hry.
+ *
+ * Sedm různých čísel místo jednoho: hráč, který každý den řeší Voštinu a na
+ * Šibenici nemá náladu, si zaslouží vidět, že Voštinu drží — a ne aby mu to
+ * jedna vynechaná hra shodila celé. Proto má každá hra vlastní řadu a Otázka
+ * dne tu svou už měla dřív, ve vlastní přihrádce.
+ *
+ * Počítá se **účast, ne výhra**. Denní výzva je návyk; Šibenice se dá prohrát
+ * a Voština se dá ukončit kdykoli, takže podmínka na úspěch by z řady udělala
+ * loterii. Stejně se chová i `dayStreak`, který počítá dny se hrou vůbec.
+ */
+export interface DailyStreak {
+  /** Poslední den, kdy hráč tuhle denní výzvu dohrál. */
+  lastDay: string | null
+  streak: number
+  best: number
+}
+
+export function emptyDailyStreak(): DailyStreak {
+  return { lastDay: null, streak: 0, best: 0 }
+}
+
 export interface Profile {
   /** Verze uloženého profilu — podle ní se pozná, co je potřeba přepočítat. */
   version: number
@@ -172,6 +195,22 @@ export interface Profile {
   guideSeen: boolean
   /** Otázka dne — vlastní přihrádka, protože se do statistik režimů nevejde. */
   quiz: QuizRecord
+  /** Denní série, jedna za každou hru. */
+  dailyStreak: Record<ModeId, DailyStreak>
+}
+
+/**
+ * Kolik dní v řadě řada **doopravdy** drží.
+ *
+ * Uložené číslo se nuluje až při dalším odehrání, takže samo o sobě může
+ * tvrdit dvanáct dní i tři týdny poté, co hráč naposledy hrál. Na obrazovku
+ * proto jde tahle hodnota: řada platí, jen když se hrálo dnes nebo včera —
+ * dnešek se ještě dá dohnat, cokoli staršího je už přetržené.
+ */
+export function liveStreak(row: DailyStreak, today: string): number {
+  if (!row.lastDay) return 0
+  if (row.lastDay === today || row.lastDay === shiftDay(today, -1)) return row.streak
+  return 0
 }
 
 function emptyStats(): ModeStats {
@@ -260,6 +299,9 @@ export function emptyProfile(): Profile {
     },
     guideSeen: false,
     quiz: emptyQuiz(),
+    dailyStreak: Object.fromEntries(
+      MODES.map((mode) => [mode, emptyDailyStreak()]),
+    ) as Record<ModeId, DailyStreak>,
   }
 }
 
@@ -394,6 +436,14 @@ export function migrate(raw: unknown): Profile {
     dailyDone: { ...base.dailyDone, ...(saved.dailyDone ?? {}) },
     tutorialSeen: { ...base.tutorialSeen, ...(saved.tutorialSeen ?? {}) },
     quiz: { ...base.quiz, ...(saved.quiz ?? {}) },
+    // Po jedné hře, ne mělce: nová hra v žebříčku by jinak zůstala
+    // `undefined` a série by se na ní počítala z ničeho.
+    dailyStreak: Object.fromEntries(
+      MODES.map((mode) => [
+        mode,
+        { ...emptyDailyStreak(), ...(saved.dailyStreak?.[mode] ?? {}) },
+      ]),
+    ) as Record<ModeId, DailyStreak>,
     history: saved.history ?? [],
   }
   // Přepočty se řetězí: starý profil projde všemi, novější jen těmi, které
@@ -655,6 +705,12 @@ export function recordRound(
     stats: { ...profile.stats, [result.mode]: stats },
     counters: updateCounters(profile, result, day, daily),
     history: [result, ...profile.history].slice(0, 50),
+    dailyStreak: daily
+      ? {
+          ...profile.dailyStreak,
+          [result.mode]: bumpDaily(profile.dailyStreak[result.mode], day),
+        }
+      : profile.dailyStreak,
   })
 }
 
@@ -699,6 +755,19 @@ export function recordQuiz(
 /** Vzdání kola sérii ukončí, ale statistiky nechá být. */
 export function breakStreak(profile: Profile): Profile {
   return { ...profile, streak: 0 }
+}
+
+/**
+ * Denní série jedné hry po dohrané denní výzvě.
+ *
+ * Navazuje se jen na včerejšek; mezera řadu utne a začíná se od jedničky.
+ * Druhé kolo v tentýž den řadu neposune — je to řada dnů, ne kol —, a proto
+ * se nejdřív porovnává `lastDay`.
+ */
+function bumpDaily(row: DailyStreak, day: string): DailyStreak {
+  if (row.lastDay === day) return row
+  const streak = row.lastDay === shiftDay(day, -1) ? row.streak + 1 : 1
+  return { lastDay: day, streak, best: Math.max(row.best, streak) }
 }
 
 /**

@@ -117,9 +117,11 @@ import {
   migrate as migrateProfile,
   recordQuiz,
   recordRound,
+  liveStreak,
   spendInk,
   type Profile,
 } from '../src/lib/storage'
+import type { ModeId } from '../src/game/types'
 
 describe('české utility', () => {
   it('skládá diakritiku', () => {
@@ -1498,5 +1500,114 @@ describe('přezdívky a hlášení', () => {
     const once = blockPlayer(start, 'uid-a')
     expect(blockPlayer(once, 'uid-a').blocked).toEqual(['uid-a'])
     expect(blockPlayer(once, 'uid-b').blocked).toEqual(['uid-a', 'uid-b'])
+  })
+})
+
+describe('denní série po hrách', () => {
+  const play = (profile: Profile, mode: ModeId, day: string): Profile =>
+    recordRound(
+      profile,
+      {
+        mode,
+        difficulty: 'normal',
+        puzzleId: `${mode}-${day}`,
+        score: 100,
+        perfect: false,
+        success: true,
+        elapsedMs: 1000,
+        hintsUsed: 0,
+        detail: {},
+      },
+      day,
+      true,
+    )
+
+  it('každá hra si vede vlastní řadu', () => {
+    let profile = emptyProfile()
+    profile = play(profile, 'hive', '2026-03-01')
+    profile = play(profile, 'hive', '2026-03-02')
+    profile = play(profile, 'chain', '2026-03-02')
+
+    expect(profile.dailyStreak.hive.streak).toBe(2)
+    expect(profile.dailyStreak.chain.streak).toBe(1)
+    // Vynechaná hra nesmí shodit řadu té druhé.
+    expect(profile.dailyStreak.tower.streak).toBe(0)
+  })
+
+  it('vynechaný den řadu utne, druhé kolo v týž den ji neposune', () => {
+    let profile = emptyProfile()
+    profile = play(profile, 'hive', '2026-03-01')
+    profile = play(profile, 'hive', '2026-03-02')
+    expect(profile.dailyStreak.hive.streak).toBe(2)
+
+    // Týž den podruhé — řada je řada dnů, ne kol.
+    profile = play(profile, 'hive', '2026-03-02')
+    expect(profile.dailyStreak.hive.streak).toBe(2)
+
+    // Mezera. Začíná se od jedničky, ale nejdelší řada zůstává.
+    profile = play(profile, 'hive', '2026-03-05')
+    expect(profile.dailyStreak.hive.streak).toBe(1)
+    expect(profile.dailyStreak.hive.best).toBe(2)
+  })
+
+  // Denní výzva je návyk, ne výkon: Šibenice se dá prohrát a Voština ukončit
+  // kdykoli, takže podmínka na úspěch by z řady udělala loterii.
+  it('prohrané kolo řadu neutne', () => {
+    let profile = emptyProfile()
+    profile = play(profile, 'gallows', '2026-03-01')
+    profile = recordRound(
+      profile,
+      {
+        mode: 'gallows',
+        difficulty: 'normal',
+        puzzleId: 'g2',
+        score: 0,
+        perfect: false,
+        success: false,
+        elapsedMs: 1000,
+        hintsUsed: 2,
+        detail: {},
+      },
+      '2026-03-02',
+      true,
+    )
+    expect(profile.dailyStreak.gallows.streak).toBe(2)
+  })
+
+  it('kolo mimo denní výzvu se do řady nepočítá', () => {
+    let profile = emptyProfile()
+    profile = play(profile, 'tower', '2026-03-01')
+    profile = recordRound(
+      profile,
+      {
+        mode: 'tower',
+        difficulty: 'normal',
+        puzzleId: 't2',
+        score: 50,
+        perfect: false,
+        success: true,
+        elapsedMs: 1000,
+        hintsUsed: 0,
+        detail: {},
+      },
+      '2026-03-02',
+      false,
+    )
+    expect(profile.dailyStreak.tower.streak).toBe(1)
+  })
+
+  // Uložené číslo se nuluje až dalším odehráním, takže samo o sobě může
+  // tvrdit dvanáct dní i tři týdny poté, co hráč naposledy hrál.
+  it('řada platí jen dnes a včera', () => {
+    const row = { lastDay: '2026-03-02', streak: 9, best: 12 }
+    expect(liveStreak(row, '2026-03-02')).toBe(9)
+    expect(liveStreak(row, '2026-03-03')).toBe(9)
+    expect(liveStreak(row, '2026-03-04')).toBe(0)
+    expect(liveStreak({ lastDay: null, streak: 0, best: 0 }, '2026-03-04')).toBe(0)
+  })
+
+  it('starý profil bez denních sérií se načte s prázdnými', () => {
+    const old = migrateProfile({ version: 3, fame: 1000 })
+    expect(old.dailyStreak.hive).toEqual({ lastDay: null, streak: 0, best: 0 })
   })
 })
