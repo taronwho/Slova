@@ -47,9 +47,7 @@ Hotovo: **80 / 80**
 | 10 | mech-vzacne-pismeno | střední | písmeno f, g, x nebo w |
 | 11 | mech-vic-samohlasek | střední | víc samohlásek než souhlásek |
 | 12 | mech-ruzne-samohlasky | střední | každá samohláska jiná |
-| 13 | mech-dve-slova | těžká | dají se rozdělit na dvě jiná slova |
 | 14 | mech-prvni-pulka | těžká | písmena jen z první poloviny abecedy |
-| 15 | mech-leva-ruka | těžká | dají se napsat jen levou rukou |
 | 16 | mech-bez-opakovani | těžká | sedm písmen a žádné se neopakuje |
 | 17 | mech-sousedni-pismena | těžká | dvě písmena, co jdou v abecedě po sobě |
 | 18 | mech-rimske-cislo | těžká | jen písmena římských číslic |
@@ -141,10 +139,46 @@ významu — a přesně to má Vetřelec dávat.
 
 ## Hotovo
 
-* 80 rodin vygenerováno a zapojeno do sady. Střední má nově **56 rodin**,
-  těžká **52**; nejčastější rodina zabírá 1,8 % své obtížnosti (dřív 8,3 %).
+* 80 rodin vygenerováno a zapojeno do sady. Střední má nově **57 rodin**,
+  těžká **51**; nejčastější rodina zabírá 2 % své obtížnosti (dřív 8,3 %).
 * Rozpočet střední a těžké se zvedl (1400 a 1300 pětic), aby na rodinu
-  vyšlo pětadvacet hádanek a ne čtrnáct. Sada má 3840 pětic.
+  vyšlo pětadvacet hádanek a ne čtrnáct. Sada má 3793 pětic.
 * Ve stavěči sady přibyla brzda na dvě slova z jednoho kořene v jedné pětici
   (*malina* a *malinovka*) a v testech dvě nová tvrzení: kořeny a rámec věty
   do vyhodnocení.
+
+## Opravy po prvním hraní
+
+Hráč nahlásil tři věci a všechny tři měly stejný charakter: hádanka byla
+formálně správná, ale nehrála se dobře. Každou opravu drží od téhle chvíle
+skript, ne pozornost.
+
+**1. Pětice se dvěma řešeními.** *labuť, plachty, srnec, orel, had* — osa
+„čtyři z nich jsou souhvězdí" ukazuje na *srnce*, jenže zbylá čtyři slova
+jsou zvířata a ukazují na *plachty*. Kdy to nastane, se dá spočítat: vadí
+právě ten případ, kdy škatulku sdílí čtyři slova a **jedno z nich je
+vetřelec**. Když ji sdílí všech pět, nikoho nevyděluje; když ji sdílí ta
+čtveřice zevnitř, vydělí téhož vetřelce jako osa. Škatulky (zvíře, rostlina)
+jsou v `tools/word_tags.py` a rodiny, které je mají přímo ve střeše
+(„savci", „ptáci", „stromy"), si je **doplní samy** — ručně psaný seznam
+nemůže být úplný a hned to bylo vidět: chyběl v něm *upír*.
+
+**2. Totéž schované dvakrát.** *peruť, román, malinovka, maximalista* —
+*malinovka* i *maximalista* nesou Mali. Generátor si u každého slova
+zapamatuje, co v něm vlastně vězí, a stavěč sady nepustí do jedné pětice dvě
+slova s touž násadou. Doplněno i starším rodinám (*rakev* a *raketa* nesou
+obě raka, *sobota* a *osoba* soba).
+
+**3. Pravidlo, které si hráč nemůže ověřit.** „Čtyři z nich se dají napsat
+jen levou rukou na české klávesnici" — na telefonu klávesnici nikdo před
+sebou nemá a rozdělení QWERTZ na půlky není vidět. Rodina šla pryč a
+nahradila ji **Tisíc a jedna noc** (*lampa, koberec, sezam, jeskyně,
+loupežník, duch*), kde stačí příběh znát.
+
+Do testů přibyla dvě tvrzení nad hotovou sadou: žádná pětice se dvěma
+řešeními a žádná pětice, kde se totéž schovává dvakrát.
+
+Cestou se ukázalo ještě jedno: rodina „čtyři z nich umí aktivně létat" měla
+uvnitř *netopýra*, *netopýra velkého* a *netopýra rezavého*, takže se čtyři
+různá slova z ní nedala vybrat a rodina nevydala **ani jednu** pětici. Teď
+má čtyři různé druhy (netopýr, kaloň, vrápenec, upír).

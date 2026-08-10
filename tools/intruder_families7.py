@@ -22,8 +22,8 @@ FAMILIES7 = [
             "los", "kos", "nos", "dost",
         ],
         "outside": [
-            "hoblík", "hřeben", "kolík", "kýbl", "lampa", "pračka", "provaz",
-            "ručník", "sud", "sušák", "trakař", "vana",
+            "dřez", "guma", "hrábě", "hřebík", "kleště", "kolík", "konev",
+            "krém", "kýbl", "mrkev", "pračka", "sud",
         ],
         "asks": [
             "mají písmena seřazená podle abecedy",
@@ -42,14 +42,14 @@ FAMILIES7 = [
             "knoflík", "kotník", "maximum", "transport", "reportér", "servis",
         ],
         "outside": [
-            "hodinky", "lednička", "metr", "mýdlo", "nůžky", "police",
-            "pouzdro", "rohožka", "sešit", "sklenice", "ubrousek", "řetízek",
+            "komoda", "konev", "peněženka", "police", "popelnice", "sešit",
+            "silnice", "smeták", "záclona", "zápisník", "řetízek", "žehlička",
         ],
         "asks": [
             "začínají a končí stejným písmenem",
-            "jsou to zároveň jména českých měst",
             "čtou se stejně zepředu i zezadu",
             "jsou to zároveň příjmení českých prezidentů",
+            "jsou to zároveň značky nebo modely aut",
         ],
     },
     {
@@ -63,9 +63,23 @@ FAMILIES7 = [
             "město",
         ],
         "outside": [
-            "brýle", "koberec", "kolík", "koště", "mýdlo", "ořezávátko",
-            "pilník", "pytel", "ručník", "smeták", "trakař", "vrtačka",
+            "brambora", "hoblík", "kolík", "koště", "kýbl", "motyka",
+            "náramek", "pouzdro", "pytel", "svěrák", "ubrus", "šroub",
         ],
+        "skryte": {
+            "dystopie": "sto",
+            "hustota": "sto",
+            "kosmonaut": "osm",
+            "manšestr": "šest",
+            "mastodont": "sto",
+            "místodržící": "sto",
+            "město": "sto",
+            "podvazek": "dva",
+            "stodola": "sto",
+            "stoh": "sto",
+            "střih": "tři",
+            "výstřih": "tři",
+        },
         "asks": [
             "mají v sobě schované číslo",
             "jsou to zároveň značky nebo modely aut",
@@ -84,9 +98,23 @@ FAMILIES7 = [
             "ionosféra", "kabanos",
         ],
         "outside": [
-            "hrnec", "kastrol", "konev", "lednička", "pekáč", "ponožka",
-            "popelnice", "propiska", "pytel", "ramínko", "sušák", "žehlička",
+            "guma", "houpačka", "hrnec", "hrneček", "kolík", "pinzeta",
+            "pračka", "rohožka", "struhadlo", "vana", "žebřík", "žehlička",
         ],
+        "skryte": {
+            "dekret": "ret",
+            "dinosaurus": "nos",
+            "dokončení": "oko",
+            "hluchota": "ucho",
+            "ionosféra": "nos",
+            "kabanos": "nos",
+            "lopata": "pata",
+            "pokolení": "oko",
+            "protokol": "oko",
+            "prsten": "prst",
+            "rukavice": "ruka",
+            "sucho": "ucho",
+        },
         "asks": [
             "mají v sobě schovanou část těla",
             "jsou to zároveň příjmení českých prezidentů",
@@ -104,8 +132,8 @@ FAMILIES7 = [
             "zábava", "děvče", "kolo", "okno", "ostrov", "motor",
         ],
         "outside": [
-            "deka", "houpačka", "kolík", "peřina", "postel", "ramínko",
-            "rohožka", "skříň", "svěrák", "truhlík", "věšák", "šuplík",
+            "hadice", "hoblík", "hřebík", "komoda", "květináč", "lavička",
+            "matrace", "peřina", "postel", "ramínko", "vařečka", "věšák",
         ],
         "asks": [
             "mají ve všech slabikách stejnou samohlásku",
@@ -124,8 +152,8 @@ FAMILIES7 = [
             "ovoce", "opatření", "úsilí", "otevření", "očekávání",
         ],
         "outside": [
-            "brýle", "deka", "hadice", "hodinky", "hřeben", "lepidlo",
-            "polštář", "propiska", "provaz", "pytel", "ramínko", "záclona",
+            "batoh", "guma", "houpačka", "hrábě", "hřebík", "kolík", "mrkev",
+            "náramek", "propiska", "ramínko", "řetízek", "šála",
         ],
         "asks": [
             "začínají i končí samohláskou",
@@ -144,14 +172,14 @@ FAMILIES7 = [
             "ostrov", "prsa", "strom", "mistr", "partner", "chleba",
         ],
         "outside": [
-            "brambora", "bunda", "hodinky", "hřeben", "koberec", "konev",
-            "mísa", "pekáč", "peřina", "police", "sud", "šroub",
+            "hodinky", "lavička", "lednička", "pekáč", "pilník", "police",
+            "ponožka", "silnice", "sud", "tácek", "zahrada", "žebřík",
         ],
         "asks": [
             "mají v sobě tři souhlásky za sebou",
-            "čtou se stejně zepředu i zezadu",
             "nemají v sobě ani jednu samohlásku",
-            "jsou to zároveň jména českých měst",
+            "jsou v názvech her Járy Cimrmana",
+            "jsou to zároveň příjmení českých prezidentů",
         ],
     },
     {
@@ -164,14 +192,14 @@ FAMILIES7 = [
             "trouba", "kloub", "automat", "inkoust", "soudkyně", "doutník",
         ],
         "outside": [
-            "batoh", "kartáček", "mýdlo", "peřina", "pinzeta", "sklenice",
-            "skříň", "sporák", "sušák", "trakař", "utěrka", "vysavač",
+            "brýle", "hřeben", "lavička", "matrace", "motyka", "pinzeta",
+            "silnice", "sušák", "ubrus", "vysavač", "věšák", "záclona",
         ],
         "asks": [
             "mají v sobě dvojhlásku ou, au nebo eu",
             "jsou to zároveň jména českých měst",
+            "mají v sobě schované zvíře",
             "jsou v názvech večerníčků",
-            "jsou to znamení zvěrokruhu",
         ],
     },
     {
@@ -185,14 +213,14 @@ FAMILIES7 = [
             "losos",
         ],
         "outside": [
-            "hadr", "hrábě", "lampa", "lavička", "metr", "mísa", "pytel",
-            "semínko", "vana", "zápisník", "řetízek", "šroub",
+            "branka", "dřez", "kolík", "komoda", "konev", "matice", "myčka",
+            "pekáč", "pilník", "pravítko", "smeták", "truhlík",
         ],
         "asks": [
             "mají v sobě dvakrát tutéž dvojici písmen",
-            "jsou v názvech her Járy Cimrmana",
             "jsou v názvech večerníčků",
             "jsou to znamení zvěrokruhu",
+            "jsou to zároveň značky českého piva",
         ],
     },
     {
@@ -206,8 +234,8 @@ FAMILIES7 = [
             "džungle",
         ],
         "outside": [
-            "brýle", "dřez", "hadice", "metr", "naběračka", "pekáč",
-            "pinzeta", "ponožka", "pravítko", "pračka", "semínko", "vrtačka",
+            "hoblík", "hrneček", "hrábě", "hřeben", "komoda", "krém",
+            "lepidlo", "myčka", "naběračka", "náramek", "podnos", "vana",
         ],
         "asks": [
             "mají v sobě f, g, x nebo w",
@@ -226,8 +254,8 @@ FAMILIES7 = [
             "úsilí", "očekávání", "využití", "galerie", "komedie",
         ],
         "outside": [
-            "brýle", "dřez", "krém", "květináč", "mýdlo", "pekáč", "pinzeta",
-            "pouzdro", "provaz", "věšák", "šroub", "žebřík",
+            "hrneček", "hřeben", "hřebík", "kompost", "naběračka", "náramek",
+            "nůžky", "peněženka", "pilník", "ručník", "ubrus", "vařečka",
         ],
         "asks": [
             "mají víc samohlásek než souhlásek",
@@ -247,8 +275,8 @@ FAMILIES7 = [
             "noviny",
         ],
         "outside": [
-            "bunda", "deka", "houpačka", "matrace", "myčka", "nůžky",
-            "rohožka", "sklenice", "sporák", "trakař", "ubrousek", "vana",
+            "houpačka", "kbelík", "lavička", "pekáč", "ponožka", "popelnice",
+            "pračka", "silnice", "trakař", "truhlík", "vysavač", "zápisník",
         ],
         "asks": [
             "nemají v sobě dvakrát tutéž samohlásku",
@@ -267,34 +295,14 @@ FAMILIES7 = [
             "chemie", "klec", "ambice", "chemikálie", "dědic",
         ],
         "outside": [
-            "koberec", "květináč", "kýbl", "lampa", "peřina", "pilník",
-            "popelnice", "rýč", "sklenice", "sporák", "struhadlo", "utěrka",
+            "brambora", "kompost", "konev", "květináč", "lavička", "mýdlo",
+            "polštář", "silnice", "struhadlo", "svěrák", "vysavač", "věšák",
         ],
         "asks": [
             "mají písmena jen z první poloviny abecedy",
             "jsou v názvech her Járy Cimrmana",
             "jsou to zároveň jména českých měst",
             "jsou to zároveň značky nebo modely aut",
-        ],
-    },
-    {
-        "id": "mech-leva-ruka",
-        "roof": "slova, která se napíšou jen levou rukou na české klávesnici",
-        "level": "hard",
-        "hidden": True,
-        "inside": [
-            "srdce", "dveře", "svět", "bratr", "starý", "sestra", "cesta",
-            "děvče", "ryba", "déšť", "tráva", "tvar",
-        ],
-        "outside": [
-            "guma", "hrábě", "motyka", "myčka", "náramek", "pekáč", "police",
-            "polštář", "silnice", "sud", "sušák", "šuplík",
-        ],
-        "asks": [
-            "se dají napsat jen levou rukou na české klávesnici",
-            "jsou to zároveň značky českého piva",
-            "mají v sobě dvě stejná písmena vedle sebe",
-            "jsou v názvech večerníčků",
         ],
     },
     {
@@ -308,9 +316,8 @@ FAMILIES7 = [
             "majitel",
         ],
         "outside": [
-            "hřeben", "kompost", "matice", "naběračka", "náramek",
-            "ořezávátko", "sklenice", "smeták", "utěrka", "vrtačka",
-            "vysavač", "záclona",
+            "hrneček", "lepidlo", "lopatka", "náramek", "pilník", "ponožka",
+            "pračka", "rohožka", "sporák", "svěrák", "zahrada", "zápisník",
         ],
         "asks": [
             "mají aspoň sedm písmen a ani jedno se v nich neopakuje",
@@ -329,14 +336,14 @@ FAMILIES7 = [
             "příležitost", "zábava", "stůl", "děvče", "víno", "prsten",
         ],
         "outside": [
-            "batoh", "brambora", "hrnec", "kartáček", "krém", "police",
-            "pouzdro", "pravítko", "smeták", "vařečka", "zápisník", "řetízek",
+            "guma", "hrnec", "hřeben", "kartáček", "nůžky", "ořezávátko",
+            "peněženka", "police", "provaz", "silnice", "záclona", "řetízek",
         ],
         "asks": [
             "mají vedle sebe dvě písmena, která jdou po sobě i v abecedě",
-            "čtou se stejně zepředu i zezadu",
             "jsou v názvech večerníčků",
-            "mají v sobě schované zvíře",
+            "čtou se stejně zepředu i zezadu",
+            "nemají v sobě ani jednu samohlásku",
         ],
     },
     {
@@ -348,13 +355,13 @@ FAMILIES7 = [
             "vliv", "div", "mix", "civil", "lid", "cíl", "mim",
         ],
         "outside": [
-            "deka", "guma", "hrnec", "hrábě", "kbelík", "komoda", "konev",
-            "mrkev", "myčka", "podnos", "pytel", "věšák",
+            "guma", "hrnec", "motyka", "mýdlo", "peřina", "podnos", "provaz",
+            "skříň", "smeták", "tácek", "utěrka", "žebřík",
         ],
         "asks": [
             "mají jen písmena, která se používají jako římské číslice",
-            "jsou v názvech her Járy Cimrmana",
             "jsou v názvech Shakespearových her",
+            "mají v sobě schované zvíře",
             "mají v sobě dvě stejná písmena vedle sebe",
         ],
     },
@@ -368,13 +375,13 @@ FAMILIES7 = [
             "slib", "prsten", "nůž", "vzduch",
         ],
         "outside": [
-            "branka", "bunda", "hodinky", "kolík", "koště", "lepidlo",
-            "matrace", "nůžky", "pilník", "postel", "pytel", "šála",
+            "batoh", "deka", "guma", "hodinky", "kastrol", "kolík", "koště",
+            "peřina", "trakař", "řetízek", "šroub", "šála",
         ],
         "asks": [
             "mají v sobě jen jednu jedinou samohlásku",
-            "jsou to zároveň příjmení českých prezidentů",
             "jsou v názvech her Járy Cimrmana",
+            "jsou to zároveň příjmení českých prezidentů",
             "jsou to znamení zvěrokruhu",
         ],
     },
@@ -388,9 +395,18 @@ FAMILIES7 = [
             "peruť", "kubatura",
         ],
         "outside": [
-            "kýbl", "lavička", "motyka", "mrkev", "pravítko", "pračka",
-            "skříň", "svěrák", "trakař", "tácek", "vysavač", "záclona",
+            "branka", "hadr", "kleště", "krém", "květináč", "matrace",
+            "motyka", "ořezávátko", "polštář", "sklenice", "sušák", "šála",
         ],
+        "skryte": {
+            "inkubace": "kuba",
+            "kubatura": "kuba",
+            "malina": "mali",
+            "malinovka": "mali",
+            "maximalista": "mali",
+            "peruť": "peru",
+            "román": "omán",
+        },
         "asks": [
             "mají v sobě schované jméno státu",
             "jsou to zároveň značky nebo modely aut",
@@ -408,14 +424,14 @@ FAMILIES7 = [
             "hůrka", "vyšehrad", "opatov", "motol", "pankrác",
         ],
         "outside": [
-            "hadice", "kolík", "krém", "peřina", "pinzeta", "propiska",
-            "silnice", "svěrák", "věšák", "zápisník", "šroub", "šála",
+            "guma", "hrábě", "hřeben", "kleště", "lavička", "mísa", "nůžky",
+            "pilník", "pravítko", "utěrka", "vařečka", "šroub",
         ],
         "asks": [
             "jsou to zároveň stanice pražského metra",
             "jsou v názvech Shakespearových her",
             "mají v sobě dvě stejná písmena vedle sebe",
-            "jsou to zároveň příjmení českých prezidentů",
+            "mají v sobě schované zvíře",
         ],
     },
     {
@@ -428,14 +444,14 @@ FAMILIES7 = [
             "peso", "rand", "won",
         ],
         "outside": [
-            "brýle", "kolík", "konev", "krém", "lampa", "mrkev", "mísa",
-            "pilník", "pouzdro", "pytel", "vysavač", "šroub",
+            "brýle", "kolík", "konev", "pilník", "pouzdro", "silnice", "sud",
+            "sušák", "svěrák", "vařečka", "šroub", "žebřík",
         ],
         "asks": [
             "jsou to zároveň měny",
-            "jsou to zároveň značky českého piva",
             "jsou to zároveň jména českých měst",
             "jsou to znamení zvěrokruhu",
+            "jsou to zároveň značky nebo modely aut",
         ],
     },
     {
@@ -448,14 +464,14 @@ FAMILIES7 = [
             "kappa", "lambda", "théta",
         ],
         "outside": [
-            "brýle", "komoda", "konev", "kýbl", "mísa", "peřina", "police",
-            "ponožka", "postel", "skříň", "vysavač", "šála",
+            "deka", "lavička", "matrace", "metr", "mísa", "police", "polštář",
+            "postel", "sud", "sušák", "vana", "žebřík",
         ],
         "asks": [
             "jsou to zároveň písmena řecké abecedy",
-            "nemají v sobě ani jednu samohlásku",
-            "jsou v názvech her Járy Cimrmana",
             "jsou to znamení zvěrokruhu",
+            "čtou se stejně zepředu i zezadu",
+            "jsou v názvech her Járy Cimrmana",
         ],
     },
     {
@@ -468,8 +484,8 @@ FAMILIES7 = [
             "rhodos", "kréta", "mallorca",
         ],
         "outside": [
-            "hřebík", "květináč", "lampa", "lepidlo", "metr", "police", "rýč",
-            "sporák", "vařečka", "věšák", "žebřík", "žehlička",
+            "batoh", "komoda", "kompost", "konev", "květináč", "matice",
+            "mýdlo", "police", "pračka", "ručník", "vařečka", "vysavač",
         ],
         "asks": [
             "jsou to zároveň ostrovy",
@@ -488,14 +504,14 @@ FAMILIES7 = [
             "dáma", "vole", "kvarteto",
         ],
         "outside": [
-            "bunda", "hoblík", "kýbl", "mýdlo", "peněženka", "sporák",
-            "truhlík", "tácek", "vana", "vařečka", "vysavač", "šála",
+            "dřez", "hadr", "hodinky", "metr", "mísa", "mýdlo", "polštář",
+            "ponožka", "semínko", "sušák", "ubrus", "vysavač",
         ],
         "asks": [
             "jsou to zároveň karetní hry",
             "jsou to zároveň značky nebo modely aut",
             "jsou to zároveň značky českého piva",
-            "mají v sobě schované zvíře",
+            "jsou to znamení zvěrokruhu",
         ],
     },
     {
@@ -508,14 +524,14 @@ FAMILIES7 = [
             "mateřídouška", "sluníčko", "junák", "téma",
         ],
         "outside": [
-            "branka", "hadr", "nůžky", "podnos", "semínko", "sešit",
-            "struhadlo", "sud", "trakař", "ubrus", "utěrka", "řetízek",
+            "bunda", "motyka", "myčka", "mýdlo", "pekáč", "peřina", "sešit",
+            "smeták", "trakař", "ubrousek", "věšák", "zápisník",
         ],
         "asks": [
             "jsou to zároveň názvy českých časopisů",
-            "jsou v názvech večerníčků",
             "jsou to znamení zvěrokruhu",
             "jsou to zároveň značky českého piva",
+            "čtou se stejně zepředu i zezadu",
         ],
     },
     {
@@ -528,14 +544,14 @@ FAMILIES7 = [
             "buty", "traband",
         ],
         "outside": [
-            "branka", "koště", "mrkev", "pračka", "provaz", "semínko",
-            "silnice", "smeták", "truhlík", "ubrousek", "zápisník", "žebřík",
+            "hřebík", "kbelík", "koště", "krém", "myčka", "pravítko", "pytel",
+            "ručník", "semínko", "sklenice", "trakař", "utěrka",
         ],
         "asks": [
             "jsou to zároveň názvy českých kapel",
             "jsou to znamení zvěrokruhu",
             "jsou v názvech her Járy Cimrmana",
-            "mají v sobě schované zvíře",
+            "jsou v názvech Shakespearových her",
         ],
     },
     {
@@ -548,14 +564,14 @@ FAMILIES7 = [
             "vlci", "berani", "draci", "indiáni",
         ],
         "outside": [
-            "guma", "hoblík", "kolík", "kýbl", "lavička", "lopatka",
-            "náramek", "polštář", "ponožka", "silnice", "ubrousek", "věšák",
+            "branka", "kbelík", "metr", "mrkev", "mýdlo", "polštář",
+            "pouzdro", "provaz", "tácek", "utěrka", "vana", "šroub",
         ],
         "asks": [
             "jsou to zároveň názvy českých hokejových klubů",
-            "jsou to zároveň značky nebo modely aut",
             "jsou to znamení zvěrokruhu",
             "jsou to zároveň značky českého piva",
+            "jsou v názvech Shakespearových her",
         ],
     },
     {
@@ -568,13 +584,13 @@ FAMILIES7 = [
             "panelka", "kývačka",
         ],
         "outside": [
-            "deka", "hadr", "hoblík", "hrábě", "mrkev", "náramek", "polštář",
-            "propiska", "ručník", "smeták", "truhlík", "vrtačka",
+            "guma", "hoblík", "kýbl", "metr", "mrkev", "postel", "pytel",
+            "ramínko", "rýč", "semínko", "sklenice", "smeták",
         ],
         "asks": [
             "jsou to zároveň názvy motorek nebo mopedů",
-            "jsou to znamení zvěrokruhu",
             "jsou to zároveň jména českých měst",
+            "mají v sobě dvě stejná písmena vedle sebe",
             "jsou v názvech večerníčků",
         ],
     },
@@ -588,14 +604,14 @@ FAMILIES7 = [
             "madeta", "vysočina", "kmotr", "moravan",
         ],
         "outside": [
-            "batoh", "dřez", "hrábě", "kastrol", "kolík", "náramek", "peřina",
-            "ramínko", "rýč", "struhadlo", "ubrus", "zápisník",
+            "brýle", "bunda", "houpačka", "kartáček", "květináč", "lavička",
+            "naběračka", "pravítko", "rohožka", "rýč", "sklenice", "šroub",
         ],
         "asks": [
             "jsou to zároveň názvy sýrů",
-            "jsou v názvech Shakespearových her",
             "jsou to zároveň příjmení českých prezidentů",
             "jsou to znamení zvěrokruhu",
+            "mají v sobě dvě stejná písmena vedle sebe",
         ],
     },
     {
@@ -608,14 +624,14 @@ FAMILIES7 = [
             "mazurka", "kalamajka", "furiant", "rejdovák",
         ],
         "outside": [
-            "batoh", "květináč", "kýbl", "lopatka", "metr", "ořezávátko",
-            "pouzdro", "rýč", "truhlík", "ubrus", "utěrka", "řetízek",
+            "brýle", "bunda", "kleště", "komoda", "kompost", "květináč",
+            "peněženka", "polštář", "pouzdro", "provaz", "semínko", "věšák",
         ],
         "asks": [
             "jsou to zároveň tance",
-            "jsou to znamení zvěrokruhu",
             "jsou v názvech večerníčků",
             "jsou to zároveň příjmení českých prezidentů",
+            "čtou se stejně zepředu i zezadu",
         ],
     },
     {
@@ -628,8 +644,8 @@ FAMILIES7 = [
             "deli", "fidorka",
         ],
         "outside": [
-            "hadice", "kastrol", "kýbl", "lepidlo", "mrkev", "myčka",
-            "popelnice", "semínko", "ubrus", "vrtačka", "zápisník", "šroub",
+            "batoh", "bunda", "hoblík", "hrábě", "myčka", "pilník", "polštář",
+            "pravítko", "rohožka", "sklenice", "sporák", "struhadlo",
         ],
         "asks": [
             "jsou to zároveň názvy českých sladkostí",
@@ -648,8 +664,8 @@ FAMILIES7 = [
             "přípona", "předložka",
         ],
         "outside": [
-            "dřez", "hrnec", "kleště", "lopatka", "matice", "pilník",
-            "police", "postel", "rýč", "silnice", "smeták", "vysavač",
+            "deka", "hrnec", "květináč", "naběračka", "police", "provaz",
+            "pytel", "sušák", "svěrák", "utěrka", "vrtačka", "šuplík",
         ],
         "asks": [
             "jsou to zároveň mluvnické pojmy",
@@ -668,12 +684,12 @@ FAMILIES7 = [
             "jeviště", "zákulisí", "premiéra",
         ],
         "outside": [
-            "hoblík", "hodinky", "metr", "myčka", "mýdlo", "náramek",
-            "pouzdro", "semínko", "svěrák", "vařečka", "záclona", "šála",
+            "kleště", "komoda", "metr", "myčka", "mísa", "mýdlo", "peněženka",
+            "silnice", "sporák", "ubrus", "řetízek", "šála",
         ],
         "asks": [
             "jsou to zároveň divadelní pojmy",
-            "jsou v názvech Shakespearových her",
+            "mají v sobě schované zvíře",
             "jsou to zároveň značky nebo modely aut",
             "jsou to znamení zvěrokruhu",
         ],
@@ -688,9 +704,8 @@ FAMILIES7 = [
             "duhovka", "sítnice", "hlemýžď", "zornice", "bělmo",
         ],
         "outside": [
-            "hrábě", "kastrol", "komoda", "konev", "květináč", "lampa",
-            "peněženka", "pinzeta", "polštář", "skříň", "ubrousek",
-            "žehlička",
+            "hodinky", "hřeben", "kbelík", "kompost", "konev", "matrace",
+            "mrkev", "postel", "pračka", "rohožka", "truhlík", "žebřík",
         ],
         "asks": [
             "jsou to zároveň části ucha nebo oka",
@@ -709,8 +724,8 @@ FAMILIES7 = [
             "disk", "sítě", "jádro",
         ],
         "outside": [
-            "brýle", "krém", "mísa", "peněženka", "peřina", "postel", "pytel",
-            "skříň", "svěrák", "vrtačka", "šála", "žebřík",
+            "deka", "hoblík", "hodinky", "kleště", "kolík", "lavička",
+            "matrace", "mísa", "náramek", "nůžky", "ručník", "sud",
         ],
         "asks": [
             "jsou to zároveň počítačové pojmy",
@@ -729,14 +744,14 @@ FAMILIES7 = [
             "zeď", "postavení", "nastavení",
         ],
         "outside": [
-            "brýle", "deka", "guma", "hodinky", "krém", "lednička", "provaz",
-            "rýč", "skříň", "sporák", "utěrka", "řetízek",
+            "hřebík", "květináč", "lepidlo", "matrace", "náramek", "nůžky",
+            "ramínko", "sporák", "vysavač", "věšák", "řetízek", "žehlička",
         ],
         "asks": [
             "jsou to zároveň fotbalové pojmy",
-            "nemají v sobě ani jednu samohlásku",
             "jsou to zároveň příjmení českých prezidentů",
-            "mají v sobě schované zvíře",
+            "mají v sobě dvě stejná písmena vedle sebe",
+            "nemají v sobě ani jednu samohlásku",
         ],
     },
     {
@@ -749,8 +764,8 @@ FAMILIES7 = [
             "radhošť", "klínovec", "čerchov", "smrk",
         ],
         "outside": [
-            "hadice", "hoblík", "hrnec", "kýbl", "mísa", "podnos", "police",
-            "ponožka", "propiska", "sušák", "vana", "šuplík",
+            "dřez", "guma", "hrnec", "hrábě", "metr", "pinzeta", "police",
+            "polštář", "skříň", "sud", "ubrousek", "vana",
         ],
         "asks": [
             "jsou to zároveň české hory nebo vrchy",
@@ -769,14 +784,14 @@ FAMILIES7 = [
             "buran",
         ],
         "outside": [
-            "guma", "hadr", "houpačka", "hrneček", "koště", "matrace", "metr",
-            "náramek", "pytel", "silnice", "sud", "truhlík",
+            "hadice", "kolík", "komoda", "koště", "pekáč", "peřina",
+            "pouzdro", "semínko", "skříň", "smeták", "tácek", "utěrka",
         ],
         "asks": [
             "jsou to zároveň názvy větrů",
-            "jsou to znamení zvěrokruhu",
             "čtou se stejně zepředu i zezadu",
             "jsou v názvech Shakespearových her",
+            "jsou to zároveň značky nebo modely aut",
         ],
     },
     {
@@ -789,8 +804,8 @@ FAMILIES7 = [
             "studio", "hybernia", "broadway", "komedie",
         ],
         "outside": [
-            "deka", "hrneček", "kýbl", "lednička", "metr", "naběračka",
-            "pilník", "ponožka", "propiska", "ručník", "rýč", "trakař",
+            "guma", "komoda", "květináč", "kýbl", "motyka", "podnos",
+            "polštář", "ramínko", "svěrák", "tácek", "vana", "žehlička",
         ],
         "asks": [
             "jsou to zároveň názvy pražských divadel",
@@ -809,14 +824,14 @@ FAMILIES7 = [
             "paseka", "vyšehrad", "torst", "triton",
         ],
         "outside": [
-            "dřez", "hadr", "kartáček", "konev", "květináč", "matice",
-            "motyka", "mýdlo", "podnos", "silnice", "trakař", "ubrus",
+            "bunda", "kompost", "motyka", "naběračka", "smeták", "truhlík",
+            "ubrousek", "ubrus", "utěrka", "vrtačka", "záclona", "žebřík",
         ],
         "asks": [
             "jsou to zároveň názvy českých nakladatelství",
+            "mají v sobě schované zvíře",
             "čtou se stejně zepředu i zezadu",
             "mají v sobě dvě stejná písmena vedle sebe",
-            "jsou to zároveň příjmení českých prezidentů",
         ],
     },
     {
@@ -829,8 +844,8 @@ FAMILIES7 = [
             "korektura", "desky", "předsádka",
         ],
         "outside": [
-            "hadr", "kartáček", "kleště", "koště", "květináč", "peněženka",
-            "police", "ponožka", "postel", "sklenice", "tácek", "vrtačka",
+            "deka", "hadr", "hoblík", "hodinky", "kompost", "koště", "police",
+            "silnice", "smeták", "vana", "záclona", "šuplík",
         ],
         "asks": [
             "jsou to zároveň knihařské nebo tiskařské pojmy",
@@ -849,8 +864,8 @@ FAMILIES7 = [
             "ostění", "nadpraží", "podezdívka",
         ],
         "outside": [
-            "dřez", "hrneček", "lampa", "matice", "mísa", "pračka", "provaz",
-            "vrtačka", "věšák", "záclona", "zápisník", "šála",
+            "hoblík", "hřebík", "konev", "krém", "mísa", "naběračka",
+            "pravítko", "sud", "tácek", "vařečka", "vrtačka", "šála",
         ],
         "asks": [
             "jsou to zároveň stavební pojmy",
@@ -869,14 +884,14 @@ FAMILIES7 = [
             "odrážka", "posuvka", "osnova", "taktovka",
         ],
         "outside": [
-            "bunda", "hrnec", "kolík", "mýdlo", "pilník", "pinzeta", "police",
-            "polštář", "popelnice", "rohožka", "ubrus", "utěrka",
+            "bunda", "hrnec", "hřeben", "mrkev", "police", "ponožka",
+            "popelnice", "struhadlo", "svěrák", "ubrus", "věšák", "šroub",
         ],
         "asks": [
             "jsou to zároveň značky v notách",
             "čtou se stejně zepředu i zezadu",
             "mají v sobě dvě stejná písmena vedle sebe",
-            "mají v sobě schované zvíře",
+            "jsou to zároveň příjmení českých prezidentů",
         ],
     },
     {
@@ -889,8 +904,8 @@ FAMILIES7 = [
             "novák", "kalabis", "vejvoda", "zich",
         ],
         "outside": [
-            "deka", "guma", "kastrol", "komoda", "konev", "krém", "kýbl",
-            "myčka", "mýdlo", "pilník", "ramínko", "truhlík",
+            "houpačka", "lepidlo", "nůžky", "polštář", "postel", "ramínko",
+            "rohožka", "semínko", "sporák", "svěrák", "ubrus", "žebřík",
         ],
         "asks": [
             "jsou to zároveň příjmení českých skladatelů",
@@ -909,8 +924,8 @@ FAMILIES7 = [
             "hvězda", "cibulka", "obora", "grébovka",
         ],
         "outside": [
-            "mísa", "peněženka", "polštář", "popelnice", "pytel", "ramínko",
-            "sklenice", "svěrák", "vařečka", "vrtačka", "šroub", "žebřík",
+            "dřez", "hoblík", "hodinky", "houpačka", "kleště", "kolík",
+            "mrkev", "mýdlo", "pilník", "ručník", "silnice", "struhadlo",
         ],
         "asks": [
             "jsou to zároveň pražské parky",
@@ -929,14 +944,14 @@ FAMILIES7 = [
             "past",
         ],
         "outside": [
-            "batoh", "bunda", "guma", "hadr", "kolík", "kýbl", "mýdlo",
-            "nůžky", "pekáč", "sušák", "tácek", "šála",
+            "batoh", "deka", "hadr", "krém", "mrkev", "myčka", "pytel", "rýč",
+            "sušák", "ubrus", "šroub", "šála",
         ],
         "asks": [
             "jsou zároveň anglická slova s jiným významem",
-            "jsou v názvech Shakespearových her",
+            "jsou v názvech her Járy Cimrmana",
+            "nemají v sobě ani jednu samohlásku",
             "čtou se stejně zepředu i zezadu",
-            "jsou to zároveň příjmení českých prezidentů",
         ],
     },
     {
@@ -949,8 +964,8 @@ FAMILIES7 = [
             "klika", "převodník", "brzda",
         ],
         "outside": [
-            "hrábě", "lavička", "matice", "mrkev", "mísa", "pilník", "podnos",
-            "pouzdro", "rohožka", "semínko", "silnice", "šála",
+            "branka", "myčka", "mísa", "peněženka", "popelnice", "rýč",
+            "sklenice", "sud", "svěrák", "ubrousek", "utěrka", "vrtačka",
         ],
         "asks": [
             "jsou to zároveň součásti jízdního kola",
@@ -969,9 +984,8 @@ FAMILIES7 = [
             "podpatek", "tkanička", "šněrování",
         ],
         "outside": [
-            "kleště", "lednička", "ořezávátko", "polštář", "sklenice",
-            "sporák", "sud", "ubrousek", "utěrka", "vysavač", "záclona",
-            "šroub",
+            "kbelík", "mrkev", "pekáč", "pilník", "pouzdro", "silnice",
+            "sušák", "vysavač", "věšák", "šuplík", "šála", "žehlička",
         ],
         "asks": [
             "jsou to zároveň části boty",
@@ -990,8 +1004,8 @@ FAMILIES7 = [
             "kování", "zástrč", "sklo",
         ],
         "outside": [
-            "hadr", "kompost", "krém", "mrkev", "mísa", "pytel", "sklenice",
-            "truhlík", "ubrus", "vana", "vařečka", "vrtačka",
+            "bunda", "dřez", "hoblík", "kartáček", "kolík", "lednička",
+            "nůžky", "semínko", "silnice", "sklenice", "smeták", "sud",
         ],
         "asks": [
             "jsou to zároveň části okna nebo dveří",
@@ -1010,8 +1024,8 @@ FAMILIES7 = [
             "žabka", "smyčec", "hmatník",
         ],
         "outside": [
-            "brambora", "branka", "deka", "hadr", "hoblík", "kastrol",
-            "matrace", "police", "ponožka", "pračka", "ručník", "vana",
+            "dřez", "krém", "kýbl", "metr", "peřina", "police", "ramínko",
+            "rohožka", "smeták", "trakař", "vana", "zahrada",
         ],
         "asks": [
             "jsou to zároveň části houslí",
@@ -1030,8 +1044,8 @@ FAMILIES7 = [
             "mudrc",
         ],
         "outside": [
-            "batoh", "branka", "komoda", "kompost", "naběračka", "semínko",
-            "skříň", "struhadlo", "záclona", "zápisník", "šála", "žehlička",
+            "brýle", "kartáček", "lednička", "matrace", "myčka", "mísa",
+            "podnos", "postel", "pravítko", "pračka", "trakař", "šála",
         ],
         "asks": [
             "jsou v názvech dílů Harryho Pottera",
@@ -1050,8 +1064,9 @@ FAMILIES7 = [
             "poušť", "bitva",
         ],
         "outside": [
-            "lednička", "lopatka", "matrace", "motyka", "mísa", "pouzdro",
-            "provaz", "rohožka", "rýč", "smeták", "vařečka", "zápisník",
+            "hřebík", "květináč", "peněženka", "peřina", "popelnice",
+            "pravítko", "prostěradlo", "provaz", "pytel", "sud", "truhlík",
+            "žehlička",
         ],
         "asks": [
             "jsou v názvech dílů Pána prstenů a Hobita",
@@ -1070,8 +1085,8 @@ FAMILIES7 = [
             "vzestup",
         ],
         "outside": [
-            "deka", "hřeben", "lavička", "matrace", "mýdlo", "peněženka",
-            "peřina", "postel", "utěrka", "zahrada", "šroub", "žebřík",
+            "branka", "deka", "hodinky", "kastrol", "lavička", "peřina",
+            "pilník", "propiska", "ramínko", "ručník", "ubrus", "věšák",
         ],
         "asks": [
             "jsou v názvech dílů Star Wars",
@@ -1090,8 +1105,8 @@ FAMILIES7 = [
             "zvíře", "království",
         ],
         "outside": [
-            "guma", "kbelík", "kolík", "mísa", "pinzeta", "propiska", "pytel",
-            "rýč", "sporák", "sud", "svěrák", "zápisník",
+            "guma", "hřeben", "kleště", "kolík", "květináč", "lepidlo",
+            "lopatka", "pekáč", "pravítko", "sud", "vysavač", "šroub",
         ],
         "asks": [
             "jsou v názvech disneyovek",
@@ -1110,14 +1125,14 @@ FAMILIES7 = [
             "křesadlo", "palečka",
         ],
         "outside": [
-            "batoh", "deka", "koberec", "koště", "květináč", "náramek",
-            "pravítko", "silnice", "sporák", "svěrák", "ubrus", "utěrka",
+            "brambora", "brýle", "bunda", "kleště", "kompost", "koště",
+            "květináč", "lepidlo", "ramínko", "utěrka", "vysavač", "věšák",
         ],
         "asks": [
             "jsou v názvech Andersenových pohádek",
-            "čtou se stejně zepředu i zezadu",
             "jsou v názvech her Járy Cimrmana",
-            "mají v sobě dvě stejná písmena vedle sebe",
+            "mají v sobě schované zvíře",
+            "nemají v sobě ani jednu samohlásku",
         ],
     },
     {
@@ -1130,12 +1145,12 @@ FAMILIES7 = [
             "chaloupka", "perník", "jeníček",
         ],
         "outside": [
-            "kartáček", "koberec", "květináč", "matrace", "mrkev", "náramek",
-            "nůžky", "pravítko", "pytel", "silnice", "svěrák", "šuplík",
+            "brambora", "kbelík", "kleště", "kolík", "kompost", "ořezávátko",
+            "peřina", "sklenice", "skříň", "utěrka", "záclona", "zápisník",
         ],
         "asks": [
             "jsou v názvech pohádek bratří Grimmů",
-            "jsou to zároveň značky nebo modely aut",
+            "mají v sobě schované zvíře",
             "nemají v sobě ani jednu samohlásku",
             "jsou v názvech Shakespearových her",
         ],
@@ -1150,14 +1165,14 @@ FAMILIES7 = [
             "bratr", "děti",
         ],
         "outside": [
-            "brýle", "hadr", "kartáček", "lepidlo", "motyka", "ořezávátko",
-            "pekáč", "rýč", "skříň", "sud", "řetízek", "šuplík",
+            "batoh", "hrneček", "květináč", "matrace", "náramek", "pekáč",
+            "ponožka", "pouzdro", "skříň", "smeták", "truhlík", "záclona",
         ],
         "asks": [
             "jsou v názvech knih Astrid Lindgrenové",
-            "jsou to zároveň příjmení českých prezidentů",
             "jsou v názvech her Járy Cimrmana",
             "jsou v názvech večerníčků",
+            "mají v sobě dvě stejná písmena vedle sebe",
         ],
     },
     {
@@ -1170,8 +1185,8 @@ FAMILIES7 = [
             "nanynka",
         ],
         "outside": [
-            "hodinky", "koberec", "komoda", "konev", "krém", "květináč",
-            "lampa", "nůžky", "podnos", "propiska", "tácek", "ubrus",
+            "brambora", "bunda", "guma", "hadr", "kompost", "konev", "nůžky",
+            "postel", "ubrousek", "zápisník", "řetízek", "žebřík",
         ],
         "asks": [
             "jsou v názvech dětských písniček",
@@ -1190,8 +1205,8 @@ FAMILIES7 = [
             "kovboj",
         ],
         "outside": [
-            "batoh", "branka", "dřez", "kompost", "lepidlo", "metr",
-            "peněženka", "pinzeta", "sklenice", "struhadlo", "svěrák", "šála",
+            "batoh", "brýle", "hodinky", "hřeben", "kartáček", "kleště",
+            "komoda", "lednička", "mísa", "naběračka", "silnice", "trakař",
         ],
         "asks": [
             "jsou v názvech českých filmových komedií",
@@ -1210,14 +1225,14 @@ FAMILIES7 = [
             "titanic", "avatar",
         ],
         "outside": [
-            "guma", "kastrol", "komoda", "kompost", "lepidlo", "matice",
-            "náramek", "peřina", "postel", "pračka", "sešit", "záclona",
+            "batoh", "deka", "krém", "lavička", "lednička", "lepidlo",
+            "peněženka", "postel", "rohožka", "sešit", "vrtačka", "šála",
         ],
         "asks": [
             "jsou v názvech slavných světových filmů",
-            "mají v sobě schované zvíře",
             "nemají v sobě ani jednu samohlásku",
             "čtou se stejně zepředu i zezadu",
+            "mají v sobě schované zvíře",
         ],
     },
     {
@@ -1230,8 +1245,8 @@ FAMILIES7 = [
             "případ", "návštěvník",
         ],
         "outside": [
-            "deka", "dřez", "hoblík", "hrábě", "lavička", "peněženka",
-            "pinzeta", "podnos", "pračka", "semínko", "ubrousek", "utěrka",
+            "branka", "hodinky", "hřeben", "kbelík", "krém", "metr", "myčka",
+            "naběračka", "ramínko", "rýč", "ubrousek", "věšák",
         ],
         "asks": [
             "jsou v názvech českých seriálů",
@@ -1250,8 +1265,8 @@ FAMILIES7 = [
             "paganini",
         ],
         "outside": [
-            "hadr", "houpačka", "hřebík", "kastrol", "lopatka", "metr",
-            "pravítko", "provaz", "truhlík", "vařečka", "vysavač", "žebřík",
+            "hadice", "hřebík", "komoda", "lepidlo", "matice", "mýdlo",
+            "provaz", "rohožka", "ručník", "semínko", "smeták", "sušák",
         ],
         "asks": [
             "jsou v názvech písní Karla Gotta",
@@ -1269,14 +1284,34 @@ FAMILIES7 = [
             "pata", "nit", "kůň", "skříňka", "meč", "chlév", "uzel", "jablko",
         ],
         "outside": [
-            "houpačka", "hrábě", "kompost", "pekáč", "polštář", "postel",
-            "pouzdro", "sklenice", "svěrák", "vana", "věšák", "záclona",
+            "brýle", "deka", "dřez", "hadice", "kleště", "lednička", "mrkev",
+            "mýdlo", "podnos", "rýč", "silnice", "šála",
         ],
         "asks": [
             "jsou v rčeních z antických bájí",
             "jsou to zároveň značky nebo modely aut",
             "jsou v názvech Shakespearových her",
             "jsou v názvech her Járy Cimrmana",
+        ],
+    },
+    {
+        "id": "nazev-sindibad",
+        "roof": "slova z příběhů Tisíce a jedné noci",
+        "level": "normal",
+        "hidden": True,
+        "inside": [
+            "lampa", "koberec", "sezam", "jeskyně", "loupežník", "duch",
+            "plavba", "poklad",
+        ],
+        "outside": [
+            "brambora", "hrnec", "peřina", "pinzeta", "ponožka", "rohožka",
+            "ručník", "semínko", "sud", "svěrák", "věšák", "záclona",
+        ],
+        "asks": [
+            "jsou v příbězích Tisíce a jedné noci",
+            "jsou v názvech her Járy Cimrmana",
+            "jsou to zároveň značky českého piva",
+            "jsou to zároveň značky nebo modely aut",
         ],
     },
     {
@@ -1289,8 +1324,8 @@ FAMILIES7 = [
             "maska", "kamélie",
         ],
         "outside": [
-            "batoh", "bunda", "hadr", "hřebík", "konev", "koště", "krém",
-            "naběračka", "pekáč", "pinzeta", "propiska", "struhadlo",
+            "brýle", "guma", "hrneček", "hřeben", "kartáček", "koště",
+            "matice", "nůžky", "podnos", "ponožka", "smeták", "žebřík",
         ],
         "asks": [
             "jsou v názvech knih Alexandra Dumase",
@@ -1309,8 +1344,8 @@ FAMILIES7 = [
             "chata", "poklad", "delfín", "kotlina",
         ],
         "outside": [
-            "brýle", "komoda", "krém", "kýbl", "lednička", "rýč", "semínko",
-            "silnice", "ubrus", "utěrka", "vana", "záclona",
+            "bunda", "dřez", "květináč", "myčka", "náramek", "nůžky",
+            "polštář", "postel", "utěrka", "věšák", "šála", "žehlička",
         ],
         "asks": [
             "jsou v názvech knih Jaroslava Foglara",
@@ -1329,8 +1364,8 @@ FAMILIES7 = [
             "míle", "ocel", "moře", "země",
         ],
         "outside": [
-            "brýle", "lednička", "lepidlo", "mrkev", "myčka", "mýdlo",
-            "náramek", "pinzeta", "rýč", "svěrák", "utěrka", "zahrada",
+            "batoh", "hřeben", "kastrol", "kleště", "komoda", "květináč",
+            "náramek", "sklenice", "sporák", "ubrus", "věšák", "žehlička",
         ],
         "asks": [
             "jsou v názvech knih Julese Verna",
@@ -1349,8 +1384,8 @@ FAMILIES7 = [
             "týden", "figurky", "dušičky", "kazisvět",
         ],
         "outside": [
-            "brýle", "hodinky", "hřebík", "kastrol", "koberec", "lampa",
-            "peněženka", "rohožka", "rýč", "semínko", "ubrus", "věšák",
+            "brambora", "bunda", "hodinky", "konev", "květináč", "matice",
+            "myčka", "náramek", "popelnice", "rohožka", "vařečka", "řetízek",
         ],
         "asks": [
             "jsou v názvech Nerudových Malostranských povídek",
@@ -1369,14 +1404,14 @@ FAMILIES7 = [
             "horymír", "bruncvík",
         ],
         "outside": [
-            "branka", "bunda", "hrnec", "kolík", "květináč", "metr", "pekáč",
-            "pilník", "postel", "vana", "řetízek", "šála",
+            "deka", "hrnec", "hrneček", "komoda", "kompost", "mísa", "pekáč",
+            "ponožka", "semínko", "svěrák", "trakař", "šroub",
         ],
         "asks": [
             "jsou v názvech Starých pověstí českých",
-            "čtou se stejně zepředu i zezadu",
             "jsou v názvech večerníčků",
             "nemají v sobě ani jednu samohlásku",
+            "čtou se stejně zepředu i zezadu",
         ],
     },
     {
@@ -1389,8 +1424,8 @@ FAMILIES7 = [
             "větrník", "káča", "mikeš",
         ],
         "outside": [
-            "kompost", "krém", "matrace", "metr", "pekáč", "pouzdro",
-            "provaz", "rohožka", "smeták", "trakař", "utěrka", "žehlička",
+            "hrneček", "hřebík", "komoda", "lednička", "motyka", "nůžky",
+            "peněženka", "peřina", "popelnice", "pračka", "pytel", "věšák",
         ],
         "asks": [
             "jsou v názvech pohádek Boženy Němcové",
@@ -1409,8 +1444,8 @@ FAMILIES7 = [
             "viola", "dalibor",
         ],
         "outside": [
-            "koště", "lepidlo", "matrace", "motyka", "pilník", "ponožka",
-            "propiska", "silnice", "sušák", "trakař", "zahrada", "záclona",
+            "batoh", "guma", "kastrol", "koště", "květináč", "motyka",
+            "peřina", "pinzeta", "svěrák", "utěrka", "vana", "šála",
         ],
         "asks": [
             "jsou v názvech Smetanových oper",
@@ -1429,12 +1464,12 @@ FAMILIES7 = [
             "palice", "výlet", "armida",
         ],
         "outside": [
-            "krém", "lepidlo", "náramek", "pekáč", "podnos", "pouzdro",
-            "ramínko", "smeták", "sporák", "trakař", "truhlík", "šuplík",
+            "batoh", "brýle", "houpačka", "motyka", "nůžky", "podnos",
+            "pytel", "semínko", "skříň", "svěrák", "ubrousek", "vysavač",
         ],
         "asks": [
             "jsou v názvech oper Dvořáka a Janáčka",
-            "jsou v názvech her Járy Cimrmana",
+            "mají v sobě schované zvíře",
             "jsou to zároveň značky českého piva",
             "jsou to zároveň značky nebo modely aut",
         ],
@@ -1449,8 +1484,8 @@ FAMILIES7 = [
             "podezření", "stupně", "vlak",
         ],
         "outside": [
-            "hadice", "hrnec", "mýdlo", "polštář", "propiska", "sešit",
-            "sklenice", "sporák", "sušák", "trakař", "utěrka", "věšák",
+            "guma", "hrnec", "hrábě", "motyka", "mrkev", "pinzeta", "sešit",
+            "silnice", "ubrus", "vařečka", "vysavač", "věšák",
         ],
         "asks": [
             "jsou v názvech Hitchcockových filmů",
@@ -1469,8 +1504,9 @@ FAMILIES7 = [
             "akumulátor", "jízda", "sezóna", "bos",
         ],
         "outside": [
-            "deka", "hřeben", "kompost", "lopatka", "motyka", "pinzeta",
-            "podnos", "rohožka", "rýč", "skříň", "zahrada", "zápisník",
+            "hřeben", "kastrol", "květináč", "lednička", "matrace",
+            "popelnice", "pravítko", "propiska", "provaz", "ramínko",
+            "truhlík", "ubrousek",
         ],
         "asks": [
             "jsou v názvech Svěrákových filmů",
@@ -1489,8 +1525,8 @@ FAMILIES7 = [
             "rebelové", "excalibur",
         ],
         "outside": [
-            "brýle", "hoblík", "hřebík", "mýdlo", "pinzeta", "semínko",
-            "trakař", "truhlík", "tácek", "utěrka", "vrtačka", "šroub",
+            "hadr", "hoblík", "hřeben", "matice", "metr", "motyka", "myčka",
+            "náramek", "pilník", "semínko", "ubrus", "věšák",
         ],
         "asks": [
             "jsou v názvech českých muzikálů",
@@ -1509,8 +1545,8 @@ FAMILIES7 = [
             "mrak", "bratříček", "revolta", "vojín",
         ],
         "outside": [
-            "brambora", "hřeben", "kastrol", "kolík", "krém", "peřina",
-            "podnos", "pytel", "trakař", "ubrousek", "zahrada", "žehlička",
+            "kastrol", "kbelík", "kolík", "lavička", "motyka", "nůžky",
+            "pračka", "propiska", "rohožka", "ubrousek", "zahrada", "šroub",
         ],
         "asks": [
             "jsou v názvech písní Karla Kryla",
@@ -1529,8 +1565,8 @@ FAMILIES7 = [
             "voják", "věž",
         ],
         "outside": [
-            "batoh", "brambora", "brýle", "krém", "kýbl", "matice", "motyka",
-            "ramínko", "sud", "sušák", "ubrus", "vrtačka",
+            "brýle", "bunda", "hoblík", "houpačka", "náramek", "nůžky",
+            "pekáč", "pinzeta", "polštář", "truhlík", "vrtačka", "zahrada",
         ],
         "asks": [
             "jsou v názvech písní Jaromíra Nohavici",
@@ -1549,8 +1585,8 @@ FAMILIES7 = [
             "štěstí", "paleček",
         ],
         "outside": [
-            "koberec", "kompost", "pekáč", "peřina", "pilník", "pravítko",
-            "ručník", "sklenice", "ubrousek", "vana", "šroub", "šála",
+            "brambora", "dřez", "hrneček", "kbelík", "kýbl", "lavička",
+            "lednička", "mísa", "ořezávátko", "pilník", "silnice", "svěrák",
         ],
         "asks": [
             "jsou v názvech pohádek z Werichova Fimfára",
@@ -1568,14 +1604,14 @@ FAMILIES7 = [
             "srnec", "ryba", "pohár", "bedna", "úhoř", "běh", "syn", "celer",
         ],
         "outside": [
-            "batoh", "branka", "brýle", "dřez", "guma", "hadice", "hřebík",
-            "kbelík", "kleště", "metr", "sporák", "tácek",
+            "batoh", "guma", "hadice", "hadr", "metr", "pekáč", "pračka",
+            "smeták", "trakař", "věšák", "šroub", "šuplík",
         ],
         "asks": [
             "jsou v názvech knih Oty Pavla",
-            "jsou to zároveň značky českého piva",
             "mají v sobě dvě stejná písmena vedle sebe",
             "jsou v názvech večerníčků",
+            "nemají v sobě ani jednu samohlásku",
         ],
     },
     {
@@ -1588,14 +1624,14 @@ FAMILIES7 = [
             "viktorka", "ruce", "jaro", "hrobař",
         ],
         "outside": [
-            "branka", "hadice", "houpačka", "kartáček", "kýbl", "náramek",
-            "pytel", "sešit", "silnice", "skříň", "truhlík", "vařečka",
+            "hadice", "hrábě", "kolík", "matrace", "myčka", "mýdlo",
+            "polštář", "semínko", "sešit", "trakař", "utěrka", "záclona",
         ],
         "asks": [
             "jsou v názvech sbírek Nezvala a Seiferta",
-            "nemají v sobě ani jednu samohlásku",
             "jsou v názvech Shakespearových her",
             "jsou v názvech her Járy Cimrmana",
+            "jsou to zároveň značky českého piva",
         ],
     },
     {
@@ -1608,9 +1644,8 @@ FAMILIES7 = [
             "napoleon", "případ",
         ],
         "outside": [
-            "komoda", "květináč", "lednička", "ořezávátko", "ponožka",
-            "propiska", "provaz", "semínko", "ubrus", "vrtačka", "šroub",
-            "šuplík",
+            "bunda", "guma", "hoblík", "hřebík", "kompost", "myčka", "pilník",
+            "postel", "pouzdro", "skříň", "vana", "žehlička",
         ],
         "asks": [
             "jsou v názvech případů Sherlocka Holmese",

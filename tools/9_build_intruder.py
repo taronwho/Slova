@@ -31,6 +31,9 @@ def fold(word: str) -> str:
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from intruder_families import FAMILIES  # noqa: E402
+from word_tags import SKATULKY, doplnit, dve_reseni  # noqa: E402
+
+doplnit(FAMILIES)
 RAW = os.path.join(HERE, "raw")
 OUT = os.path.join(HERE, "..", "public", "data", "intruder")
 
@@ -211,6 +214,10 @@ def build(words: list[dict], kind: str, rng: random.Random) -> list[dict]:
             continue
         if not only_answer(five, kind):
             continue
+        # Zvířata a rostliny umí vydělit vetřelce samy, i když se hádá
+        # počet slabik — viz word_tags.py.
+        if dve_reseni([i["word"] for i in four], odd["word"]):
+            continue
         key = tuple(sorted(i["word"] for i in five))
         if key in seen:
             continue
@@ -356,6 +363,20 @@ def from_families(rng: random.Random, per_family: dict[str, int]) -> list[dict]:
             koreny = {fold(w)[:5] for w in four + [odd]}
             if len(koreny) < 5:
                 continue
+            # A pětice nesmí nabízet druhou stejně dobrou odpověď: kdyby byl
+            # vetřelec zvíře a byla mezi pěticí zvířata právě čtyři, ukazuje
+            # ta čtveřice na jiné slovo než osa rodiny (viz word_tags.py).
+            if dve_reseni(four, odd):
+                continue
+            # U rodin se schovaným slovem musí čtveřice schovávat čtyři
+            # **různé** věci. Jinak vyjde pětice jako *malinovka,
+            # maximalista, román, peruť*, kde dvě slova nesou totéž Mali —
+            # osa sedí, ale vypadá to jako přehlédnutí.
+            skryte = family.get("skryte")
+            if skryte:
+                nasady = [skryte[w] for w in four if w in skryte]
+                if len(set(nasady)) < len(nasady):
+                    continue
             seen.add(key)
             # Ze zásoby zavádějících vět se berou dvě — nabídka se tím mění
             # kolo od kola a nedá se zapamatovat, že správná bývá ta první.
@@ -439,6 +460,17 @@ def main() -> int:
     for i, puzzle in enumerate(puzzles):
         puzzle["id"] = f"i-{i:04d}"
         rng.shuffle(puzzle["words"])
+
+    # Škatulky si odnese i test, aby se dvě řešení nemohla vrátit zadními
+    # vrátky. Do hry se nebalí — hráč je nikdy neuvidí, slouží jen ke
+    # kontrole hotové sady.
+    fixture = os.path.join(HERE, "..", "tests", "fixtures", "word-tags.json")
+    json.dump({
+        "skatulky": {tag: sorted(words) for tag, words in SKATULKY.items()},
+        # A co se v kterém slově schovává — podle toho test pozná, že
+        # v jedné pětici nestojí dvě slova s toutéž schovanou věcí.
+        "skryte": {f["asks"][0]: f["skryte"] for f in FAMILIES if f.get("skryte")},
+    }, open(fixture, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 
     os.makedirs(OUT, exist_ok=True)
     path = os.path.join(OUT, "puzzles.json")

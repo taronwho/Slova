@@ -43,6 +43,13 @@ FAMILIES6 = [
         # rak v rakvi, lev v levanduli, sob v sobotě, los v kolosu.
         "inside": ["rakev", "raketa", "levandule", "levice", "sobota", "osoba",
                    "kolos", "myšlenka", "pestrý", "hadice", "kosatec"],
+        # Co v kterém slově vězí. Stavěč sady podle toho hlídá, aby v jedné
+        # pětici nestála dvě slova s týmž zvířetem — „rakev" a „raketa" nesou
+        # obě raka a vypadalo by to jako přehlédnutí.
+        "skryte": {"rakev": "rak", "raketa": "rak", "levandule": "lev",
+                   "levice": "lev", "sobota": "sob", "osoba": "sob",
+                   "kolos": "los", "myšlenka": "myš", "pestrý": "pes",
+                   "hadice": "had", "kosatec": "kos"},
         # Ani v jednom z nich žádné zvíře není — ověřeno slovo po slovu.
         "outside": ["stůl", "okno", "zahrada", "polštář", "chleba", "sklenice",
                     "kabát", "silnice", "brambora", "koberec", "hrnec", "lampa"],
@@ -102,6 +109,10 @@ FAMILIES6 = [
         "inside": ["divan", "petrklíč", "petržel", "pivo", "svítilna",
                    "madam", "romance", "sklenka", "poleva", "bota", "jantar",
                    "pyramida"],
+        "skryte": {"divan": "Ivan", "petrklíč": "Petr", "petržel": "Petr",
+                   "pivo": "Ivo", "svítilna": "Vít", "madam": "Adam",
+                   "romance": "Roman", "sklenka": "Lenka", "poleva": "Eva",
+                   "bota": "Ota", "jantar": "Jan", "pyramida": "Ida"},
         "outside": ["stůl", "okno", "zahrada", "hrnec", "koště", "plot",
                     "mrkev", "police", "sešit", "kabát", "lampa", "deštník"],
         "asks": [

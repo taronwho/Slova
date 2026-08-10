@@ -783,6 +783,50 @@ describe('vetřelec — vyváženost sady', () => {
     expect(problems).toEqual([])
   })
 
+  it('pětice nenabízí druhou stejně dobrou odpověď', () => {
+    const puzzles = JSON.parse(
+      readFileSync('public/data/intruder/puzzles.json', 'utf-8'),
+    ) as { words: string[]; odd: string; recap: string }[]
+    const { skatulky } = JSON.parse(
+      readFileSync('tests/fixtures/word-tags.json', 'utf-8'),
+    ) as { skatulky: Record<string, string[]> }
+
+    // Hlášená pětice: labuť, plachty, srnec, orel, had — „čtyři z nich jsou
+    // souhvězdí", jenže zbylá čtyři slova jsou zvířata a ukazují na
+    // plachty. Vadí právě tenhle případ: škatulku sdílí čtyři slova a jedno
+    // z nich je vetřelec. Když ji sdílí všech pět nebo právě ta čtveřice
+    // zevnitř, nikoho to nevyděluje nebo to vydělí téhož vetřelce.
+    const problems: string[] = []
+    for (const [tag, list] of Object.entries(skatulky)) {
+      const set = new Set(list)
+      for (const one of puzzles) {
+        const n = one.words.filter((w) => set.has(w)).length
+        if (n === 4 && set.has(one.odd)) problems.push(`${tag}: ${one.words.join(' ')}`)
+      }
+    }
+    expect(problems.slice(0, 5)).toEqual([])
+  })
+
+  it('v pětici se totéž neschovává dvakrát', () => {
+    const puzzles = JSON.parse(
+      readFileSync('public/data/intruder/puzzles.json', 'utf-8'),
+    ) as { words: string[]; family: string }[]
+    const { skryte } = JSON.parse(
+      readFileSync('tests/fixtures/word-tags.json', 'utf-8'),
+    ) as { skryte: Record<string, Record<string, string>> }
+
+    // „malinovka" i „maximalista" nesou Mali. Osa sedí, ale hráči to
+    // připadá jako přehlédnutí — čtveřice má schovávat čtyři různé věci.
+    const problems: string[] = []
+    for (const one of puzzles) {
+      const map = skryte[one.family]
+      if (!map) continue
+      const found = one.words.map((w) => map[w]).filter(Boolean)
+      if (new Set(found).size < found.length) problems.push(one.words.join(' '))
+    }
+    expect(problems.slice(0, 5)).toEqual([])
+  })
+
   it('věta do vyhodnocení sedí do rámce „Čtyři z nich …"', () => {
     const puzzles = JSON.parse(
       readFileSync('public/data/intruder/puzzles.json', 'utf-8'),

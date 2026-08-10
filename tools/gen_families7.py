@@ -169,8 +169,6 @@ PRAVIDLA = {
     "ruzne-samohlasky": lambda w: (len(_samohlasky(w)) >= 3
                                    and len(set(_samohlasky(w))) == len(_samohlasky(w))),
     "prvni-pulka": lambda w: all(c in "abcdefghijklm" for c in fold(w)),
-    # Česká klávesnice je QWERTZ, takže levá ruka má y, ne z.
-    "leva-ruka": lambda w: all(c in "qwertasdfgyxcvb" for c in fold(w)),
     "bez-opakovani": lambda w: len(fold(w)) >= 7 and len(set(fold(w))) == len(fold(w)),
     "sousedni-pismena": lambda w: any(ord(fold(w)[i + 1]) - ord(fold(w)[i]) == 1
                                       for i in range(len(fold(w)) - 1)),
@@ -301,9 +299,6 @@ MECH = [
     dict(id="mech-prvni-pulka", level="hard", rule="prvni-pulka",
          roof="slova z písmen první poloviny abecedy",
          ask="mají písmena jen z první poloviny abecedy"),
-    dict(id="mech-leva-ruka", level="hard", rule="leva-ruka",
-         roof="slova, která se napíšou jen levou rukou na české klávesnici",
-         ask="se dají napsat jen levou rukou na české klávesnici"),
     dict(id="mech-bez-opakovani", level="hard", rule="bez-opakovani",
          roof="dlouhá slova, ve kterých se žádné písmeno neopakuje",
          ask="mají aspoň sedm písmen a ani jedno se v nich neopakuje"),
@@ -567,6 +562,11 @@ ZNALOSTNI: list[dict] = [
          ask="jsou v rčeních z antických bájí",
          inside=["pata", "nit", "kůň", "skříňka", "meč", "chlév", "uzel",
                  "jablko"]),
+    dict(id="nazev-sindibad", level="normal",
+         roof="slova z příběhů Tisíce a jedné noci",
+         ask="jsou v příbězích Tisíce a jedné noci",
+         inside=["lampa", "koberec", "sezam", "jeskyně", "loupežník", "duch",
+                 "plavba", "poklad"]),
     dict(id="nazev-dumas", level="normal",
          roof="slova z názvů knih Alexandra Dumase",
          ask="jsou v názvech knih Alexandra Dumase",
@@ -692,6 +692,25 @@ def decoys(rodina: dict, slova: list[str], rng: random.Random) -> list[str]:
     return out
 
 
+# Pravidlo -> seznam, ve kterém se hledá. Jen pro pravidla, která něco
+# schovávají; ostatní (počet samohlásek, pořadí písmen) žádnou násadu nemají.
+NASADA_PRAVIDLA = {
+    "skryte-cislo": lambda: CISLA,
+    "skryte-telo": lambda: TELO,
+    "skryty-stat": lambda: STATY,
+}
+
+
+def nasada(rule: str, word: str) -> str | None:
+    """Co se v tom slově schovává — nejdelší shoda, ať sedí i „deset" proti „set"."""
+    seznam = NASADA_PRAVIDLA.get(rule)
+    if not seznam:
+        return None
+    low = word.lower()
+    hits = [x for x in seznam() if x in low]
+    return max(hits, key=len) if hits else None
+
+
 def postav(rng: random.Random) -> list[dict]:
     slovnik_slov = slovnik()
     vata = VATA.split()
@@ -739,6 +758,12 @@ def postav(rng: random.Random) -> list[dict]:
         if len(outside) < 8:
             raise SystemExit(f"{r['id']}: jen {len(outside)} slov vně")
 
+        skryte = {}
+        for w in r["inside"]:
+            found = nasada(r.get("rule", ""), w)
+            if found:
+                skryte[w] = found
+
         rodiny.append({
             "id": r["id"],
             "roof": r["roof"],
@@ -747,6 +772,7 @@ def postav(rng: random.Random) -> list[dict]:
             "inside": r["inside"],
             "outside": sorted(outside),
             "asks": [r["ask"]] + decoys(r, r["inside"] + outside, vlastni),
+            **({"skryte": skryte} if skryte else {}),
         })
     return rodiny
 
@@ -786,6 +812,11 @@ def zapis(rodiny: list[dict]) -> None:
                 radek += kus
             kusy.append(radek)
             kusy.append("        ],")
+        if r.get("skryte"):
+            kusy.append("        \"skryte\": {")
+            for w, n in sorted(r["skryte"].items()):
+                kusy.append(f"            {w!r}: {n!r},")
+            kusy.append("        },")
         kusy.append("        \"asks\": [")
         for a in r["asks"]:
             kusy.append(f"            {a!r},")

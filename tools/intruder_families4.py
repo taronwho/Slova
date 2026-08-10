@@ -198,7 +198,11 @@ EXTRA4 = [
         "id": "priroda-savci-let",
         "roof": "savci",
         "level": "hard",
-        "inside": ["netopýr", "kaloň", "vrápenec", "netopýr velký", "netopýr rezavý", "kaloň egyptský"],
+        # Poddruhy jednoho netopýra tu stály zbytečně: do jedné pětice se
+        # čtyři z nich nevejdou, aniž by dvě byla „netopýr něco", a to
+        # vypadá jako přehlédnutí. Létajících savců je málo, takže rodina
+        # má přesně čtyři slova a každé jiné.
+        "inside": ["netopýr", "kaloň", "vrápenec", "upír"],
         "outside": ["veverka", "kuna", "liška", "jezevec", "myš", "krtek",
                     "ježek", "rys", "zajíc", "srnec"],
         "asks": ["umí aktivně létat", "je to savec", "žije v Evropě",
