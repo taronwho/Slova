@@ -87,7 +87,7 @@ PER_KIND = 400
 # obtížnost prošel dřív, než by se stihl rozkoukat. Součet drží pod pěti
 # tisíci — data se balí celá, takže víc už by bylo znát na velikosti
 # stažení.
-LEVEL_BUDGET = {"easy": 1200, "normal": 1700, "hard": 1600}
+LEVEL_BUDGET = {"easy": 1200, "normal": 2000, "hard": 1800}
 
 
 def origin(text: str) -> str | None:

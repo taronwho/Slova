@@ -221,3 +221,51 @@ Dvě věci se u nových typů dělají jinak:
   vyšlo dvacet hádanek a ne deset.
 * `npm test` (201), `smoke`, `smoke:standalone`, `audit:mobile`,
   `audit:pwa`, `play:verify` — vše prošlo.
+
+# Devátá várka — 100 rodin, a pokaždé jiná povaha osy
+
+Generátor: `tools/gen_families9.py` → `tools/intruder_families9.py`.
+Kontroly si bere ze sedmé várky, takže se nedublují.
+
+| skupina | rodin | příklad |
+|---|---|---|
+| vlastnosti věcí a přírody | 15 | *voda, olej, rtuť, líh, **vosk*** — čtyři jsou tekuté |
+| praktické použití | 2 | zamknout na klíč, autolékárnička |
+| zeměpis | 4 | leží na Moravě, krajská města, Rakousko-Uhersko, UNESCO |
+| mluvnice a pravopis | 4 | nepravidelné množné číslo, přesmyčky, dva druhy rýmu |
+| ustálená spojení | 6 | bílá vrána, suchý humor, hluboký talíř, Tichý oceán |
+| obory s vlastní řečí | 46 | film, právo, tělocvik, pivovar, jeskyně, tkalcovství, kosti |
+| další prameny názvů | 14 | Malý princ, Alenka, Narnie, Poe, Wells, pražské pověsti |
+| ještě vlastnosti věcí | 9 | mají rub a líc, patří na kompost, musí se naostřit |
+
+## Co se při kontrole ukázalo
+
+Sto rodin se nedá odbýt čtením; každou jsem si nechal vypsat i se slovy
+vně a prošel je. Nálezy:
+
+* **Torzo jména není slovo.** Kalendářní rodiny („čtyři z nich připadají
+  každý rok na jiné datum") by do pětice postavily *Velký* nebo *Bílá* —
+  půlku názvu *Velký pátek*. Rodiny padly a nahradily je vlastnosti.
+  Ze stejného důvodu vypadly *Karlovy*, *Ústí* a *Kutná* z měst.
+* **Vetřelec nesmí platit taky.** *Lampa* je přesmyčka slova *palma*, takže
+  v rodině o přesmyčkách nemohla stát vně. *Sud vína amontilladského* je
+  povídka od Poea, *Mojžíš* pluje v koši, *Alenka* proleze do zahrady
+  a v Narnii stojí hned za skříní **lampa** — všechna tahle nudná slova
+  musela z vetřelců pryč.
+* **Nudné slovo bývá odborný pojem.** *Lopatka* je kost, *matice* je
+  matematický pojem, *hřeben* je část hory, *police* je knihovnický pojem,
+  *pekáč* a *trouba* patří do pekárny. Na to je seznam `avoid`.
+* **Vata se vzorkuje.** Sto vetřelců na rodinu se nedá při kontrole
+  přečíst — a číst se musí, protože zrovna tyhle chyby stroj nepozná.
+  Bere se patnáct.
+
+## Stav po deváté várce
+
+* Sada má **4730 pětic** a 342 rodin: lehká 84, střední **145**, těžká
+  **113**. Nejčastější rodina zabírá 0,7 % střední a 0,9 % těžké.
+* Rozpočet střední a těžké zvednut na 2000 a 1800 pětic.
+* Strojová kontrola nad hotovou sadou: žádná pětice se dvěma řešeními,
+  žádná se dvěma slovy z jednoho kořene, žádná s toutéž schovanou věcí
+  dvakrát, žádná rozbitá věta do vyhodnocení.
+* `npm test` (201), `smoke`, `smoke:standalone`, `audit:pwa`,
+  `play:verify` — vše prošlo; šest kol odehráno v prohlížeči.
