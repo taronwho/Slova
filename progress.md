@@ -269,3 +269,47 @@ vně a prošel je. Nálezy:
   dvakrát, žádná rozbitá věta do vyhodnocení.
 * `npm test` (201), `smoke`, `smoke:standalone`, `audit:pwa`,
   `play:verify` — vše prošlo; šest kol odehráno v prohlížeči.
+
+# Návrat do rozehraného kola
+
+Hráč nahlásil, že se u Citátu po odchodu do menu vrací na začátek, a chtěl
+projít celou hru. Prošel jsem ji a našly se čtyři věci.
+
+**1. Citát a Vetřelec se neobnovovaly vůbec.** Překlad uloženého stavu zpátky
+na hádanku byl řada `else if` s koncovým `else`, který všechno ostatní
+považoval za Věž. Obě hry přibyly později, spadly do něj a hráč začínal
+znovu. Teď je to čistá funkce (`src/app/resume.ts`) a test prochází režim po
+režimu — nová hra se do ní musí zapsat, jinak neprojde.
+
+**2. Denní dlaždice začínala vždycky znovu.** Kdo si v půlce výzvy odskočil
+a dlaždici ťukl podruhé, přišel o postup i o čas. Rozehraná dnešní výzva se
+teď otevře tam, kde skončila, a na dlaždici je vidět, kolik má hráč za sebou.
+Volná hra z panelu si dál začíná od začátku — „Pokračovat" tam má vlastní
+tlačítko a hráč si vybírá.
+
+**3. Denní výzva přepisovala volnou hru téže hry.** Kolo se ukládalo jen
+podle režimu, takže rozehraný volný Řetěz zmizel ve chvíli, kdy hráč ťukl na
+dnešní výzvu Řetězu. Nově má každá hra dvě přihrádky (`hive`, `hive:denni`)
+a kola se nepřepisují. Kola uložená starší verzí se při načtení přesypou do
+té správné.
+
+**4. Otázka dne se neukládala vůbec.** Sázka na počet indicií je nevratná
+a otázka je jedna denně — návrat na začátek by hráče připravil o celý den.
+Ukládá se teď stejně jako hry, jen stranou: otázka není režim, nemá obtížnost
+ani hádanku ze sady.
+
+**A hodiny.** Čas kolu běžel i mimo hru (skóre se počítá z času uloženého ve
+stavu), ale lišta po návratu ukazovala nulu — hráč tedy nevěděl, že o bonus
+za rychlost přišel. Teď navazuje: měří se od chvíle, kdy kolo **začalo**.
+Sekundy se navíc dopočítávají z času, ne přičítáním, protože prohlížeč na
+pozadí intervaly zpomaluje a sčítaný počet se rozejde.
+
+Denní kolo rozehrané včera a otevřené dnes se za dnešní výzvu nepočítá:
+hádanka je včerejší a v přehledu ani v souboji by neseděla. Dlaždice proto
+začne dnešní výzvu načisto.
+
+## Čím je to hlídané
+
+* `npm test` — obnova všech osmi režimů, přihrádky, přesyp starých kol.
+* `npm run audit:resume` (nové) — v prohlížeči: odchod a návrat u každé hry,
+  volná hra vedle denní výzvy, Otázka dne, běžící čas, včerejší výzva.

@@ -24,6 +24,7 @@ import {
   RoundModeContext,
   type NextUpItem,
 } from './app/nextUp'
+import { restore, stillDaily } from './app/resume'
 import { AwardPopup, type Gained } from './components/AwardPopup'
 import { Awards } from './components/Awards'
 import { InkMark } from './components/art/InkMark'
@@ -56,7 +57,7 @@ import type { DetectivePuzzle, DetectiveState } from './game/detective'
 import type { ExplainTarget } from './game/glossary'
 import type { GallowsPuzzle, GallowsState } from './game/gallows'
 import type { HivePuzzle, HiveState } from './game/hive'
-import { quizFor, type QuizDeck, type QuizQuestion } from './game/quiz'
+import { quizFor, type QuizDeck, type QuizQuestion, type QuizState } from './game/quiz'
 import {
   dailyIntruder,
   pickIntruder,
@@ -108,13 +109,17 @@ import {
   emptyProfile,
   liveStreak,
   loadProfile,
+  loadQuizRound,
   loadRounds,
   recordQuiz,
   recordRound,
+  roundSlot,
   saveProfile,
+  saveQuizRound,
   saveRounds,
   spendInk,
   type Profile,
+  type SavedQuiz,
   type SavedRound,
   type SavedRounds,
 } from './lib/storage'
@@ -197,6 +202,16 @@ export default function App() {
    * šlo dvě stě otázek přečíst dřív než za dvě stě dní.
    */
   const [quizOffset, setQuizOffset] = useState(0)
+  /** Rozehraná Otázka dne. Drží se stranou od kol — otázka není režim. */
+  const [quizRound, setQuizRound] = useState<SavedQuiz | null>(() => loadQuizRound())
+  /**
+   * Kdy začalo kolo, které je na obrazovce.
+   *
+   * Nastavuje ho ten, kdo kolo otevřel: nové kolo teď, obnovené tím časem,
+   * který má uložený ve svém stavu. Podle toho běží lišta a hráč vidí
+   * tentýž čas, ze kterého se počítá bonus za rychlost.
+   */
+  const [roundStart, setRoundStart] = useState(() => Date.now())
 
   const rank = rankFor(profile.fame)
   const dayKey = todayKey()
@@ -267,6 +282,7 @@ export default function App() {
       setLoading(true)
       setError(null)
       setResume(null)
+      setRoundStart(Date.now())
       const difficulty = profile.difficulty[mode]
       const random = daily
         ? mulberry32(hashSeed(`${dayKey}:${mode}`))
@@ -360,7 +376,9 @@ export default function App() {
           nonce: previous.kind === 'game' ? previous.nonce + 1 : 1,
         }))
         setSaved((previous) => {
-          const { [mode]: _dropped, ...rest } = previous
+          // Zahodí se jen kolo téhož druhu. Rozehraná denní výzva a volná
+          // hra téže hry leží každá jinde, takže se nepřepisují.
+          const { [roundSlot(mode, daily)]: _dropped, ...rest } = previous
           saveRounds(rest)
           return rest
         })
@@ -381,33 +399,33 @@ export default function App() {
       setLoading(true)
       setError(null)
       try {
-        if (round.mode === 'chain') {
-          const state = round.state as ChainState
-          const bundle = await loadChain(round.difficulty)
-          setLoaded({ chain: { bundle, puzzle: state.puzzle } })
-        } else if (round.mode === 'hive') {
-          setLoaded({ hive: (round.state as HiveState).puzzle })
-        } else if (round.mode === 'detective') {
-          setLoaded({ detective: (round.state as DetectiveState).puzzle })
-        } else if (round.mode === 'tetris') {
-          const saved = round.state as TetrisState
-          setLoaded({ tetris: { deck: saved.deck, setup: saved.setup } })
-        } else if (round.mode === 'gallows') {
-          setLoaded({ gallows: (round.state as GallowsState).puzzle })
+        const back = restore(round)
+        if (!back) throw new Error('Uložené kolo už nejde otevřít')
+        if (back.mode === 'chain') {
+          // Jediný režim, který k hádance potřebuje ještě graf slov.
+          setLoaded({ chain: { bundle: await loadChain(round.difficulty), puzzle: back.puzzle } })
+        } else if (back.mode === 'tetris') {
+          setLoaded({ tetris: { deck: back.deck, setup: back.setup } })
+        } else if (back.mode === 'quotes') {
+          // Odkrytá slova si stav nese s sebou, takže se seed k ničemu
+          // nepotřebuje — hádanka se z něj losuje jen na začátku kola.
+          setLoaded({ quotes: { quote: back.quote, seed: 0 } })
         } else {
-          setLoaded({ tower: (round.state as TowerState).puzzle })
+          setLoaded({ [back.mode]: back.puzzle })
         }
         setResume(round.state)
+        const started = (round.state as { startedAt?: number }).startedAt
+        setRoundStart(typeof started === 'number' ? started : Date.now())
         setView((previous) => ({
           kind: 'game',
           mode: round.mode,
-          daily: round.daily,
+          daily: stillDaily(round, dayKey, (at) => todayKey(new Date(at))),
           nonce: previous.kind === 'game' ? previous.nonce + 1 : 1,
         }))
       } catch (cause) {
         setError(cause instanceof Error ? cause.message : 'Kolo se nepodařilo obnovit')
         setSaved((previous) => {
-          const { [round.mode]: _dropped, ...rest } = previous
+          const { [roundSlot(round.mode, round.daily)]: _dropped, ...rest } = previous
           saveRounds(rest)
           return rest
         })
@@ -415,7 +433,28 @@ export default function App() {
         setLoading(false)
       }
     },
-    [],
+    [dayKey],
+  )
+
+  /**
+   * Spuštění z menu.
+   *
+   * Denní výzva se ťuká z dlaždice a ta dřív začínala **vždycky znovu** —
+   * kdo si v půlce odskočil a dlaždici zmáčkl podruhé, přišel o postup
+   * i o čas. Rozehraná dnešní výzva se proto otevře tam, kde skončila;
+   * volná hra z panelu si dál začíná od začátku, protože „Pokračovat" má
+   * v panelu vlastní tlačítko a hráč si vybírá.
+   */
+  const play = useCallback(
+    (mode: ModeId, daily: boolean) => {
+      const round = saved[roundSlot(mode, true)]
+      if (daily && round && stillDaily(round, dayKey, (at) => todayKey(new Date(at)))) {
+        void resumeRound(round)
+        return
+      }
+      void startRound(mode, daily)
+    },
+    [dayKey, resumeRound, saved, startRound],
   )
 
   /**
@@ -426,10 +465,11 @@ export default function App() {
   const keepProgress = useCallback(
     (mode: ModeId, puzzleId: string, difficulty: Difficulty, state: unknown, over: boolean) => {
       const daily = view.kind === 'game' ? view.daily : false
+      const slot = roundSlot(mode, daily)
       setSaved((previous) => {
         let next: SavedRounds
         if (over) {
-          const { [mode]: _dropped, ...rest } = previous
+          const { [slot]: _dropped, ...rest } = previous
           next = rest
         } else {
           const round: SavedRound = {
@@ -440,7 +480,7 @@ export default function App() {
             state,
             savedAt: Date.now(),
           }
-          next = { ...previous, [mode]: round }
+          next = { ...previous, [slot]: round }
         }
         saveRounds(next)
         return next
@@ -598,8 +638,9 @@ export default function App() {
 
   const finishRound = useCallback(
     (result: RoundResult) => {
+      const isDailyRound = view.kind === 'game' && view.daily
       setSaved((previous) => {
-        const { [result.mode]: _dropped, ...rest } = previous
+        const { [roundSlot(result.mode, isDailyRound)]: _dropped, ...rest } = previous
         saveRounds(rest)
         return rest
       })
@@ -625,9 +666,8 @@ export default function App() {
 
   const giveUp = useCallback(() => {
     setSaved((previous) => {
-      const mode = view.kind === 'game' ? view.mode : null
-      if (!mode) return previous
-      const { [mode]: _dropped, ...rest } = previous
+      if (view.kind !== 'game') return previous
+      const { [roundSlot(view.mode, view.daily)]: _dropped, ...rest } = previous
       saveRounds(rest)
       return rest
     })
@@ -691,22 +731,28 @@ export default function App() {
    *
    * Bonus za rychlost se dřív počítal ze skrytého času — hráč viděl až
    * v rozpisu, že o něj přišel. Ťuknutím se otevře, jak se počítá.
-   * Měří se od otevření kola; po návratu k rozehranému kolu začíná znovu,
-   * protože skóre se stejně počítá z času uloženého ve stavu hry.
+   *
+   * Měří se od chvíle, kdy kolo **začalo**, ne od chvíle, kdy je hráč
+   * otevřel. Když se vrátí k rozehranému kolu, navazují hodiny tam, kde
+   * skutečně jsou: čas běží i mimo hru a skóre se z něj počítá, takže
+   * vynulovaná lišta by hráči lhala. Odsud se taky bere `startedAt`
+   * z uloženého stavu — jiné místo, kde by ho lišta vzala, není.
+   *
+   * Sekundy se dopočítávají z času, ne přičítáním: prohlížeč na pozadí
+   * intervaly zpomaluje, takže sčítaný počet by se za chvíli rozešel
+   * s hodinami.
    */
-  const [tick, setTick] = useState(0)
-  const roundStart = useRef(Date.now())
+  const [, setTick] = useState(0)
   const roundKey = view.kind === 'game' ? `${view.mode}-${view.nonce}` : view.kind
   useEffect(() => {
-    roundStart.current = Date.now()
-    setTick(0)
+    setTick((count) => count + 1)
   }, [roundKey])
   useEffect(() => {
     if (view.kind !== 'game' && view.kind !== 'quiz') return
     const id = setInterval(() => setTick((count) => count + 1), 1000)
     return () => clearInterval(id)
   }, [view.kind])
-  const seconds = tick
+  const seconds = Math.max(0, Math.floor((Date.now() - roundStart) / 1000))
   const clock = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
 
   /**
@@ -722,6 +768,14 @@ export default function App() {
       if (!question) throw new Error('Otázka na dnešek chybí')
       setLoaded({ quiz: question, quizDeck: deck })
       setQuizOffset(offset)
+      // Rozehraná otázka si nese svůj začátek s sebou, ať lišta po návratu
+      // navazuje a neukazuje nulu u kola, které běží třeba hodinu.
+      const saved = loadQuizRound()
+      const started =
+        saved && saved.day === dayNumber() + offset
+          ? (saved.state as { startedAt?: number }).startedAt
+          : undefined
+      setRoundStart(typeof started === 'number' ? started : Date.now())
       setView({ kind: 'quiz' })
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Otázku se nepodařilo načíst')
@@ -749,12 +803,12 @@ export default function App() {
       id: mode,
       glyph: MODE_GLYPH[mode],
       label: MODE_LABEL[mode],
-      start: () => void startRound(mode, true),
+      start: () => play(mode, true),
     }))
     if (left.length > 0) return left
     if (!__QUIZ_ALL__ && profile.quiz.lastDay === dayKey) return []
     return [{ id: 'quiz', glyph: '?', label: 'Otázka dne', start: () => void startQuiz() }]
-  }, [dayKey, profile.dailyDone, profile.quiz.lastDay, startQuiz, startRound, view])
+  }, [dayKey, play, profile.dailyDone, profile.quiz.lastDay, startQuiz, view])
 
   /** Přehled všech otázek — jen v kontrolním buildu. */
   const openQuizList = useCallback(async () => {
@@ -776,6 +830,23 @@ export default function App() {
       updateProfile((previous) => recordQuiz(previous, dayKey, outcome))
     },
     [dayKey, updateProfile],
+  )
+
+  /**
+   * Průběžné ukládání Otázky dne.
+   *
+   * Zodpovězená otázka se maže: nabízet návrat do něčeho hotového nedává
+   * smysl a druhý pokus by stejně nešel.
+   */
+  const keepQuiz = useCallback(
+    (state: QuizState, over: boolean) => {
+      const next: SavedQuiz | null = over
+        ? null
+        : { day: dayNumber() + quizOffset, state, savedAt: Date.now() }
+      setQuizRound(next)
+      saveQuizRound(next)
+    },
+    [quizOffset],
   )
 
   const closeGuide = useCallback(() => {
@@ -1021,7 +1092,7 @@ export default function App() {
             profile={profile}
             dayKey={dayKey}
             dayLabel={''}
-            onPlay={startRound}
+            onPlay={play}
             onDifficulty={(mode, difficulty: Difficulty) =>
               updateProfile((previous) => ({
                 ...previous,
@@ -1045,7 +1116,7 @@ export default function App() {
             }
             saved={saved}
             onResume={(mode) => {
-              const round = saved[mode]
+              const round = saved[roundSlot(mode, false)]
               if (round) void resumeRound(round)
             }}
           />
@@ -1135,6 +1206,12 @@ export default function App() {
             dayLabel={__QUIZ_ALL__ ? `#${dayNumber() + quizOffset}` : ''}
             onFinish={finishQuiz}
             onHome={goHome}
+            resume={
+              quizRound && quizRound.day === dayNumber() + quizOffset
+                ? (quizRound.state as QuizState)
+                : null
+            }
+            onProgress={keepQuiz}
             {...(__QUIZ_ALL__
               ? { onNext: () => void startQuiz(quizOffset + 1) }
               : {})}

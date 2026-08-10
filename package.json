@@ -16,6 +16,7 @@
     "smoke:standalone": "node tools/smoke-standalone.mjs",
     "build:icons": "python3 tools/6_build_icons.py",
     "audit:mobile": "node tools/audit-mobile.mjs",
+    "audit:resume": "node tools/audit-resume.mjs",
     "audit:awards": "node tools/audit-awards.mjs",
     "audit:pwa": "node tools/audit-pwa.mjs",
     "build:review": "QUIZ_ALL=1 vite build && QUIZ_ALL=1 node tools/build-artifact.mjs && mkdir -p review && mv dist/slova-kontrolni.html review/"

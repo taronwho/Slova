@@ -20,7 +20,13 @@ import { RankBadge } from './art/RankBadge'
 import { useBackGuard } from '../lib/back'
 import { InkMark } from './art/InkMark'
 import { Explain } from './Explain'
-import { liveStreak, type Profile, type SavedRound, type SavedRounds } from '../lib/storage'
+import {
+  liveStreak,
+  roundSlot,
+  type Profile,
+  type SavedRound,
+  type SavedRounds,
+} from '../lib/storage'
 
 interface Props {
   profile: Profile
@@ -197,7 +203,9 @@ export function Home({
   )
 
   const pickedMode = picked ? MODES.find((m) => m.id === picked)! : null
-  const pickedSaved = picked ? saved[picked] : undefined
+  // Panel režimu je o volné hře, takže tlačítko Pokračovat nabízí volné
+  // kolo. Rozehraná denní výzva má vlastní cestu zpátky — svou dlaždici.
+  const pickedSaved = picked ? saved[roundSlot(picked, false)] : undefined
 
   // Systémové zpět zavře panel, ne celou hru.
   useBackGuard(picked !== null, () => setPicked(null))
@@ -303,7 +311,7 @@ export function Home({
       <div className="mode-grid">
         {MODES.map((mode) => {
           const dailyDone = profile.dailyDone[`${dayKey}:${mode.id}`] !== undefined
-          const round = saved[mode.id]
+          const round = saved[roundSlot(mode.id, false)] ?? saved[roundSlot(mode.id, true)]
           return (
             <button
               type="button"
@@ -357,6 +365,10 @@ export function Home({
           {MODES.map((mode) => {
             const score = profile.dailyDone[`${dayKey}:${mode.id}`]
             const done = score !== undefined
+            // Rozehraná dnešní výzva: dlaždice v ní pokračuje, tak ať je to
+            // na ní vidět. Bez toho vypadá stejně jako nezačatá a hráč neví,
+            // jestli ťuknutím naváže, nebo začne od začátku.
+            const started = saved[roundSlot(mode.id, true)]
             return (
               <button
                 type="button"
@@ -375,7 +387,11 @@ export function Home({
                 </span>
                 <span className="daily-name">{MODE_LABEL[mode.id]}</span>
                 <span className="daily-note num">
-                  {done ? `✓ ${score.toLocaleString('cs-CZ')}` : 'Hrát'}
+                  {done
+                    ? `✓ ${score.toLocaleString('cs-CZ')}`
+                    : started
+                      ? progressNote(started)
+                      : 'Hrát'}
                 </span>
                 {/* Řada dnů u téhle hry. Ukazuje se, jen když nějaká je —
                     nula u sedmi dlaždic by z mřížky udělala tabulku nul. */}

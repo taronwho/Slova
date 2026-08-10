@@ -14,6 +14,7 @@ const KEY = 'slova.profile.v1'
 // z osmi.
 const MODES: ModeId[] = MODE_ORDER
 const ROUNDS_KEY = 'slova.rounds.v1'
+const QUIZ_ROUND_KEY = 'slova.quizround.v1'
 
 export interface ModeStats {
   played: number
@@ -506,12 +507,16 @@ export function saveProfile(profile: Profile): void {
 /**
  * Rozehrané kolo.
  *
- * Drží se **zvlášť pro každý režim**, aby si hráč mohl nechat rozehraný
- * Řetěz i Voštinu naráz. Ukládá se stranou od profilu: zapisuje se po
- * každém tahu, takže se nesmí stát, aby jeho poškození vzalo s sebou
- * i statistiky. Stav hry je prostý objekt (cesta řetězu, nalezená slova,
- * postavená patra), takže stačí JSON — rekonstruovat se z něj dá celé kolo
- * včetně hádanky.
+ * Drží se **zvlášť pro každý režim a zvlášť pro denní výzvu**. Zvlášť pro
+ * režim proto, aby si hráč mohl nechat rozehraný Řetěz i Voštinu naráz;
+ * zvlášť pro denní výzvu proto, že jinak si dvě kola téže hry přepisovala:
+ * kdo měl rozehraný volný Řetěz a ťukl na dnešní výzvu, přišel o postup
+ * a ani se to nedozvěděl.
+ *
+ * Ukládá se stranou od profilu: zapisuje se po každém tahu, takže se nesmí
+ * stát, aby jeho poškození vzalo s sebou i statistiky. Stav hry je prostý
+ * objekt (cesta řetězu, nalezená slova, postavená patra), takže stačí JSON
+ * — rekonstruovat se z něj dá celé kolo včetně hádanky.
  */
 export interface SavedRound {
   mode: ModeId
@@ -523,7 +528,16 @@ export interface SavedRound {
   savedAt: number
 }
 
-export type SavedRounds = Partial<Record<ModeId, SavedRound>>
+/**
+ * Přihrádka, ve které kolo leží: `hive` pro volnou hru, `hive:denni` pro
+ * denní výzvu. Klíč se skládá takhle, a ne z dvojice map, aby zůstalo
+ * ukládání jedním zápisem — po každém tahu se to volá pořád dokola.
+ */
+export function roundSlot(mode: ModeId, daily: boolean): string {
+  return daily ? `${mode}:denni` : mode
+}
+
+export type SavedRounds = Partial<Record<string, SavedRound>>
 
 export function loadRounds(): SavedRounds {
   try {
@@ -532,9 +546,15 @@ export function loadRounds(): SavedRounds {
     const saved = JSON.parse(raw) as SavedRounds
     if (!saved || typeof saved !== 'object') return {}
     const rounds: SavedRounds = {}
-    for (const mode of MODES) {
-      const round = saved[mode]
-      if (round && round.mode === mode && round.state) rounds[mode] = round
+    const known = new Set<string>(MODES)
+    for (const [key, round] of Object.entries(saved)) {
+      if (!round || !round.state || !known.has(round.mode)) continue
+      // Kola uložená starší verzí leží pod holým názvem režimu, i když jsou
+      // denní. Přesypou se do správné přihrádky, ať o ně hráč nepřijde.
+      const slot = key === round.mode || key === roundSlot(round.mode, true)
+        ? roundSlot(round.mode, round.daily)
+        : null
+      if (slot) rounds[slot] = round
     }
     return rounds
   } catch {
@@ -545,6 +565,46 @@ export function loadRounds(): SavedRounds {
 export function saveRounds(rounds: SavedRounds): void {
   try {
     localStorage.setItem(ROUNDS_KEY, JSON.stringify(rounds))
+  } catch {
+    // Soukromý režim nebo plná kvóta — hra běží dál, jen se nedá pokračovat.
+  }
+}
+
+/**
+ * Rozehraná Otázka dne.
+ *
+ * Leží stranou od ostatních kol, protože otázka není režim: nemá obtížnost
+ * ani hádanku ze sady, zato má den, na který patří. Kdyby se držela mezi
+ * nimi, musel by se kvůli ní ohýbat `SavedRound` i klíčování podle režimu.
+ *
+ * Uložit se musí ze stejného důvodu jako u her — koupené indicie a spotřebo­
+ * vané pokusy jsou nevratné, takže návrat na začátek by hráče připravil
+ * o jedinou dnešní otázku.
+ */
+export interface SavedQuiz {
+  /** Číslo dne, ke kterému otázka patří. Zítřek si ji už nesmí vzít. */
+  day: number
+  /** QuizState — typ hlídá Otázka dne sama. */
+  state: unknown
+  savedAt: number
+}
+
+export function loadQuizRound(): SavedQuiz | null {
+  try {
+    const raw = localStorage.getItem(QUIZ_ROUND_KEY)
+    if (!raw) return null
+    const saved = JSON.parse(raw) as SavedQuiz
+    if (!saved || typeof saved !== 'object' || typeof saved.day !== 'number') return null
+    return saved.state ? saved : null
+  } catch {
+    return null
+  }
+}
+
+export function saveQuizRound(round: SavedQuiz | null): void {
+  try {
+    if (round) localStorage.setItem(QUIZ_ROUND_KEY, JSON.stringify(round))
+    else localStorage.removeItem(QUIZ_ROUND_KEY)
   } catch {
     // Soukromý režim nebo plná kvóta — hra běží dál, jen se nedá pokračovat.
   }

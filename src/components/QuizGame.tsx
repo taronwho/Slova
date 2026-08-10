@@ -41,6 +41,10 @@ interface Props {
   dayLabel: string
   onFinish: (outcome: { solved: boolean; clues: number; ink: number }) => void
   onHome: () => void
+  /** Stav rozehrané otázky, do kterého se má hráč vrátit. */
+  resume?: QuizState | null
+  /** Volá se po každém tahu, aby se dal návrat obnovit. */
+  onProgress?: (state: QuizState, finished: boolean) => void
   /**
    * Další otázka. Jen v kontrolním buildu — v ostré hře žádná další není,
    * o tom celá hra je.
@@ -59,8 +63,17 @@ function Pips({ count }: { count: number }) {
   )
 }
 
-export function QuizGame({ question, day, dayLabel, onFinish, onHome, onNext }: Props) {
-  const [state, setState] = useState<QuizState>(() => createQuizState(question))
+export function QuizGame({
+  question,
+  day,
+  dayLabel,
+  onFinish,
+  onHome,
+  resume,
+  onProgress,
+  onNext,
+}: Props) {
+  const [state, setState] = useState<QuizState>(() => resume ?? createQuizState(question))
   const [draft, setDraft] = useState('')
   const [flash, setFlash] = useState<{ text: string; key: number } | null>(null)
   const [confirmGiveUp, setConfirmGiveUp] = useState(false)
@@ -69,6 +82,12 @@ export function QuizGame({ question, day, dayLabel, onFinish, onHome, onNext }: 
 
   const over = isOver(state)
   const left = triesLeft(state)
+
+  // Ukládá se po každé změně stavu, ne po každém tahu zvlášť: koupení
+  // indicie i chybný pokus jsou nevratné, takže se nesmí ztratit ani jedno.
+  useEffect(() => {
+    onProgress?.(state, over)
+  }, [onProgress, over, state])
 
   // Kolo se hlásí právě jednou, hned jak skončí.
   useEffect(() => {

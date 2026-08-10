@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 import {
   claimKey,
@@ -121,7 +121,16 @@ import {
   spendInk,
   type Profile,
 } from '../src/lib/storage'
-import type { ModeId } from '../src/game/types'
+import { MODE_ORDER, type ModeId } from '../src/game/types'
+import {
+  loadQuizRound,
+  loadRounds,
+  roundSlot,
+  saveQuizRound,
+  saveRounds,
+  type SavedRound,
+} from '../src/lib/storage'
+import { restore, RESTORABLE, stillDaily } from '../src/app/resume'
 import {
   dailyIntruder,
   pickIntruder,
@@ -1674,5 +1683,126 @@ describe('vetřelec — střídání rodin', () => {
     expect(dailyIntruder(pool, 12, mulberry32(1)).family).toBe(
       dailyIntruder(pool, 12, mulberry32(2)).family,
     )
+  })
+})
+
+describe('návrat do rozehraného kola', () => {
+  const round = (mode: ModeId, state: unknown, daily = false): SavedRound => ({
+    mode,
+    daily,
+    difficulty: 'normal',
+    puzzleId: 'p1',
+    state,
+    savedAt: Date.UTC(2026, 0, 5, 10),
+  })
+
+  // Uložený stav každého režimu, jak ho hra zapisuje po tahu. Stačí ta část,
+  // ze které se hádanka vytahuje zpátky — zbytek stavu se nasazuje beze změny.
+  const STAVY: Record<ModeId, unknown> = {
+    chain: { puzzle: { id: 'c1', difficulty: 'normal' }, path: ['kos'] },
+    hive: { puzzle: { id: 'h1', solutions: [] }, found: [] },
+    tower: { puzzle: { id: 't1', levels: [] }, built: [] },
+    gallows: { puzzle: { id: 'g1', word: 'kos' }, tried: [] },
+    detective: { puzzle: { id: 'd1', word: 'kos' }, tried: [] },
+    intruder: { puzzle: { id: 'i1', words: [] }, picked: null },
+    quotes: { quote: { id: 'q1', text: 'Ať' }, tried: [] },
+    tetris: { deck: { words: [] }, setup: { seed: 7, difficulty: 'normal' }, cleared: [] },
+  }
+
+  it('umí obnovit každý režim, který se dá hrát', () => {
+    // Tohle je jádro věci: dokud se překlad psal jako řada „else if"
+    // s koncovým „else", spadly do posledního režimu i Citát a Vetřelec
+    // a hráč se místo rozehraného kola vracel na začátek.
+    for (const mode of MODE_ORDER) {
+      expect(RESTORABLE).toContain(mode)
+      const back = restore(round(mode, STAVY[mode]))
+      expect(back, `režim ${mode}`).not.toBeNull()
+      expect(back!.mode).toBe(mode)
+    }
+  })
+
+  it('Citát vrátí výrok a Slabiky balíček i rozdání', () => {
+    const quotes = restore(round('quotes', STAVY.quotes))
+    expect(quotes).toEqual({ mode: 'quotes', quote: { id: 'q1', text: 'Ať' } })
+    const tetris = restore(round('tetris', STAVY.tetris))
+    expect(tetris).toMatchObject({ mode: 'tetris', setup: { seed: 7 } })
+  })
+
+  it('poškozený nebo prázdný stav radši zahodí', () => {
+    expect(restore(round('hive', null))).toBeNull()
+    expect(restore(round('hive', { found: [] }))).toBeNull()
+    expect(restore(round('tetris', { deck: null, setup: null }))).toBeNull()
+  })
+
+  it('denní kolo dohrané po půlnoci se už za denní nepočítá', () => {
+    const den = (at: number) => new Date(at).toISOString().slice(0, 10)
+    const dnes = round('hive', STAVY.hive, true)
+    expect(stillDaily(dnes, '2026-01-05', den)).toBe(true)
+    expect(stillDaily(dnes, '2026-01-06', den)).toBe(false)
+    // Volné kolo denní nebylo a po půlnoci se jím nestane.
+    expect(stillDaily(round('hive', STAVY.hive), '2026-01-05', den)).toBe(false)
+  })
+})
+
+describe('přihrádky rozehraných kol', () => {
+  // Testy běží v Node, kde localStorage není. Stačí ale úložiště na klíč
+  // a hodnotu — víc z něj ukládání kol nepotřebuje.
+  const pamet = new Map<string, string>()
+  beforeEach(() => {
+    pamet.clear()
+    ;(globalThis as { localStorage?: unknown }).localStorage = {
+      getItem: (key: string) => pamet.get(key) ?? null,
+      setItem: (key: string, value: string) => void pamet.set(key, value),
+      removeItem: (key: string) => void pamet.delete(key),
+    }
+  })
+
+  it('denní výzva a volná hra téže hry se nepřepisují', () => {
+    // Dřív se kolo ukládalo jen podle režimu. Kdo měl rozehraný volný
+    // Řetěz a ťukl na dnešní výzvu, o postup přišel a nedozvěděl se to.
+    expect(roundSlot('chain', false)).not.toBe(roundSlot('chain', true))
+    for (const mode of MODE_ORDER) {
+      expect(roundSlot(mode, false)).toBe(mode)
+      expect(roundSlot(mode, true)).toContain(mode)
+    }
+  })
+
+  it('kola uložená starší verzí se přesypou do správné přihrádky', () => {
+    const stare = {
+      hive: {
+        mode: 'hive', daily: true, difficulty: 'normal',
+        puzzleId: 'h1', state: { a: 1 }, savedAt: 1,
+      },
+      chain: {
+        mode: 'chain', daily: false, difficulty: 'normal',
+        puzzleId: 'c1', state: { a: 2 }, savedAt: 2,
+      },
+    }
+    pamet.set('slova.rounds.v1', JSON.stringify(stare))
+    const rounds = loadRounds()
+    expect(rounds[roundSlot('hive', true)]?.puzzleId).toBe('h1')
+    expect(rounds.hive).toBeUndefined()
+    expect(rounds[roundSlot('chain', false)]?.puzzleId).toBe('c1')
+  })
+
+  it('obě kola téže hry vydrží vedle sebe', () => {
+    const kolo = (daily: boolean): SavedRound => ({
+      mode: 'hive', daily, difficulty: 'normal',
+      puzzleId: daily ? 'denni' : 'volne', state: { found: [] }, savedAt: 1,
+    })
+    saveRounds({
+      [roundSlot('hive', false)]: kolo(false),
+      [roundSlot('hive', true)]: kolo(true),
+    })
+    const rounds = loadRounds()
+    expect(rounds[roundSlot('hive', false)]?.puzzleId).toBe('volne')
+    expect(rounds[roundSlot('hive', true)]?.puzzleId).toBe('denni')
+  })
+
+  it('rozehraná Otázka dne se drží stranou a jen pro svůj den', () => {
+    saveQuizRound({ day: 42, state: { bought: 2, tried: [] }, savedAt: 5 })
+    expect(loadQuizRound()?.day).toBe(42)
+    saveQuizRound(null)
+    expect(loadQuizRound()).toBeNull()
   })
 })
