@@ -769,4 +769,35 @@ describe('vetřelec — vyváženost sady', () => {
     ) as { family?: string }[]
     expect(puzzles.every((one) => typeof one.family === 'string' && one.family.length > 0)).toBe(true)
   })
+
+  it('v pětici nestojí dvě slova z jednoho kořene', () => {
+    const puzzles = JSON.parse(
+      readFileSync('public/data/intruder/puzzles.json', 'utf-8'),
+    ) as { words: string[] }[]
+    // „malina" a „malinovka" vedle sebe vypadají jako přehlédnutí, i když
+    // do rodiny patří obě.
+    const problems = puzzles
+      .filter((one) => new Set(one.words.map((w) => fold(w).slice(0, 5))).size < 5)
+      .slice(0, 5)
+      .map((one) => one.words.join(' '))
+    expect(problems).toEqual([])
+  })
+
+  it('věta do vyhodnocení sedí do rámce „Čtyři z nich …"', () => {
+    const puzzles = JSON.parse(
+      readFileSync('public/data/intruder/puzzles.json', 'utf-8'),
+    ) as { recap: string }[]
+    // Rámec rozbíjí jednotné číslo („Čtyři z nich je to polévka"), příklonka
+    // na špatném místě („čtou se stejně" místo „se čtou stejně") a zástupka
+    // za slovo, které už stojí v podmětu („sedá se na ně").
+    const spatne = [' je to ', ' bývá to ', ' to ', ' na ně ', ' jim ']
+    const problems = new Set<string>()
+    for (const one of puzzles) {
+      const at = one.recap.indexOf('Čtyři z nich ')
+      if (at < 0) continue
+      const veta = one.recap.slice(at + 'Čtyři z nich'.length).split(' — ')[0]!
+      for (const kus of spatne) if (veta.includes(kus)) problems.add(veta.trim())
+    }
+    expect([...problems].slice(0, 5)).toEqual([])
+  })
 })

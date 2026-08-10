@@ -78,9 +78,12 @@ PER_KIND = 400
 # Kolik pětic připadne na kterou obtížnost. Rozpočet se pak rozdělí rovným
 # dílem mezi rodiny, které do té obtížnosti patří — uvnitř jedné obtížnosti
 # tak mají všechny rodiny přesně stejný podíl a žádná se nemůže tlačit
-# dopředu. Součet je tři tisíce, tedy tolik, kolik se do hry balí: data se
-# balí celá a v jednosouborové verzi navíc bobtnají na dvojnásobek.
-LEVEL_BUDGET = {"easy": 1200, "normal": 800, "hard": 1000}
+# dopředu. Rozpočet střední a těžké stoupl, když k nim přibylo osmdesát
+# skrytých rodin: kdyby zůstal, vyšlo by na rodinu čtrnáct pětic a hráč by
+# celou obtížnost prošel dřív, než by se stihl rozkoukat. Součet drží kolem
+# čtyř tisíc — data se balí celá a v jednosouborové verzi bobtnají na
+# dvojnásobek, takže víc už by bylo znát na velikosti stažení.
+LEVEL_BUDGET = {"easy": 1200, "normal": 1400, "hard": 1300}
 
 
 def origin(text: str) -> str | None:
@@ -347,6 +350,11 @@ def from_families(rng: random.Random, per_family: dict[str, int]) -> list[dict]:
             odd = rng.choice(family["outside"])
             key = tuple(sorted(four)) + (odd,)
             if key in seen:
+                continue
+            # Dvě slova z jednoho kořene vedle sebe („malina" a „malinovka")
+            # vypadají jako přehlédnutí, i když jsou obě uvnitř právem.
+            koreny = {fold(w)[:5] for w in four + [odd]}
+            if len(koreny) < 5:
                 continue
             seen.add(key)
             # Ze zásoby zavádějících vět se berou dvě — nabídka se tím mění
