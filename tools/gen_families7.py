@@ -793,8 +793,8 @@ slova uvnitř psaná ručně, slova vně vybral skript z nudné zásoby a ověř
 FAMILIES7 = ['''
 
 
-def zapis(rodiny: list[dict]) -> None:
-    kusy = [HLAVICKA]
+def zapis(rodiny: list[dict], cesta: str = OUT, hlavicka: str = HLAVICKA) -> None:
+    kusy = [hlavicka]
     for r in rodiny:
         kusy.append("    {")
         kusy.append(f"        \"id\": {r['id']!r},")
@@ -824,7 +824,7 @@ def zapis(rodiny: list[dict]) -> None:
         kusy.append("    },")
     kusy.append("]")
     text = "\n".join(kusy).replace("'", '"') + "\n"
-    with open(OUT, "w", encoding="utf-8") as fh:
+    with open(cesta, "w", encoding="utf-8") as fh:
         fh.write(text)
 
 

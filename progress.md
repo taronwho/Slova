@@ -182,3 +182,42 @@ Cestou se ukázalo ještě jedno: rodina „čtyři z nich umí aktivně létat"
 uvnitř *netopýra*, *netopýra velkého* a *netopýra rezavého*, takže se čtyři
 různá slova z ní nedala vybrat a rodina nevydala **ani jednu** pětici. Teď
 má čtyři různé druhy (netopýr, kaloň, vrápenec, upír).
+
+# Osmá várka — 50 rodin, pět nových druhů osy
+
+Padesát dalších rodin téhož ražení by sadu nafouklo, ale hru by nezměnilo:
+hráč by pořád hledal jednu ze tří věcí (pravidlo o písmenech, druhý význam,
+název) a čtvrté kolo by se hrálo jako první. Tahle várka proto přidává
+**nové druhy souvislosti**, ne jen další slova.
+
+Generátor: `tools/gen_families8.py` → `tools/intruder_families8.py`.
+Kontroly si bere ze sedmé várky, takže se nedublují.
+
+| skupina | rodin | příklad |
+|---|---|---|
+| fyzikální vlastnost | 12 | *korek, dřevo, led, olej, **kámen*** — čtyři plavou |
+| praktické použití | 8 | vejdou se do kapsy, teče z nich voda, potřebují dva lidi |
+| mluvnice | 7 | jen v množném čísle, nesklonná, po odtržení předpony zbude slovo |
+| ustálená spojení | 4 | zlatý déšť, zlatá horečka, zlaté ručičky, zlatý řez |
+| text, který zná každý | 3 | česká hymna, přísloví, pranostiky |
+| nové obory druhého významu | 6 | části kostela, včelařství, šití, rybaření, rybníky |
+| další vlastnosti věcí | 10 | rozbijí se pádem, mají pružinu, věší se na hřebík |
+
+Dvě věci se u nových typů dělají jinak:
+
+* **Slova vně se nedají brát z nudné zásoby.** U rodiny „čtyři z nich
+  plavou" musí být vetřelec věc, která se **jistě potopí** — kdyby tam stál
+  deštník, hráč netuší, jak to s ním je, a hádanka se rozpadne na dohady.
+  Skoro každá rodina má proto vlastní seznam vetřelců.
+* **Past se staví schválně.** Mezi vetřelce u „vydávají vlastní světlo"
+  patří *měsíc*, u „neskloňují se" *kino* a *metro*. Vypadají, že do
+  čtveřice patří, a hra se láme přesně na nich.
+
+## Stav po osmé várce
+
+* Sada má **4383 pětic** a 158 rodin: lehká 84, střední **85**, těžká **73**.
+* Nejčastější rodina zabírá 1,4 % své obtížnosti (před šestou várkou 8,3 %).
+* Rozpočet střední a těžké zvednut na 1700 a 1600 pětic, aby na rodinu
+  vyšlo dvacet hádanek a ne deset.
+* `npm test` (201), `smoke`, `smoke:standalone`, `audit:mobile`,
+  `audit:pwa`, `play:verify` — vše prošlo.

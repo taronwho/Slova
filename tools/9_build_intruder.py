@@ -81,12 +81,13 @@ PER_KIND = 400
 # Kolik pětic připadne na kterou obtížnost. Rozpočet se pak rozdělí rovným
 # dílem mezi rodiny, které do té obtížnosti patří — uvnitř jedné obtížnosti
 # tak mají všechny rodiny přesně stejný podíl a žádná se nemůže tlačit
-# dopředu. Rozpočet střední a těžké stoupl, když k nim přibylo osmdesát
-# skrytých rodin: kdyby zůstal, vyšlo by na rodinu čtrnáct pětic a hráč by
-# celou obtížnost prošel dřív, než by se stihl rozkoukat. Součet drží kolem
-# čtyř tisíc — data se balí celá a v jednosouborové verzi bobtnají na
-# dvojnásobek, takže víc už by bylo znát na velikosti stažení.
-LEVEL_BUDGET = {"easy": 1200, "normal": 1400, "hard": 1300}
+# dopředu. Rozpočet střední a těžké stoupá s tím, jak rodin přibývá: než
+# přišly skryté várky, nesla střední dvanáct rodin, dneska pětaosmdesát.
+# Kdyby rozpočet zůstal, vyšlo by na rodinu deset pětic a hráč by celou
+# obtížnost prošel dřív, než by se stihl rozkoukat. Součet drží pod pěti
+# tisíci — data se balí celá, takže víc už by bylo znát na velikosti
+# stažení.
+LEVEL_BUDGET = {"easy": 1200, "normal": 1700, "hard": 1600}
 
 
 def origin(text: str) -> str | None:
