@@ -35,7 +35,12 @@ MAX_SYLLABLE = 4
 MAX_RUN = 3
 # Kolik slabik se rozdává. Víc = pestřejší, ale řidší deska; tři sta padesát
 # vyšlo ze zkoušení jako místo, kde je hra pestrá a pořád se dá skládat.
-DEAL_POOL = 350
+#
+# Osm slabik navíc přidá do balíčku skoro dvě stě slov, a na hustotu desky to
+# znát není: přibyly na konci pořadí podle četnosti, takže mají nejmenší váhu
+# a padají nejvzácněji. Slabiky se totiž nerozdávají rovnoměrně — kdyby ano,
+# každá další by desku ředila a tenhle krok by se dělat nedal.
+DEAL_POOL = 358
 # Slabika se rozdává, jen když ji jazyk používá aspoň takhle často.
 MIN_USE = 4
 MIN_WORD, MAX_WORD = 3, 12

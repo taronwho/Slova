@@ -27,10 +27,14 @@ OUT = os.path.join(HERE, "out")
 DATA = os.path.join(HERE, "..", "public", "data", "gallows")
 
 # délky a kolik nejčastějších slov z každé délky vzít
+#
+# Přidávalo se po stovce na celou hru, tedy o 34/33/33 na úroveň. Slova jsou
+# v poolu setříděná podle frekvence, takže vyšší strop jen prodlouží konec
+# seznamu — dosavadní hádanky si nechávají svá čísla i svou úroveň.
 BANDS = {
-    "easy": ([4, 5], 700),
-    "normal": ([6, 7], 700),
-    "hard": ([8, 9], 700),
+    "easy": ([4, 5], 734),
+    "normal": ([6, 7], 733),
+    "hard": ([8, 9], 733),
 }
 
 # Slovo, ve kterém je jen pár různých písmen, se uhodne po dvou tazích;

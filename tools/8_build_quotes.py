@@ -23,10 +23,17 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DUMP = os.path.join(HERE, "raw", "cswikiquote.xml.bz2")
 OUT = os.path.join(HERE, "..", "public", "data", "quotes")
 
-# Kolik slov citát unese. Pod pět je to heslo, ne výrok; nad čtrnáct se
-# políčka na telefon nevejdou a hádání se protáhne.
-MIN_WORDS, MAX_WORDS = 5, 14
-MIN_LEN, MAX_LEN = 30, 110
+# Kolik slov citát unese. Pod pět je to heslo, ne výrok; nahoře rozhoduje,
+# kolik políček se ještě vejde na displej telefonu.
+#
+# Horní mez byla dřív čtrnáct slov a sto deset znaků. Zvednutí o jedno slovo
+# a osm znaků přidalo přes sto padesát výroků, protože právě kolem téhle
+# hranice jich leží nejvíc. Věta se sází přetékajícím řádkem (`.quote-text`
+# je `flex-wrap`), takže delší citát jen zabere o řádek víc — nic se
+# neuřízne. Výš už se jít nedá: šestnáct slov znamená na úzkém telefonu
+# stránku, kterou hráč nevidí celou, a hádaná věta musí být vidět naráz.
+MIN_WORDS, MAX_WORDS = 5, 15
+MIN_LEN, MAX_LEN = 30, 118
 
 # Zařazení autora podle kategorií stránky. Pořadí rozhoduje — kdo je herec
 # i spisovatel, spadne k tomu, co je uvedené dřív.

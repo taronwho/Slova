@@ -653,7 +653,7 @@ def frequency_ranks() -> dict[str, int]:
 # verzi se navíc každý český znak zapíše jako \uXXXX, takže megabajt textu
 # nabobtná na několik. Tři tisíce znamená, že hráč narazí na tutéž hádanku
 # nejdřív po osmi letech denního hraní — víc není k čemu.
-CAP = 3000
+CAP = 3100
 
 
 def pick_best(puzzles: list[dict], ranks: dict[str, int]) -> list[dict]:

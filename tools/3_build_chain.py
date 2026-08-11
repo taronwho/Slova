@@ -31,9 +31,15 @@ ENDPOINT_MIN_FREQ = {4: 300, 5: 150, 6: 120}
 HUMANE_MIN_FREQ = {4: 60, 5: 10, 6: 5}
 
 # délka -> (obtížnost, rozsah par, kolik hádanek chceme)
+#
+# Čísla jsou násobky počtu hodnot par, protože se na ně dělí kvóta — jinak by
+# se posledních pár hádanek do sady nedostalo. Šestipísmenná úroveň svůj strop
+# nevyčerpává: koncových kandidátů je jen kolem sto padesáti a všechny jejich
+# dvojice v rozsahu par se do hry berou tak jako tak, takže přírůstek stovky
+# hádanek nesou čtyřky a pětky.
 PLAN = {
-    4: ("easy", range(3, 6), 2500),
-    5: ("normal", range(4, 8), 3500),
+    4: ("easy", range(3, 6), 2550),
+    5: ("normal", range(4, 8), 3552),
     6: ("hard", range(5, 10), 3000),
 }
 

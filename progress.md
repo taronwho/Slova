@@ -313,3 +313,129 @@ začne dnešní výzvu načisto.
 * `npm test` — obnova všech osmi režimů, přihrádky, přesyp starých kol.
 * `npm run audit:resume` (nové) — v prohlížeči: odchod a návrat u každé hry,
   volná hra vedle denní výzvy, Otázka dne, běžící čas, včerejší výzva.
+
+---
+
+# Sto položek do každé z devíti her
+
+Zadání znělo přidat do každé hry sto otázek, rodin, citátů — podle toho, co
+která hra vlastně rozdává. To je devět různých úloh, protože každá hra bere
+data odjinud.
+
+| hra | bylo | je | odkud |
+|---|---|---|---|
+| Řetěz | 7824 | 7927 | vyšší strop v `3_build_chain.py` |
+| Voština | 2400 | 2502 | `TARGET_HIVES` |
+| Věž | 1962 | 2068 | `TOWERS_PER_DIFFICULTY` |
+| Šibenice | 2100 | 2200 | `BANDS` |
+| Detektiv | 3000 | 3100 | `CAP` |
+| Slabiky | 9037 slov | 9213 slov | `DEAL_POOL` 350 → 358 |
+| Citát | 2672 | 2835 | čerstvý dump + širší meze délky |
+| Vetřelec | 335 rodin | 435 rodin | `tools/gen_families10.py` |
+| Otázka dne | 1250 | 1350 | `tools/quiz_bank.py` |
+
+## Hry ze slovníku
+
+Šest her si data staví ze staženého korpusu. U nich nejde „dopsat sto
+kousků" — jde jen povolit, aby jich stavitel vzal víc. To má háček: čísla
+nejsou libovolná, protože se dělí mezi obtížnosti nebo mezi hodnoty par.
+Kdyby se strop nastavil na kulaté číslo, posledních pár hádanek by se do
+sady nedostalo, protože kvóta je celočíselný podíl.
+
+Šestipísmenná úroveň Řetězu svůj strop nevyčerpává a nevyčerpá ho ani teď:
+koncových kandidátů je jen sto třicet osm a všechny jejich dvojice v rozsahu
+par se do hry berou tak jako tak. Stovku proto nesou čtyřky a pětky. Podobně
+u Věže: strop platí na každou obtížnost zvlášť, ale vyčerpat se dá jen ta
+nejlehčí — u střední a těžké dojdou dřív podpisy s úplným řetězem.
+
+U Slabik se nepřidávaly hádanky, ale slova, ze kterých hra pozná, co je
+platný tvar. Osm slabik navíc v rozdávacím poolu přineslo skoro dvě stě slov
+a na hustotu desky to znát není: přibyly na konci pořadí podle četnosti,
+takže mají nejmenší váhu a padají nejvzácněji.
+
+U Citátu nestačilo stáhnout čerstvý dump — od posledního přibyly dva výroky.
+Povolilo se proto jedno slovo a osm znaků navíc (5–15 slov, 30–118 znaků),
+protože právě kolem téhle hranice jich leží nejvíc. Nejdelší citát zabere na
+displeji 320 × 568 sedm řádků a 210 px; věta se sází přetékajícím řádkem,
+takže se nic neuřízne.
+
+Detektiv se staví **až po** Otázce dne: slova, na která se ptá kvíz, se
+detektivkám zapovídají, aby hráč neluštil ráno v kvízu totéž co odpoledne
+v detektivce. Sto nových otázek proto zvedlo počet zahozených hesel.
+
+## Otázka dne
+
+Deset otázek do každého z deseti oborů — jinak to nešlo. Obory se hráči
+podávají kolečkem a délka toho nejmenšího určuje, za kolik dní se otázka
+zopakuje; kdyby se jeden obor rozešel, zkrátil by cyklus celé hry. Teď je
+všech deset po sto pětatřiceti, tedy 1350 dní bez opakování.
+
+Build hlásil jediný nález: druhá indicie u turbodmychadla prozrazovala
+odpověď slovem *turbínou* — kontrola porovnává přes kmen, takže si všimla
+i toho, že *turbo* je uznávaná odpověď. A jedno upozornění navíc: indicie
+u Marathónu ukazovala zájmenem na odpověď, která je spojením dvou jmen.
+Obojí přepsáno.
+
+## Vetřelec
+
+Sto nových rodin, opět skript (`tools/gen_families10.py`), ne ruční seznam.
+Osy jsou schválně z různých soudků:
+
+* **tělo u věcí** — ucho hrnce, zuby pily, jazyk boty, oko sítě; slovo zná
+  každý, ale že je to jedna a tatáž věc, dojde až po chvíli,
+* **ustálená spojení** — těžký, horký, slepý, mrtvý, šedý, tvrdý,
+* **řemesla** — kovárna, hasiči, truhlárna, hornictví, mlékárna, filatelie,
+  účetnictví, pojišťovna, elektro, lukostřelba, šerm,
+* **části věcí** — květ, zub, houba, kytara, kamna, most, kniha, střecha,
+  schodiště, košile, vodovod, zámek, koňský vůz,
+* **písmena** — slabikotvorné r, koncovka -tel, háčky, kroužek, useknuté
+  první písmeno,
+* **příroda podle chování** — co táhne na zimu, co spí zimní spánek, co
+  svléká kůži, co kvete před olistěním, co žije na cizí úkor,
+* **prameny názvů** — May, Havel, Kundera, Zeman, Chaplin, Dickens, Mucha,
+  Menzel, Štorch,
+* **vlastnosti a děje** — co saje vodu, co ji odpuzuje, co hasí oheň, co
+  uletí ve větru, co svítí jen odraženým světlem.
+
+### Co při psaní spadlo
+
+**Slova vně musí být ze stejného soudku jako slova uvnitř.** U tažných ptáků
+stojí vně ptáci stálí, u jedovatých rostlin rostliny neškodné, u zapalovaných
+světel světla elektrická. Bez toho by osa sklouzla na „čtyři jsou ptáci"
+a hádanka by měla dvě řešení.
+
+**Jasan kvete taky před olistěním.** Byl mezi vetřelci u rodiny o dřevinách,
+které kvetou dřív, než jim narostou listy — jako odpověď by byl stejně dobrý
+jako slova uvnitř. Totéž javor mléč. Oba pryč; vně zůstaly lípa, dub, buk.
+
+**Luk není část kytary.** Patří ke smyčcovým nástrojům.
+
+**Příklonka.** Otázka se sází do rámce „Čtyři z nich …", takže sloveso je ve
+větě až třetí a zvratné *se* se musí přesunout před ně: „Čtyři z nich **se**
+sbírají v lese", ne „sbírají se v lese". Sdílená kontrola to nechytí, protože
+hlídá jen podobu otázky samotné, a ta zní správně obojím způsobem. Přibyla
+proto vlastní kontrola — s výjimkou pro „tvoří **se slovem** ostrý ustálené
+spojení", kde *se* není příklonka, ale předložka.
+
+**Dvakrát podmět.** „Čtyři z nich vyroste **z nich** rostlina." Rámec podmět
+už říká, takže druhý odkaz je navíc. Hlídá se to teď taky.
+
+### Co hlídá stroj
+
+Rodiny s pravidlem o písmenech ověřuje skript na obě strany naráz: každé
+slovo uvnitř pravidlu vyhovět **musí** a žádné slovo vně mu vyhovět **nesmí**.
+Jedno pravidlo je zdroj pravdy pro obojí, takže se nedají omylem rozejít.
+U rodiny „po useknutí prvního písmene dají jiné slovo" se navíc sahá do
+slovníku hry — `sval` se tak neudržel, protože *val* v základních tvarech
+není.
+
+Ke stávajícím kontrolám (jedinečná otázka, rámec věty, žádná pětice se dvěma
+řešeními, žádné dvě slova se stejným kmenem, žádná schovaná věc dvakrát)
+přibylo ještě hlášení, když slovo stojí uvnitř i vně téže rodiny.
+
+## Čím je to hlídané
+
+* `npm test` — 209 testů, z toho datové na všech devět sad.
+* `npm run smoke`, `smoke:standalone`, `play:verify` — 199 zkontrolovaných
+  slov v odehraných kolech.
+* `npm run audit:pwa`, `audit:mobile`, `audit:resume` — bez nálezů.

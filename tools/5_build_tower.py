@@ -33,7 +33,10 @@ ACCEPT_MIN_FREQ = 2
 TOP_LEVEL = {"easy": 6, "normal": 7, "hard": 8}
 BASE_LEVEL = 3
 
-TOWERS_PER_DIFFICULTY = 900
+# Strop platí na každou obtížnost zvlášť, ale vyčerpat se dá jen ta nejlehčí
+# — u střední a těžké dojdou dřív podpisy s úplným řetězem, takže zvednutím
+# stropu přibývají věže tam, kde je z čeho brát.
+TOWERS_PER_DIFFICULTY = 1000
 TOWERS_PER_PACK = 60
 
 

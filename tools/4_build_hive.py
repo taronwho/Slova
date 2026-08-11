@@ -35,7 +35,8 @@ MIN_EASY_WORDS = 10
 EASY_FREQ = 800
 
 HIVES_PER_PACK = 40
-TARGET_HIVES = 2400
+# Dělí se na třetiny, takže cíl je násobek tří: 834 na každou obtížnost.
+TARGET_HIVES = 2502
 
 
 def fold(word: str) -> str:
