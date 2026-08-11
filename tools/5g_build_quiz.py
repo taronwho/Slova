@@ -70,7 +70,8 @@ def stem(word: str) -> str:
 # nahlas. Kdyby se hlídala i tahle slova, kontrola by křičela u poloviny
 # otázek a přestala by se číst, což je horší než ji nemít.
 GENERIC = {
-    "jazyk", "jazyka", "kniha", "knihy", "film", "filmu", "jezero", "hora",
+    "jazyk", "jazyka", "jazyky", "jazyku", "kniha", "knihy", "film", "filmu",
+    "jezero", "hora",
     "stat", "statu", "spor", "sporu", "pruplav", "vodopad", "vodopady",
     "stupnice", "system", "vyroba", "pismo", "slovo", "slova", "svatek",
     "ustava", "stadium", "metr", "metru", "metru", "presmycka", "podzemni",

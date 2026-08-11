@@ -439,3 +439,87 @@ přibylo ještě hlášení, když slovo stojí uvnitř i vně téže rodiny.
 * `npm run smoke`, `smoke:standalone`, `play:verify` — 199 zkontrolovaných
   slov v odehraných kolech.
 * `npm run audit:pwa`, `audit:mobile`, `audit:resume` — bez nálezů.
+
+---
+
+# Pět set otázek a dvě stě rodin navíc
+
+Otázka dne vyrostla z 1350 na **1850**, Vetřelec z 435 rodin na **635**.
+
+## Otázka dne
+
+Padesát otázek do každého z deseti oborů, v pěti várkách po stovce. Rovnoměrně
+to být muselo: obory se hráči podávají kolečkem a nejmenší z nich určuje, za
+kolik dní se otázka zopakuje. Teď je všech deset po sto pětaosmdesáti, tedy
+**1850 dní bez opakování** — přes pět let denního hraní.
+
+Kontrola na únik odpovědi hlásila v každé várce deset až dvacet nálezů a
+všechny byly opravdové. Nejčastěji šlo o tři věci:
+
+* **Alternativní tvar odpovědi**, na který autor při psaní indicií nemyslel.
+  U vokativu je uznávaná odpověď „pátý pád" — a druhá indicie začínala slovy
+  „Pátý pád, tvar, kterým…". U turbodmychadla prozradilo odpověď slovo
+  *turbínou*, protože *turbo* je taky uznávané.
+* **Obecné slovo, které se u téhle odpovědi obecné být přestalo.** U rodin
+  jazyků („slovanské jazyky", „germánské jazyky") se nedalo napsat „skupina
+  indoevropských **jazyků**". Do seznamu druhových slov proto přibylo
+  `jazyky` a `jazyku`: nadpis otázky to slovo stejně říká nahlas.
+* **Kmen kratší, než se zdá.** Kontrola porovnává přes hrubý kmen, takže
+  *Nigérie* se schová i v *Nigeru*, *svatého* v *svátku* a *teplo*
+  v *teploměru*. Tyhle nálezy vypadají jako plané, ale nejsou: hráč vidí
+  totéž, co stroj.
+
+## Vetřelec
+
+Dvě stě rodin ve dvou skriptech (`gen_families11.py`, `gen_families12.py`).
+Osy jsou opět rozdělené do skupin, které si nejsou podobné:
+
+* **části věcí** — strom, sud, pluh, mlýn, varhany, buben, meč, brnění,
+  sedlo, deštník, zvon, postel, mikroskop, tunel, silnice, pila, nůžky,
+  kladivo, stan, batoh, kotel, skříň, komín, studna, řeka, rybník, město,
+  divadlo, klavír, trubka, brýle, motor, raketa, lyže, klobouk,
+* **řemesla** — padesát oborů od sklárny a koželužny po numismatiku,
+  kriminalistiku a paleontologii; slova jsou všední, druhý význam odborný,
+* **ustálená spojení** — dvacet dalších přívlastků (zelený, modrý, sladký,
+  měkký, lehký, krátký, vysoký, silný, prázdný, divoký, hořký, čerstvý,
+  plný, holý, planý, hluchý, křivý, rovný, mokrý, drahý),
+* **písmena** — koncovky -ost, -ník a -dlo, předpona pře-, ypsilon, ě,
+  krajní písmena vedle sebe v abecedě, stejný počet samohlásek a souhlásek,
+  useknuté poslední písmeno, slovo pozpátku, složené slovo ze dvou slov,
+* **prameny názvů** — Vančura, Lada, Kästner, Twain, London, Kipling,
+  Poláček, Chytilová, Kubrick, Hemingway, Kafka, Škvorecký, Kachyňa,
+  Troška, Tučný, balety, operety, symfonické básně, trampské písně,
+* **vlastnosti a děje** — co praská v ohni, co se táhne v teple, co pění,
+  co dorůstá, co unese člověka, co chladí bez proudu, co se dá roztavit,
+  recyklovat, zamrazit, vyžehlit, rozsvítit,
+* **znalostní osy** — pražské vrchy, slovenská města, evropské metropole,
+  čeští panovníci a světci, apoštolové, severští bohové, řecké bohyně,
+  měsíce planet, odrůdy jablek, brambor a vína, uzly, moře, kávy, čaje,
+  těstoviny, pečivo, prvky, africké a americké státy, olympijská města.
+
+### Rozpočet pětic
+
+Nová sada by byla menší než ta stará, a to je past, kterou nikdo nečeká:
+rozpočet se dělí **rovným dílem mezi rodiny** dané úrovně, takže s každou
+další rodinou ubude pěticím na rodinu — a při celočíselném dělení spadne
+rovnou o celý stupeň. Dvě stě nových rodin srazilo podíl z deseti pětic na
+šest a celá sada se scvrkla z 4893 na 4498. Čísla se proto zvedla tak, aby
+na každou skrytou rodinu vyšlo osm pětic: **5614 pětic** z 635 rodin.
+
+### Co spadlo při psaní
+
+* **Slovo uvnitř i vně téže rodiny.** U drahého kovu stálo dvakrát *kov*.
+* **Písmena, která se nepočítala.** *Propast* nekončí na -ost, *dech* nemá
+  krajní písmena vedle sebe v abecedě. Obojí zastavil build.
+* **Vetřelec, který pravidlu vyhovuje.** *Ručník* po useknutí posledního
+  písmene dá *ručni*… ne, dá slovo, které ve slovníku hry je — a tím by
+  hádanka měla dvě řešení. Stejně tak *motyka* má stejně samohlásek jako
+  souhlásek a *propiska* nemá jedinou čárku ani háček.
+* **Příklonka.** „sklízejí se až na podzim" musí být „se sklízejí až na
+  podzim", jinak rekapitulace zní „Čtyři z nich sklízejí se…".
+
+## Čím je to hlídané
+
+* `npm test` — 209 testů.
+* `npm run smoke`, `smoke:standalone`, `play:verify` (206 slov).
+* `npm run audit:pwa`, `audit:mobile` (bez nálezů), `audit:resume`.

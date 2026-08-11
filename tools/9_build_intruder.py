@@ -87,7 +87,12 @@ PER_KIND = 400
 # obtížnost prošel dřív, než by se stihl rozkoukat. Součet drží pod pěti
 # tisíci — data se balí celá, takže víc už by bylo znát na velikosti
 # stažení.
-LEVEL_BUDGET = {"easy": 1200, "normal": 2000, "hard": 1800}
+# Rozpočet se dělí rovným dílem mezi rodiny dané úrovně, takže s každou
+# další rodinou ubude pěticím na rodinu — a při celočíselném dělení
+# spadne rovnou o celý stupeň. Po dvou stovkách nových rodin vyšlo na
+# rodinu šest pětic místo deseti a sada se scvrkla; čísla se proto zvedla
+# tak, aby na každou skrytou rodinu vyšlo osm pětic.
+LEVEL_BUDGET = {"easy": 1200, "normal": 2400, "hard": 2100}
 
 
 def origin(text: str) -> str | None:
