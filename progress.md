@@ -523,3 +523,119 @@ na každou skrytou rodinu vyšlo osm pětic: **5614 pětic** z 635 rodin.
 * `npm test` — 209 testů.
 * `npm run smoke`, `smoke:standalone`, `play:verify` (206 slov).
 * `npm run audit:pwa`, `audit:mobile` (bez nálezů), `audit:resume`.
+
+---
+
+# Bezpečnostní kontrola před vydáním na Google Play
+
+Prošel jsem celou aplikaci — klienta, pravidla databáze, závislosti,
+zásady soukromí — a rozdělil nálezy na to, co jsem opravil, a na to, co se
+musí udělat v konzolích (Firebase, Play), protože do repozitáře nepatří.
+
+## Co bylo špatně a je opravené
+
+**1. Smazání účtu neprošlo do konce. (vysoká)**
+`eraseMe()` maže přezdívku, záznam hráče a došlé výzvy. Pravidlo pro
+`nicks/{přezdívka}` ale povolovalo jen **zabrání**:
+`!data.exists() && newData.val() === auth.uid`. Při mazání `data` existuje
+a `newData` je prázdné, takže obě podmínky selhaly a Firebase zápis odmítla.
+Výsledek: hráč dostal chybu, jeho záznam zmizel, ale **přezdívka zůstala
+navěky zabraná mrtvým účtem** a nikdo jiný si ji nemohl vzít. Smazání účtu
+přímo v aplikaci přitom Google Play vyžaduje. Pravidlo teď povoluje i
+smazání vlastního záznamu.
+
+**2. Přezdívku šlo podvrhnout. (střední)**
+Filtr závadných jmen (`foulNick`) běží v telefonu — a to je v pořádku,
+dokud server hlídá, že se ven dostane jen jméno, které filtrem prošlo.
+U `results` se to hlídalo, u **výzev a soubojů ne**: `challenges/*/nick`,
+`duels/hostNick`, `duels/guestNick` i `duels/*/done/*/nick` braly libovolný
+řetězec. Upravený klient tak mohl druhému hráči zobrazit cokoli, včetně
+toho, co filtr zakazuje. Všechna čtyři místa se teď ověřují proti
+`players/{id}/nick`, tedy proti jménu, které filtrem prošlo při zabrání.
+
+**3. Seznam všech hráčů se dal stáhnout. (střední)**
+`players` mělo `.read` na úrovni celé větve, takže jeden anonymní účet mohl
+jedním požadavkem vytáhnout všechny přezdívky a id. Hra to nikdy
+nepotřebovala — čte vždy konkrétního hráče. `.read` sedí teď o patro níž,
+na `players/{id}`.
+
+**4. Chyběly meze u volných polí. (nízká)**
+`duels.guest` mohl být libovolný řetězec (i neexistující hráč),
+`duels/*/words/{slovo}` klíč libovolné délky. Obojí je teď omezené;
+`guest` musí být existující hráč a nesmí to být vyzývatel sám.
+
+**5. Jednosouborová verze sahala na Wikimedia. (střední — soukromí)**
+Verze pro jeden soubor má slíbeno, že neodešle ani bajt, a smoke test to
+kontroluje. Jenže nekontroloval nápovědu **podobizna** v Citátu, která
+stahuje obrázek z Wikimedia Commons. Kdo si otevřel „kontrolní" soubor
+a koupil si tuhle nápovědu, prozradil svoji IP adresu třetí straně.
+Nápověda se v téhle verzi už vůbec nenabízí a navíc to vynucuje zásada
+zabezpečení obsahu (`img-src data:`), takže se to nemůže vrátit omylem.
+
+**6. Obrázek posílal Wikimedii adresu stránky. (nízká)**
+`<img>` s podobiznou teď má `referrerPolicy="no-referrer"`.
+
+**7. Zranitelnost v závislostech. (nízká)**
+`nanoid < 3.3.17` (high, GHSA-2v37-7h3g-55p8) — jen vývojová závislost přes
+Vite, do aplikace se nedostala. `npm audit fix`; obojí hlásí nula nálezů.
+
+## Co přibylo navíc
+
+**Zásada zabezpečení obsahu (CSP).** Hra sama žádný cizí kód nespouští, ale
+v obalu pro Play běží jako webová stránka a dává smysl to říct nahlas.
+Seznam adres není vymyšlený — je to úplný výčet toho, na co hra opravdu
+sahá: Firebase (přihlášení a databáze) a Wikimedia Commons. Skripty smí
+jen ze stejného původu, žádné v textu stránky.
+
+Jednosouborová verze má vlastní, mnohem přísnější: `default-src 'none'`
+a zpátky jen text skriptu, text stylů a `data:`. Slib „neodejde ani bajt"
+je tím poprvé vynucený prohlížečem, ne jen dodržovaný.
+
+**`npm run audit:csp`.** Přísná zásada má ošklivou vlastnost: když je moc
+těsná, nic se nerozbije nahlas — jen zmizí písmo nebo se hra tiše nespojí
+se serverem. Nový audit hru rozehraje a poslouchá, jestli prohlížeč něco
+neodmítl (konzole i událost `securitypolicyviolation`), a ověří, že se
+načetlo vlastní písmo a zaregistroval service worker.
+
+**Kontrola slibu ze zásad soukromí.** Tentýž audit hlídá, že při obyčejném
+hraní neodejde požadavek na žádný cizí server. Je to slib, který se dá
+porušit jedním nešikovným importem — Firebase se proto natahuje až uvnitř
+funkcí — a od teď to hlídá stroj.
+
+**Zásady soukromí** dostaly odstavec o podobiznách z Wikimedia Commons.
+Chyběl a bez něj by výčet toho, kam data odcházejí, nebyl úplný.
+
+## Co pravidla neuhlídají a musí se nastavit v konzoli
+
+* **Firebase App Check** s Play Integrity. Anonymní přihlášení je zdarma
+  a bez omezení, takže si kdokoli může vyrobit libovolný počet identit
+  a psát do databáze mimo aplikaci. Pravidla drží **tvar** dat, ne
+  **množství**. App Check přijme jen požadavky z pravé aplikace.
+* **Rozpočtové upozornění** na projektu, aby se zahlcení poznalo dřív
+  než z faktury.
+* **Omezení API klíče** v Google Cloud → Credentials: klíč v balíčku je
+  veřejný z principu, ale dá se omezit na Firebase API a na otisk podpisu
+  aplikace.
+* **Čtení nahlášení.** `reports` umí jen zapsat, číst je jde jen v konzoli.
+  Google Play u obsahu od uživatelů chce, aby hlášení někdo skutečně
+  vyřizoval — tady stačí jednou za čas nahlédnout.
+
+## Co Play bude chtět ve formulářích
+
+* **Data safety:** ID uživatele (skryté id Firebase), obsah od uživatele
+  (přezdívka — sdílená s ostatními hráči), aktivita v aplikaci (skóre).
+  Šifrováno při přenosu ✔, smazání dat na žádost ✔ přímo v aplikaci
+  i odkazem `soukromi.html#mazani`.
+* **Hodnocení obsahu:** hra obsahuje obsah od uživatelů (přezdívky), ale
+  žádný volný chat — důvody nahlášení jsou z pevného seznamu.
+* **Oprávnění:** obal potřebuje jen `INTERNET`. Hra nežádá o polohu,
+  kontakty, fotky, mikrofon ani kameru.
+
+## Co zůstává vědomě tak, jak to je
+
+Hra funguje offline, takže **všechna data hádanek včetně odpovědí jsou
+v telefonu**. Kdo umí otevřít vývojářské nástroje, uvidí odpovědi Otázky
+dne i řešení hádanek. To není chyba, kterou by šlo opravit — je to cena za
+to, že se hraje bez signálu. Souboje z toho nic nekazí: skóre se porovnává
+mezi lidmi, kteří hráli tutéž hádanku, a pravidla nedovolí zapsat výsledek
+dvakrát ani ho po prohře přepsat.

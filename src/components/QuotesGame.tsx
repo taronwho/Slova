@@ -275,6 +275,10 @@ export function QuotesGame({
               src={artUrl(quote.art!)}
               alt=""
               loading="lazy"
+              // Bez tohohle by Wikimedia z hlavičky Referer věděla, kdo si
+              // otevřel kterou hádanku. Obrázek je jediné místo, kde hra
+              // sahá na cizí server, a stačí, že o něj požádá.
+              referrerPolicy="no-referrer"
               onError={() => {
                 // Bez sítě (nebo když soubor na Commons zmizel) hráč zaplatil
                 // za nic. Místo podobizny proto dostane další stupeň zadarmo.

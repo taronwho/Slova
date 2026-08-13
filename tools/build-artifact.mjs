@@ -141,7 +141,30 @@ const viewportBootstrap = `<script>
 })()
 </script>`
 
+/**
+ * Zásada zabezpečení obsahu pro jednosouborovou verzi.
+ *
+ * Tahle verze je jeden soubor, který se posílá mailem a otevírá odkudkoli —
+ * z disku, z flashky, z cizího webu. Nesmí poslat ven ani bajt, a tady to
+ * přestává být slib v dokumentaci a stává se pravidlem, které vynutí
+ * prohlížeč: `default-src 'none'` zakáže úplně všechno a zpátky se povolí
+ * jen to, co v souboru opravdu leží — text skriptu, text stylů a obrázky
+ * s písmy zapsané jako `data:`. Žádná adresa v seznamu není, takže síť je
+ * mimo hru i kdyby ji někdo v kódu omylem zavolal.
+ */
+const CSP = [
+  "default-src 'none'",
+  "script-src 'unsafe-inline'",
+  "style-src 'unsafe-inline'",
+  "img-src data:",
+  "font-src data:",
+  "connect-src 'none'",
+  "base-uri 'none'",
+  "form-action 'none'",
+].join('; ')
+
 const page = `<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="${CSP}">
 <meta name="viewport" content="${VIEWPORT}">
 <title>${title}</title>
 ${viewportBootstrap}

@@ -250,10 +250,20 @@ export function revealWord(state: QuoteState): QuoteState {
   return isSolved(next) ? { ...next, finishedAt: Date.now() } : next
 }
 
-/** Které nápovědy má kolo v zásobě — obrázek jen když je co ukázat. */
+/**
+ * Které nápovědy má kolo v zásobě — obrázek jen když je co ukázat.
+ *
+ * Podobizna je jediná část hry, která si sahá na cizí server (Wikimedia
+ * Commons), a proto v jednosouborové verzi vůbec není v nabídce. Ta se
+ * rozdává jako jeden soubor a nesmí poslat ven ani bajt — jinak by
+ * o hráči věděl někdo další už tím, že si otevře hádanku. Hlídá to
+ * i zásada zabezpečení obsahu, která v té verzi povoluje obrázky jen
+ * z `data:`; tohle je jen druhá strana téhož pravidla, aby hráč neplatil
+ * inkoustem za nápovědu, která nemůže dorazit.
+ */
 export function hintLadder(quote: Quote): QuoteHint[] {
   const out: QuoteHint[] = []
-  if (quote.art) out.push('art')
+  if (quote.art && !__STANDALONE__) out.push('art')
   if (quote.note) out.push('note')
   out.push('who')
   return out

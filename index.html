@@ -3,6 +3,42 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+    <!--
+      Zásada zabezpečení obsahu. Hra sama žádný cizí kód nespouští, ale
+      v obalu pro obchod běží jako webová stránka uvnitř prohlížeče, takže
+      dává smysl říct nahlas, kam smí a kam nesmí.
+
+      Adresy nejsou vybrané od stolu — je to úplný seznam toho, na co hra
+      opravdu sahá: přihlášení a databáze Firebase (jen souboje) a podobizny
+      z Wikimedia Commons u Citátu. `Special:FilePath` přesměrovává na
+      `upload.wikimedia.org`, proto tam musí být obojí.
+
+      `script-src 'self'` znamená, že žádný skript nesmí přijít v textu
+      stránky ani zvenčí. Vestavěné styly to nezakazuje, protože React je
+      nastavuje přes `element.style`, což zásada neřeší; `<style>` v textu
+      hra nemá.
+
+      Co se do značky napsat nedá: `frame-ancestors` (proti vložení hry do
+      cizího rámu) a `Permissions-Policy` — obojí jde jen hlavičkou, a tu
+      GitHub Pages nastavit neumí. V obalu pro Play to řeší sám obal, který
+      stránku otevírá jako aplikaci, ne v rámu.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self';
+               base-uri 'self';
+               object-src 'none';
+               form-action 'none';
+               frame-src 'none';
+               script-src 'self';
+               style-src 'self';
+               font-src 'self' data:;
+               img-src 'self' data: https://commons.wikimedia.org https://upload.wikimedia.org;
+               connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebasedatabase.app;
+               worker-src 'self';
+               manifest-src 'self'"
+    />
     <meta name="theme-color" content="#f2f1fa" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#121028" media="(prefers-color-scheme: dark)" />
 
