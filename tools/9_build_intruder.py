@@ -28,6 +28,23 @@ def fold(word: str) -> str:
     return "".join(ch for ch in out if unicodedata.category(ch) != "Mn")
 
 
+def velke(word: str) -> bool:
+    """Vlastní jméno — poznají se podle velkého písmene na začátku."""
+    return word[:1].isupper()
+
+
+def frekvence() -> dict[str, int]:
+    """Jak běžné které slovo je. Mimo build se vrátí prázdno a kontroly mlčí."""
+    import json  # noqa: PLC0415
+
+    cesta = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                         "out", "lexicon_base.json")
+    if not os.path.exists(cesta):
+        return {}
+    base = json.load(open(cesta, encoding="utf-8"))
+    return {w: f for delka in base for w, f in base[delka]}
+
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from intruder_families import FAMILIES  # noqa: E402
@@ -338,6 +355,59 @@ def in_sentence(ask: str) -> str:
     return "jsou " + ask[len("jsou to "):] if ask.startswith("jsou to ") else ask
 
 
+def prezbroj(rng: random.Random) -> int:
+    """
+    Rodinám, které si braly vetřelce z nudné zásoby, dá sousedy téže skupiny.
+
+    Novější várky si sousedy hledají samy už v generátoru, ale ručně psané
+    rodiny z prvních dávek na to čekat nemusí: skupinu jde poznat z otázky.
+    Kde je uvnitř odborná hantýrka („pomlka, odrážka, tečka, posuvka") a vně
+    domácí potřeba („šroub"), pozná hráč vetřelce dřív, než si otázku
+    přečte — a hádanka se ptá na vzhled místo na znalost.
+
+    Sahá se **jen** na rodiny, které mají celou zásobu z nudné vaty. Kde je
+    seznam vně psaný ručně, byl k tomu důvod a ten se nepřebíjí.
+    """
+    from gen_families7 import VATA  # noqa: PLC0415 — jen kvůli téhle kontrole
+
+    vata = set(VATA.split())
+    freq = frekvence()
+
+    def bezne(word: str) -> bool:
+        return not velke(word) and freq.get(word.lower(), 0) >= 300
+
+    def skupina(family: dict) -> str | None:
+        ask = family["asks"][0]
+        podil = sum(bezne(w) for w in family["inside"]) / len(family["inside"])
+        if ask.startswith("jsou v názvech"):
+            return "nazvy"
+        if ask.startswith("jsou to zároveň") and podil <= 0.34:
+            return "obor"
+        return None
+
+    kam = {f["id"]: skupina(f) for f in FAMILIES}
+    zmeneno = 0
+    for family in FAMILIES:
+        moje = kam[family["id"]]
+        if moje is None or not set(family["outside"]) <= vata:
+            continue
+        sousedi = [f for f in FAMILIES if kam[f["id"]] == moje and f is not family]
+        kolikrat: dict[str, int] = {}
+        for one in sousedi + [family]:
+            for word in set(one["inside"]):
+                kolikrat[word] = kolikrat.get(word, 0) + 1
+        doma = set(family["inside"])
+        # Slovo ze dvou rodin naráz („měch" u varhan i v kovárně) by dělalo
+        # vetřelce, o kterém by se dalo právem hádat.
+        pool = sorted({w for one in sousedi for w in one["inside"]
+                       if kolikrat[w] == 1 and w not in doma})
+        if len(pool) < 12:
+            continue
+        family["outside"] = sorted(rng.sample(pool, 12))
+        zmeneno += 1
+    return zmeneno
+
+
 def from_families(rng: random.Random, per_family: dict[str, int]) -> list[dict]:
     """Hádanky z ručně psaných rodin — páteř režimu.
 
@@ -368,6 +438,14 @@ def from_families(rng: random.Random, per_family: dict[str, int]) -> list[dict]:
             # vypadají jako přehlédnutí, i když jsou obě uvnitř právem.
             koreny = {fold(w)[:5] for w in four + [odd]}
             if len(koreny) < 5:
+                continue
+            # Vetřelec nesmí trčet už tím, **jak vypadá**. Když jsou čtyři
+            # slova vlastní jména (Jan, Václav, Anežka, Kliment) a páté je
+            # obyčejné podstatné jméno (*kolík*), pozná ho hráč, aniž by
+            # o ose cokoli věděl — a těžká hádanka se vyřeší za vteřinu.
+            # Hlásili to hráči hned dvakrát, u českých světců a u chemických
+            # prvků; obojí bylo v těžké úrovni.
+            if velke(odd) != any(velke(w) for w in four):
                 continue
             # A pětice nesmí nabízet druhou stejně dobrou odpověď: kdyby byl
             # vetřelec zvíře a byla mezi pěticí zvířata právě čtyři, ukazuje
@@ -425,6 +503,9 @@ def from_families(rng: random.Random, per_family: dict[str, int]) -> list[dict]:
 def main() -> int:
     rng = random.Random(7)
     words = load()
+
+    # Starším ručně psaným rodinám se dohledají vetřelci ze stejného soudku.
+    print(f"rodin, kterým se doplnili sousedé místo nudné vaty: {prezbroj(rng)}")
 
     # Tabulka přepisů má hlídat sama sebe: kdyby se otázka v rodině
     # přeformulovala a v RECAP zůstal starý tvar, tichounce by se přestal

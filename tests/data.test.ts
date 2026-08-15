@@ -763,6 +763,29 @@ describe('vetřelec — vyváženost sady', () => {
     }
   })
 
+  it('vetřelec netrčí už tím, že je jediný psaný velkým písmenem', () => {
+    const puzzles = JSON.parse(
+      readFileSync('public/data/intruder/puzzles.json', 'utf-8'),
+    ) as { words: string[]; odd: string; difficulty: string; family: string }[]
+
+    // Hráči hlásili dvě hádanky v těžké úrovni, které se daly vyřešit bez
+    // přemýšlení: *Jan, Václav, Anežka, Kliment* — a mezi nimi **kolík**.
+    // Čtyři vlastní jména a jedno obyčejné slovo; vetřelec je vidět dřív,
+    // než si člověk stihne přečíst, na co se ptá.
+    //
+    // Vlastní jméno se pozná strojově podle velkého písmene, takže tohle
+    // je jediná část problému, kterou jde uhlídat testem: buď jsou velká
+    // všechna, nebo žádné. Zbytek — aby vetřelec nebyl jediné cizí slovo
+    // mezi domácími nebo jediná domácí potřeba mezi řemeslnými termíny —
+    // řeší stavitel tím, že vetřelce bere ze sousední rodiny téhož druhu.
+    const bad = puzzles.filter((one) => {
+      const four = one.words.filter((w) => w !== one.odd)
+      const velke = (w: string) => w[0] !== w[0]?.toLowerCase()
+      return velke(one.odd) !== four.some(velke)
+    })
+    expect(bad.slice(0, 3)).toEqual([])
+  })
+
   it('každá pětice ví, z jaké je rodiny', () => {
     const puzzles = JSON.parse(
       readFileSync('public/data/intruder/puzzles.json', 'utf-8'),

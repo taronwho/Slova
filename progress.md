@@ -639,3 +639,79 @@ dne i řešení hádanek. To není chyba, kterou by šlo opravit — je to cena 
 to, že se hraje bez signálu. Souboje z toho nic nekazí: skóre se porovnává
 mezi lidmi, kteří hráli tutéž hádanku, a pravidla nedovolí zapsat výsledek
 dvakrát ani ho po prohře přepsat.
+
+---
+
+# Vetřelec: vetřelec nesmí trčet už tím, jak vypadá
+
+Hráč nahlásil dvě hádanky z **těžké** úrovně, které se daly vyřešit bez
+přemýšlení:
+
+* *rhenium, wolfram, lanthan, gallium* — a mezi nimi **šroub**,
+* *Jan, Václav, Anežka, Kliment* — a mezi nimi **kolík**.
+
+Osa v obou případech sedí a věta na konci je pravdivá. Přesto je hádanka
+špatná: čtyři latinské názvy prvků a jedna domácí potřeba, čtyři vlastní
+jména a jedno obyčejné slovo. **Vetřelec je vidět dřív, než si člověk
+stihne přečíst, na co se ptá** — a znalost, na kterou se hádanka chtěla
+ptát, k ničemu není.
+
+## Odkud se to vzalo
+
+Rodina má dva seznamy: slova uvnitř (patří k ose) a slova vně (nepatří).
+Slova vně se u většiny rodin brala z **nudné zásoby** — sta všedních
+domácích potřeb, které schválně nemají nic společného s ničím. U rodin,
+kde jsou slova uvnitř taky všední (*mají ucho, i když neslyší*), je to
+správně. U rodin, kde je uvnitř hantýrka nebo vlastní jména, je to špatně:
+zásoba je z jiného soudku a je to vidět.
+
+Prošel jsem tím měřítkem celou sadu. Z 635 rodin jich takhle rozpojených
+bylo **56** — a nebyly to jen ty nové: patřily mezi ně i pivovar, mapa,
+tkaní, myslivost nebo lodě z dřívějších várek.
+
+## Tři opravy
+
+**1. Vlastní jména mají vetřelce z vlastních jmen.** Dvaadvacet rodin
+(světci, panovníci, apoštolové, hlavní města, africké státy, státy USA,
+řeky, měsíce planet, odrůdy jablek a brambor, lázně, přehrady, CHKO,
+pražské čtvrti a vrchy…) dostalo seznam psaný ručně tak, aby vetřelec byl
+**téhož druhu**: u českých světců jsou vně česká jména, která svatořečená
+nejsou; u měst letních olympiád velkoměsta, kde olympiáda nebyla; u měsíců
+planet hvězdy. Hádanka se tím konečně ptá na to, na co se ptát chtěla.
+
+**2. Řemesla, obory a prameny názvů si berou vetřelce od sousedů.** U sto
+šedesáti rodin to teď dělá skript sám: vetřelec pro kovárnu je hasičská
+*proudnice* nebo geologický *zlom*, pro ornitologii mineralogický *vryp*,
+pro psychologii kriminalistická *daktyloskopie*. Věta „čtyři z nich jsou
+zároveň kovářské pojmy — proudnice ne" platí doslova a hráč musí vědět,
+co ke kterému oboru patří.
+
+Slovo, které leží ve **dvou** rodinách skupiny naráz, se za vetřelce
+nebere. *Měch* je díl varhan i kovářské náčiní, *obruč* patří k sudu i
+k bubnu; u takového slova by hráč měl pravdu, i kdyby ukázal jinam.
+
+Starší ručně psané rodiny na to nemusely čekat, až je někdo přepíše:
+skupinu jde poznat z otázky, takže si sousedy dohledá stavitel při buildu.
+Sahá jen na rodiny, které měly celou zásobu z nudné vaty — kde je seznam
+psaný ručně, byl k tomu důvod a ten se nepřebíjí.
+
+**3. Rodina, která se spravit nedala, zmizela.** *„Jsou to zároveň názvy
+jazyků"* — cokoli, co jazyk není, trčí na první pohled, a cokoli, co jazyk
+je, dělá z hádanky dvě řešení. Taková osa se nedá zachránit seznamem.
+
+Při té příležitosti šly ven i dvě drobnosti: *„zelený slad"* se
+v sladovnickém seznamu rozpadl na holé přídavné jméno a čajová rodina
+míchala obyčejná přídavná jména (*zelený, černý*) s exotickými názvy
+(*rooibos, matcha*) — obojí byl tentýž problém v malém.
+
+## Čím je to hlídané
+
+Stavitel pětici zahodí, když je vetřelec **jediné slovo psané velkým
+písmenem** — nebo naopak jediné psané malým mezi vlastními jmény. Je to
+ta část problému, kterou stroj pozná bezpečně, a hlídá ji i test nad
+hotovými daty (`tests/data.test.ts`). Zbytek — cizí slovo mezi domácími,
+domácí potřeba mezi řemeslnými termíny — drží tím, že vetřelec pochází
+ze sousední rodiny téhož druhu.
+
+Sada má po opravě 5606 pětic z 634 rodin a žádná rodina nepřišla o všechny
+hádanky.

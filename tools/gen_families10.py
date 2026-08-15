@@ -69,6 +69,38 @@ def slovnik() -> set[str]:
 SLOVNIK = slovnik()
 
 
+def sousedni(spec: dict, rodiny: list[dict], rng: random.Random) -> list[str]:
+    """
+    Vetřelci ze sousedních rodin téže skupiny.
+
+    U řemesel a částí věcí je nudná zásoba domácích potřeb špatně: čtyři
+    kovářské termíny a *prostěradlo* pozná hráč, aniž by o kovařině cokoli
+    věděl. Vetřelec proto přichází z **jiného řemesla** — u kovárny je to
+    třeba tkalcovská *osnova*. Věta „čtyři z nich jsou zároveň kovářské
+    pojmy — osnova ne" pak platí doslova a hádanka se konečně ptá na to,
+    na co se ptát chce: víš, co ke kterému řemeslu patří?
+
+    Slovo, které leží uvnitř **dvou a víc** rodin skupiny, se za vetřelce
+    nebere. *Měch* je díl varhan i kovářské náčiní a *obruč* patří k sudu
+    i k bubnu; u takového slova by rozhodnutí nebylo jednoznačné a hráč by
+    měl pravdu, i kdyby ukázal jinam.
+    """
+    skupina = [r for r in rodiny if r.get("skupina") == spec["skupina"]]
+    kolikrat: dict[str, int] = {}
+    for r in skupina:
+        for w in set(r["inside"]):
+            kolikrat[w] = kolikrat.get(w, 0) + 1
+    doma = set(spec["inside"]) | set(spec.get("avoid", []))
+    pool = sorted(
+        w for r in skupina if r["id"] != spec["id"]
+        for w in r["inside"]
+        if kolikrat[w] == 1 and w not in doma
+    )
+    if len(pool) < 10:
+        raise SystemExit(f"{spec['id']}: sousedních slov je jen {len(pool)}")
+    return sorted(rng.sample(pool, 12))
+
+
 def slabikotvorne(word: str) -> bool:
     """Nese r nebo l celou slabiku — je z obou stran mezi souhláskami."""
     f = fold(word)
@@ -180,97 +212,97 @@ RODINY: list[dict] = [
                    " tácek ramínko ubrousek")),
 
     # ============================================ řemesla a obory (21) =====
-    dict(id="v10-kovarna", level="hard",
+    dict(id="v10-kovarna", skupina="obor", level="hard",
          roof="kovářské pojmy",
          ask="jsou to zároveň kovářské pojmy",
          inside=s("výheň kovadlina měch podkova kalení okuje výkovek"),
          avoid=s("kleště kladívko hřebík pilník svěrák šroub matice")),
-    dict(id="v10-hasici", level="hard",
+    dict(id="v10-hasici", skupina="obor", level="hard",
          roof="hasičské pojmy",
          ask="jsou to zároveň hasičské pojmy",
          inside=s("proudnice savice hydrant stříkačka rozdělovač zásah útok"),
          avoid=s("hadice žebřík kbelík kýbl")),
-    dict(id="v10-truhlarna", level="hard",
+    dict(id="v10-truhlarna", skupina="obor", level="hard",
          roof="truhlářské pojmy",
          ask="jsou to zároveň truhlářské pojmy",
          inside=s("dláto dýha rašple čep hobliny fládr"),
          avoid=s("hoblík svěrák kleště pilník vrtačka kladívko šuplík"
                  " komoda skříň")),
-    dict(id="v10-astronomie", level="hard",
+    dict(id="v10-astronomie", skupina="obor", level="hard",
          roof="astronomické pojmy",
          ask="jsou to zároveň astronomické pojmy",
          inside=s("mlhovina zákryt opozice fáze dráha hvězdokupa úplněk")),
-    dict(id="v10-geologie", level="hard",
+    dict(id="v10-geologie", skupina="obor", level="hard",
          roof="geologické pojmy",
          ask="jsou to zároveň geologické pojmy",
          inside=s("vrstva zlom žíla kra výchoz souvrství nános")),
-    dict(id="v10-zemedelstvi", level="normal",
+    dict(id="v10-zemedelstvi", skupina="obor", level="normal",
          roof="zemědělské pojmy",
          ask="jsou to zároveň zemědělské pojmy",
          inside=s("brázda úhor osivo strniště mez orba hnojivo"),
          avoid=s("motyka rýč hrábě trakař kompost semínko zahrada")),
-    dict(id="v10-serm", level="hard",
+    dict(id="v10-serm", skupina="obor", level="hard",
          roof="šermířské pojmy",
          ask="jsou to zároveň šermířské pojmy",
          inside=s("výpad kryt sek čepel garda kord")),
-    dict(id="v10-kvet", level="hard",
+    dict(id="v10-kvet", skupina="casti", level="hard",
          roof="části květu",
          ask="jsou to zároveň části květu",
          inside=s("kalich koruna tyčinka blizna čnělka pestík semeník stopka")),
-    dict(id="v10-zub", level="hard",
+    dict(id="v10-zub", skupina="casti", level="hard",
          roof="části zubu",
          ask="jsou to zároveň části zubu",
          inside=s("korunka krček kořen sklovina dřeň cement")),
-    dict(id="v10-houba-casti", level="normal",
+    dict(id="v10-houba-casti", skupina="casti", level="normal",
          roof="části houby",
          ask="jsou to zároveň části houby",
          inside=s("klobouk třeň plodnice podhoubí výtrusy lupeny")),
-    dict(id="v10-kytara", level="normal",
+    dict(id="v10-kytara", skupina="casti", level="normal",
          roof="části kytary",
          ask="jsou to zároveň části kytary",
          inside=s("krk kobylka pražec struna hlavice sedlo"),
          avoid=s("kolík")),
-    dict(id="v10-kamna", level="normal",
+    dict(id="v10-kamna", skupina="casti", level="normal",
          roof="části kamen",
          ask="jsou to zároveň části kamen",
          inside=s("rošt popelník dvířka komín tah plotna")),
-    dict(id="v10-most", level="hard",
+    dict(id="v10-most", skupina="casti", level="hard",
          roof="části mostu",
          ask="jsou to zároveň části mostu",
          inside=s("pilíř oblouk pole opěra mostovka zábradlí")),
-    dict(id="v10-kniha-casti", level="normal",
+    dict(id="v10-kniha-casti", skupina="casti", level="normal",
          roof="části knihy",
          ask="jsou to zároveň části knihy",
          inside=s("hřbet desky vazba obálka kapitola rejstřík předsádka"),
          avoid=s("sešit zápisník pouzdro")),
-    dict(id="v10-pojisteni", level="hard",
+    dict(id="v10-pojisteni", skupina="sluzby", level="hard",
          roof="pojišťovací pojmy",
          ask="jsou to zároveň pojišťovací pojmy",
          inside=s("pojistka škoda plnění riziko spoluúčast smlouva")),
-    dict(id="v10-ucetnictvi", level="hard",
+    dict(id="v10-ucetnictvi", skupina="sluzby", level="hard",
          roof="účetní pojmy",
          ask="jsou to zároveň účetní pojmy",
          inside=s("rozvaha saldo obrat závazek zisk položka")),
-    dict(id="v10-lukostrelba", level="normal",
+    dict(id="v10-lukostrelba", skupina="obor", level="normal",
          roof="lukostřelecké pojmy",
          ask="jsou to zároveň lukostřelecké pojmy",
          inside=s("tětiva terč hrot opeření toulec nátah"),
          avoid=s("kolík provaz")),
-    dict(id="v10-filatelie", level="hard",
+    dict(id="v10-filatelie", skupina="sluzby", level="hard",
          roof="filatelistické pojmy",
          ask="jsou to zároveň filatelistické pojmy",
          inside=s("známka zoubkování přetisk arch aršík obtisk"),
          avoid=s("schránka")),
-    dict(id="v10-elektro", level="hard",
+    dict(id="v10-elektro", skupina="obor", level="hard",
          roof="elektrotechnické pojmy",
          ask="jsou to zároveň elektrotechnické pojmy",
          inside=s("vodič jistič zkrat uzemnění svorka cívka"),
          avoid=s("lampa vysavač pračka myčka lednička žehlička sporák")),
-    dict(id="v10-mlekarna", level="hard",
+    dict(id="v10-mlekarna", skupina="obor", level="hard",
          roof="mlékárenské pojmy",
          ask="jsou to zároveň mlékárenské pojmy",
          inside=s("syřidlo sýřenina podmáslí syrovátka zrání smetana")),
-    dict(id="v10-hornictvi", level="hard",
+    dict(id="v10-hornictvi", skupina="obor", level="hard",
          roof="hornické pojmy",
          ask="jsou to zároveň hornické pojmy",
          inside=s("šachta sloj štola výdřeva klec překop"),
@@ -282,12 +314,14 @@ RODINY: list[dict] = [
          ask="jsou to zároveň české lázně",
          inside=s("Teplice Poděbrady Jeseník Luhačovice Bechyně Darkov"
                   " Bohdaneč Libverda"),
+         outside=s("Kolín Náchod Vsetín Rakovník Přerov Chrudim Beroun Blansko Havířov Písek"),
          avoid_asks=["jsou to zároveň jména českých měst"]),
     dict(id="v10-chko", level="hard",
          roof="chráněné krajinné oblasti",
          ask="jsou to zároveň chráněné krajinné oblasti",
          inside=s("Pálava Blaník Beskydy Kokořínsko Broumovsko Poodří"
                   " Křivoklátsko Žďársko"),
+         outside=s("Krkonoše Podyjí Vysočina Polabí Haná Slovácko Valašsko Chodsko Posázaví Podkrkonoší"),
          avoid_asks=["jsou to zároveň jména českých měst"]),
 
     # ============================================ písmena a mluvnice (5) ===
@@ -355,118 +389,118 @@ RODINY: list[dict] = [
                    " kopřiva mech")),
 
     # ============================================== prameny názvů (9) ======
-    dict(id="v10-may", level="hard",
+    dict(id="v10-may", skupina="nazvy", level="hard",
          roof="slova z názvů knih Karla Maye",
          ask="jsou v názvech knih Karla Maye",
          inside=s("poklad jezero syn duch mustang princ lev odkaz")),
-    dict(id="v10-havel", level="hard",
+    dict(id="v10-havel", skupina="nazvy", level="hard",
          roof="slova z názvů her Václava Havla",
          ask="jsou v názvech her Václava Havla",
          inside=s("slavnost audience vernisáž vyrozumění odcházení pokoušení"
                   " spiklenci opera")),
-    dict(id="v10-kundera", level="hard",
+    dict(id="v10-kundera", skupina="nazvy", level="hard",
          roof="slova z názvů knih Milana Kundery",
          ask="jsou v názvech knih Milana Kundery",
          inside=s("žert nesmrtelnost lehkost valčík nevědomost totožnost"
                   " smích pomalost")),
-    dict(id="v10-zeman", level="hard",
+    dict(id="v10-zeman", skupina="nazvy", level="hard",
          roof="slova z názvů filmů Karla Zemana",
          ask="jsou v názvech filmů Karla Zemana",
          inside=s("cesta pravěk vynález zkáza baron vzducholoď kronika")),
-    dict(id="v10-chaplin", level="hard",
+    dict(id="v10-chaplin", skupina="nazvy", level="hard",
          roof="slova z názvů Chaplinových filmů",
          ask="jsou v názvech Chaplinových filmů",
          inside=s("světla velkoměsto doba opojení cirkus diktátor král"
                   " rampa")),
-    dict(id="v10-dickens", level="hard",
+    dict(id="v10-dickens", skupina="nazvy", level="hard",
          roof="slova z názvů knih Charlese Dickense",
          ask="jsou v názvech knih Charlese Dickense",
          inside=s("koleda dům vyhlídky příběh časy kronika klub")),
-    dict(id="v10-mucha", level="hard",
+    dict(id="v10-mucha", skupina="nazvy", level="hard",
          roof="slova z názvů obrazů Alfonse Muchy",
          ask="jsou v názvech obrazů Alfonse Muchy",
          inside=s("jaro zima poezie tanec hvězda epopej")),
-    dict(id="v10-menzel", level="hard",
+    dict(id="v10-menzel", skupina="nazvy", level="hard",
          roof="slova z názvů filmů Jiřího Menzela",
          ask="jsou v názvech filmů Jiřího Menzela",
          inside=s("skřivánci nit postřižiny slavnosti sněženky vesnička"
                   " konec")),
-    dict(id="v10-storch", level="hard",
+    dict(id="v10-storch", skupina="nazvy", level="hard",
          roof="slova z názvů knih Eduarda Štorcha",
          ask="jsou v názvech knih Eduarda Štorcha",
          inside=s("lovci mamut osada havran bronz volání rod")),
 
     # ================================================ obory podruhé (10) ===
-    dict(id="v10-box", level="normal",
+    dict(id="v10-box", skupina="sluzby", level="normal",
          roof="boxerské pojmy",
          ask="jsou to zároveň boxerské pojmy",
          inside=s("hák roh gong kolo provazy rukavice"),
          avoid=s("hřebík")),
-    dict(id="v10-tenis", level="normal",
+    dict(id="v10-tenis", skupina="sluzby", level="normal",
          roof="tenisové pojmy",
          ask="jsou to zároveň tenisové pojmy",
          inside=s("podání síť dvorec výhoda shoda čára")),
-    dict(id="v10-skaut", level="normal",
+    dict(id="v10-skaut", skupina="sluzby", level="normal",
          roof="skautské pojmy",
          ask="jsou to zároveň skautské pojmy",
          inside=s("stezka slib družina oddíl uzel totem")),
-    dict(id="v10-policie", level="normal",
+    dict(id="v10-policie", skupina="sluzby", level="normal",
          roof="policejní pojmy",
          ask="jsou to zároveň policejní pojmy",
          inside=s("hlídka výslech stopa obušek cela pouta")),
-    dict(id="v10-heraldika", level="hard",
+    dict(id="v10-heraldika", skupina="obor", level="hard",
          roof="heraldické pojmy",
          ask="jsou to zároveň heraldické pojmy",
          inside=s("štít klenot přilba pole znak helma")),
-    dict(id="v10-burza", level="hard",
+    dict(id="v10-burza", skupina="sluzby", level="hard",
          roof="burzovní pojmy",
          ask="jsou to zároveň burzovní pojmy",
          inside=s("kurz medvěd býk propad akcie dividenda")),
-    dict(id="v10-letiste", level="normal",
+    dict(id="v10-letiste", skupina="sluzby", level="normal",
          roof="letištní pojmy",
          ask="jsou to zároveň letištní pojmy",
          inside=s("brána pás věž odbavení plocha rukáv")),
-    dict(id="v10-hotel", level="normal",
+    dict(id="v10-hotel", skupina="sluzby", level="normal",
          roof="hotelové pojmy",
          ask="jsou to zároveň hotelové pojmy",
          inside=s("recepce pokoj apartmá snídaně hvězdička lůžko"),
          avoid=s("postel matrace peřina polštář deka")),
-    dict(id="v10-restaurace", level="normal",
+    dict(id="v10-restaurace", skupina="sluzby", level="normal",
          roof="restaurační pojmy",
          ask="jsou to zároveň restaurační pojmy",
          inside=s("objednávka účet lístek chod obsluha spropitné")),
-    dict(id="v10-autoskola", level="normal",
+    dict(id="v10-autoskola", skupina="sluzby", level="normal",
          roof="pojmy z autoškoly",
          ask="jsou to zároveň pojmy z autoškoly",
          inside=s("křižovatka přednost značka zkouška jízda testy")),
 
     # ================================================= části věcí (6) ======
-    dict(id="v10-schodiste", level="normal",
+    dict(id="v10-schodiste", skupina="casti", level="normal",
          roof="části schodiště",
          ask="jsou to zároveň části schodiště",
          inside=s("stupeň madlo podesta sloupek rameno nášlap"),
          avoid=s("žebřík lavička")),
-    dict(id="v10-kosile", level="normal",
+    dict(id="v10-kosile", skupina="casti", level="normal",
          roof="části košile",
          ask="jsou to zároveň části košile",
          inside=s("límec manžeta náprsenka knoflík rukáv sedlo"),
          avoid=s("bunda kabát šála ponožka ramínko")),
-    dict(id="v10-vodovod", level="hard",
+    dict(id="v10-vodovod", skupina="casti", level="hard",
          roof="části vodovodu",
          ask="jsou to zároveň části vodovodu",
          inside=s("kohout koleno přípojka sifon ventil těsnění"),
          avoid=s("hadice konev dřez vana kbelík kýbl")),
-    dict(id="v10-strecha", level="normal",
+    dict(id="v10-strecha", skupina="casti", level="normal",
          roof="části střechy",
          ask="jsou to zároveň části střechy",
          inside=s("hřeben taška krov okap úžlabí štít"),
          avoid=s("žebřík hřeben")),
-    dict(id="v10-vuz", level="hard",
+    dict(id="v10-vuz", skupina="casti", level="hard",
          roof="části koňského vozu",
          ask="jsou to zároveň části koňského vozu",
          inside=s("oj náprava loukoť korba ráf zápřah"),
          avoid=s("trakař")),
-    dict(id="v10-zamek", level="normal",
+    dict(id="v10-zamek", skupina="casti", level="normal",
          roof="části dveřního zámku",
          ask="jsou to zároveň části dveřního zámku",
          inside=s("klika vložka závora jazýček zástrč štítek"),
@@ -596,12 +630,14 @@ RODINY: list[dict] = [
          ask="jsou to zároveň české přehrady",
          inside=s("Orlík Lipno Slapy Nechranice Dalešice Rozkoš Švihov"
                   " Hracholusky"),
+         outside=s("Rožmberk Bezdrev Svět Horusický Dvořiště Staňkovský Dářko Nesyt"),
          avoid_asks=["jsou to zároveň jména českých měst"]),
     dict(id="v10-ctvrti", level="normal",
          roof="pražské čtvrti",
          ask="jsou to zároveň pražské čtvrti",
          inside=s("Dejvice Vinohrady Žižkov Karlín Smíchov Braník Vršovice"
                   " Podolí"),
+         outside=s("Bohunice Židenice Líšeň Komín Slatina Poruba Zábřeh Hrabůvka Přívoz Vítkovice"),
          avoid_asks=["jsou to zároveň jména českých měst",
                      "jsou to zároveň značky českého piva"]),
     dict(id="v10-par", level="normal",
@@ -675,13 +711,18 @@ def main() -> int:
         if len(set(inside)) != len(inside):
             raise SystemExit(f"{spec['id']}: slovo uvnitř dvakrát")
 
-        volna = [w for w in spec.get("outside", VATA.split())
+        # Řemesla a části věcí si vetřelce berou od sousedů, ne z nudné
+        # zásoby domácích potřeb — jinak trčí už tím, jak vypadá.
+        zasoba = spec.get("outside")
+        if zasoba is None and spec.get("skupina"):
+            zasoba = sousedni(spec, RODINY, rng)
+        volna = [w for w in (zasoba if zasoba is not None else VATA.split())
                  if w not in inside and w not in spec.get("avoid", [])]
         # Z nudné zásoby se bere vzorek, ne celá: sto vetřelců na rodinu se
         # při ruční kontrole nedá přečíst, a přečíst se musí — stroj nepozná,
         # že *lopatka* je taky kost.
         outside = (sorted(random.Random(spec["id"]).sample(volna, 15))
-                   if "outside" not in spec and len(volna) > 15 else volna)
+                   if zasoba is None and len(volna) > 15 else volna)
 
         # Pravidlo o písmenech platí pro obě strany naráz. Tohle je jediné
         # místo, kde se dá rodina rozejít sama se sebou, a proto se tvrdě
