@@ -715,3 +715,55 @@ ze sousední rodiny téhož druhu.
 
 Sada má po opravě 5606 pětic z 634 rodin a žádná rodina nepřišla o všechny
 hádanky.
+
+---
+
+# Řetěz: klepnutí na vytažené písmeno padalo do tlačítka pod ním
+
+Hráč hlásil, že v Řetězu po podržení klávesy sice vyskočí písmeno
+s diakritikou, ale klepnutí na ně provede **tlačítko pod nabídkou** —
+vrátí tah nebo nabídne vzdání kola.
+
+## Co se dělo
+
+Nabídka variant se otevírá **nad** klávesou, a v Řetězu tím pádem přesně
+přes řádek s tlačítky *Zrušit úpravu*, *Vrátit tah* a *Vzdát kolo*.
+Písmeno se zapisovalo na `pointerup`:
+
+1. prst se zvedne → `pointerup` na vytažené variantě,
+2. písmeno se napíše a nabídka **zmizí z DOMu**,
+3. prohlížeč pošle po každém doteku ještě dodatečné `click` — to, kterým
+   se od dob myši udržují při životě stránky, co o doteku nevědí. Znovu se
+   zeptá, co na těch souřadnicích leží, nabídku už tam nenajde a stiskne
+   tlačítko pod ní.
+
+Písmeno se tedy napsalo správně. Jenže hned nato ho *Vrátit tah* (nebo
+*Zrušit úpravu*) smazal, takže to vypadalo, že klepnutí vůbec netrefilo.
+
+## Oprava
+
+**Písmeno se zapisuje na `click`, ne na `pointerup`.** Nabídka v té chvíli
+v DOMu ještě stojí, klepnutí dostane ona a žádné další už nepřijde. Navrch
+to spraví ovládání z klávesnice, kde `pointerup` nikdy nepřijde.
+
+**A druhé gesto, které nefungovalo vůbec.** Na systémové klávesnici se
+písmeno s háčkem bere tak, že prst po podržení **sjede** na variantu
+a teprve tam se zvedne. Tady to nedělalo nic, a byly to dvě věci naráz:
+
+* prohlížeč si ten pohyb bral jako rolování stránky, posílal
+  `pointercancel` a gesto skončilo nikde. Klávesy proto mají
+  `touch-action: none` — dotek, který začal na klávese, patří klávesnici;
+* i kdyby se to nestalo, `pointerup` dostane pořád **základní** klávesa,
+  protože jí prohlížeč ukazatel na začátku stisku implicitně přidělí a do
+  konce gesta ho nepustí. Co je pod prstem doopravdy, se proto zjišťuje ze
+  souřadnic (`elementFromPoint`).
+
+## Čím je to hlídané
+
+`npm run audit:keyboard` (nový) hraje Řetěz **dotykem**: podrží klávesu,
+klepne na vytažené písmeno a zvlášť zkusí i sjetí prstem. Kontroluje, že
+se napsalo právě to písmeno, že se neotevřelo okno vzdání kola a že
+nabídka nad klávesnicí opravdu leží nejvýš.
+
+Myší se chyba nedá reprodukovat — ta dodatečné `click` neposílá. Právě
+proto ji neodhalil ani jeden z dosavadních testů, které klikají myší.

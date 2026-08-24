@@ -84,11 +84,22 @@ export function Keyboard({
     }, LONG_PRESS_MS)
   }
 
-  function pressEnd(letter: string) {
+  function pressEnd(letter: string, event: React.PointerEvent) {
     clearTimer()
     // Po vytažení variant se základní písmeno nezapisuje.
     if (fired.current) {
       fired.current = false
+      // Prst mohl mezitím sjet na vytaženou variantu, jako na systémové
+      // klávesnici. Na dotykovém displeji přitom `pointerup` dostane pořád
+      // základní klávesa — prohlížeč jí ukazatel na začátku stisku
+      // implicitně přidělí a do konce gesta ho nepustí. Co je pod prstem
+      // doopravdy, se proto musí zjistit ze souřadnic.
+      const under = document.elementFromPoint(event.clientX, event.clientY)
+      const picked = under?.closest<HTMLElement>('.key.variant')?.dataset.letter
+      if (picked) {
+        onLetter(picked)
+        setOpenKey(null)
+      }
       return
     }
     if (openKey) return
@@ -108,7 +119,7 @@ export function Keyboard({
                   className="key"
                   disabled={disabled?.has(letter) ?? false}
                   onPointerDown={() => pressStart(letter)}
-                  onPointerUp={() => pressEnd(letter)}
+                  onPointerUp={(event) => pressEnd(letter, event)}
                   onPointerLeave={clearTimer}
                   onPointerCancel={clearTimer}
                   onContextMenu={(event) => event.preventDefault()}
@@ -127,7 +138,28 @@ export function Keyboard({
                         type="button"
                         key={variant}
                         className="key variant"
-                        onPointerUp={() => {
+                        data-letter={variant}
+                        /*
+                         * Zapisuje se na `click`, ne na `pointerup`.
+                         *
+                         * Nabídka se otevírá **nad** klávesnicí a v Řetězu
+                         * tím pádem přesně přes tlačítka Vrátit tah a Vzdát
+                         * kolo. Když se písmeno zapsalo už na `pointerup`,
+                         * zmizela nabídka z DOMu dřív, než prohlížeč stihl
+                         * poslat dodatečné `click` — to, které posílá po
+                         * každém doteku kvůli stránkám psaným na myš. Ptal
+                         * se pak znovu, co na těch souřadnicích leží, našel
+                         * tlačítko pod nabídkou a stiskl je. Písmeno se
+                         * přitom napsalo správně, jenže hned nato ho *Vrátit
+                         * tah* smazal, takže to vypadalo, že klepnutí
+                         * netrefilo.
+                         *
+                         * Na `click` nabídka v DOMu ještě stojí, klepnutí
+                         * dostane ona a žádné další už nepřijde. Navrch to
+                         * spraví ovládání z klávesnice, kde `pointerup`
+                         * nikdy nepřijde.
+                         */
+                        onClick={() => {
                           onLetter(variant)
                           setOpenKey(null)
                         }}
