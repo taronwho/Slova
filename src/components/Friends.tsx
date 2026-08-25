@@ -22,7 +22,15 @@ import {
   type DuelKind,
 } from '../game/duel'
 import { MODE_GLYPH } from '../game/types'
-import { claimNick, loadMe, nickError, saveMe, type Challenge, type Me } from '../lib/multi'
+import {
+  claimNick,
+  loadMe,
+  nickError,
+  saveMe,
+  SoubojChyba,
+  type Challenge,
+  type Me,
+} from '../lib/multi'
 
 /** Dohraný zápas, o kterém hráč ještě neví. */
 export interface DuelReport {
@@ -81,8 +89,12 @@ export function Friends({
       const next = { ...loadMe(), nick: draft.trim() }
       saveMe(next)
       onMe(next)
-    } catch {
-      setProblem('Nepodařilo se spojit. Zkus to znovu, až budeš online.')
+    } catch (chyba) {
+      setProblem(
+        chyba instanceof SoubojChyba
+          ? chyba.message
+          : 'Nepodařilo se spojit. Zkus to znovu, až budeš online.',
+      )
     } finally {
       setBusy(false)
     }

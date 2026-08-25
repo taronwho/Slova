@@ -14,10 +14,18 @@
       z Wikimedia Commons u Citátu. `Special:FilePath` přesměrovává na
       `upload.wikimedia.org`, proto tam musí být obojí.
 
-      `script-src 'self'` znamená, že žádný skript nesmí přijít v textu
-      stránky ani zvenčí. Vestavěné styly to nezakazuje, protože React je
-      nastavuje přes `element.style`, což zásada neřeší; `<style>` v textu
-      hra nemá.
+      `script-src` pouští jen skripty z vlastní adresy — a k tomu jednu
+      jedinou cizí, databázi soubojů. Není to ozdoba: když se Firebase
+      nedostane přes websocket (mobilní síť, firemní proxy), přepne na
+      záložní přenos, a ten funguje tak, že si do stránky vloží
+      `<script src="…/.lp?…">`. S holým `'self'` ho zásada odmítla, klient
+      se nespojil vůbec — a protože se na spojení jen čeká, nic nehlásilo
+      chybu: souboje se tvářily, že se pořád odesílají. Proto je tu ta
+      adresa vypsaná celá, ne přes hvězdičku: pustí se přesně naše
+      databáze a nic jiného.
+
+      Vestavěné styly zásada nezakazuje, protože React je nastavuje přes
+      `element.style`, což se neřeší; `<style>` v textu hra nemá.
 
       Co se do značky napsat nedá: `frame-ancestors` (proti vložení hry do
       cizího rámu) a `Permissions-Policy` — obojí jde jen hlavičkou, a tu
@@ -31,7 +39,7 @@
                object-src 'none';
                form-action 'none';
                frame-src 'none';
-               script-src 'self';
+               script-src 'self' https://slova-b0176-default-rtdb.europe-west1.firebasedatabase.app;
                style-src 'self';
                font-src 'self' data:;
                img-src 'self' data: https://commons.wikimedia.org https://upload.wikimedia.org;

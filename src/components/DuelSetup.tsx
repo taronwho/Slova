@@ -9,6 +9,7 @@
 import { useState } from 'react'
 
 import { DUEL_ABOUT, DUEL_KINDS, DUEL_MODE, DUEL_TITLE, type DuelKind } from '../game/duel'
+import { SoubojChyba } from '../lib/multi'
 import { MODE_GLYPH } from '../game/types'
 
 interface Props {
@@ -29,8 +30,14 @@ export function DuelSetup({ onClose, onSend }: Props) {
     try {
       const ok = await onSend(kind, nick.trim())
       if (!ok) setProblem('Takového hráče neznám. Zkontroluj přezdívku.')
-    } catch {
-      setProblem('Nepodařilo se spojit. Zkus to znovu, až budeš online.')
+    } catch (chyba) {
+      // Co má hráč vědět přesně (server mlčí, chybí přezdívka), to se ukáže
+      // doslova; zbytek dostane obecnou větu.
+      setProblem(
+        chyba instanceof SoubojChyba
+          ? chyba.message
+          : 'Nepodařilo se spojit. Zkus to znovu, až budeš online.',
+      )
     } finally {
       setBusy(false)
     }

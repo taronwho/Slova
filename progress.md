@@ -866,3 +866,84 @@ auditu a `audit:layout` ji zná pojmenovanou, ne mlčky.
 
 Lišta v menu se s celou značkou vejde i se čtyřciferným kalamářem —
 měřeno se zásobou 1312 inkoustu, na 320 až 430 px.
+
+# Souboje nefungovaly vůbec — a mlčely o tom
+
+Hráč poslal snímek, kde „Vyzvat hráče" zůstalo na **Posílám…** a už se
+nehnulo. Nebyla to pomalá síť. Byly to čtyři chyby, které na sebe navazují,
+a tři z nich jsem tam zavlekl při bezpečnostní kontrole a při psaní té
+vrstvy.
+
+## 1. Zásada obsahu zabila spojení s databází
+
+Firebase se k databázi dostává websocketem. Když neprojde — mobilní síť,
+firemní proxy, jedno klopýtnutí —, přepne na **záložní přenos**, a ten
+funguje tak, že si do stránky vloží `<script src="…/.lp?…">`.
+
+Zásada obsahu (CSP), kterou jsem přidal při kontrole pro Google Play, měla
+`script-src 'self'`. Prohlížeč tedy ten skript odmítl:
+
+```
+Refused to load the script 'https://…firebasedatabase.app/.lp?start=t'
+because it violates the following Content Security Policy directive:
+"script-src 'self'".
+```
+
+Klient se nespojil vůbec. Websocket přitom zásada pouštěla — proto to
+vypadalo, že je všechno v pořádku, a proto se toho nevšimla ani kontrola CSP.
+
+Opravené tím, že `script-src` pouští **jednu jedinou** cizí adresu: naši
+databázi, vypsanou celou, ne přes hvězdičku.
+
+## 2. Nic ze sítě nemělo lhůtu
+
+Tohle je důvod, proč se hráč nedozvěděl **nic**. Firebase žádnou lhůtu nemá:
+dokud se klient nespojí, zápis leží ve frontě a slib se **nikdy nesplní ani
+nezamítne**. Tlačítko proto svítilo „Posílám…" donekonečna — ne chybou,
+ale čekáním na něco, co nikdy nepřijde.
+
+Každé volání má teď dvanáctivteřinovou lhůtu a vlastní jméno kroku, takže
+hláška řekne, kde to uvázlo: „Server neodpovídá (odeslání výzvy)."
+
+## 3. Neúspěšné spojení se pamatovalo napořád
+
+`ready ??= connect()` — když první pokus selhal, zůstal v proměnné
+**zamítnutý slib** a vracel se pořád dokola. Jedno klopýtnutí sítě tím
+umlčelo souboje až do restartu aplikace a rada „zkus to znovu, až budeš
+online" se nedala poslechnout. Nepovedený pokus se teď zapomíná — a aby šel
+zopakovat, hledá se existující instance Firebase místo slepého
+`initializeApp`, který by podruhé spadl.
+
+Stejná chyba byla i v načítání herních dat (`fetchJson`): v paměti leží
+slib, ne hotová data, takže se pamatovalo i selhání a celý balíček byl do
+restartu němý. Opravené obojí.
+
+## 4. Přezdívka se dala zamknout sama sobě
+
+Zabírá se dvěma zápisy — jméno a k němu záznam hráče. Komu prošel první
+a druhý ne, ten měl na serveru jméno zabrané svým vlastním id, ale bez
+záznamu hráče: nedalo se s ním nic dělat a každý další pokus hlásil „tuhle
+přezdívku už někdo má". Teď se nejdřív zjistí, kdo jméno drží, a když jsem
+to já sám, jen se dopíše, co chybí.
+
+Navrch: zápas se nezaloží bez zapsané přezdívky (pravidla databáze u něj
+ověřují, že jméno vyzývatele sedí se serverem) a řekne se to rovnou, místo
+obecného „nepodařilo se spojit". A kdo napíše svoje vlastní jméno, dozví se,
+že sám sebe vyzvat nemůže — dřív dostal „takového hráče neznám".
+
+## Čím je to hlídané
+
+`npm run audit:duel` (nový). Odehrát celý souboj z tohohle stroje nejde,
+databáze je za bránou — ale právě to je ta situace, která byla rozbitá,
+takže se ověřuje ona:
+
+1. **Zásada pustí, co Firebase potřebuje** — websocket i záložní přenos.
+   Rozlišuje se, jestli spojení odmítla zásada (chyba), nebo síť (tady
+   v pořádku). Se starou zásadou audit spadne, ověřeno.
+2. **Nedostupný server se ozve** — do dvaceti vteřin je na obrazovce hláška
+   a tlačítko jde zmáčknout znovu. Nikde nesmí zůstat „Posílám…".
+
+Co ověřit odsud nejde a musí se vyzkoušet na telefonu: že výzva doopravdy
+dojde druhému hráči. Pravidla databáze jsem proti tomu, co hra posílá,
+prošel řádek po řádku (včetně délky seznamu hádanek — id mají šest znaků,
+limit je 120).

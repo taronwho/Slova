@@ -80,18 +80,51 @@ type Db = Awaited<ReturnType<typeof connect>>
 let ready: Promise<Db> | null = null
 
 /**
+ * Jak dlouho se čeká na server, než se to vzdá.
+ *
+ * Firebase žádnou lhůtu nemá: dokud se klient nespojí, zápis se drží ve
+ * frontě a slib se **nikdy nesplní ani nezamítne**. Na obrazovce to vypadá
+ * jako tlačítko, které navždycky svítí „Posílám…" — přesně tak vypadala
+ * rozbitá výzva. Chyba se musí ozvat, i když druhá strana mlčí.
+ */
+const CEKANI_MS = 12_000
+
+/**
+ * Chyba, kterou smí hráč přečíst.
+ *
+ * Zbytek — hlášky z Firebase jako `PERMISSION_DENIED` — se na obrazovku
+ * nepouští; jsou v angličtině a hráči neřeknou nic. Obrazovky proto
+ * ukazují text jen z téhle třídy a na všechno ostatní mají svoji větu.
+ */
+export class SoubojChyba extends Error {}
+
+function docekat<T>(prace: Promise<T>, co: string): Promise<T> {
+  let budik: ReturnType<typeof setTimeout> | undefined
+  const lhuta = new Promise<never>((_, zamitnout) => {
+    budik = setTimeout(
+      () => zamitnout(new SoubojChyba(`Server neodpovídá (${co}). Zkus to za chvíli.`)),
+      CEKANI_MS,
+    )
+  })
+  return Promise.race([prace, lhuta]).finally(() => clearTimeout(budik))
+}
+
+/**
  * Přihlásí telefon a vrátí, co je potřeba k práci s databází.
  *
  * Přihlášení je anonymní — hráč nikam nezadává e‑mail ani heslo, jen
  * dostane skryté id, na které se navěsí přezdívka.
  */
 async function connect() {
-  const [{ initializeApp }, auth, db] = await Promise.all([
+  const [core, auth, db] = await Promise.all([
     import('firebase/app'),
     import('firebase/auth'),
     import('firebase/database'),
   ])
-  const app = initializeApp(CONFIG)
+  // Druhý pokus o spojení nesmí ztroskotat na tom, že aplikace už jednou
+  // vznikla — `initializeApp` by podruhé vyhodil chybu a hráč by po jednom
+  // výpadku sítě už souboje nerozchodil.
+  const app = core.getApps().length > 0 ? core.getApp() : core.initializeApp(CONFIG)
   const session = auth.getAuth(app)
   const user = session.currentUser ?? (await auth.signInAnonymously(session)).user
   const base = db.getDatabase(app)
@@ -103,7 +136,22 @@ async function connect() {
   return { db, base, uid: user.uid }
 }
 
-const open = (): Promise<Db> => (ready ??= connect())
+/**
+ * Spojení, které se dá zkusit znovu.
+ *
+ * Dřív tu stálo `ready ??= connect()`. Když se první pokus nepovedl —
+ * telefon byl na vteřinu bez signálu, přihlášení se nedovolalo —, zůstal
+ * v proměnné **zamítnutý slib** a vracel se pořád dokola. Souboje tím byly
+ * mrtvé až do úplného restartu aplikace a rada „zkus to znovu, až budeš
+ * online" se nedala poslechnout. Nepovedený pokus se proto zapomíná.
+ */
+function open(): Promise<Db> {
+  ready ??= docekat(connect(), 'přihlášení').catch((chyba: unknown) => {
+    ready = null
+    throw chyba
+  })
+  return ready
+}
 
 /** Rozdíl mezi hodinami telefonu a serverem, v milisekundách. */
 let offset = 0
@@ -141,23 +189,41 @@ function subscribe(path: string, onChange: (value: unknown) => void): () => void
 export async function claimNick(nick: string): Promise<boolean> {
   const { db, base, uid } = await open()
   const key = nickKey(nick)
-  try {
-    await db.set(db.ref(base, `nicks/${key}`), uid)
-  } catch {
-    return false
+  /*
+   * Nejdřív se zjistí, kdo přezdívku drží.
+   *
+   * Zabírá se dvěma zápisy — jméno a k němu záznam hráče — a dřív se
+   * rovnou psalo. Komu prošel první a druhý ne (spadlo spojení mezi nimi),
+   * ten si svoje vlastní jméno zamkl: na serveru bylo zabrané jeho id, ale
+   * bez záznamu hráče, takže se s ním nedalo nic dělat a každý další pokus
+   * hlásil „tuhle přezdívku už někdo má". Vlastní jméno se proto pozná
+   * a dopíše se jen to, co chybí.
+   */
+  const drzitel = await docekat(db.get(db.ref(base, `nicks/${key}`)), 'přezdívka')
+  if (drzitel.exists() && drzitel.val() !== uid) return false
+  if (!drzitel.exists()) {
+    try {
+      await docekat(db.set(db.ref(base, `nicks/${key}`), uid), 'přezdívka')
+    } catch {
+      // Někdo byl o vteřinu rychlejší — pravidla druhý zápis nepustí.
+      return false
+    }
   }
-  await db.update(db.ref(base, `players/${uid}`), {
-    nick: nick.trim(),
-    key,
-    seenAt: db.serverTimestamp(),
-  })
+  await docekat(
+    db.update(db.ref(base, `players/${uid}`), {
+      nick: nick.trim(),
+      key,
+      seenAt: db.serverTimestamp(),
+    }),
+    'záznam hráče',
+  )
   return true
 }
 
 /** Je tahle přezdívka volná? Pro průběžnou kontrolu při psaní. */
 export async function nickFree(nick: string): Promise<boolean> {
   const { db, base } = await open()
-  const found = await db.get(db.ref(base, `nicks/${nickKey(nick)}`))
+  const found = await docekat(db.get(db.ref(base, `nicks/${nickKey(nick)}`)), 'přezdívka')
   return !found.exists()
 }
 
@@ -183,7 +249,7 @@ export async function playRound(
   const { db, base, uid } = await open()
   const path = `results/${mode}/${puzzle}`
 
-  const all = await db.get(db.ref(base, path))
+  const all = await docekat(db.get(db.ref(base, path)), 'výsledky kola')
   const rows: { uid: string; nick: string; score: number; band: number }[] = []
   all.forEach((row) => {
     const value = row.val() as { nick: string; score: number; band: number }
@@ -442,7 +508,7 @@ export function serverNow(): number {
 /** Najde hráče podle přezdívky. Vrací jeho id, nebo null. */
 export async function findPlayer(nick: string): Promise<string | null> {
   const { db, base } = await open()
-  const found = await db.get(db.ref(base, `nicks/${nickKey(nick)}`))
+  const found = await docekat(db.get(db.ref(base, `nicks/${nickKey(nick)}`)), 'hledání hráče')
   return found.exists() ? (found.val() as string) : null
 }
 
@@ -459,30 +525,53 @@ export async function createMatch(
 ): Promise<Match | null> {
   const { db, base, uid } = await open()
   const target = await findPlayer(rivalNick)
-  if (!target || target === uid) return null
-  const mine = String((await db.get(db.ref(base, `players/${uid}/nick`))).val() ?? '?')
-  const guest = String((await db.get(db.ref(base, `players/${target}/nick`))).val() ?? rivalNick)
+  if (!target) return null
+  // Vlastní přezdívka není překlep — hráč se nemá dozvědět, že „takového
+  // hráče neznáme", když se jmenuje přesně takhle.
+  if (target === uid) throw new SoubojChyba('Sám sebe vyzvat nemůžeš.')
+  const mine = String(
+    (await docekat(db.get(db.ref(base, `players/${uid}/nick`)), 'profil')).val() ?? '',
+  )
+  /*
+   * Bez zapsané přezdívky se zápas založit nedá a nemá smysl to zkoušet:
+   * pravidla databáze u něj ověřují, že jméno vyzývatele sedí s tím, co
+   * o něm server ví. Dřív se místo jména poslal otazník, zápis se odmítl
+   * a hráč se dozvěděl jen „nepodařilo se spojit".
+   */
+  if (!mine) {
+    throw new SoubojChyba('Nejdřív si zaber přezdívku — bez ní tě soupeř nepozná.')
+  }
+  const guest = String(
+    (await docekat(db.get(db.ref(base, `players/${target}/nick`)), 'profil soupeře')).val() ??
+      rivalNick,
+  )
 
   const row = db.push(db.ref(base, 'duels'))
   const id = row.key!
-  await db.set(row, {
-    kind,
-    puzzles: puzzles.join('|'),
-    host: uid,
-    hostNick: mine,
-    guest: target,
-    guestNick: guest,
-    live: 0,
-    ping: db.serverTimestamp(),
-    at: db.serverTimestamp(),
-  })
-  await db.set(db.push(db.ref(base, `challenges/${target}`)), {
-    from: uid,
-    nick: mine,
-    kind,
-    match: id,
-    at: db.serverTimestamp(),
-  })
+  await docekat(
+    db.set(row, {
+      kind,
+      puzzles: puzzles.join('|'),
+      host: uid,
+      hostNick: mine,
+      guest: target,
+      guestNick: guest,
+      live: 0,
+      ping: db.serverTimestamp(),
+      at: db.serverTimestamp(),
+    }),
+    'založení zápasu',
+  )
+  await docekat(
+    db.set(db.push(db.ref(base, `challenges/${target}`)), {
+      from: uid,
+      nick: mine,
+      kind,
+      match: id,
+      at: db.serverTimestamp(),
+    }),
+    'odeslání výzvy',
+  )
   return {
     id,
     kind,
@@ -499,7 +588,7 @@ export async function createMatch(
 /** Přečte zápas. */
 export async function loadMatch(id: string): Promise<Match | null> {
   const { db, base } = await open()
-  const found = await db.get(db.ref(base, `duels/${id}`))
+  const found = await docekat(db.get(db.ref(base, `duels/${id}`)), 'načtení zápasu')
   return toMatch(id, found.val() as Record<string, unknown> | null)
 }
 
@@ -519,7 +608,10 @@ export async function pingMatch(id: string): Promise<void> {
 /** Soupeř výzvu přijal — zápas se rozjede. */
 export async function startMatch(id: string): Promise<void> {
   const { db, base } = await open()
-  await db.set(db.ref(base, `duels/${id}/live`), db.serverTimestamp())
+  await docekat(
+    db.set(db.ref(base, `duels/${id}/live`), db.serverTimestamp()),
+    'start zápasu',
+  )
 }
 
 /** Vyzývatel čekání vzdal. */
@@ -538,7 +630,7 @@ export async function cancelMatch(id: string): Promise<void> {
 export async function claimWord(id: string, key: string): Promise<boolean> {
   const { db, base, uid } = await open()
   try {
-    await db.set(db.ref(base, `duels/${id}/words/${key}`), uid)
+    await docekat(db.set(db.ref(base, `duels/${id}/words/${key}`), uid), 'slovo')
     return true
   } catch {
     return false
@@ -558,15 +650,16 @@ export function watchWords(
 /** Zapíše vlastní výsledek zápasu. */
 export async function finishMatch(id: string, nick: string, score: number): Promise<void> {
   const { db, base, uid } = await open()
-  await db
-    .set(db.ref(base, `duels/${id}/done/${uid}`), { nick, score, at: db.serverTimestamp() })
-    .catch(() => undefined)
+  await docekat(
+    db.set(db.ref(base, `duels/${id}/done/${uid}`), { nick, score, at: db.serverTimestamp() }),
+    'zápis výsledku',
+  ).catch(() => undefined)
 }
 
 /** Přečte výsledky zápasu — pro proužek v menu, kde se nesleduje nic trvale. */
 export async function matchDone(id: string): Promise<Record<string, MatchScore>> {
   const { db, base } = await open()
-  const found = await db.get(db.ref(base, `duels/${id}/done`))
+  const found = await docekat(db.get(db.ref(base, `duels/${id}/done`)), 'výsledky zápasu')
   return (found.val() as Record<string, MatchScore> | null) ?? {}
 }
 

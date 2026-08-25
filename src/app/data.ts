@@ -34,10 +34,23 @@ function fetchJson<T>(path: string): Promise<T> {
   const request =
     embedded !== undefined
       ? Promise.resolve(embedded as T)
-      : fetch(`${BASE}data/${path}`).then((response) => {
-          if (!response.ok) throw new Error(`Nepodařilo se načíst ${path}`)
-          return response.json() as Promise<T>
-        })
+      : fetch(`${BASE}data/${path}`)
+          .then((response) => {
+            if (!response.ok) throw new Error(`Nepodařilo se načíst ${path}`)
+            return response.json() as Promise<T>
+          })
+          /*
+           * Neúspěch se nesmí zapamatovat.
+           *
+           * V paměti leží slib, ne hotová data — a zamítnutý slib se vracel
+           * pořád dokola. Jedno klopýtnutí sítě tak umlčelo celý balíček až
+           * do restartu hry: hráč se vrátil na signál, ťukl znovu a dostal
+           * tutéž chybu, protože se o nic nepokusilo.
+           */
+          .catch((chyba: unknown) => {
+            cache.delete(key)
+            throw chyba
+          })
 
   cache.set(key, request)
   return request
