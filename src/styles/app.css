@@ -186,16 +186,16 @@
     padding: 2px 6px 2px 3px;
   }
 
-  /* Tři tečky triády jsou ozdoba značky; na 320 px se místo hodí na profil
-     a značku unese samotné „O" v logu. */
-  .brand-triad {
-    display: none;
+  /* Čipy se stáhnou dřív, než by musela ustoupit značka. Kalamář navíc
+     roste s číslem — čtyřciferná zásoba inkoustu se do lišty musí vejít
+     stejně jako prázdná. */
+  .topbar .chip {
+    padding-inline: 7px;
   }
 }
 
 @media (max-width: 400px) {
-  .shell.round .topbar .chip-streak,
-  .topbar .brand-word {
+  .shell.round .topbar .chip-streak {
     display: none;
   }
 }
@@ -209,19 +209,41 @@
     padding-inline: 7px;
   }
 
-  /* Značka je zároveň tlačítko „domů", takže zůstává — jen z ní tady zbývá
-     samotné kroužkované „O". Dřív tu místo toho stálo `overflow: hidden`,
-     což slovo mlčky uřízlo v půlce a audit neměl jak si toho všimnout. */
+  /* Značka je zároveň tlačítko „domů" a zůstává celá — nápis, kroužkované
+     „O" i tři tečky. Dřív tu k ní stálo `overflow: hidden`, které slovo
+     mlčky uřízlo v půlce a audit neměl jak si toho všimnout. */
   .topbar .brand {
     font-size: 0.92rem;
   }
 
+  .topbar .btn-sm {
+    padding-inline: 8px;
+  }
+}
+
+/*
+ * Nejužší displeje, jaké se ještě potkají (iPhone SE první řady, 320 px).
+ *
+ * Lišta v menu veze celou značku, hodnost, kalamář, sérii i téma a nic
+ * z toho neustupuje — celé logo tam hráč chce vidět a ostatní čtyři čísla
+ * jsou důvod, proč se na lištu dívá. Vejde se to jen tak, že se stáhnou
+ * mezery a přepínač témat se vrátí ke své přirozené šířce 34 px. Na výšku
+ * má pořád plných 44 px, takže se do něj trefí palec i tak; širší už být
+ * nemůže, aniž by z lišty něco vypadlo.
+ */
+@media (max-width: 340px) {
+  .topbar {
+    gap: 4px;
+    padding-inline: 6px;
+  }
+
   .topbar .chip {
-    padding-inline: 7px;
+    padding-inline: 5px;
   }
 
   .topbar .btn-sm {
-    padding-inline: 8px;
+    min-width: 34px;
+    padding-inline: 6px;
   }
 }
 

@@ -162,7 +162,14 @@ function scan() {
       el.classList.contains('key') ||
       el.classList.contains('letter-key') ||
       el.classList.contains('well-col')
-    const minW = key ? 28 : 40
+    /*
+     * Na 320px displeji veze lišta celou značku a čtyři ukazatele a 40 px
+     * na šířku by z ní něco vytlačilo. Tlačítko se znakem se tam proto vrací
+     * ke svým 34 px — na výšku má pořád plných 44. Je to jediná úleva
+     * v celém auditu a platí jen pod 340 px.
+     */
+    const uzko = window.innerWidth <= 340 && el.closest('.topbar')
+    const minW = key ? 28 : uzko ? 34 : 40
     const minH = key ? (landscape ? 36 : 44) : 40
     // Zaokrouhluje se stejně, jako se to pak vypíše — jinak by audit hlásil
     // „40×40 je málo" kvůli dvěma desetinám pixelu.

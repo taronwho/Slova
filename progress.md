@@ -844,3 +844,25 @@ hodností, statistiky a průvodce — na osmi velikostech od 320 px po monitor.
 Na monitoru se mez na dotykový cíl neuplatňuje; platí pro prst, ne pro myš.
 
 `audit:mobile` má nově na seznamu i Citát a Vetřelce.
+
+## Dodatek: značka se z menu neměla ztratit
+
+Hráč hned nahlásil, že v menu zmizel nápis „Slova" a zbyl jen kroužek
+s tečkami. Byla to moje chyba v předchozím kroku: ustupování jsem napsal
+tak, že se pod 400 px schoval nápis — jenže značku má hráč v menu vidět
+celou, včetně teček. To místo se dá vzít jinde.
+
+Vyšlo přitom najevo, proč se to vůbec zdálo v pořádku: pravidlo, které
+mělo tečky triády pod 420 px schovat, bylo napsané jako `.brand-triad`
+a v souboru nad výchozím `.brand-triad { display: inline-flex }`. Stejná
+specificita, později vyhrává to druhé — takže **nikdy neplatilo**. Tečky
+byly vidět vždycky a šetření místem, se kterým se počítalo, se nikdy
+nekonalo.
+
+Značka je teď celá na každé šířce. Místo se bere z mezer a pod 340 px
+(iPhone SE první řady) se přepínač témat vrací ke svým přirozeným 34 px
+na šířku; na výšku má pořád 44. Je to jediná úleva z meze 40 px v celém
+auditu a `audit:layout` ji zná pojmenovanou, ne mlčky.
+
+Lišta v menu se s celou značkou vejde i se čtyřciferným kalamářem —
+měřeno se zásobou 1312 inkoustu, na 320 až 430 px.
