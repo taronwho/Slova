@@ -227,6 +227,90 @@ export async function nickFree(nick: string): Promise<boolean> {
   return !found.exists()
 }
 
+/* ---------- zkouška spojení ---------- */
+
+export interface Nalez {
+  krok: string
+  ok: boolean
+  detail: string
+}
+
+function strucne(chyba: unknown): string {
+  const text = chyba instanceof Error ? chyba.message : String(chyba)
+  return text.replace(/\s+/g, ' ').slice(0, 90)
+}
+
+/**
+ * Zkouška spojení se serverem.
+ *
+ * Souboje mají tři vrstvy a každá se dá rozbít zvlášť: přihlášení jde přes
+ * jednu adresu, databáze přes druhou, a ta druhá se používá dvěma způsoby —
+ * běžným požadavkem a websocketem, který si drží spojení otevřené. Hra sama
+ * mluví websocketem; když neprojde, ostatní vrstvy můžou vesele fungovat
+ * a navenek to vypadá, že „server neodpovídá".
+ *
+ * Bez tohohle rozlišení se nedá poznat, jestli je chyba v přihlášení,
+ * v adrese databáze, v pravidlech, nebo v tom, že síť websockety nepustí —
+ * a hádat se to z jedné věty na obrazovce nedá.
+ */
+export async function zkouskaSpojeni(): Promise<Nalez[]> {
+  const out: Nalez[] = []
+  const host = new URL(CONFIG.databaseURL).host
+  const ns = host.split('.')[0]
+
+  try {
+    const uid = await myUid()
+    out.push({ krok: 'Přihlášení', ok: true, detail: `id ${uid.slice(0, 8)}…` })
+  } catch (chyba) {
+    out.push({ krok: 'Přihlášení', ok: false, detail: strucne(chyba) })
+  }
+
+  // Běžný požadavek na databázi. Pravidla ho odmítnou (a to je v pořádku) —
+  // podstatné je, že vůbec dorazí odpověď, tedy že je adresa dosažitelná.
+  try {
+    const stopka = new AbortController()
+    const budik = setTimeout(() => stopka.abort(), 8000)
+    try {
+      const odpoved = await fetch(`https://${host}/.json?shallow=true`, {
+        signal: stopka.signal,
+      })
+      const text = (await odpoved.text()).replace(/\s+/g, ' ').slice(0, 60)
+      out.push({ krok: 'Databáze (běžný požadavek)', ok: true, detail: `${odpoved.status} ${text}` })
+    } finally {
+      clearTimeout(budik)
+    }
+  } catch (chyba) {
+    out.push({ krok: 'Databáze (běžný požadavek)', ok: false, detail: strucne(chyba) })
+  }
+
+  // Websocket — tudy mluví hra doopravdy.
+  const websocket = await new Promise<Nalez>((hotovo) => {
+    let ws: WebSocket
+    try {
+      ws = new WebSocket(`wss://${host}/.ws?v=5&ns=${ns}`)
+    } catch (chyba) {
+      hotovo({ krok: 'Databáze (websocket)', ok: false, detail: strucne(chyba) })
+      return
+    }
+    const budik = setTimeout(() => {
+      ws.close()
+      hotovo({ krok: 'Databáze (websocket)', ok: false, detail: 'do 10 s se neotevřel' })
+    }, 10_000)
+    ws.onopen = () => {
+      clearTimeout(budik)
+      ws.close()
+      hotovo({ krok: 'Databáze (websocket)', ok: true, detail: 'otevřel se' })
+    }
+    ws.onerror = () => {
+      clearTimeout(budik)
+      hotovo({ krok: 'Databáze (websocket)', ok: false, detail: 'spojení se neotevřelo' })
+    }
+  })
+  out.push(websocket)
+
+  return out
+}
+
 /* ---------- kolo ---------- */
 
 /**

@@ -177,6 +177,30 @@ if (await vyzvat.isVisible().catch(() => false)) {
   check(false, 'tlačítko Vyzvat není vidět, i když přezdívka je zabraná')
 }
 
+console.log('\nZKOUŠKA SPOJENÍ ROZEBERE, KDE JE ZEĎ')
+/*
+ * Když server mlčí, nedá se z jedné hlášky poznat proč. Zkouška prochází
+ * tři vrstvy zvlášť — přihlášení, běžný požadavek na databázi a websocket,
+ * kterým mluví hra — a musí doběhnout i tehdy, když neprojde ani jedna.
+ */
+// Panel s výzvou pořád stojí přes obrazovku — nejdřív pryč s ním.
+const zpet = page.locator('.sheet .btn', { hasText: /^Zpět$/ }).first()
+if (await zpet.isVisible().catch(() => false)) {
+  await zpet.click()
+  await page.locator('.sheet').waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined)
+}
+
+const zkouska = page.locator('.friends-check .btn')
+if (await zkouska.isVisible().catch(() => false)) {
+  await zkouska.click()
+  await page.locator('.check-list').waitFor({ timeout: 60000 }).catch(() => undefined)
+  const radky = await page.locator('.check-list li').allInnerTexts().catch(() => [])
+  check(radky.length === 3, `zkouška doběhla a vypsala tři kroky (${radky.length})`)
+  for (const radek of radky) console.log(`    ${radek.replace(/\s+/g, ' ')}`)
+} else {
+  check(false, 'zkouška spojení není v Hře s přáteli k nalezení')
+}
+
 console.log(problems.length ? `\nNÁLEZY: ${problems.length}` : '\nVŠE PROŠLO')
 await browser.close()
 process.exit(problems.length > 0 ? 1 : 0)

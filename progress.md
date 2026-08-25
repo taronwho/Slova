@@ -978,3 +978,31 @@ ale doplnit měly:
   po sobě přezdívku neuklidí. Obchody to vyžadují a repozitář to má.
 * jména (`hostNick`, `guestNick`, `nick` u výzev) se na serveru neověřují
   proti záznamu hráče, takže si je kdokoli může poslat jaká chce.
+
+## Dodatek 2: přihlášení projde, databáze mlčí
+
+Hráč poslal snímek s hláškou **„Server neodpovídá (hledání hráče)"**. To je
+přesně ta informace, která dosud chyběla, a zužuje to hledání na jediné
+místo:
+
+* **přihlášení proběhlo** (jinak by v závorce stálo „přihlášení"),
+* **hádanky se stáhly** (jinak by tlačítko stálo na „Chystám hádanky…"),
+* **databáze neodpověděla** — klient se k ní vůbec nespojil.
+
+Adresa databáze je přitom v pořádku: `slova-b0176-default-rtdb.europe-west1.
+firebasedatabase.app` má A i AAAA záznam. Zásada obsahu už pouští websocket
+i záložní přenos (ověřeno auditem). Zbývá tedy něco na straně telefonu nebo
+sítě, a to se odsud změřit nedá — databáze je z tohohle stroje za bránou.
+
+**Přibyla proto zkouška spojení** přímo v Hře s přáteli. Rozebere to na tři
+vrstvy, protože každá se dá rozbít zvlášť a každá selhává jinak:
+
+1. **Přihlášení** — jde přes `identitytoolkit.googleapis.com`.
+2. **Databáze běžným požadavkem** — `https://…/.json`. Pravidla ho odmítnou
+   a to je v pořádku; podstatné je, že vůbec dorazí odpověď, tedy že je
+   adresa dosažitelná.
+3. **Databáze websocketem** — tudy mluví hra doopravdy. Když projde bod 2
+   a neprojde bod 3, síť nepouští websockety a chyba není ve hře.
+
+Výsledek se vypíše po řádcích a dá se vyfotit. `audit:duel` hlídá, že
+zkouška doběhne a vypíše všechny tři kroky i tehdy, když neprojde ani jeden.

@@ -28,8 +28,10 @@ import {
   nickError,
   saveMe,
   SoubojChyba,
+  zkouskaSpojeni,
   type Challenge,
   type Me,
+  type Nalez,
 } from '../lib/multi'
 
 /** Dohraný zápas, o kterém hráč ještě neví. */
@@ -71,6 +73,12 @@ export function Friends({
   const [draft, setDraft] = useState('')
   const [busy, setBusy] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
+  const [zkouska, setZkouska] = useState<Nalez[] | 'bezi' | null>(null)
+
+  async function zkusit() {
+    setZkouska('bezi')
+    setZkouska(await zkouskaSpojeni())
+  }
 
   async function claim() {
     const bad = nickError(draft)
@@ -267,6 +275,36 @@ export function Friends({
               soubojů. Nic z toho není spojené se jménem, e‑mailem ani
               telefonním číslem — jen se skrytým id, které ti hra přidělila.
             </p>
+            {/*
+              * Zkouška spojení.
+              *
+              * Souboje jsou jediná část hry, která potřebuje server, a když
+              * mlčí, nedá se z jedné hlášky poznat proč: jestli je chyba
+              * v přihlášení, v adrese databáze, nebo v tom, že síť nepustí
+              * websockety. Tohle to rozebere na tři kroky a napíše, který
+              * z nich neprošel — dá se to vyfotit a poslat.
+              */}
+            <div className="friends-check">
+              <button
+                type="button"
+                className="btn btn-sm btn-ghost"
+                onClick={() => void zkusit()}
+                disabled={zkouska === 'bezi'}
+              >
+                {zkouska === 'bezi' ? 'Zkouším…' : 'Zkusit spojení se serverem'}
+              </button>
+              {Array.isArray(zkouska) && (
+                <ul className="check-list">
+                  {zkouska.map((nalez) => (
+                    <li key={nalez.krok} className={nalez.ok ? 'ok' : 'bad'}>
+                      <span aria-hidden="true">{nalez.ok ? '✓' : '✗'}</span> {nalez.krok}:{' '}
+                      <span className="faint">{nalez.detail}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
             <div className="friends-erase">
               <button type="button" className="btn btn-sm" onClick={onErase}>
                 Smazat přezdívku a data
