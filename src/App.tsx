@@ -565,8 +565,13 @@ export default function App() {
 
   /** Odešle výzvu a rovnou se do souboje pustí. */
   const sendDuel = useCallback(
-    async (kind: DuelKind, nick: string): Promise<boolean> => {
+    async (kind: DuelKind, nick: string, krok: (co: string) => void): Promise<boolean> => {
+      // Dvě fáze, dvě různá čekání: hádanky se stahují ze stejné adresy jako
+      // hra, zápas se zakládá v databázi. Když se to zasekne, musí být na
+      // první pohled poznat, která z nich stojí.
+      krok('Chystám hádanky…')
       const picked = await duelPuzzles(kind)
+      krok('Posílám výzvu…')
       const created = await createMatch(kind, picked.ids, nick)
       if (!created) return false
       setUid(await myUid())

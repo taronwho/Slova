@@ -14,23 +14,35 @@ import { MODE_GLYPH } from '../game/types'
 
 interface Props {
   onClose: () => void
-  /** Vrací false, když hráč s takovou přezdívkou není. */
-  onSend: (kind: DuelKind, nick: string) => Promise<boolean>
+  /**
+   * Vrací false, když hráč s takovou přezdívkou není.
+   *
+   * `krok` je popisek toho, co se zrovna děje. Odeslání výzvy má dvě fáze
+   * a každá čeká na něco jiného — hádanky na síť, zápas na databázi —
+   * a když se to zaseklo, byl na tlačítku pořád jen jeden nápis, takže
+   * z něj nešlo poznat, která z nich stojí.
+   */
+  onSend: (kind: DuelKind, nick: string, krok: (co: string) => void) => Promise<boolean>
 }
 
 export function DuelSetup({ onClose, onSend }: Props) {
   const [kind, setKind] = useState<DuelKind>('hive')
   const [nick, setNick] = useState('')
   const [busy, setBusy] = useState(false)
+  const [krok, setKrok] = useState('Posílám…')
   const [problem, setProblem] = useState<string | null>(null)
 
   async function send() {
     setBusy(true)
+    setKrok('Posílám…')
     setProblem(null)
     try {
-      const ok = await onSend(kind, nick.trim())
+      const ok = await onSend(kind, nick.trim(), setKrok)
       if (!ok) setProblem('Takového hráče neznám. Zkontroluj přezdívku.')
     } catch (chyba) {
+      // Do konzole i celá chyba: hláška na obrazovce je pro hráče, tohle je
+      // pro případ, kdy se to hlásí a je potřeba vědět víc.
+      console.error('Souboj se nepodařilo odeslat:', chyba)
       // Co má hráč vědět přesně (server mlčí, chybí přezdívka), to se ukáže
       // doslova; zbytek dostane obecnou větu.
       setProblem(
@@ -90,7 +102,7 @@ export function DuelSetup({ onClose, onSend }: Props) {
             disabled={busy || !nick.trim()}
             onClick={() => void send()}
           >
-            {busy ? 'Posílám…' : 'Vyzvat'}
+            {busy ? krok : 'Vyzvat'}
           </button>
           <button type="button" className="btn btn-ghost" onClick={onClose}>
             Zpět

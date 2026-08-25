@@ -25,6 +25,32 @@ declare global {
   }
 }
 
+/**
+ * Stažení jednoho balíčku dat — s lhůtou.
+ *
+ * `fetch` sám od sebe nikdy neskončí: když spojení uvázne v půli (telefon
+ * přepíná mezi wi-fi a daty, síť odpoví jen zpola), slib se nesplní ani
+ * nezamítne a obrazovka, která na data čeká, zůstane viset. Přesně tak
+ * uvázla výzva na souboj ve fázi „Chystám hádanky…". Půl minuty je dost
+ * i na dvoumegový balíček přes pomalé připojení.
+ */
+const NACITANI_MS = 30_000
+
+async function nacti<T>(path: string): Promise<T> {
+  const stopka = new AbortController()
+  const budik = setTimeout(() => stopka.abort(), NACITANI_MS)
+  try {
+    const response = await fetch(`${BASE}data/${path}`, { signal: stopka.signal })
+    if (!response.ok) throw new Error(`Nepodařilo se načíst ${path}`)
+    return (await response.json()) as T
+  } catch (chyba) {
+    if (stopka.signal.aborted) throw new Error(`Data se nestihla načíst (${path}).`)
+    throw chyba
+  } finally {
+    clearTimeout(budik)
+  }
+}
+
 function fetchJson<T>(path: string): Promise<T> {
   const key = path
   const hit = cache.get(key)
@@ -34,11 +60,7 @@ function fetchJson<T>(path: string): Promise<T> {
   const request =
     embedded !== undefined
       ? Promise.resolve(embedded as T)
-      : fetch(`${BASE}data/${path}`)
-          .then((response) => {
-            if (!response.ok) throw new Error(`Nepodařilo se načíst ${path}`)
-            return response.json() as Promise<T>
-          })
+      : nacti<T>(path)
           /*
            * Neúspěch se nesmí zapamatovat.
            *

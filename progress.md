@@ -947,3 +947,34 @@ Co ověřit odsud nejde a musí se vyzkoušet na telefonu: že výzva doopravdy
 dojde druhému hráči. Pravidla databáze jsem proti tomu, co hra posílá,
 prošel řádek po řádku (včetně délky seznamu hádanek — id mají šest znaků,
 limit je 120).
+
+## Dodatek: kde přesně to visí, se dalo jen hádat
+
+Hráč po opravě hlásil, že je to pořád stejné. Nasazený balík opravu měl —
+ověřeno, hláška o lhůtě je v `assets/index-*.js`. Zbývaly dvě možnosti a obě
+jsou teď zavřené:
+
+**Načítání hádanek nemělo lhůtu.** Odeslání výzvy má dvě fáze: nejdřív se
+stáhnou hádanky (stejná adresa jako hra), teprve pak se zakládá zápas
+v databázi. Lhůtu dostala jen ta druhá. `fetch` přitom sám od sebe nikdy
+neskončí — když spojení uvázne v půli (telefon přepíná mezi wi-fi a daty),
+slib se nesplní ani nezamítne. Výzva tedy mohla viset dál, jen o krok dřív,
+a vypadalo to úplně stejně. Načítání dat má teď třicetivteřinovou lhůtu
+s `AbortController`.
+
+**Z tlačítka nešlo poznat, která fáze stojí.** Obě říkaly „Posílám…". Teď
+říkají „Chystám hádanky…" a „Posílám výzvu…", takže se ze snímku pozná, jestli
+je problém v síti k herním datům, nebo v databázi soubojů.
+
+`audit:duel` nově projde i samotné odeslání výzvy, ne jen zabrání přezdívky.
+
+### K pravidlům, která hráč poslal
+
+Ta na serveru jsou v pořádku a výzvu pustí — jsou dokonce volnější než ta
+v repozitáři (`tools/firebase/database.rules.json`). Dvě věci by se z něj
+ale doplnit měly:
+
+* `nicks/$nick` na serveru nemá větev pro **smazání**, takže „smazat účet"
+  po sobě přezdívku neuklidí. Obchody to vyžadují a repozitář to má.
+* jména (`hostNick`, `guestNick`, `nick` u výzev) se na serveru neověřují
+  proti záznamu hráče, takže si je kdokoli může poslat jaká chce.

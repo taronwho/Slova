@@ -136,6 +136,47 @@ if (await pole.isVisible().catch(() => false)) {
   check(false, 'zabrání přezdívky se nedá vyzkoušet — pole není vidět')
 }
 
+console.log('\nODESLÁNÍ VÝZVY SE TAKY MUSÍ OZVAT')
+/*
+ * Hráč, který přezdívku má, jde rovnou na „Vyzvat hráče" — a právě tam
+ * zůstávalo věčné „Posílám…". Odesílání má dvě fáze (hádanky ze sítě,
+ * zápas z databáze) a ani jedna nesmí viset bez konce.
+ */
+await page.addInitScript(() => {
+  localStorage.setItem(
+    'slova.multi.v1',
+    JSON.stringify({ nick: 'Zkouska', wins: 0, losses: 0, draws: 0, matches: [], blocked: [] }),
+  )
+})
+await page.goto(APP, { waitUntil: 'networkidle' })
+await waitReady(page)
+await page.locator('.friends-entry, .btn', { hasText: /přáteli/i }).first().click()
+await page.locator('.friends').waitFor({ timeout: 10000 })
+
+const vyzvat = page.locator('.friends .btn', { hasText: /^Vyzvat/ }).first()
+if (await vyzvat.isVisible().catch(() => false)) {
+  await vyzvat.click()
+  await page.locator('.sheet').waitFor({ timeout: 8000 })
+  await page.locator('.sheet input').fill('nekdojiny')
+  await page.locator('.sheet .btn-primary').click()
+
+  // Dvě fáze po dvanácti vteřinách plus rezerva.
+  await page
+    .waitForFunction(
+      () => Boolean(document.querySelector('.duel-problem')?.textContent?.trim()),
+      undefined,
+      { timeout: 45000 },
+    )
+    .catch(() => undefined)
+
+  const napis = (await page.locator('.sheet .btn-primary').innerText().catch(() => '')).trim()
+  const hlaska = await page.locator('.duel-problem').first().innerText().catch(() => '')
+  check(!napis.includes('…'), `tlačítko nezůstalo viset (${napis || 'zmizelo'})`)
+  check(hlaska.length > 0, `výzva se ozvala („${hlaska}")`)
+} else {
+  check(false, 'tlačítko Vyzvat není vidět, i když přezdívka je zabraná')
+}
+
 console.log(problems.length ? `\nNÁLEZY: ${problems.length}` : '\nVŠE PROŠLO')
 await browser.close()
 process.exit(problems.length > 0 ? 1 : 0)
