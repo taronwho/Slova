@@ -461,8 +461,26 @@ log('\nDENNÍ VÝZVA A INKOUST')
     await page.locator('.shell[data-daily="true"]').isVisible(),
     'spustí se rovnou denní kolo',
   )
-  check(await page.locator('.profile-chip').isVisible(), 'hodnost je vidět i ve hře')
+  /*
+   * V běžícím kole hodnost na telefonu ustoupí.
+   *
+   * Lišta ve hře veze osm věcí a na 390px displej se osm nevejde. Dokud se
+   * ustupování nedopsalo, nevešel se z ní přepínač témat — jenže ne tak, že
+   * by ustoupil, nýbrž tak, že visel za okrajem obrazovky. Teď ustupuje to,
+   * co se během kola nemění a je vidět jinde: hodnost, série, téma. Hodiny
+   * a kalamář zůstávají vždycky; podle nich se hráč rozhoduje, jestli si
+   * vzít nápovědu.
+   */
+  check(
+    !(await page.locator('.topbar .profile-chip').isVisible()),
+    'hodnost v kole na telefonu ustoupí, aby se lišta vešla',
+  )
+  check(await page.locator('.chip-time').isVisible(), 'hodiny v liště zůstávají')
   await goHome(page)
+  check(
+    await page.locator('.topbar .profile-chip').isVisible(),
+    'a v menu je hodnost hned zpátky',
+  )
 
   // Kalamář se pro tuhle kontrolu nastaví do známého stavu. Po padesáti
   // odehraných kolech je většinou prázdný a test by pak měřil náhodu.

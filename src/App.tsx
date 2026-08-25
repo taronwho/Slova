@@ -909,7 +909,7 @@ export default function App() {
     return (
       <button
         type="button"
-        className="btn btn-sm btn-ghost"
+        className="btn btn-sm btn-ghost btn-theme"
         title={`Téma: ${labels[profile.theme]}`}
         aria-label={`Téma: ${labels[profile.theme]}. Přepnout na ${labels[next]}`}
         onClick={() => updateProfile((previous) => ({ ...previous, theme: next }))}
@@ -936,7 +936,22 @@ export default function App() {
       }
     >
     <div
-      className={`shell ${view.kind === 'game' || view.kind === 'duel' ? 'playing' : ''}`}
+      /*
+       * `playing` je celoobrazovkové rozvržení hry (deska, patička, žádné
+       * rolování stránky) — to má jen deska hry a souboj.
+       *
+       * `round` je slabší tvrzení: běží kolo. Platí i pro Otázku dne, která
+       * si celoobrazovkové rozvržení nebere, ale lištu má stejně nabitou —
+       * hodiny, kalamář, série — a stejně jako ve hře se z ní musí uvolnit
+       * místo. Bez toho z ní na každém telefonu vypadl přepínač témat.
+       */
+      className={[
+        'shell',
+        view.kind === 'game' || view.kind === 'duel' ? 'playing' : '',
+        view.kind === 'game' || view.kind === 'duel' || view.kind === 'quiz' ? 'round' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
       data-mode={
         view.kind === 'game'
           ? view.mode
@@ -956,25 +971,39 @@ export default function App() {
           onClick={goHome}
           style={{ color: 'inherit' }}
         >
-          Sl<span className="mark">o</span>va
+          {/* Na nejužších telefonech zbude ze značky jen kroužkované „O" —
+              lišta tam veze hodnost, kalamář a sérii a na celé slovo místo
+              není. Tlačítko „domů" tím nemizí, jen se scvrkne na svůj znak. */}
+          <span className="brand-word">Sl</span>
+          <span className="mark">o</span>
+          <span className="brand-word">va</span>
           <span className="brand-triad" aria-hidden="true">
             <i style={{ background: 'var(--mode-chain)' }} />
             <i style={{ background: 'var(--mode-hive)' }} />
             <i style={{ background: 'var(--mode-tower)' }} />
           </span>
         </button>
+        {/* Zpět do menu. Rozehrané kolo se tím neztrácí — na úvodní
+            obrazovce se nabídne k pokračování. Otázka dne má šipku taky:
+            jinak by z ní na telefonu nevedla cesta ven, protože značka
+            (která ji dosud zastávala) v běžícím kole z lišty ustupuje. */}
+        {(view.kind === 'game' || view.kind === 'quiz') && (
+          <button
+            type="button"
+            className="btn btn-sm btn-ghost btn-back"
+            onClick={goHome}
+            aria-label="Zpět do menu"
+          >
+            <span aria-hidden="true">←</span>
+            {/* Na telefonu zůstane jen šipka. Slovo by se do lišty vešlo
+                jen tak, že by se smrsklo tlačítko pod svůj nápis — a ten
+                by pak ležel přes čip vedle. Šipka sama je srozumitelná
+                a čtečka pořád čte „Zpět do menu". */}
+            <span className="btn-back-label">Menu</span>
+          </button>
+        )}
         {view.kind === 'game' && (
           <>
-            {/* Zpět do menu. Rozehrané kolo se tím neztrácí — na úvodní
-                obrazovce se nabídne k pokračování. */}
-            <button
-              type="button"
-              className="btn btn-sm btn-ghost btn-back"
-              onClick={goHome}
-              aria-label="Zpět do menu"
-            >
-              <span aria-hidden="true">←</span> Menu
-            </button>
             <button
               type="button"
               className="chip chip-mode"

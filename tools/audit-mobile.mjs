@@ -14,6 +14,8 @@ const MODE_ID = {
   'Šibenice': 'gallows',
   'Detektiv': 'detective',
   'Slabiky': 'tetris',
+  'Citát': 'quotes',
+  'Vetřelec': 'intruder',
 }
 
 const APP_URL = process.env.URL ?? 'http://localhost:4173/'
@@ -29,6 +31,14 @@ const SIZES = [
   { name: '740-landscape', width: 740, height: 360 },
 ]
 
+/*
+ * Všech osm herních režimů.
+ *
+ * Citát a Vetřelec tu kdysi chyběly a přesně v Citátu pak hráč našel
+ * rozsypanou horní lištu: nápis „← Menu" ležel přes čip vedle a přepínač
+ * témat visel za okrajem. Chyba přitom byla ve všech hrách — jen se měřily
+ * jenom ty, které byly na seznamu.
+ */
 const MODES = [
   ['Řetěz', '.ladder'],
   ['Voština', '.hive'],
@@ -36,6 +46,11 @@ const MODES = [
   ['Šibenice', '.gallows-art'],
   ['Detektiv', '.clue-card'],
   ['Slabiky', '.well'],
+  ['Citát', '.quote-text'],
+  // Vetřelec nemá patičku s ovládáním — ovládá se ťuknutím do jednoho z pěti
+  // slov na desce. Kontrola „ovládání je vidět bez rolování" se u něj proto
+  // měří na samotných slovech.
+  ['Vetřelec', '.intruder-words', '.intruder-words'],
 ]
 
 // Běžné ovládací prvky: 44px podle doporučení pro dotyk.
@@ -178,7 +193,7 @@ for (const size of SIZES) {
     }
   }
 
-  for (const [mode, selector] of MODES) {
+  for (const [mode, selector, controls = '.board-footer'] of MODES) {
     await page.goto(APP_URL, { waitUntil: 'networkidle' })
   await page.locator('.splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined)
     await openGame(page, MODE_ID[mode])
@@ -190,7 +205,7 @@ for (const size of SIZES) {
     }
     await page.waitForTimeout(400)
 
-    const metrics = await page.evaluate(() => {
+    const metrics = await page.evaluate((controls) => {
       const doc = document.documentElement
       const board = document.querySelector('.board')
       const rect = board?.getBoundingClientRect()
@@ -222,26 +237,50 @@ for (const size of SIZES) {
           )
         }
       }
-      const footer = document.querySelector('.board-footer')
+      const footer = document.querySelector(controls)
       const footerRect = footer?.getBoundingClientRect()
+      /*
+       * Ovládání smí ležet i pod okrajem — pokud sedí v rolovatelné desce.
+       * Vetřelec žádnou patičku nemá, ovládá se ťuknutím do jednoho z pěti
+       * slov, a ta se naležato do 360px výšky nevejdou. Deska si proto roluje
+       * sama (`overflow: auto`) a všech pět slov je na dosah. Pro hry
+       * s přišpendlenou patičkou tahle úleva neplatí — ta leží mimo desku.
+       */
+      let scroller = footer?.parentElement ?? null
+      let inScroller = false
+      while (scroller && scroller !== document.body) {
+        const overflow = getComputedStyle(scroller).overflowY
+        if (
+          (overflow === 'auto' || overflow === 'scroll') &&
+          scroller.scrollHeight > scroller.clientHeight + 1
+        ) {
+          const box = scroller.getBoundingClientRect()
+          inScroller = box.top >= -1 && box.bottom <= document.documentElement.clientHeight + 1
+          break
+        }
+        scroller = scroller.parentElement
+      }
       return {
         overflowX: doc.scrollWidth - doc.clientWidth,
         boardBottom: rect ? Math.round(rect.bottom) : 0,
         footerBottom: footerRect ? Math.round(footerRect.bottom) : 0,
         footerTop: footerRect ? Math.round(footerRect.top) : 0,
         hasFooter: Boolean(footer),
+        inScroller,
         viewportHeight: doc.clientHeight,
         pageHeight: doc.scrollHeight,
         small: [...new Set(small)],
       }
-    })
+    }, controls)
 
     const label = `${size.name}/${mode}`
     if (metrics.overflowX > 0) note(label, `přetéká vodorovně o ${metrics.overflowX}px`)
     // Se sticky patičkou nevadí, že hrací plocha přesahuje — vadí, když
     // ovládání není vidět bez rolování.
     if (!metrics.hasFooter) {
-      note(label, 'chybí přišpendlená patička s ovládáním')
+      note(label, `chybí ovládání (${controls})`)
+    } else if (metrics.inScroller) {
+      // Ovládání si roluje deska sama a je celá vidět — v pořádku.
     } else if (metrics.footerBottom > metrics.viewportHeight + 1) {
       note(
         label,

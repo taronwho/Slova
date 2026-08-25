@@ -23,65 +23,133 @@
   flex-shrink: 0;
 }
 
-/* Chipy v hlavičce se nesmí lámat do dvou řádků. */
-.topbar .chip {
-  white-space: nowrap;
+/*
+ * Nic v liště se nesmí smrsknout pod svůj obsah.
+ *
+ * Tlačítko v pružném řádku se ve výchozím nastavení nechá stlačit, jenže
+ * nápis uvnitř se nezmenší — vyleze z tlačítka ven a kreslí se přes souseda.
+ * Přesně tak vypadalo „← Menu" ležící pod zlatým čipem s plamínkem: nic se
+ * neuřízlo, stránka se nerozšířila, jen dvě věci seděly na sobě. Se
+ * zakázaným smrskáváním se místo toho lišta poctivě přeplní, což audit
+ * uvidí a hlásí — a řeší se to ustupováním níž, ne tichým překrytím.
+ */
+.topbar > * {
   flex-shrink: 0;
+  white-space: nowrap;
 }
 
-/* Ve hře veze lišta o tři prvky navíc (Menu, název režimu, Pravidla) a na
-   telefonu se do ní přestane vejít profil s hodností — přesně to, co hráč
-   hlásil. Ustoupí proto to, co se dá vyčíst odjinud: značka (domů vede
-   tlačítko Menu hned vedle) a název režimu (ten je vidět na desce). */
-@media (max-width: 700px) {
-  .shell.playing .topbar .brand,
-  .shell.playing .topbar .chip-mode {
-    display: none;
-  }
+/*
+ * Dotykové cíle v liště.
+ *
+ * Čipy jsou drobné (32 px) a profil s odznakem ještě menší (26 px), přitom
+ * všechny jde ťuknout — otevírají vysvětlení, vitrínu, přepínají téma.
+ * Lišta je díky tlačítkům stejně 44 px vysoká, takže je zvětšení zadarmo.
+ */
+.topbar .chip,
+.topbar .profile-chip,
+.topbar .brand {
+  min-height: 40px;
+}
+
+/* Tlačítka se samotným znakem (?, ◐) mají užší nápis než palec. */
+.topbar .btn-sm {
+  min-width: 40px;
+}
+
+/*
+ * ---------- Dotykové cíle mimo lištu ----------
+ *
+ * Mez je 40 px na kratší straně. Kde má prvek kolem sebe volno, prostě
+ * povyroste. Část ovládání jsou ale vysvětlivky přilepené k textu — popisek
+ * nad nápovědami, čísla v ukazateli hry. Ty se nafouknout nedají: velikost
+ * jim určuje písmo, ke kterému patří, a roztáhly by řádek, kterému vládne
+ * něco jiného. Dostanou proto neviditelnou plochu navíc — prvek zůstane, jak
+ * je, jen se do něj ťuká pohodlně. Plocha přerůstá jen nahoru a dolů, do
+ * prázdna kolem řádku; do stran by si sousední vysvětlivky sahaly do řeči.
+ *
+ * `npm run audit:layout` tuhle plochu započítává, takže se malý cíl nedá
+ * schovat tím, že se mu pseudoprvek dopíše jen naoko.
+ */
+.stat-tap,
+.hint-head {
+  position: relative;
+}
+
+/* Ukazatel hry je vysoký 26 px a popisek nad nápovědami 16 px; těch pár
+   pixelů nahoru a dolů padne do mezery k liště, k desce a k odsazení
+   panelu, takže plocha nemá do čeho zasahovat. */
+.stat-tap::after,
+.hint-head::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 40px;
+  transform: translateY(-50%);
+}
+
+/* Vysvětlivky, kolem kterých místo je, se rovnou zvětší. Otazník u Otázky
+   dne neviditelnou plochu dostat nemůže: hned vedle něj leží tlačítko, které
+   kolo spouští, a plocha navíc by mu ukusovala z ťuknutí. */
+.quiz-note {
+  padding-block: 10px;
+}
+
+.daily-head .label,
+.award-summary .explain {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
 }
 
 /*
  * Pořadí ustupování.
  *
  * Lišta je jeden řádek a její obsah se nesmí zalomit ani vysunout za okraj —
- * uříznutý kalamář hráč nenajde a bude si myslet, že o inkoust přišel. Když
- * se přestane vejít, ustupuje se odshora dolů podle toho, co se dá zjistit
- * odjinud:
+ * uříznutý kalamář hráč nenajde a bude si myslet, že o inkoust přišel. Ve
+ * hře jich přitom veze osm: zpět, denní řadu, pravidla, hodnost, kalamář,
+ * hodiny, sérii a téma. Na žádný telefon se osm nevejde, takže se ustupuje
+ * odshora dolů podle toho, co se dá zjistit odjinud a co se během kola nemění:
  *
- *   1. čip „Denní" — hráč do denní výzvy sám vlezl a vidí ji i v menu,
- *   2. jméno hodnosti (od 640 px níž) — číslo vedle odznaku zůstává,
- *   3. popisek „Série" — místo něj je fajfka,
- *   4. mezery.
+ *   1. do 899 px v kole — značka (domů vede šipka hned vedle), název režimu
+ *      (je vidět na desce), slovo „Menu" (zbude šipka) a přepínač témat
+ *      (v menu je o jedno ťuknutí dál a uprostřed kola ho nikdo nehledá),
+ *   2. do 640 px — jméno hodnosti; číslo vedle odznaku zůstává,
+ *   3. do 560 px v kole — celý profil; hodnost se během kola nemění a na
+ *      úvodní obrazovce je pořád,
+ *   4. do 480 px — popisek „Série"; místo něj je fajfka,
+ *   5. do 400 px v kole — celý čip série; taky se mění až po kole,
+ *   6. do 400 px — slovo ve značce; zbude kroužkované „O",
+ *   7. mezery.
  *
- * Nikdy neustoupí kalamář, číslo hodnosti a přepínač témat: první dva jsou
- * důvod, proč se na lištu hráč vůbec dívá, třetí je jediná cesta k přepnutí
- * motivu. Hlídá to `npm run audit:mobile`, který spadne, jakmile něco
- * z lišty přeteče přes okraj.
+ * Nikdy neustoupí kalamář a hodiny: to jsou jediné dva údaje, které se
+ * během kola mění a podle kterých se hráč rozhoduje. Hlídá to
+ * `npm run audit:layout` — spadne, jakmile z lišty něco vyleze za okraj
+ * nebo se nápis nevejde do svého tlačítka.
  */
-.topbar > * {
-  min-width: 0;
-}
-
-@media (max-width: 560px) {
-  .shell.playing .topbar .chip-gold {
+@media (max-width: 899px) {
+  /* Značka je zároveň tlačítko „domů". Ustoupí jedině tam, kde ji vystřídá
+     šipka zpět — v souboji šipka není, takže tam značka zůstává a hráč má
+     pořád kudy ven. */
+  .topbar:has(.btn-back) .brand,
+  .shell.round .topbar .chip-mode,
+  .shell.round .topbar .btn-theme,
+  .btn-back .btn-back-label {
     display: none;
   }
 }
 
-@media (max-width: 420px) {
-  .topbar {
-    gap: var(--sp-2);
-    padding-inline: var(--sp-3);
+@media (max-width: 560px) {
+  .shell.round .topbar .profile-chip {
+    display: none;
   }
+}
 
-  .brand {
-    font-size: 1rem;
-    letter-spacing: 0.12em;
-  }
-
-  /* Na úzkém displeji se z „Série 0" stane jen číslo se symbolem. Fajfka
-     tam musí být: samotné číslo v liště nic neříká a hráč nemá jak poznat,
-     že se dívá na řadu kol bez nápovědy. */
+/* Na úzkém displeji se z „Série 0" stane jen číslo se symbolem. Fajfka
+   tam musí být: samotné číslo v liště nic neříká a hráč nemá jak poznat,
+   že se dívá na řadu kol bez nápovědy. */
+@media (max-width: 480px) {
   .topbar .chip-streak .chip-label {
     display: none;
   }
@@ -99,6 +167,18 @@
     font-size: 0.72rem;
     opacity: 0.75;
   }
+}
+
+@media (max-width: 420px) {
+  .topbar {
+    gap: var(--sp-2);
+    padding-inline: var(--sp-3);
+  }
+
+  .brand {
+    font-size: 1rem;
+    letter-spacing: 0.12em;
+  }
 
   /* Na nejužších telefonech se profil stáhne, ale číslo hodnosti zůstává —
      bez něj by z odznaku nešlo poznat, jak daleko hráč je. */
@@ -113,6 +193,13 @@
   }
 }
 
+@media (max-width: 400px) {
+  .shell.round .topbar .chip-streak,
+  .topbar .brand-word {
+    display: none;
+  }
+}
+
 /* Nejužší telefony (320 px): lišta veze značku, profil, nápovědy, sérii
    i téma. Aby se to vešlo, stáhnou se mezery — schovat další ukazatel by
    bylo horší než pár pixelů natěsno. */
@@ -122,13 +209,11 @@
     padding-inline: 7px;
   }
 
-  /* Značka je zároveň tlačítko „domů", takže zůstává — ale ustoupí jako
-     první. Bez tohohle vytlačí profil, kalamář a přepínač témat mimo
-     obrazovku a hráč přijde o hodnost i o zásobu inkoustu. */
+  /* Značka je zároveň tlačítko „domů", takže zůstává — jen z ní tady zbývá
+     samotné kroužkované „O". Dřív tu místo toho stálo `overflow: hidden`,
+     což slovo mlčky uřízlo v půlce a audit neměl jak si toho všimnout. */
   .topbar .brand {
     font-size: 0.92rem;
-    min-width: 0;
-    overflow: hidden;
   }
 
   .topbar .chip {
@@ -1059,6 +1144,20 @@
   }
   .game.with-rail .rail-right {
     order: 3;
+  }
+
+  /*
+   * Patička s ovládáním patří **pod desku**, ne vedle ní.
+   *
+   * Bez tohohle měla výchozí `order: 0`, takže se v mřížce postavila jako
+   * první — zabrala levý sloupec, panely se posunuly o jeden dál a deska
+   * skončila v pravém, 260 px širokém. Klávesnice se do něj vešla jen tak,
+   * že písmena vylezla z kláves, a patro Věže z něj čouhalo ven na obě
+   * strany až za okraj stránky.
+   */
+  .game.with-rail .board-footer {
+    order: 4;
+    grid-column: 2;
   }
 }
 
@@ -3615,7 +3714,10 @@ button.rank-card:hover {
   flex: 1 1 0;
   max-width: 42px;
   min-width: 0;
-  height: clamp(38px, 6.4vh, 48px);
+  /* Deset kláves v řadě je na 320px displeji úzkých — což mají i nativní
+     klávesnice — takže se to dohání výškou. Pod 44 px se nesmí, i kdyby to
+     na nejnižších telefonech mělo ukrojit z desky. */
+  height: clamp(44px, 6.4vh, 48px);
   border-radius: var(--r-sm);
   border: 1px solid var(--border);
   background: var(--surface);
@@ -4399,15 +4501,16 @@ button.stat.open {
   white-space: nowrap;
 }
 
-/* Malý otazníček s výkladem. Sedí na kraji proužku, aby se nepletl s
-   ťuknutím do hry, a je dost velký na prst i při té drobné velikosti. */
+/* Otazníček s výkladem. Sedí na kraji proužku, aby se nepletl s ťuknutím do
+   hry — a právě proto musí být velký doopravdy, ne jen s neviditelnou
+   plochou navíc: ta by sahala do tlačítka, které kolo spouští. */
 .quiz-strip-help {
   flex: none;
   align-self: center;
   display: grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
+  width: 40px;
+  height: 40px;
   margin-right: var(--sp-2);
   border-radius: var(--r-full);
   border: 1px solid var(--border);
@@ -5335,16 +5438,12 @@ button.stat.open {
 /* Na úzkém displeji se z lišty schová jen slovo, ne číslo: řada je to jediné,
    co v denním kole hráč sleduje, a čip bez ní by nesl jen ozdobu. */
 @media (max-width: 560px) {
-  .shell.playing .topbar .chip-daily {
-    display: inline-flex;
-  }
-
-  .shell.playing .topbar .chip-daily .chip-label {
+  .shell.round .topbar .chip-daily .chip-label {
     display: none;
   }
 
   /* Když řada ještě není, nemá čip co ukázat a místo si nezaslouží. */
-  .shell.playing .topbar .chip-daily:not(:has(.daily-flame)) {
+  .shell.round .topbar .chip-daily:not(:has(.daily-flame)) {
     display: none;
   }
 }

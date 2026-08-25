@@ -767,3 +767,80 @@ nabídka nad klávesnicí opravdu leží nejvýš.
 
 Myší se chyba nedá reprodukovat — ta dodatečné `click` neposílá. Právě
 proto ji neodhalil ani jeden z dosavadních testů, které klikají myší.
+
+# Rozvržení: lišta ve hře se rozsypala a nikdo to neměřil
+
+Hráč poslal snímek z Citátu: nahoře vlevo „← Menu" napsané **přes** zlatý
+čip s plamínkem, vpravo čip série uříznutý okrajem. Nebyla to jedna
+překlepnutá hodnota — bylo to celé rodině chyb, která šla napříč všemi
+devíti hrami a všemi šířkami telefonu.
+
+## Co se dělo
+
+**Tlačítko se smrsklo pod svůj nápis.** Prvek v pružném řádku se ve
+výchozím nastavení nechá stlačit, jenže písmena uvnitř se nezmenší —
+vylezou z tlačítka ven a kreslí se přes souseda. Tlačítko „← Menu" mělo být
+62 px široké, dostalo 34 a zbytek nápisu si sedl na čip vedle. Nic se
+neuřízlo, stránka se nerozšířila, jen dvě věci ležely na sobě, takže se
+o tom žádná dosavadní kontrola nedozvěděla.
+
+**Lišta se přestala vejít.** Ve hře veze osm věcí: zpět, denní řadu,
+pravidla, hodnost, kalamář, hodiny, sérii a téma. Osm se nevejde na žádný
+telefon. Ustupování bylo napsané pro dobu, kdy jich bylo míň, takže na
+390 px visel přepínač témat za okrajem i v běžném kole a v denním k němu
+přibyl čip série.
+
+**Otázka dne o tom vůbec nevěděla.** Pravidla lišty se držela třídy
+`playing`, kterou si bere jen deska hry a souboj. Kvíz má lištu stejně
+nabitou (hodiny, kalamář, série), ale žádné ustupování se ho netýkalo —
+přetékal až o 87 px.
+
+**A hlavně: měřilo se jen šest her z devíti.** `audit:mobile` má seznam
+režimů a Citát ani Vetřelec na něm nikdy nebyly. Chyba přitom byla úplně
+všude — jen se koukalo jinam, než kam hráč.
+
+## Co je opravené
+
+* **Nic v liště se nesmí smrsknout pod svůj obsah** (`flex-shrink: 0`
+  a `nowrap` na všech jejích dětech). Když se něco nevejde, lišta se
+  poctivě přeplní — a to audit uvidí. Tiché překrytí ne.
+* **Dopsané ustupování** do 899 px (značka, název režimu, slovo „Menu",
+  přepínač témat), 560 px (profil) a 400 px (čip série, slovo ve značce).
+  Kalamář a hodiny neustoupí nikdy — jsou to jediné dva údaje, které se
+  během kola mění.
+* **Značka ustoupí jen tam, kde ji vystřídá šipka zpět** (`:has(.btn-back)`).
+  V souboji šipka není, takže tam značka zůstává a je pořád kudy ven.
+* **Otázka dne dostala šipku zpět** a třídu `round`, která nese pravidla
+  lišty pro každé běžící kolo. Bez šipky by se z ní na telefonu nedalo
+  odejít — dosud to zastávala značka, která teď v kole ustupuje.
+* **Dotykové cíle na 40 px.** V liště to bylo zadarmo (je vysoká 44 px), jen
+  se to nikdy nenastavilo: čipy měly 32 px a profil 26. Klávesy Šibenice
+  a Citátu mají místo toho podlahu 44 px na výšku — na šířku jich deset
+  v řadě jinak nevyjde ani nativní klávesnici.
+* **Vysvětlivky přilepené k textu** (popisek nad nápovědami, čísla
+  v ukazateli hry) se zvětšit nedají — velikost jim určuje písmo, ke
+  kterému patří. Dostaly neviditelnou plochu navíc; ťuká se do 40 px,
+  vidět je pořád jen text. Otazník u Otázky dne ji dostat nemohl (hned
+  vedle leží tlačítko, které kolo spouští), tak povyrostl doopravdy.
+* Ze značky zmizelo `overflow: hidden`, které slovo mlčky uřízlo v půlce.
+
+## Čím je to hlídané
+
+`npm run audit:layout` (nový). Neptá se, jestli se obrazovka vejde — na to
+je `audit:mobile` — ale jestli každý prvek sedí ve svém místě:
+
+1. **nápis přetéká ze svého tlačítka** (měří se podle dětí, ne přes
+   `scrollWidth`: vystředěný obsah přetéká na obě strany a `scrollWidth`
+   zná jen tu pravou),
+2. **sourozenci na sobě**,
+3. **prvek za okrajem obrazovky**,
+4. **malý dotykový cíl** — a počítá se plocha, do které se dá trefit, včetně
+   neviditelné, takže se malý cíl nedá schovat pseudoprvkem naoko,
+5. **stránka přetéká do strany**.
+
+Prochází všech devět her v běžném i denním kole, Otázku dne, menu, panel
+obtížnosti, panel nápověd, potvrzení vzdání kola, návod, vitrínu, žebříček
+hodností, statistiky a průvodce — na osmi velikostech od 320 px po monitor.
+Na monitoru se mez na dotykový cíl neuplatňuje; platí pro prst, ne pro myš.
+
+`audit:mobile` má nově na seznamu i Citát a Vetřelce.

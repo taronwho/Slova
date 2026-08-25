@@ -166,6 +166,8 @@ h3 {
   .btn,
   .seg button {
     min-height: 44px;
+    /* Krátký nápis („Více", „OK") nesmí ze čtverečku udělat proužek. */
+    min-width: 44px;
   }
 
   .btn-sm {
