@@ -87,7 +87,25 @@ let ready: Promise<Db> | null = null
  * jako tlačítko, které navždycky svítí „Posílám…" — přesně tak vypadala
  * rozbitá výzva. Chyba se musí ozvat, i když druhá strana mlčí.
  */
-const CEKANI_MS = 12_000
+const CEKANI_MS = 15_000
+
+/**
+ * Jak dlouho se čeká, než se databáze doopravdy spojí.
+ *
+ * Tohle je jiné čekání než to nahoře a musí být štědřejší. Přihlášení je
+ * jeden obyčejný požadavek, kdežto databáze si drží **otevřené spojení**
+ * a než ho navlékne, musí projít několik kroků: otevřít websocket (a když
+ * ho síť nepustí, přepnout na záložní přenos, který je pomalejší),
+ * vyměnit si přihlašovací lístek a teprve pak umí odpovídat. Na telefonu
+ * to poprvé trvá klidně dvacet vteřin.
+ *
+ * Dřív se na to nečekalo vůbec: dotaz se poslal do ještě nespojeného
+ * klienta a měřila se mu tatáž krátká lhůta jako všemu ostatnímu. Jednou
+ * to stihl a hra běžela, podruhé ne a hlásilo se „server neodpovídá",
+ * i když byl server v pořádku a stačilo mu dát chvíli. Proto se teď
+ * napřed počká na spojení a **teprve pak** se posílá dotaz.
+ */
+const SPOJENI_MS = 25_000
 
 /**
  * Chyba, kterou smí hráč přečíst.
@@ -153,6 +171,46 @@ function open(): Promise<Db> {
   return ready
 }
 
+/**
+ * Spojení, přes které se dá **hned** ptát.
+ *
+ * `open()` vrací hotové přihlášení, ne hotové spojení s databází — to se
+ * navléká na pozadí a chvíli to trvá. Kdo se chce ptát, počká si tady.
+ * Kdo jen navěšuje posluchač (`subscribe`), čekat nemusí: posluchač si
+ * počká sám a zavolá se, až data přijdou.
+ */
+async function pripraveno(): Promise<Db> {
+  const spojeni = await open()
+  const { db, base } = spojeni
+  await new Promise<void>((hotovo, zamitnout) => {
+    let odpojit: (() => void) | null = null
+    const budik = setTimeout(() => {
+      odpojit?.()
+      zamitnout(
+        new SoubojChyba('Nepodařilo se spojit s databází. Zkontroluj připojení a zkus to znovu.'),
+      )
+    }, SPOJENI_MS)
+    odpojit = db.onValue(db.ref(base, '.info/connected'), (snap) => {
+      if (snap.val() !== true) return
+      clearTimeout(budik)
+      odpojit?.()
+      hotovo()
+    })
+  })
+  return spojeni
+}
+
+/**
+ * Navázat spojení předem, aby o tom šlo dát vědět.
+ *
+ * Čekání na spojení je ta nejdelší část celého odesílání a bez tohohle by
+ * se odehrálo mlčky pod nápisem „Posílám výzvu…". Obrazovka si ho tímhle
+ * vyžádá zvlášť a může u něj napsat, co se děje.
+ */
+export async function pripravSpojeni(): Promise<void> {
+  await pripraveno()
+}
+
 /** Rozdíl mezi hodinami telefonu a serverem, v milisekundách. */
 let offset = 0
 
@@ -187,7 +245,7 @@ function subscribe(path: string, onChange: (value: unknown) => void): () => void
  * vteřinu, uspěje právě jeden — bez transakce a bez čekání.
  */
 export async function claimNick(nick: string): Promise<boolean> {
-  const { db, base, uid } = await open()
+  const { db, base, uid } = await pripraveno()
   const key = nickKey(nick)
   /*
    * Nejdřív se zjistí, kdo přezdívku drží.
@@ -222,7 +280,7 @@ export async function claimNick(nick: string): Promise<boolean> {
 
 /** Je tahle přezdívka volná? Pro průběžnou kontrolu při psaní. */
 export async function nickFree(nick: string): Promise<boolean> {
-  const { db, base } = await open()
+  const { db, base } = await pripraveno()
   const found = await docekat(db.get(db.ref(base, `nicks/${nickKey(nick)}`)), 'přezdívka')
   return !found.exists()
 }
@@ -283,6 +341,25 @@ export async function zkouskaSpojeni(): Promise<Nalez[]> {
     out.push({ krok: 'Databáze (běžný požadavek)', ok: false, detail: strucne(chyba) })
   }
 
+  // Spojení, které si drží sama hra. Tohle je ze všech kroků ten
+  // nejdůležitější: hra se neptá websocketem přímo, ptá se přes Firebase,
+  // a ten si spojení navléká sám a chvíli mu to trvá. Měří se, jak dlouho.
+  const zacatek = Date.now()
+  try {
+    await pripraveno()
+    out.push({
+      krok: 'Spojení hry s databází',
+      ok: true,
+      detail: `navázáno za ${((Date.now() - zacatek) / 1000).toFixed(1)} s`,
+    })
+  } catch (chyba) {
+    out.push({
+      krok: 'Spojení hry s databází',
+      ok: false,
+      detail: `${strucne(chyba)} (po ${((Date.now() - zacatek) / 1000).toFixed(1)} s)`,
+    })
+  }
+
   // Websocket — tudy mluví hra doopravdy.
   const websocket = await new Promise<Nalez>((hotovo) => {
     let ws: WebSocket
@@ -330,7 +407,7 @@ export async function playRound(
   band: number,
   blocked: string[] = [],
 ): Promise<Duel | null> {
-  const { db, base, uid } = await open()
+  const { db, base, uid } = await pripraveno()
   const path = `results/${mode}/${puzzle}`
 
   const all = await docekat(db.get(db.ref(base, path)), 'výsledky kola')
@@ -374,7 +451,7 @@ export async function recordDuel(duel: Duel, before: Tally): Promise<Tally> {
     draws: before.draws + (duel.won === null ? 1 : 0),
   }
   try {
-    const { db, base, uid } = await open()
+    const { db, base, uid } = await pripraveno()
     await db.update(db.ref(base, `players/${uid}`), { ...next, seenAt: db.serverTimestamp() })
   } catch {
     // Tabulka je jen ozdoba; když se nezapíše, hra běží dál.
@@ -427,7 +504,7 @@ export async function reportPlayer(
   reason: string,
 ): Promise<void> {
   try {
-    const { db, base, uid: mine } = await open()
+    const { db, base, uid: mine } = await pripraveno()
     await db.set(db.push(db.ref(base, 'reports')), {
       about: uid,
       nick,
@@ -451,7 +528,7 @@ export async function reportPlayer(
  */
 export async function eraseMe(): Promise<void> {
   try {
-    const { db, base, uid } = await open()
+    const { db, base, uid } = await pripraveno()
     const key = String((await db.get(db.ref(base, `players/${uid}/key`))).val() ?? '')
     await Promise.all([
       key ? db.remove(db.ref(base, `nicks/${key}`)) : Promise.resolve(),
@@ -591,7 +668,7 @@ export function serverNow(): number {
 
 /** Najde hráče podle přezdívky. Vrací jeho id, nebo null. */
 export async function findPlayer(nick: string): Promise<string | null> {
-  const { db, base } = await open()
+  const { db, base } = await pripraveno()
   const found = await docekat(db.get(db.ref(base, `nicks/${nickKey(nick)}`)), 'hledání hráče')
   return found.exists() ? (found.val() as string) : null
 }
@@ -607,7 +684,7 @@ export async function createMatch(
   puzzles: string[],
   rivalNick: string,
 ): Promise<Match | null> {
-  const { db, base, uid } = await open()
+  const { db, base, uid } = await pripraveno()
   const target = await findPlayer(rivalNick)
   if (!target) return null
   // Vlastní přezdívka není překlep — hráč se nemá dozvědět, že „takového
@@ -671,7 +748,7 @@ export async function createMatch(
 
 /** Přečte zápas. */
 export async function loadMatch(id: string): Promise<Match | null> {
-  const { db, base } = await open()
+  const { db, base } = await pripraveno()
   const found = await docekat(db.get(db.ref(base, `duels/${id}`)), 'načtení zápasu')
   return toMatch(id, found.val() as Record<string, unknown> | null)
 }
@@ -685,13 +762,13 @@ export function watchMatch(id: string, onChange: (match: Match | null) => void):
 
 /** Vyzývatel dá vědět, že u Voštiny pořád čeká. */
 export async function pingMatch(id: string): Promise<void> {
-  const { db, base } = await open()
+  const { db, base } = await pripraveno()
   await db.set(db.ref(base, `duels/${id}/ping`), db.serverTimestamp()).catch(() => undefined)
 }
 
 /** Soupeř výzvu přijal — zápas se rozjede. */
 export async function startMatch(id: string): Promise<void> {
-  const { db, base } = await open()
+  const { db, base } = await pripraveno()
   await docekat(
     db.set(db.ref(base, `duels/${id}/live`), db.serverTimestamp()),
     'start zápasu',
@@ -700,7 +777,7 @@ export async function startMatch(id: string): Promise<void> {
 
 /** Vyzývatel čekání vzdal. */
 export async function cancelMatch(id: string): Promise<void> {
-  const { db, base } = await open()
+  const { db, base } = await pripraveno()
   await db.set(db.ref(base, `duels/${id}/live`), -1).catch(() => undefined)
 }
 
@@ -712,7 +789,7 @@ export async function cancelMatch(id: string): Promise<void> {
  * zápis odmítne. Žádná transakce ani čekání ve frontě k tomu není potřeba.
  */
 export async function claimWord(id: string, key: string): Promise<boolean> {
-  const { db, base, uid } = await open()
+  const { db, base, uid } = await pripraveno()
   try {
     await docekat(db.set(db.ref(base, `duels/${id}/words/${key}`), uid), 'slovo')
     return true
@@ -733,7 +810,7 @@ export function watchWords(
 
 /** Zapíše vlastní výsledek zápasu. */
 export async function finishMatch(id: string, nick: string, score: number): Promise<void> {
-  const { db, base, uid } = await open()
+  const { db, base, uid } = await pripraveno()
   await docekat(
     db.set(db.ref(base, `duels/${id}/done/${uid}`), { nick, score, at: db.serverTimestamp() }),
     'zápis výsledku',
@@ -742,7 +819,7 @@ export async function finishMatch(id: string, nick: string, score: number): Prom
 
 /** Přečte výsledky zápasu — pro proužek v menu, kde se nesleduje nic trvale. */
 export async function matchDone(id: string): Promise<Record<string, MatchScore>> {
-  const { db, base } = await open()
+  const { db, base } = await pripraveno()
   const found = await docekat(db.get(db.ref(base, `duels/${id}/done`)), 'výsledky zápasu')
   return (found.val() as Record<string, MatchScore> | null) ?? {}
 }
@@ -750,7 +827,7 @@ export async function matchDone(id: string): Promise<Record<string, MatchScore>>
 /** Uloží bilanci soubojů i na server, ať ji vidí ostatní. */
 export async function saveTally(tally: Tally): Promise<void> {
   try {
-    const { db, base, uid } = await open()
+    const { db, base, uid } = await pripraveno()
     await db.update(db.ref(base, `players/${uid}`), { ...tally, seenAt: db.serverTimestamp() })
   } catch {
     // Bilance je jen ozdoba; když se nezapíše, hra běží dál.
@@ -794,6 +871,6 @@ export function watchChallenges(
 
 /** Smaže vyřízenou výzvu. */
 export async function dropChallenge(id: string): Promise<void> {
-  const { db, base, uid } = await open()
+  const { db, base, uid } = await pripraveno()
   await db.remove(db.ref(base, `challenges/${uid}/${id}`)).catch(() => undefined)
 }

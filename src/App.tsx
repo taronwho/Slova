@@ -68,6 +68,7 @@ import type { Challenge, Match } from './lib/multi'
 import {
   blockPlayer,
   createMatch,
+  pripravSpojeni,
   dropChallenge,
   eraseMe,
   reportPlayer,
@@ -578,6 +579,11 @@ export default function App() {
       // první pohled poznat, která z nich stojí.
       krok('Chystám hádanky…')
       const picked = await duelPuzzles(kind)
+      // Spojení s databází je nejdelší část celého odesílání — na telefonu
+      // klidně dvacet vteřin. Vyžádá se zvlášť, aby se u něj dalo napsat,
+      // co se děje, místo mlčení pod nápisem „Posílám výzvu…".
+      krok('Spojuji se serverem…')
+      await pripravSpojeni()
       krok('Posílám výzvu…')
       const created = await createMatch(kind, picked.ids, nick)
       if (!created) return false

@@ -195,7 +195,7 @@ if (await zkouska.isVisible().catch(() => false)) {
   await zkouska.click()
   await page.locator('.check-list').waitFor({ timeout: 60000 }).catch(() => undefined)
   const radky = await page.locator('.check-list li').allInnerTexts().catch(() => [])
-  check(radky.length === 3, `zkouška doběhla a vypsala tři kroky (${radky.length})`)
+  check(radky.length === 4, `zkouška doběhla a vypsala všechny kroky (${radky.length})`)
   for (const radek of radky) console.log(`    ${radek.replace(/\s+/g, ' ')}`)
 } else {
   check(false, 'zkouška spojení není v Hře s přáteli k nalezení')

@@ -1059,3 +1059,33 @@ upozornění všem hráčům. Znamenalo by to Cloud Function a k ní placený ta
 rozehrát nedá (potřebuje soupeře v databázi), ale rozvržení ano: do běžícího
 kola se vloží deska souboje a změří se, že má výšku a že se do ní vejde celá
 pětice. Bez opravy audit spadne na `0px` — ověřeno.
+
+## Dodatek 3: čekalo se na dotaz, ne na spojení
+
+Hráč hlásil totéž znovu — jenže mezitím jednou prošlo a souboj se založil.
+Střídavý výsledek je jiná chyba než blokáda a ukazuje na jinou příčinu:
+lhůta byla utažená na něco, co jí nepatřilo.
+
+**Přihlášení a spojení s databází jsou dvě různá čekání.** Přihlášení je
+jeden obyčejný požadavek — vteřinu, dvě. Databáze si ale drží **otevřené
+spojení** a než ho navlékne, musí otevřít websocket (a když ho síť nepustí,
+přepnout na pomalejší záložní přenos), vyměnit si přihlašovací lístek
+a teprve pak umí odpovídat. Na telefonu to poprvé trvá klidně dvacet vteřin.
+
+Dotaz se přitom posílal do ještě nespojeného klienta a měřila se mu tatáž
+krátká lhůta jako všemu ostatnímu — dvanáct vteřin. Jednou se to stihlo
+a hra běžela, podruhé ne a hlásilo se „server neodpovídá", i když byl server
+v pořádku a stačilo mu dát chvíli.
+
+**Teď se napřed počká na spojení a teprve pak se posílá dotaz.** Čeká se na
+`.info/connected`, na což je pětadvacet vteřin, a dotazy pak běží proti živému
+spojení, takže jim patnáct vteřin bohatě stačí. Když se spojení nenaváže,
+řekne se to rovnou: „Nepodařilo se spojit s databází."
+
+Zároveň o tom čekání obrazovka **říká**, místo aby mlčela — odeslání výzvy
+má teď tři fáze: „Chystám hádanky…", „Spojuji se serverem…", „Posílám
+výzvu…".
+
+Zkouška spojení má čtvrtý řádek: **spojení hry s databází**, i s časem, jak
+dlouho trvalo. To je ze všech kroků ten nejdůležitější — hra se neptá
+websocketem přímo, ptá se přes Firebase, a ten si spojení navléká sám.
