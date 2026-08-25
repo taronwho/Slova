@@ -23,6 +23,11 @@ import {
 } from '../game/duel'
 import { MODE_GLYPH } from '../game/types'
 import {
+  pozadatOPovoleni,
+  stavPovoleni,
+  type Povoleni,
+} from '../lib/upozorneni'
+import {
   claimNick,
   loadMe,
   nickError,
@@ -74,6 +79,7 @@ export function Friends({
   const [busy, setBusy] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
   const [zkouska, setZkouska] = useState<Nalez[] | 'bezi' | null>(null)
+  const [povoleni, setPovoleni] = useState<Povoleni>(() => stavPovoleni())
 
   async function zkusit() {
     setZkouska('bezi')
@@ -275,6 +281,35 @@ export function Friends({
               soubojů. Nic z toho není spojené se jménem, e‑mailem ani
               telefonním číslem — jen se skrytým id, které ti hra přidělila.
             </p>
+            {/*
+              * Upozornění na došlou výzvu.
+              *
+              * Ptá se až tady, z ťuknutí — bez gesta prohlížeče žádost rovnou
+              * zamítnou a druhá šance pak není. A rovnou se říká, kam
+              * upozornění dosáhnou: dokud hra běží (i schovaná), ne když je
+              * zavřená. Slibovat víc by bylo horší než neslíbit nic.
+              */}
+            {povoleni !== 'nejde' && (
+              <div className="friends-notify">
+                {povoleni === 'nezeptáno' && (
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    onClick={() => void pozadatOPovoleni().then(setPovoleni)}
+                  >
+                    Upozorňovat na došlé výzvy
+                  </button>
+                )}
+                <p className="faint">
+                  {povoleni === 'ano'
+                    ? 'Upozornění na výzvy jsou zapnutá. Přijdou, dokud hra běží — i když ji máš schovanou. Když ji úplně zavřeš, dozvíš se o výzvě až po otevření.'
+                    : povoleni === 'ne'
+                      ? 'Upozornění máš pro tuhle hru zakázaná. Zapnout se dají v nastavení telefonu u aplikace.'
+                      : 'Dají se zapnout upozornění, když tě někdo vyzve. Chodí, dokud hra běží — i když ji máš schovanou na pozadí.'}
+                </p>
+              </div>
+            )}
+
             {/*
               * Zkouška spojení.
               *

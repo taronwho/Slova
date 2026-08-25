@@ -29,7 +29,7 @@
 
 import { chromium } from 'playwright'
 
-import { waitReady } from './_ui.mjs'
+import { dismissTutorial, waitReady } from './_ui.mjs'
 
 const APP = process.env.URL ?? 'http://localhost:4173/'
 const CHROME = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'
@@ -200,6 +200,54 @@ if (await zkouska.isVisible().catch(() => false)) {
 } else {
   check(false, 'zkouška spojení není v Hře s přáteli k nalezení')
 }
+
+console.log('\nSOUBOJ MÁ NA DESKU MÍSTO')
+/*
+ * Souboj se z tohohle stroje rozehrát nedá — potřebuje soupeře v databázi.
+ * Rozvržení se ale ověřit dá, a právě to bylo rozbité: deska souboje má
+ * `container-type: size`, tedy „počítej svoji velikost, jako bys byla
+ * prázdná", a v sloupci bez určené výšky se smrskla na **nula pixelů**.
+ * Pětice slov se vysázela a nebyla vidět; vypadalo to, že se hra nespustila.
+ *
+ * Měří se v běžícím kole, aby platila celoobrazovková pravidla hry: do
+ * hotové stránky se vloží deska souboje a zkontroluje se, že má výšku.
+ */
+await page.goto(APP, { waitUntil: 'networkidle' })
+await waitReady(page)
+await page.locator('.mode-tile[data-mode="intruder"]').click()
+await page.locator('.sheet').waitFor()
+await page.locator('.sheet-actions .btn', { hasText: /^(Hrát|Nová hra)$/ }).first().click()
+await page.waitForSelector('.board', { timeout: 20000 })
+await dismissTutorial(page)
+
+const deska = await page.evaluate(() => {
+  const main = document.querySelector('.main')
+  const puvodni = main.firstElementChild
+  puvodni.style.display = 'none'
+  const souboj = document.createElement('div')
+  souboj.className = 'game duel-game'
+  souboj.innerHTML =
+    '<div class="duel-bar"><span class="duel-side me"><span class="duel-name">proti Zelda</span>' +
+    '<span class="num">0</span></span><span class="duel-clock">1. kolo ze 3</span>' +
+    '<span class="duel-side"><span class="duel-name">nejvíc</span><span class="num">600</span></span></div>' +
+    '<div class="board"><p class="intruder-ask">Které slovo do pětice nepatří?</p>' +
+    '<div class="intruder-words">' +
+    ['kladivo', 'pila', 'hoblík', 'dláto', 'jablko']
+      .map((w) => `<button class="intruder-word">${w}</button>`)
+      .join('') +
+    '</div></div>'
+  main.appendChild(souboj)
+  const box = souboj.querySelector('.board').getBoundingClientRect()
+  const slova = souboj.querySelector('.intruder-words').getBoundingClientRect()
+  souboj.remove()
+  puvodni.style.display = ''
+  return { deska: Math.round(box.height), slova: Math.round(slova.height) }
+})
+check(deska.deska > 100, `deska souboje má výšku (${deska.deska}px, slova ${deska.slova}px)`)
+check(
+  deska.deska >= Math.min(deska.slova, 200),
+  'do desky se vejde celá pětice, ne jen kus',
+)
 
 console.log(problems.length ? `\nNÁLEZY: ${problems.length}` : '\nVŠE PROŠLO')
 await browser.close()

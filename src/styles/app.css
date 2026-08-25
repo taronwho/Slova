@@ -2142,6 +2142,18 @@
     gap: var(--sp-3);
   }
 
+  /*
+   * Souboj má vlastní rozvržení (`duel-game`), a právě proto o plnou výšku
+   * přišel — pravidlo výš platí jen pro `with-rail`. Zní to jako drobnost,
+   * jenže deska má `container-type: size`, což znamená „počítej svoji
+   * velikost, jako bys byla prázdná". Ve sloupci bez určené výšky se tím
+   * smrskla na **nula pixelů**: pětice slov se vysázela, ale nebyla vidět
+   * a souboj vypadal, že se nespustil.
+   */
+  .shell.playing .duel-game {
+    height: 100%;
+  }
+
   /* Levý sloupec na mobilu neexistuje — jeho dva díly se rovnou zařadí
      nad hrací plochu a pod ni. */
   .shell.playing .game.with-rail .rail-left {
@@ -5950,4 +5962,20 @@ button.stat.open {
 
 .check-list .bad {
   color: var(--danger, #c0392b);
+}
+
+/* Přepínač upozornění v Hře s přáteli. Text pod tlačítkem říká, kam
+   upozornění dosáhnou — slíbit víc, než co umí, by bylo horší než mlčet. */
+.friends-notify {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  align-items: flex-start;
+  margin-bottom: var(--sp-3);
+}
+
+.friends-notify p {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
 }

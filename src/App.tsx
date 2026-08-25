@@ -89,7 +89,14 @@ import {
   type Duel,
   type Me,
 } from './lib/multi'
-import { DUEL_MODE, INTRUDER_ROUNDS, type DuelKind, type Verdict } from './game/duel'
+import {
+  DUEL_MODE,
+  DUEL_TITLE,
+  INTRUDER_ROUNDS,
+  type DuelKind,
+  type Verdict,
+} from './game/duel'
+import { upozorni } from './lib/upozorneni'
 import type { Quote, QuoteState } from './game/quotes'
 import { RANKS, rankFor } from './game/ranks'
 import { tetrisSetup, type TetrisDeck, type TetrisSetup, type TetrisState } from './game/tetris'
@@ -697,9 +704,42 @@ export default function App() {
    */
   const outside = view.kind === 'home' || view.kind === 'friends'
   useEffect(() => {
-    if (!MULTI_ON || !me.nick || !outside) return
+    if (!MULTI_ON || !me.nick) return
     return watchChallenges(setChallenges, me.blocked ?? [])
-  }, [me.nick, outside])
+  }, [me.nick, me.blocked])
+
+  /*
+   * Upozornění na došlou výzvu.
+   *
+   * Ohlásí se každá výzva, kterou hráč ještě neviděl — i když je zrovna
+   * v jiné hře nebo má hru schovanou na pozadí. Ohlašuje se jen to, co
+   * přibylo: seznam chodí celý pokaždé, takže bez pamatování už ohlášených
+   * by se při každé změně ozvalo všechno znovu.
+   *
+   * Když je aplikace úplně zavřená, upozornění nepřijde — na to je potřeba
+   * server, který zprávu odešle. Víc je v `lib/upozorneni.ts`.
+   */
+  const ohlasene = useRef<Set<string>>(new Set())
+  const ohlaseniPripraveno = useRef(false)
+  useEffect(() => {
+    if (!MULTI_ON) return
+    const nove = challenges.filter((one) => !ohlasene.current.has(one.id))
+    for (const one of challenges) ohlasene.current.add(one.id)
+    if (nove.length === 0) return
+    // První načtení po spuštění se neohlašuje: hráč se na výzvy dívá právě
+    // teď a upozornění na to, co má před očima, je otravné.
+    if (!ohlaseniPripraveno.current) {
+      ohlaseniPripraveno.current = true
+      return
+    }
+    const prvni = nove[0]!
+    upozorni(
+      nove.length === 1 ? `${prvni.nick} tě vyzývá` : `${nove.length} nových výzev`,
+      nove.length === 1
+        ? `${DUEL_TITLE[prvni.kind]} — ťukni a pusť se do toho.`
+        : 'Někdo na tebe čeká v Hře s přáteli.',
+    ).catch(() => undefined)
+  }, [challenges])
 
   /*
    * Dohrané zápasy, o kterých hráč ještě neví.

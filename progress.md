@@ -1006,3 +1006,56 @@ vrstvy, protože každá se dá rozbít zvlášť a každá selhává jinak:
 
 Výsledek se vypíše po řádcích a dá se vyfotit. `audit:duel` hlídá, že
 zkouška doběhne a vypíše všechny tři kroky i tehdy, když neprojde ani jeden.
+
+# Souboj se otevřel, ale deska měla nulovou výšku
+
+Spojení už drží a výzva se založí. Jenže u Vetřelce se otevřela obrazovka
+souboje, ukázala hlavičku („proti Zelda · 1. kolo ze 3 · nejvíc 600")
+a **pod ní nic**. Vypadalo to, že se hra nespustila.
+
+## Co se dělo
+
+Deska hry má `container-type: size`. To znamená „počítej svoji velikost,
+jako bys byla prázdná" — a je to schválně: díky tomu se dá obsah desky
+škálovat podle jejích rozměrů, aniž by si to samo se sebou skákalo do řeči.
+
+Podmínkou ale je, že výšku desce musí dát někdo shora. U běžných her ji dává
+pravidlo `.shell.playing .game.with-rail { height: 100% }`. Souboj má vlastní
+rozvržení (`duel-game`) a na tohle pravidlo nedosáhl — takže ve sloupci bez
+určené výšky se deska smrskla na **nula pixelů**. Pětice slov se přitom
+vysázela celá (288 px), jen ji nebylo kam vykreslit.
+
+Změřeno, ne odhadnuto: `.board` 380×0, `.intruder-words` 380×288.
+
+## Oprava
+
+`.shell.playing .duel-game { height: 100% }` — souboj dostane plnou výšku
+stejně jako ostatní hry. Deska pak měří 753 px místo nuly.
+
+Platí pro oba formáty, Voština i Vetřelec sdílejí `duel-game`.
+
+## Upozornění na výzvu
+
+Hráč k tomu chtěl, aby o výzvě vždycky věděl. Přibylo tedy:
+
+* **Výzvy se poslouchají pořád**, ne jen v menu. Dřív se posluchač uvnitř
+  hry vypínal, aby neubíral spojení — jenže pak se o výzvě hráč dozvěděl,
+  až když se vrátil do menu.
+* **Systémové upozornění**, když nějaká dorazí. Ohlašuje se jen to, co
+  přibylo (seznam chodí celý pokaždé), a první načtení po spuštění se
+  neohlašuje — upozorňovat na to, co má hráč před očima, je otravné.
+* **Povolení se ptá z ťuknutí** v Hře s přáteli, ne samo od sebe při
+  spuštění. Bez gesta žádost prohlížeče rovnou zamítnou a druhá šance není.
+
+Co to **neumí a je to u toho napsané**: upozornění chodí, dokud hra běží —
+i schovaná na pozadí —, ale ne když je úplně zavřená. K tomu je potřeba
+Firebase Cloud Messaging a k němu server, který zprávu odešle; odesílací
+klíč je tajný a do telefonu se dát nesmí, jinak by mohl kdokoli posílat
+upozornění všem hráčům. Znamenalo by to Cloud Function a k ní placený tarif.
+
+## Čím je to hlídané
+
+`audit:duel` má nový oddíl **„Souboj má na desku místo"**. Souboj se odsud
+rozehrát nedá (potřebuje soupeře v databázi), ale rozvržení ano: do běžícího
+kola se vloží deska souboje a změří se, že má výšku a že se do ní vejde celá
+pětice. Bez opravy audit spadne na `0px` — ověřeno.
