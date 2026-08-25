@@ -14,10 +14,18 @@
       z Wikimedia Commons u Citátu. `Special:FilePath` přesměrovává na
       `upload.wikimedia.org`, proto tam musí být obojí.
 
-      `script-src 'self'` znamená, že žádný skript nesmí přijít v textu
-      stránky ani zvenčí. Vestavěné styly to nezakazuje, protože React je
-      nastavuje přes `element.style`, což zásada neřeší; `<style>` v textu
-      hra nemá.
+      `script-src` pouští jen skripty z vlastní adresy — a k tomu jednu
+      jedinou cizí, databázi soubojů. Není to ozdoba: když se Firebase
+      nedostane přes websocket (mobilní síť, firemní proxy), přepne na
+      záložní přenos, a ten funguje tak, že si do stránky vloží
+      `<script src="…/.lp?…">`. S holým `'self'` ho zásada odmítla, klient
+      se nespojil vůbec — a protože se na spojení jen čeká, nic nehlásilo
+      chybu: souboje se tvářily, že se pořád odesílají. Proto je tu ta
+      adresa vypsaná celá, ne přes hvězdičku: pustí se přesně naše
+      databáze a nic jiného.
+
+      Vestavěné styly zásada nezakazuje, protože React je nastavuje přes
+      `element.style`, což se neřeší; `<style>` v textu hra nemá.
 
       Co se do značky napsat nedá: `frame-ancestors` (proti vložení hry do
       cizího rámu) a `Permissions-Policy` — obojí jde jen hlavičkou, a tu
@@ -31,7 +39,7 @@
                object-src 'none';
                form-action 'none';
                frame-src 'none';
-               script-src 'self';
+               script-src 'self' https://slova-b0176-default-rtdb.europe-west1.firebasedatabase.app;
                style-src 'self';
                font-src 'self' data:;
                img-src 'self' data: https://commons.wikimedia.org https://upload.wikimedia.org;
@@ -54,7 +62,7 @@
     />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23121028'/%3E%3Cpath d='M17.2 4.6A11.5 11.5 0 0 1 26.5 20.7' stroke='%235b3df5' stroke-width='5.5' fill='none'/%3E%3Cpath d='M25.3 22.8A11.5 11.5 0 0 1 6.7 22.8' stroke='%23d98704' stroke-width='5.5' fill='none'/%3E%3Cpath d='M5.5 20.7A11.5 11.5 0 0 1 14.8 4.6' stroke='%23e23a2e' stroke-width='5.5' fill='none'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%23fff'/%3E%3C/svg%3E" />
     <title>Slova — české slovní hry</title>
-    <script type="module" crossorigin src="./assets/index-DpOPQilv.js"></script>
+    <script type="module" crossorigin src="./assets/index-DRWPReza.js"></script>
     <link rel="stylesheet" crossorigin href="./assets/index-BIAqyFKm.css">
   </head>
   <body>
