@@ -1274,3 +1274,38 @@ ověřit nedají:
   lhůty — jinak by překlep vypadal jako výpadek serveru,
 * **po výpadku sítě se spojení obnoví bez restartu aplikace** — přesně to,
   co bylo rozbité.
+
+# Aktualizace: hráč tři a půl hodiny hrál starou verzi
+
+Po nasazení opravy hráč napsal, že má „poslední aktualizaci 12:06" — tedy
+verzi, kterou už mezitím nahradily dvě novější. Všechny opravy z toho
+odpoledne se k němu nedostaly.
+
+## Proč
+
+Kontrola verze běžela **jen při načtení stránky**. Jenže nainstalovaná
+aplikace se na telefonu nezavírá — odloží se na pozadí a zase vytáhne, a
+stránka se přitom nenačítá znovu. Kontrola se tak nemusí spustit celé dny.
+
+K tomu druhá past: počitadlo marných pokusů o aktualizaci se drželo napříč
+vším. Kdo se dvakrát nedokázal doskočit na jednu verzi, měl aktualizace
+zamčené do konce sezení — a protože se aplikace nezavírá, klidně i na dny.
+
+## Oprava
+
+* Kontroluje se **i pokaždé, když se hra vrátí na obrazovku**, s odstupem
+  půl minuty, aby to nechodilo na server při každém přepnutí mezi
+  aplikacemi.
+* Počitadlo pokusů patří ke konkrétní verzi. Nová verze dostane vlastní
+  pokusy, takže jedno nepovedené kolo aktualizace neumlčí všechna další.
+
+## Čím je to hlídané
+
+`npm run audit:update` (nový). Postaví „starou" verzi (tatáž hra s jiným
+otiskem v názvu souboru), otevře ji, pak pod běžící hrou vymění `index.html`
+za novou — jako po skutečném nasazení — a hru odloží na pozadí a zase
+vytáhne. Musí sama naskočit na novou verzi a normálně se otevřít.
+
+Hned první běh chybu potvrdil: hra zůstala na staré. (Podruhé už kvůli
+odstupu mezi kontrolami, takže si ho test musí odsedět — jinak by měřil
+odstup, ne aktualizaci.)

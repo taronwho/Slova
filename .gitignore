@@ -19,3 +19,4 @@ review/
 
 # Sestavení pro emulátor Firebase (npm run audit:duel:e2e)
 dist-emu/
+dist-update/

@@ -37,6 +37,8 @@ createRoot(document.getElementById('root')!).render(
  * a nemá jak se to dozvědět.
  */
 const TRIES = 'slova.refreshTries'
+/** Ke které verzi se ty pokusy vztahují. */
+const TRIES_FOR = 'slova.refreshTarget'
 
 async function ensureLatestBuild() {
   try {
@@ -54,6 +56,19 @@ async function ensureLatestBuild() {
       // neposuzovala podle toho, jak dopadla ta minulá.
       sessionStorage.removeItem(TRIES)
       return
+    }
+
+    /*
+     * Počitadlo pokusů patří k jedné konkrétní verzi.
+     *
+     * Dřív se počítalo napříč vším: kdo se dvakrát marně pokusil doskočit
+     * na jednu verzi, měl aktualizace do konce sezení zamčené — a protože
+     * se nainstalovaná aplikace nezavírá, klidně i na dny. Nová verze
+     * dostane vlastní pokusy.
+     */
+    if (sessionStorage.getItem(TRIES_FOR) !== live[0]) {
+      sessionStorage.setItem(TRIES_FOR, live[0])
+      sessionStorage.removeItem(TRIES)
     }
 
     const tries = Number(sessionStorage.getItem(TRIES) ?? '0')
@@ -83,8 +98,41 @@ async function ensureLatestBuild() {
   }
 }
 
+/*
+ * Kontrola se opakuje, ne jen při načtení.
+ *
+ * Nainstalovaná aplikace se na telefonu nezavírá — jen se odloží na pozadí
+ * a pak zas vytáhne, a stránka se přitom **nenačítá znovu**. Kontrola při
+ * načtení se tedy nemusí spustit celé dny a hráč hraje starou verzi, aniž
+ * by udělal cokoli špatně. Přesně tak zůstal hráč tři a půl hodiny na
+ * verzi, kterou už dávno nahradily dvě novější.
+ *
+ * Proto se kontroluje i pokaždé, když se hra vrátí na obrazovku. Aby to
+ * nechodilo na server při každém přepnutí, drží se mezi kontrolami odstup.
+ */
+const ODSTUP_MS = 30 * 1000
+let posledniKontrola = 0
+let kontrolaBezi = false
+
+async function zkontrolujVerzi() {
+  if (kontrolaBezi) return
+  const ted = Date.now()
+  if (ted - posledniKontrola < ODSTUP_MS) return
+  posledniKontrola = ted
+  kontrolaBezi = true
+  try {
+    await ensureLatestBuild()
+  } finally {
+    kontrolaBezi = false
+  }
+}
+
 if (import.meta.env.PROD && 'serviceWorker' in navigator && !window.__SLOVA_DATA__) {
-  void ensureLatestBuild()
+  void zkontrolujVerzi()
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') void zkontrolujVerzi()
+  })
 
   // Nová verze hry přináší i nový slovník. Když se service worker vymění,
   // stránka se hned načte znovu, aby hráč nedohrával kolo ze starých dat.

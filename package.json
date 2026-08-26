@@ -24,6 +24,7 @@
     "audit:duel:e2e": "bash tools/duel-e2e.sh",
     "audit:awards": "node tools/audit-awards.mjs",
     "audit:pwa": "node tools/audit-pwa.mjs",
+    "audit:update": "node tools/audit-update.mjs",
     "build:review": "QUIZ_ALL=1 vite build && QUIZ_ALL=1 node tools/build-artifact.mjs && mkdir -p review && mv dist/slova-kontrolni.html review/"
   },
   "devDependencies": {
