@@ -9,7 +9,7 @@
 import { useState } from 'react'
 
 import { DUEL_ABOUT, DUEL_KINDS, DUEL_MODE, DUEL_TITLE, type DuelKind } from '../game/duel'
-import { SoubojChyba } from '../lib/multi'
+import { SoubojChyba, zkouskaSpojeni, type Nalez } from '../lib/multi'
 import { MODE_GLYPH } from '../game/types'
 
 interface Props {
@@ -31,11 +31,13 @@ export function DuelSetup({ onClose, onSend }: Props) {
   const [busy, setBusy] = useState(false)
   const [krok, setKrok] = useState('Posílám…')
   const [problem, setProblem] = useState<string | null>(null)
+  const [rozbor, setRozbor] = useState<Nalez[] | 'bezi' | null>(null)
 
   async function send() {
     setBusy(true)
     setKrok('Posílám…')
     setProblem(null)
+    setRozbor(null)
     try {
       const ok = await onSend(kind, nick.trim(), setKrok)
       if (!ok) setProblem('Takového hráče neznám. Zkontroluj přezdívku.')
@@ -94,6 +96,39 @@ export function DuelSetup({ onClose, onSend }: Props) {
           }}
         />
         {problem && <p className="duel-problem">{problem}</p>}
+
+        {/*
+          * Rozbor rovnou u chyby.
+          *
+          * Když výzva neprojde, je jediná otázka „kde to vázne" — a odpověď
+          * na ni je jinde v nabídce, což je uprostřed nezdaru to poslední,
+          * co chce hráč hledat. Tady je na jedno ťuknutí a dá se vyfotit.
+          */}
+        {problem && (
+          <div className="duel-rozbor">
+            <button
+              type="button"
+              className="btn btn-sm btn-ghost"
+              disabled={rozbor === 'bezi'}
+              onClick={() => {
+                setRozbor('bezi')
+                void zkouskaSpojeni().then(setRozbor, () => setRozbor(null))
+              }}
+            >
+              {rozbor === 'bezi' ? 'Zjišťuji…' : 'Kde to vázne?'}
+            </button>
+            {Array.isArray(rozbor) && (
+              <ul className="check-list">
+                {rozbor.map((nalez) => (
+                  <li key={nalez.krok} className={nalez.ok ? 'ok' : 'bad'}>
+                    <span aria-hidden="true">{nalez.ok ? '✓' : '✗'}</span> {nalez.krok}:{' '}
+                    <span className="faint">{nalez.detail}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
 
         <div className="sheet-actions">
           <button

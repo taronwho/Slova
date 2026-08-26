@@ -1151,3 +1151,33 @@ by zůstala navždy zamčená.
 Šest nových testů nad počítáním soubojové hodnosti: body za výhru a remízu,
 že prohra hodnost nesráží, že žebříček začíná na nule a končí, že postup
 uvnitř hodnosti sedí na prahy a že prahy jdou zdola nahoru bez opakování.
+
+## Dodatek 4: spojení se občas nenavázalo a samo se nevzpamatovalo
+
+Hráč hlásil „Nepodařilo se spojit s databází" — tedy novou hlášku, ne starý
+zásek. Spojení se prostě nenavázalo ani za pětadvacet vteřin, a to střídavě:
+jednou večer prošlo, podruhé ne. Poprvé to bylo na mobilních datech, teď na
+wi-fi.
+
+**Firebase si přenos vybírá sám a pamatuje si, co mu naposled nevyšlo.** Když
+jednou neprojde websocket, drží se pak celé sezení pomalejšího záložního
+přenosu — a když uvázne i ten, sám od sebe už nic nezkusí. Jediné, co
+pomáhalo, bylo zavřít celou aplikaci.
+
+Čekání na spojení je proto rozdělené na dva pokusy: deset vteřin, pak
+`goOffline` + `goOnline` (což Firebase donutí začít načisto) a dalších
+patnáct. Celkem tedy stejná trpělivost jako dřív, jen se uprostřed spojením
+zatřepe.
+
+Při té příležitosti se opravila i drobnost v čekání: posluchač se odhlašoval
+uvnitř své vlastní obsluhy, kde ale proměnná s odhlašovací funkcí ještě
+nebyla naplněná — když spojení stálo hned, posluchač po sobě neuklidil.
+
+**A rozbor je nově rovnou u chyby.** Když výzva neprojde, je pod hláškou
+tlačítko *Kde to vázne?*, které vypíše všechny čtyři kroky. Dosud se totéž
+dalo najít jen jinde v nabídce, což je uprostřed nezdaru to poslední, co
+hráč chce hledat.
+
+`audit:duel` k tomu hlídá, že je rozbor u chyby po ruce, že vypíše všechny
+kroky a že se panel s ním dá dorolovat — s rozborem povyroste a ovládání se
+nesmí stát nedosažitelným.

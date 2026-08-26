@@ -173,6 +173,23 @@ if (await vyzvat.isVisible().catch(() => false)) {
   const hlaska = await page.locator('.duel-problem').first().innerText().catch(() => '')
   check(!napis.includes('…'), `tlačítko nezůstalo viset (${napis || 'zmizelo'})`)
   check(hlaska.length > 0, `výzva se ozvala („${hlaska}")`)
+
+  // U chyby musí být po ruce rozbor — jinak se „kde to vázne" hledá jinde
+  // v nabídce, což je uprostřed nezdaru to poslední, co hráč chce dělat.
+  const kdeVazne = page.locator('.duel-rozbor .btn')
+  check(await kdeVazne.isVisible().catch(() => false), 'u chyby je po ruce rozbor spojení')
+  if (await kdeVazne.isVisible().catch(() => false)) {
+    await kdeVazne.click()
+    await page.locator('.duel-rozbor .check-list').waitFor({ timeout: 90000 }).catch(() => undefined)
+    const radky = await page.locator('.duel-rozbor .check-list li').count()
+    check(radky === 4, `rozbor vypsal všechny kroky (${radky})`)
+    // Panel se rozborem povyroste; ovládání se nesmí stát nedosažitelným.
+    const dosah = await page.evaluate(() => {
+      const sheet = document.querySelector('.sheet')
+      return sheet ? getComputedStyle(sheet).overflowY : 'chybí'
+    })
+    check(dosah === 'auto' || dosah === 'scroll', `delší panel jde dorolovat (${dosah})`)
+  }
 } else {
   check(false, 'tlačítko Vyzvat není vidět, i když přezdívka je zabraná')
 }

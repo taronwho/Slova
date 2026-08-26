@@ -105,7 +105,8 @@ const CEKANI_MS = 15_000
  * i když byl server v pořádku a stačilo mu dát chvíli. Proto se teď
  * napřed počká na spojení a **teprve pak** se posílá dotaz.
  */
-const SPOJENI_MS = 25_000
+const SPOJENI_PRVNI_MS = 10_000
+const SPOJENI_DRUHY_MS = 15_000
 
 /**
  * Chyba, kterou smí hráč přečíst.
@@ -179,25 +180,49 @@ function open(): Promise<Db> {
  * Kdo jen navěšuje posluchač (`subscribe`), čekat nemusí: posluchač si
  * počká sám a zavolá se, až data přijdou.
  */
+function pockejNaSpojeni(db: Db['db'], base: Db['base'], kolik: number): Promise<boolean> {
+  return new Promise<boolean>((hotovo) => {
+    let odpojit: (() => void) | null = null
+    let sesnuto = false
+    const konec = (uspech: boolean) => {
+      if (sesnuto) return
+      sesnuto = true
+      clearTimeout(budik)
+      odpojit?.()
+      hotovo(uspech)
+    }
+    const budik = setTimeout(() => konec(false), kolik)
+    odpojit = db.onValue(db.ref(base, '.info/connected'), (snap) => {
+      if (snap.val() === true) konec(true)
+    })
+    // Kdyby spojení stálo hned, `onValue` se ozve ještě uvnitř téhle řádky —
+    // a `odpojit` by v tu chvíli bylo prázdné. Posluchač se proto odhlašuje
+    // až tady, když se to stihlo.
+    if (sesnuto) odpojit()
+  })
+}
+
 async function pripraveno(): Promise<Db> {
   const spojeni = await open()
   const { db, base } = spojeni
-  await new Promise<void>((hotovo, zamitnout) => {
-    let odpojit: (() => void) | null = null
-    const budik = setTimeout(() => {
-      odpojit?.()
-      zamitnout(
-        new SoubojChyba('Nepodařilo se spojit s databází. Zkontroluj připojení a zkus to znovu.'),
-      )
-    }, SPOJENI_MS)
-    odpojit = db.onValue(db.ref(base, '.info/connected'), (snap) => {
-      if (snap.val() !== true) return
-      clearTimeout(budik)
-      odpojit?.()
-      hotovo()
-    })
-  })
-  return spojeni
+  if (await pockejNaSpojeni(db, base, SPOJENI_PRVNI_MS)) return spojeni
+
+  /*
+   * Nespojilo se. Než se to vzdá, spojení se zatřepe.
+   *
+   * Firebase si přenos vybírá sám a pamatuje si, co mu naposled nevyšlo —
+   * když se jednou nepovede websocket, drží se pak celé sezení pomalejšího
+   * záložního přenosu, a když uvázne i ten, sám od sebe už nic nezkusí.
+   * `goOffline` + `goOnline` ho donutí začít načisto; hráč pak nemusí zavírat
+   * celou aplikaci, což bylo jediné, co dosud pomáhalo.
+   */
+  db.goOffline(base)
+  db.goOnline(base)
+  if (await pockejNaSpojeni(db, base, SPOJENI_DRUHY_MS)) return spojeni
+
+  throw new SoubojChyba(
+    'Nepodařilo se spojit s databází. Zkontroluj připojení a zkus to znovu.',
+  )
 }
 
 /**

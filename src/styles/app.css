@@ -6077,3 +6077,13 @@ button.stat.open {
   border-radius: var(--r-full);
   background: var(--accent);
 }
+
+/* Rozbor spojení pod chybou při výzvě. Sedí v panelu, takže se drží úzko
+   a nesmí ho roztáhnout — proto vlastní řádkování, ne to z karty. */
+.duel-rozbor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  align-items: flex-start;
+  margin-bottom: var(--sp-3);
+}
