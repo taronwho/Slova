@@ -21,6 +21,7 @@ import {
   VERDICT_TITLE,
   type DuelKind,
 } from '../game/duel'
+import { duelPoints, duelRankFor, DUEL_RANKS } from '../game/duelRank'
 import { MODE_GLYPH } from '../game/types'
 import {
   pozadatOPovoleni,
@@ -115,6 +116,7 @@ export function Friends({
   }
 
   const played = me.wins + me.losses + me.draws
+  const soubojova = duelRankFor(duelPoints(me))
 
   return (
     <div className="friends">
@@ -161,6 +163,39 @@ export function Friends({
         </div>
       ) : (
         <>
+          {/*
+            * Vlastní soubojová hodnost.
+            *
+            * Souboje se nepočítají do věhlasu — a bez vlastního žebříčku by
+            * z nich nezůstalo nic než čísla výher. Tenhle roste pomalu (za
+            * výhru tři body, za remízu jeden) a je to záznam o hraní proti
+            * lidem, ne měřítko, kdo je lepší: k odehranému souboji je
+            * pokaždé potřeba druhý člověk.
+            */}
+          <div className="panel friends-rank">
+            <span className="label">Hodnost v soubojích</span>
+            <b className="friends-rank-name">{soubojova.rank.name}</b>
+            <span className="faint">
+              {soubojova.rank.index}. z {DUEL_RANKS.length}
+              {soubojova.next
+                ? ` · do hodnosti ${soubojova.next.name} zbývá ${
+                    soubojova.span - soubojova.into
+                  } b.`
+                : ' · nejvyšší'}
+            </span>
+            {soubojova.next && (
+              <span
+                className="friends-rank-bar"
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={soubojova.span}
+                aria-valuenow={soubojova.into}
+              >
+                <i style={{ width: `${Math.round((soubojova.into / soubojova.span) * 100)}%` }} />
+              </span>
+            )}
+          </div>
+
           <div className="panel friends-me">
             <span className="friends-nick">{me.nick}</span>
             <span className="friends-tally">

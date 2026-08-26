@@ -1089,3 +1089,65 @@ výzvu…".
 Zkouška spojení má čtvrtý řádek: **spojení hry s databází**, i s časem, jak
 dlouho trvalo. To je ze všech kroků ten nejdůležitější — hra se neptá
 websocketem přímo, ptá se přes Firebase, a ten si spojení navléká sám.
+
+# Odveta, hodnost soupeře a soubojové mety
+
+Souboje běží, takže přišly tři věci, o které si hráč řekl.
+
+## Odveta
+
+Po dohraném souboji se v závěrečné kartě nabídne **Odveta**. Založí nový
+zápas s tímtéž soupeřem a ve stejném formátu, jen s novými hádankami —
+staré by soupeř už znal. Dřív se musela přezdívka pokaždé vypsat znovu, což
+u dvou lidí, kteří si hrají celý večer, znamenalo psát ji pořád dokola.
+
+Obrazovka souboje se přitom musí rozehrát načisto, ne jen dostat nová data —
+proto má `key={match.id}`. Bez toho by v ní zůstal starý stav a odveta by
+začala u výsledku předchozího kola.
+
+## Hodnost soupeře
+
+U přezdívky soupeře je odznak hodnosti a její číslo; ťuknutím se otevře
+karta hráče se jménem hodnosti, soubojovou hodností a bilancí.
+
+Vlastní hodnost si každý posílá na server sám (`players/{uid}/band`) — jen
+číslo, jméno si druhá strana dohledá ze stejného seznamu. Píše se, jen když
+se změnila; hodnost roste pomalu a zápis při každém spuštění by byl jen šum.
+
+**Karta se načítá až na ťuknutí.** Uprostřed souboje se nemá chodit na server
+pro nic, co si hráč nevyžádal, a kdo si soupeře prohlížet nebude, nezaplatí
+za to ani jedním požadavkem.
+
+Pravidla databáze se kvůli tomu měnit nemusely: `band` i `wins/losses/draws`
+jsou pole, která `players/$uid` už povoluje, a čtení je otevřené každému
+přihlášenému.
+
+## Hodnosti a mety za souboje
+
+Dvanáct soubojových hodností od **Vyzyvatele** po **Nepřemožitelného**.
+Počítají se ze tří čísel, která databáze o hráči už vede: za výhru tři body,
+za remízu jeden, za prohru nula. Prohra tedy hodnost **nesráží** — kdo hraje
+a prohrává, stojí; kdo nehraje, taky stojí. Hodnost říká „tohle jsem
+odehrál", ne „o tolik jsem lepší".
+
+Poslední stupeň je na zhruba dvě stě vyhraných soubojů, tedy na dlouhou
+známost, ne na jeden večer. K odehranému souboji je pokaždé potřeba druhý
+člověk — to je jediná obrana proti nahánění a stačí, protože žebříček nikam
+neposílá a s nikým se neporovnává.
+
+K tomu **čtrnáct nových met** ve vlastní skupině *Souboje s přáteli*: dva
+žebříčky po pěti (odehrané souboje, výhry), tři za série výher a jedna za
+vyhranou odvetu. Body ze soubojů dál nejdou do věhlasu ani do hodnosti
+profilu; mety dávají jen inkoust a je jich pevný počet, takže se ani jimi
+nedá nic nahnat donekonečna.
+
+Podmínky se čtou z `profile.duels`, což je **kopie** bilance ze
+`slova.multi.v1`. Je to schválně: ocenění se smí koukat jedině do profilu,
+jinak by se nedala kdykoli přepočítat znovu a meta, která nestihla spadnout,
+by zůstala navždy zamčená.
+
+## Čím je to hlídané
+
+Šest nových testů nad počítáním soubojové hodnosti: body za výhru a remízu,
+že prohra hodnost nesráží, že žebříček začíná na nule a končí, že postup
+uvnitř hodnosti sedí na prahy a že prahy jdou zdola nahoru bez opakování.

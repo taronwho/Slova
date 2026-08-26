@@ -37,6 +37,7 @@ import {
   type Match,
 } from '../lib/multi'
 import { DuelEnd } from './DuelEnd'
+import { RivalChip } from './RivalChip'
 
 interface Props {
   match: Match
@@ -45,7 +46,9 @@ interface Props {
   uid: string
   nick: string
   onHome: () => void
-  onVerdict: (verdict: Verdict) => void
+  onVerdict: (verdict: Verdict, mine: number) => void
+  /** Odveta se stejným soupeřem, aby se přezdívka nemusela psát znovu. */
+  onRematch?: () => Promise<boolean>
 }
 
 const RING = [
@@ -59,7 +62,7 @@ const RING = [
 
 const CENTER = { left: '33.5%', top: '33.8%' }
 
-export function DuelHive({ match, puzzle, uid, nick, onHome, onVerdict }: Props) {
+export function DuelHive({ match, puzzle, uid, nick, onHome, onVerdict, onRematch }: Props) {
   const [live, setLive] = useState(match.live)
   const [owners, setOwners] = useState<Record<string, string>>({})
   const [state, setState] = useState<HiveState>(() => createHiveState(puzzle))
@@ -68,6 +71,7 @@ export function DuelHive({ match, puzzle, uid, nick, onHome, onVerdict }: Props)
   const [left, setLeft] = useState(HIVE_DUEL_MS)
   const [over, setOver] = useState(false)
   const rival = match.host === uid ? match.guestNick : match.hostNick
+  const rivalUid = match.host === uid ? match.guest : match.host
   const host = match.host === uid
 
   const letters = useMemo(() => letterSet(puzzle), [puzzle])
@@ -238,7 +242,9 @@ export function DuelHive({ match, puzzle, uid, nick, onHome, onVerdict }: Props)
           {clock}
         </span>
         <span className="duel-side">
-          <span className="duel-name">{rival}</span>
+          <span className="duel-name">
+            <RivalChip uid={rivalUid} nick={rival} />
+          </span>
           <span className="num">{rivalPoints}</span>
         </span>
       </div>
@@ -333,6 +339,7 @@ export function DuelHive({ match, puzzle, uid, nick, onHome, onVerdict }: Props)
           note={`${mineWords.length} slov · ${points} bodů z plástve`}
           onHome={onHome}
           onVerdict={onVerdict}
+          {...(onRematch ? { onRematch } : {})}
         />
       )}
     </div>

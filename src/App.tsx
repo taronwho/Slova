@@ -69,6 +69,7 @@ import {
   blockPlayer,
   createMatch,
   pripravSpojeni,
+  ulozHodnost,
   dropChallenge,
   eraseMe,
   reportPlayer,
@@ -599,6 +600,28 @@ export default function App() {
     [duelPuzzles],
   )
 
+  /**
+   * Odveta — znovu proti témuž soupeři a ve stejném formátu.
+   *
+   * Dřív se musela přezdívka pokaždé vypsat znovu, což u dvou lidí, kteří
+   * si hrají celý večer, znamenalo psát ji pořád dokola. Zápas je nový
+   * (staré hádanky by soupeř už znal), jen se nevybírá, s kým.
+   */
+  const rematch = useCallback(async (): Promise<boolean> => {
+    if (!match) return false
+    const rivalNick = match.host === uid ? match.guestNick : match.hostNick
+    const picked = await duelPuzzles(match.kind)
+    await pripravSpojeni()
+    const created = await createMatch(match.kind, picked.ids, rivalNick)
+    if (!created) return false
+    odvetaZa.current.add(created.id)
+    setMatchHive(picked.hive)
+    setMatchIntruder(picked.intruder)
+    setMatch(created)
+    setMe((previous) => rememberMatch(previous, created.id))
+    return true
+  }, [duelPuzzles, match, uid])
+
   /** Přijme došlou výzvu. */
   const acceptDuel = useCallback(
     async (item: Challenge) => {
@@ -645,14 +668,63 @@ export default function App() {
   }, [])
 
   /** Souboj je rozhodnutý — připíše se do bilance a zmizí z rozehraných. */
-  const closeDuel = useCallback((id: string, verdict: Verdict) => {
-    setMe((previous) => {
-      const next = tallyWith(forgetMatch(previous, id), verdict === 'draw' ? null : verdict === 'win')
-      saveMe(next)
-      void saveTally(next)
-      return next
-    })
-  }, [])
+  /**
+   * Souboj je dohraný.
+   *
+   * Bilance se ukládá dvakrát, a je to tak schválně: do `slova.multi.v1`
+   * (a na server, ať ji vidí soupeři) a do profilu. Ocenění se totiž čtou
+   * **výhradně z profilu** — díky tomu se dají kdykoli přepočítat znovu
+   * a meta, která nestihla spadnout, se dožene sama. Do věhlasu a hodnosti
+   * profilu souboje dál nesahají; mají vlastní žebříček.
+   */
+  const closeDuel = useCallback(
+    (id: string, verdict: Verdict, skore = 0) => {
+      const odveta = odvetaZa.current.has(id)
+      odvetaZa.current.delete(id)
+      setMe((previous) => {
+        const next = tallyWith(
+          forgetMatch(previous, id),
+          verdict === 'draw' ? null : verdict === 'win',
+        )
+        saveMe(next)
+        void saveTally(next)
+        return next
+      })
+      updateProfile((previous) => {
+        const rada = verdict === 'win' ? previous.duels.winStreak + 1 : 0
+        return {
+          ...previous,
+          duels: {
+            ...previous.duels,
+            played: previous.duels.played + 1,
+            wins: previous.duels.wins + (verdict === 'win' ? 1 : 0),
+            losses: previous.duels.losses + (verdict === 'loss' ? 1 : 0),
+            draws: previous.duels.draws + (verdict === 'draw' ? 1 : 0),
+            best: Math.max(previous.duels.best, skore),
+            rematchWins: previous.duels.rematchWins + (odveta && verdict === 'win' ? 1 : 0),
+            winStreak: rada,
+            bestWinStreak: Math.max(previous.duels.bestWinStreak, rada),
+          },
+        }
+      })
+    },
+    [updateProfile],
+  )
+
+  /** Zápasy, které vznikly jako odveta — kvůli metě za oplacenou porážku. */
+  const odvetaZa = useRef<Set<string>>(new Set())
+
+  /*
+   * Vlastní hodnost na server, aby ji soupeř viděl u přezdívky.
+   *
+   * Posílá se jen číslo hodnosti, nic jiného, a jen tomu, kdo má zabranou
+   * přezdívku — bez ní o hráči server stejně nic nevede. Uvnitř `ulozHodnost`
+   * se hlídá, aby se totéž číslo nezapisovalo pořád dokola.
+   */
+  useEffect(() => {
+    if (!MULTI_ON || !me.nick) return
+    void ulozHodnost(rank.rank.index)
+  }, [me.nick, rank.rank.index])
 
   const finishRound = useCallback(
     (result: RoundResult) => {
@@ -1244,23 +1316,27 @@ export default function App() {
             proti sobě stojí dva lidé a nic jiného se do toho neplete. */}
         {!loading && view.kind === 'duel' && match && matchHive && (
           <DuelHive
+            key={match.id}
             match={match}
             puzzle={matchHive}
             uid={uid}
             nick={me.nick}
             onHome={goHome}
-            onVerdict={(verdict) => closeDuel(match.id, verdict)}
+            onVerdict={(verdict, skore) => closeDuel(match.id, verdict, skore)}
+            onRematch={rematch}
           />
         )}
 
         {!loading && view.kind === 'duel' && match && matchIntruder && (
           <DuelIntruder
+            key={match.id}
             match={match}
             puzzles={matchIntruder}
             uid={uid}
             nick={me.nick}
             onHome={goHome}
-            onVerdict={(verdict) => closeDuel(match.id, verdict)}
+            onVerdict={(verdict, skore) => closeDuel(match.id, verdict, skore)}
+            onRematch={rematch}
           />
         )}
 

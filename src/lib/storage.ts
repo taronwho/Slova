@@ -198,6 +198,46 @@ export interface Profile {
   quiz: QuizRecord
   /** Denní série, jedna za každou hru. */
   dailyStreak: Record<ModeId, DailyStreak>
+  /**
+   * Souboje s přáteli.
+   *
+   * Bilance samotná se vede v `slova.multi.v1` (má ji i server), tady je
+   * proto **kopie** a k ní pár počítadel navíc. Důvod: ocenění se čtou
+   * výhradně z profilu — jen tak se dají kdykoli přepočítat znovu a meta,
+   * která nestihla spadnout, se dožene sama. Kdyby soubojová ocenění sahala
+   * jinam, tohle pravidlo padne.
+   *
+   * Do věhlasu ani do hodnosti profilu se souboje nepočítají dál. Mají
+   * vlastní žebříček (`game/duelRank.ts`) a vlastní mety.
+   */
+  duels: DuelRecord
+}
+
+export interface DuelRecord {
+  played: number
+  wins: number
+  losses: number
+  draws: number
+  /** Nejlepší skóre v jednom souboji. */
+  best: number
+  /** Výhry v odvetě — meta za to, že si hráč porážku vzal zpátky. */
+  rematchWins: number
+  /** Kolik výher jde právě po sobě, a nejvíc, kolik jich kdy šlo. */
+  winStreak: number
+  bestWinStreak: number
+}
+
+export function emptyDuels(): DuelRecord {
+  return {
+    played: 0,
+    wins: 0,
+    losses: 0,
+    draws: 0,
+    best: 0,
+    rematchWins: 0,
+    winStreak: 0,
+    bestWinStreak: 0,
+  }
 }
 
 /**
@@ -300,6 +340,7 @@ export function emptyProfile(): Profile {
     },
     guideSeen: false,
     quiz: emptyQuiz(),
+    duels: emptyDuels(),
     dailyStreak: Object.fromEntries(
       MODES.map((mode) => [mode, emptyDailyStreak()]),
     ) as Record<ModeId, DailyStreak>,
@@ -437,6 +478,7 @@ export function migrate(raw: unknown): Profile {
     dailyDone: { ...base.dailyDone, ...(saved.dailyDone ?? {}) },
     tutorialSeen: { ...base.tutorialSeen, ...(saved.tutorialSeen ?? {}) },
     quiz: { ...base.quiz, ...(saved.quiz ?? {}) },
+    duels: { ...base.duels, ...(saved.duels ?? {}) },
     // Po jedné hře, ne mělce: nová hra v žebříčku by jinak zůstala
     // `undefined` a série by se na ní počítala z ničeho.
     dailyStreak: Object.fromEntries(

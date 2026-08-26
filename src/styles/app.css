@@ -5979,3 +5979,101 @@ button.stat.open {
   font-size: 0.82rem;
   line-height: 1.5;
 }
+
+/* ---------- soupeř v souboji ---------- */
+
+/* Přezdívka soupeře i s odznakem hodnosti. Vypadá jako text, ale je to
+   tlačítko — ťuknutím se otevře karta hráče. */
+.rival-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  margin: -2px -2px;
+  border: 0;
+  border-radius: var(--r-full);
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  max-width: 100%;
+}
+
+.rival-chip:hover {
+  background: var(--surface-2);
+}
+
+.rival-nick {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rival-band {
+  font-size: 0.72rem;
+  font-weight: 700;
+  opacity: 0.7;
+}
+
+.rival-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.rival-head h3 {
+  margin: 0;
+}
+
+.rival-head p {
+  margin: 2px 0 0;
+}
+
+.rival-rank {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  margin-bottom: var(--sp-3);
+}
+
+.rival-tally {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+
+/* ---------- vlastní hodnost v soubojích ---------- */
+
+.friends-rank {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: var(--sp-3);
+}
+
+.friends-rank-name {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+}
+
+.friends-rank-bar {
+  display: block;
+  height: 6px;
+  margin-top: var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.friends-rank-bar i {
+  display: block;
+  height: 100%;
+  border-radius: var(--r-full);
+  background: var(--accent);
+}

@@ -12,6 +12,7 @@ import { duelRoundScore, INTRUDER_DUEL_MAX, type Verdict } from '../game/duel'
 import type { IntruderPuzzle } from '../game/intruder'
 import { finishMatch, type Match } from '../lib/multi'
 import { DuelEnd } from './DuelEnd'
+import { RivalChip } from './RivalChip'
 
 interface Props {
   match: Match
@@ -19,10 +20,12 @@ interface Props {
   uid: string
   nick: string
   onHome: () => void
-  onVerdict: (verdict: Verdict) => void
+  onVerdict: (verdict: Verdict, mine: number) => void
+  /** Odveta se stejným soupeřem, aby se přezdívka nemusela psát znovu. */
+  onRematch?: () => Promise<boolean>
 }
 
-export function DuelIntruder({ match, puzzles, uid, nick, onHome, onVerdict }: Props) {
+export function DuelIntruder({ match, puzzles, uid, nick, onHome, onVerdict, onRematch }: Props) {
   const [round, setRound] = useState(0)
   const [picked, setPicked] = useState<string | null>(null)
   const [total, setTotal] = useState(0)
@@ -63,12 +66,15 @@ export function DuelIntruder({ match, puzzles, uid, nick, onHome, onVerdict }: P
   }
 
   const rival = match.host === uid ? match.guestNick : match.hostNick
+  const rivalUid = match.host === uid ? match.guest : match.host
 
   return (
     <div className="game duel-game">
       <div className="duel-bar">
         <span className="duel-side me">
-          <span className="duel-name">proti {rival}</span>
+          <span className="duel-name">
+            proti <RivalChip uid={rivalUid} nick={rival} />
+          </span>
           <span className="num">{total}</span>
         </span>
         <span className="duel-clock">
@@ -120,6 +126,7 @@ export function DuelIntruder({ match, puzzles, uid, nick, onHome, onVerdict }: P
           note={`${total} bodů ze tří kol`}
           onHome={onHome}
           onVerdict={onVerdict}
+          {...(onRematch ? { onRematch } : {})}
         />
       )}
     </div>

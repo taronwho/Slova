@@ -13,6 +13,7 @@ import { ReportContext } from '../app/nextUp'
 import { VERDICT_TITLE, verdictOf, type Verdict } from '../game/duel'
 import { watchDone, type Match, type MatchScore } from '../lib/multi'
 import { Confetti } from './Confetti'
+import { RivalChip } from './RivalChip'
 
 interface Props {
   match: Match
@@ -23,11 +24,29 @@ interface Props {
   verdict?: Verdict
   note?: string
   onHome: () => void
-  onVerdict: (verdict: Verdict) => void
+  onVerdict: (verdict: Verdict, mine: number) => void
+  /**
+   * Odveta se stejným soupeřem a stejným formátem.
+   *
+   * Bez ní se musela přezdívka pokaždé psát znovu, což u dvou lidí, kteří
+   * si hrají celý večer, znamenalo psát ji pořád dokola. Vrací false, když
+   * se soupeř mezitím ztratil (smazal si přezdívku).
+   */
+  onRematch?: () => Promise<boolean>
 }
 
-export function DuelEnd({ match, uid, mine, fallback, note, onHome, onVerdict }: Props) {
+export function DuelEnd({
+  match,
+  uid,
+  mine,
+  fallback,
+  note,
+  onHome,
+  onVerdict,
+  onRematch,
+}: Props) {
   const [rows, setRows] = useState<Record<string, MatchScore>>({})
+  const [odveta, setOdveta] = useState<'ne' | 'bezi' | 'chyba'>('ne')
   const report = useContext(ReportContext)
   const rivalUid = match.host === uid ? match.guest : match.host
   const rivalNick = match.host === uid ? match.guestNick : match.hostNick
@@ -42,8 +61,8 @@ export function DuelEnd({ match, uid, mine, fallback, note, onHome, onVerdict }:
   useEffect(() => {
     if (!verdict || counted.current) return
     counted.current = true
-    onVerdict(verdict)
-  }, [onVerdict, verdict])
+    onVerdict(verdict, mine)
+  }, [mine, onVerdict, verdict])
 
   return (
     <>
@@ -75,7 +94,7 @@ export function DuelEnd({ match, uid, mine, fallback, note, onHome, onVerdict }:
               <b className="num">{mine.toLocaleString('cs-CZ')}</b>
               <span className="faint">:</span>
               <b className="num">{row ? row.score.toLocaleString('cs-CZ') : '—'}</b>
-              <span className="faint">{row?.nick ?? rivalNick}</span>
+              <RivalChip uid={rivalUid} nick={row?.nick ?? rivalNick} />
             </span>
           </div>
 
@@ -86,8 +105,34 @@ export function DuelEnd({ match, uid, mine, fallback, note, onHome, onVerdict }:
             </p>
           )}
 
+          {odveta === 'chyba' && (
+            <p className="duel-problem">
+              Odvetu se nepodařilo poslat. Zkus to z Hry s přáteli.
+            </p>
+          )}
+
           <div className="result-actions">
-            <button type="button" className="btn btn-primary" onClick={onHome}>
+            {onRematch && (
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={odveta === 'bezi'}
+                onClick={() => {
+                  setOdveta('bezi')
+                  void onRematch().then(
+                    (ok) => setOdveta(ok ? 'ne' : 'chyba'),
+                    () => setOdveta('chyba'),
+                  )
+                }}
+              >
+                {odveta === 'bezi' ? 'Posílám odvetu…' : 'Odveta'}
+              </button>
+            )}
+            <button
+              type="button"
+              className={`btn ${onRematch ? '' : 'btn-primary'}`}
+              onClick={onHome}
+            >
               Zpět do menu
             </button>
           </div>

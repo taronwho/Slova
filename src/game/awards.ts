@@ -43,6 +43,7 @@ export type AwardGroup =
   | 'grit'
   | 'mastery'
   | 'habit'
+  | 'duel'
 
 /** Barva kresby. Meta patřící k jednomu režimu si bere jeho barvu. */
 export type AwardTone =
@@ -88,6 +89,7 @@ export const GROUP_LABEL: Record<AwardGroup, string> = {
   feat: 'Mistrovské kousky',
   habit: 'Návyk',
   grit: 'Vytrvalost',
+  duel: 'Souboje s přáteli',
 }
 
 export const GROUP_NOTE: Record<AwardGroup, string> = {
@@ -98,6 +100,7 @@ export const GROUP_NOTE: Record<AwardGroup, string> = {
   feat: 'Kousky, které se jen tak nepovedou.',
   habit: 'Za to, že se vracíš den po dni. Jediné mety, které nejdou dohnat jedním večerem.',
   grit: 'Za dlouhé série a nasbírané kilometry.',
+  duel: 'Za hraní proti lidem. Body ze soubojů do věhlasu nejdou — tyhle mety jsou jediné, co za ně padne.',
 }
 
 export const AWARD_GROUPS: AwardGroup[] = [
@@ -108,6 +111,7 @@ export const AWARD_GROUPS: AwardGroup[] = [
   'feat',
   'habit',
   'grit',
+  'duel',
 ]
 
 /** Podíl splnění, oříznutý na 0–1. */
@@ -620,6 +624,39 @@ export const AWARDS: Award[] = [
   ...ladder('serie-dlouhe', 'grit', 'ok', 'gem', (p) => p.bestStreak, [
     { need: 150, title: 'Sto padesát načisto v řadě', goal: 'Dohraj sto padesát kol za sebou bez nápovědy' },
     { need: 300, title: 'Tři sta načisto v řadě', goal: 'Dohraj tři sta kol za sebou bez nápovědy' },
+  ]),
+
+  /*
+   * --- Souboje s přáteli ------------------------------------------------
+   *
+   * Souboje se nepočítají do věhlasu ani do ostatních met — dva domluvení
+   * kamarádi by si za večer nahnali cokoli. Tyhle mety jsou proto jediné,
+   * co za souboje padne, a jsou postavené tak, aby se nedaly odbýt jedním
+   * večerem: k odehranému souboji je pokaždé potřeba druhý člověk.
+   *
+   * Čte se z `profile.duels`, což je kopie bilance ze `slova.multi.v1`.
+   * Ocenění se smí koukat jedině do profilu, jinak by se nedala přepočítat.
+   */
+  ...ladder('duely', 'duel', 'brand', 'flag', (p) => p.duels.played, [
+    { need: 1, title: 'První souboj', goal: 'Odehraj souboj s kamarádem' },
+    { need: 10, title: 'Deset klání', goal: 'Odehraj deset soubojů' },
+    { need: 30, title: 'Třicet klání', goal: 'Odehraj třicet soubojů' },
+    { need: 75, title: 'Pětasedmdesát klání', goal: 'Odehraj pětasedmdesát soubojů' },
+    { need: 150, title: 'Sto padesát klání', goal: 'Odehraj sto padesát soubojů' },
+  ]),
+  ...ladder('duel-vyhry', 'duel', 'gold', 'medal', (p) => p.duels.wins, [
+    { need: 1, title: 'První výhra', goal: 'Vyhraj souboj' },
+    { need: 5, title: 'Pět výher', goal: 'Vyhraj pět soubojů' },
+    { need: 15, title: 'Patnáct výher', goal: 'Vyhraj patnáct soubojů' },
+    { need: 40, title: 'Čtyřicet výher', goal: 'Vyhraj čtyřicet soubojů' },
+    { need: 100, title: 'Sto výher', goal: 'Vyhraj sto soubojů' },
+  ]),
+  count('duel-odveta', 'duel', 'ok', 'Oplaceno', 'Vyhraj odvetu', 'arrow', 1,
+    (p) => p.duels.rematchWins),
+  ...ladder('duel-serie', 'duel', 'warn', 'flame', (p) => p.duels.bestWinStreak, [
+    { need: 3, title: 'Tři výhry v řadě', goal: 'Vyhraj tři souboje za sebou' },
+    { need: 7, title: 'Sedm výher v řadě', goal: 'Vyhraj sedm soubojů za sebou' },
+    { need: 15, title: 'Patnáct výher v řadě', goal: 'Vyhraj patnáct soubojů za sebou' },
   ]),
 ]
 

@@ -7,6 +7,13 @@ import {
   INTRUDER_ROUNDS,
   verdictOf,
 } from '../src/game/duel'
+import {
+  DUEL_RANKS,
+  duelPoints,
+  duelRankFor,
+  duelsPlayed,
+  duelWinRate,
+} from '../src/game/duelRank'
 import { foldNick } from '../src/game/nickCheck'
 import { blockPlayer, forgetMatch, nickError, rememberMatch, tallyWith } from '../src/lib/multi'
 import {
@@ -1804,5 +1811,52 @@ describe('přihrádky rozehraných kol', () => {
     expect(loadQuizRound()?.day).toBe(42)
     saveQuizRound(null)
     expect(loadQuizRound()).toBeNull()
+  })
+})
+
+describe('hodnosti v soubojích', () => {
+  it('za výhru tři body, za remízu jeden, za prohru nic', () => {
+    expect(duelPoints({ wins: 0, losses: 0, draws: 0 })).toBe(0)
+    expect(duelPoints({ wins: 1, losses: 9, draws: 0 })).toBe(3)
+    expect(duelPoints({ wins: 0, losses: 0, draws: 4 })).toBe(4)
+    expect(duelPoints({ wins: 7, losses: 3, draws: 2 })).toBe(23)
+  })
+
+  it('prohra hodnost nesráží — kdo prohrává, stojí, neklesá', () => {
+    const po_vyhrach = duelRankFor(duelPoints({ wins: 5, losses: 0, draws: 0 }))
+    const po_prohrach = duelRankFor(duelPoints({ wins: 5, losses: 20, draws: 0 }))
+    expect(po_prohrach.rank.index).toBe(po_vyhrach.rank.index)
+  })
+
+  it('žebříček začíná na nule a končí nejvyšší hodností', () => {
+    expect(duelRankFor(0).rank.index).toBe(1)
+    expect(duelRankFor(0).rank.name).toBe(DUEL_RANKS[0]!.name)
+    const nejvyssi = DUEL_RANKS[DUEL_RANKS.length - 1]!
+    const vrchol = duelRankFor(nejvyssi.at + 1000)
+    expect(vrchol.rank.index).toBe(nejvyssi.index)
+    expect(vrchol.next).toBeNull()
+    expect(vrchol.span).toBe(0)
+  })
+
+  it('postup uvnitř hodnosti sedí na prahy', () => {
+    const druha = DUEL_RANKS[1]!
+    const treti = DUEL_RANKS[2]!
+    const kus = duelRankFor(druha.at + 1)
+    expect(kus.rank.index).toBe(2)
+    expect(kus.into).toBe(1)
+    expect(kus.span).toBe(treti.at - druha.at)
+  })
+
+  it('prahy jdou zdola nahoru a žádný se neopakuje', () => {
+    for (let i = 1; i < DUEL_RANKS.length; i += 1) {
+      expect(DUEL_RANKS[i]!.at).toBeGreaterThan(DUEL_RANKS[i - 1]!.at)
+    }
+  })
+
+  it('úspěšnost bere remízu za půl výhry a bez odehraných kol mlčí', () => {
+    expect(duelWinRate({ wins: 0, losses: 0, draws: 0 })).toBeNull()
+    expect(duelWinRate({ wins: 1, losses: 1, draws: 0 })).toBe(50)
+    expect(duelWinRate({ wins: 0, losses: 1, draws: 1 })).toBe(25)
+    expect(duelsPlayed({ wins: 7, losses: 3, draws: 2 })).toBe(12)
   })
 })

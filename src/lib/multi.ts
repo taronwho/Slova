@@ -285,6 +285,59 @@ export async function nickFree(nick: string): Promise<boolean> {
   return !found.exists()
 }
 
+/* ---------- karta hráče ---------- */
+
+export interface KartaHrace {
+  uid: string
+  nick: string
+  /** Hodnost profilu (1–58), nebo 0, když ji hráč ještě neposlal. */
+  band: number
+  wins: number
+  losses: number
+  draws: number
+}
+
+/**
+ * Vlastní hodnost profilu na server, aby ji soupeř viděl.
+ *
+ * Posílá se samotné číslo, nic víc — jméno hodnosti si druhá strana dohledá
+ * sama ze stejného seznamu. Píše se, jen když se změnila; hodnost roste
+ * pomalu a zbytečný zápis při každém spuštění by byl jen šum.
+ */
+let poslednaHodnost = 0
+
+export async function ulozHodnost(band: number): Promise<void> {
+  if (!Number.isFinite(band) || band <= 0 || band === poslednaHodnost) return
+  poslednaHodnost = band
+  try {
+    const { db, base, uid } = await pripraveno()
+    await docekat(
+      db.update(db.ref(base, `players/${uid}`), { band, seenAt: db.serverTimestamp() }),
+      'hodnost',
+    )
+  } catch {
+    // Hodnost je údaj pro ostatní, ne pro hru. Když se nezapíše, nic se
+    // neděje — příště to zkusí znovu.
+    poslednaHodnost = 0
+  }
+}
+
+/** Přečte kartu soupeře. Vrací null, když o něm server nic neví. */
+export async function nactiHrace(uid: string): Promise<KartaHrace | null> {
+  const { db, base } = await pripraveno()
+  const found = await docekat(db.get(db.ref(base, `players/${uid}`)), 'karta hráče')
+  const value = found.val() as Record<string, unknown> | null
+  if (!value) return null
+  return {
+    uid,
+    nick: String(value.nick ?? '?'),
+    band: Number(value.band ?? 0),
+    wins: Number(value.wins ?? 0),
+    losses: Number(value.losses ?? 0),
+    draws: Number(value.draws ?? 0),
+  }
+}
+
 /* ---------- zkouška spojení ---------- */
 
 export interface Nalez {
