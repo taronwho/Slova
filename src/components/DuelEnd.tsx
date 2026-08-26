@@ -24,7 +24,7 @@ interface Props {
   verdict?: Verdict
   note?: string
   onHome: () => void
-  onVerdict: (verdict: Verdict, mine: number) => void
+  onVerdict: (verdict: Verdict, mine: number, souper: MatchScore) => void
   /**
    * Odveta se stejným soupeřem a stejným formátem.
    *
@@ -61,8 +61,8 @@ export function DuelEnd({
   useEffect(() => {
     if (!verdict || counted.current) return
     counted.current = true
-    onVerdict(verdict, mine)
-  }, [mine, onVerdict, verdict])
+    onVerdict(verdict, mine, row ?? { nick: rivalNick, score: 0 })
+  }, [mine, onVerdict, rivalNick, row, verdict])
 
   return (
     <>
@@ -125,7 +125,16 @@ export function DuelEnd({
                   )
                 }}
               >
-                {odveta === 'bezi' ? 'Posílám odvetu…' : 'Odveta'}
+                {/*
+                  * Dokud soupeř nedohrál, není co oplácet — „Odveta" by na
+                  * téhle obrazovce byla holá nepravda. Až když je výsledek
+                  * známý, dává to slovo smysl.
+                  */}
+                {odveta === 'bezi'
+                  ? 'Posílám…'
+                  : verdict
+                    ? 'Odveta'
+                    : 'Vyzvat znovu'}
               </button>
             )}
             <button

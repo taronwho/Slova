@@ -6087,3 +6087,40 @@ button.stat.open {
   align-items: flex-start;
   margin-bottom: var(--sp-3);
 }
+
+/* Zápas odehraný, čeká se na soupeře. Vypadá jako ostatní proužky soubojů,
+   ale ťuknout do něj nejde — čekat se dá jen tak a tlačítko, které nic
+   nedělá, je horší než text. */
+.duel-strip.pending {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  cursor: default;
+  opacity: 0.9;
+}
+
+.duel-wait-mark {
+  margin-left: auto;
+  font-size: 1.1rem;
+  opacity: 0.7;
+}
+
+/* Archiv odehraných soubojů. Není to tlačítko — zpětně se s dohraným kolem
+   nedá nic dělat, jen se na něj podívat. Výsledek nese barva okraje, stejně
+   jako u čerstvě dohraných. */
+.duel-strip.past {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  cursor: default;
+}
+
+.duel-strip.past.win {
+  border-color: color-mix(in oklab, var(--ok) 45%, var(--border));
+}
+
+.duel-strip.past.loss {
+  border-color: color-mix(in oklab, var(--danger, #c0392b) 35%, var(--border));
+}

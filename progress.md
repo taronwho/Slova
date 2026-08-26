@@ -1309,3 +1309,50 @@ vytáhne. Musí sama naskočit na novou verzi a normálně se otevřít.
 Hned první běh chybu potvrdil: hra zůstala na staré. (Podruhé už kvůli
 odstupu mezi kontrolami, takže si ho test musí odsedět — jinak by měřil
 odstup, ne aktualizaci.)
+
+# Souboje: čeká se, přehled odehraných a hodnost při hře
+
+Tři věci, které si hráč vyžádal, když souboje konečně běžely.
+
+## Na co se čeká
+
+U Vetřelce si každý zahraje, kdy chce, takže mezi „odehráno" a „známe
+výsledek" může být klidně den. Zápas, který hráč dohrál a soupeř ještě ne,
+se přitom nikde neukazoval — vypadalo to, že se někam ztratil.
+
+V Hře s přáteli je teď oddíl **Čeká se na soupeře** s tím, komu se míč
+odkopl, o jaký formát šlo a kolik hráč nahrál. Není to tlačítko: čekat se
+dá jen tak a tlačítko, které nic nedělá, je horší než text.
+
+## Přehled odehraných
+
+Bilance říká „sedm výher", ne proti komu a jak. Server si výsledky drží
+u zápasů, jenže ty se dosud četly jen do chvíle, než je hráč jednou viděl.
+Padesát posledních soubojů se proto ukládá do telefonu a v Hře s přáteli je
+z nich oddíl **Odehrané souboje** — výsledek, soupeř, skóre a datum.
+
+Zapisuje se pod id zápasu, protože výsledek se dozvíme dvakrát: jednou na
+konci hry a podruhé, když ho vyzvedne přehled dohraných. Dvakrát v seznamu
+by nedával smysl.
+
+## „Odveta" tam, kde ještě není co oplácet
+
+Na kartě, kde hráč dohrál jako první a čeká se na soupeře, stálo tlačítko
+**Odveta**. To je holá nepravda — oplácí se prohra, kterou zatím nikdo
+neutrpěl. Dokud výsledek není známý, stojí tam **Vyzvat znovu**.
+
+## Hodnost soupeře při hře
+
+Odznak s číslem se načítal až na ťuknutí, aby se uprostřed hry nechodilo na
+server zbytečně. Jenže pak u přezdívky nebyl vidět vůbec — a to je přesně
+to, co má o soupeři říct na první pohled. Karta se proto načte jednou při
+otevření souboje a ťuknutí už na server nesahá.
+
+## Čím je to hlídané
+
+`audit:duel:e2e` (proti emulátoru se skutečnými pravidly) prošel o pět
+oddílů: odznak hodnosti je u přezdívky vidět bez ťuknutí, ťuknutím se
+otevře karta se jménem hodnosti, soubojovou hodností i bilancí, odehraný
+souboj se objeví v „čeká se", nedohraný má na tlačítku „Vyzvat znovu"
+a dohraný „Odveta" — a po dohrání zůstane v přehledu odehraných i se
+soupeřem a skóre.

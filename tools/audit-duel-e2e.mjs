@@ -143,6 +143,106 @@ if (dosla) {
   }
 }
 
+console.log('\nHODNOST SOUPEŘE JE VIDĚT UŽ PŘI HŘE')
+/*
+ * V souboji je jméno soupeře jediné, co o něm hráč ví, a to je málo.
+ * Odznak s číslem hodnosti musí být u přezdívky vidět **sám od sebe** —
+ * dřív se načítal až na ťuknutí, takže při hře tam nebyl vůbec.
+ */
+{
+  const cip = jedna.page.locator('.duel-game .rival-chip').first()
+  const jeCip = await cip.waitFor({ timeout: 20000 }).then(() => true).catch(() => false)
+  check(jeCip, 'u přezdívky soupeře je čip s hodností')
+  if (jeCip) {
+    const odznak = await cip.locator('.rank-badge').count()
+    const cislo = (await cip.locator('.rival-band').innerText().catch(() => '')).trim()
+    check(odznak > 0, 'odznak hodnosti je vidět bez ťuknutí')
+    check(/^\d+$/.test(cislo), `a vedle něj číslo hodnosti (${cislo || 'chybí'})`)
+
+    // Ťuknutím se otevře karta se jménem hodnosti a bilancí.
+    await cip.click()
+    const karta = await jedna.page
+      .locator('.rival-sheet')
+      .waitFor({ timeout: 20000 })
+      .then(() => true)
+      .catch(() => false)
+    check(karta, 'ťuknutím se otevře karta hráče')
+    if (karta) {
+      const text = await jedna.page.locator('.rival-sheet').innerText()
+      check(/hodnost/i.test(text), 'karta říká jméno hodnosti')
+      check(/V soubojích/i.test(text), 'a soubojovou hodnost')
+      check(/Výhry/i.test(text), 'a bilanci soubojů')
+      await jedna.page.locator('.rival-sheet .btn', { hasText: 'Zavřít' }).click()
+    }
+  }
+}
+
+console.log('\nODEHRANÝ SOUBOJ ČEKÁ NA SOUPEŘE A JE TO VIDĚT')
+/*
+ * U Vetřelce si každý zahraje, kdy chce. Mezi „odehráno" a „známe výsledek"
+ * tak může být klidně den — a bez výpisu to vypadalo, že se zápas ztratil.
+ */
+{
+  const page = jedna.page
+  // Tři kola: trefit nemusíme, jde o to dohrát je až do konce.
+  for (let kolo = 0; kolo < 3; kolo += 1) {
+    await page.locator('.intruder-word').first().click()
+    await page.locator('.duel-round-end .btn').click()
+    await page.waitForTimeout(400)
+  }
+  await page.locator('.result-card').waitFor({ timeout: 20000 }).catch(() => undefined)
+
+  /*
+   * Na kartě „Odehráno" (soupeř ještě nehrál) stálo tlačítko **Odveta**,
+   * což je holá nepravda: oplácet se dá až prohra, kterou zatím nikdo
+   * neutrpěl.
+   */
+  const napis = (await page.locator('.result-actions .btn-primary').first().innerText().catch(() => '')).trim()
+  check(
+    napis === 'Vyzvat znovu',
+    `dokud soupeř nedohrál, stojí na tlačítku „Vyzvat znovu" (${napis || 'nic'})`,
+  )
+
+  await page.locator('.result-actions .btn', { hasText: 'Zpět do menu' }).click()
+  await page.locator('.friends-entry, .btn', { hasText: /přáteli/i }).first().click()
+  await page.locator('.friends').waitFor({ timeout: 15000 })
+
+  const cekani = page.locator('.duel-strip.pending').first()
+  const jeVidet = await cekani.waitFor({ timeout: 40000 }).then(() => true).catch(() => false)
+  check(jeVidet, 'v Hře s přáteli je vidět, na koho se čeká')
+  if (jeVidet) {
+    const text = (await cekani.innerText()).replace(/\s+/g, ' ')
+    check(text.includes(SOUPER), `a je u toho jméno soupeře (${text})`)
+  }
+}
+
+console.log('\nSOUPEŘ DOHRAJE A OBA VIDÍ VYHODNOCENÍ')
+{
+  // Soupeř si odehraje svoje tři kola.
+  for (let kolo = 0; kolo < 3; kolo += 1) {
+    await druha.page.locator('.intruder-word').first().click()
+    await druha.page.locator('.duel-round-end .btn').click()
+    await druha.page.waitForTimeout(400)
+  }
+  await druha.page.locator('.result-card').waitFor({ timeout: 20000 }).catch(() => undefined)
+  const vysledek = await druha.page.locator('.result-card').innerText().catch(() => '')
+  check(/\d+\s*:\s*\d+/.test(vysledek.replace(/\s+/g, ' ')), 'soupeř vidí výsledek proti sobě')
+
+  const tlacitkoSoupere = (await druha.page.locator('.result-actions .btn-primary').first().innerText().catch(() => '')).trim()
+  check(tlacitkoSoupere === 'Odveta', `a u dohraného souboje je „Odveta" (${tlacitkoSoupere || 'nic'})`)
+
+  await druha.page.locator('.result-actions .btn', { hasText: 'Zpět do menu' }).click()
+  await druha.page.locator('.friends-entry, .btn', { hasText: /přáteli/i }).first().click()
+  await druha.page.locator('.friends').waitFor({ timeout: 15000 })
+  const archiv = druha.page.locator('.duel-strip.past').first()
+  const jeArchiv = await archiv.waitFor({ timeout: 20000 }).then(() => true).catch(() => false)
+  check(jeArchiv, 'odehraný souboj zůstal v přehledu')
+  if (jeArchiv) {
+    const radek = (await archiv.innerText()).replace(/\s+/g, ' ')
+    check(radek.includes(VYZYVATEL), `a je v něm soupeř i skóre (${radek})`)
+  }
+}
+
 console.log('\nNEZNÁMÁ PŘEZDÍVKA SE POZNÁ HNED, NE AŽ PO LHŮTĚ')
 /*
  * Přezdívka, kterou nikdo nezabral. Hra ji má poznat rovnou — čte se

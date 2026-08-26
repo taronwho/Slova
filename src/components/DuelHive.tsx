@@ -35,6 +35,7 @@ import {
   watchMatch,
   watchWords,
   type Match,
+  type MatchScore,
 } from '../lib/multi'
 import { DuelEnd } from './DuelEnd'
 import { RivalChip } from './RivalChip'
@@ -46,7 +47,7 @@ interface Props {
   uid: string
   nick: string
   onHome: () => void
-  onVerdict: (verdict: Verdict, mine: number) => void
+  onVerdict: (verdict: Verdict, mine: number, souper: MatchScore) => void
   /** Odveta se stejným soupeřem, aby se přezdívka nemusela psát znovu. */
   onRematch?: () => Promise<boolean>
 }

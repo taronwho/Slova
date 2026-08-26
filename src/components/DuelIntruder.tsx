@@ -10,7 +10,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import { duelRoundScore, INTRUDER_DUEL_MAX, type Verdict } from '../game/duel'
 import type { IntruderPuzzle } from '../game/intruder'
-import { finishMatch, type Match } from '../lib/multi'
+import { finishMatch, type Match, type MatchScore } from '../lib/multi'
 import { DuelEnd } from './DuelEnd'
 import { RivalChip } from './RivalChip'
 
@@ -20,7 +20,7 @@ interface Props {
   uid: string
   nick: string
   onHome: () => void
-  onVerdict: (verdict: Verdict, mine: number) => void
+  onVerdict: (verdict: Verdict, mine: number, souper: MatchScore) => void
   /** Odveta se stejným soupeřem, aby se přezdívka nemusela psát znovu. */
   onRematch?: () => Promise<boolean>
 }

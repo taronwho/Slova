@@ -42,7 +42,7 @@ import { IntruderGame } from './components/IntruderGame'
 import { DuelHive } from './components/DuelHive'
 import { DuelIntruder } from './components/DuelIntruder'
 import { DuelSetup } from './components/DuelSetup'
-import { Friends, type DuelReport } from './components/Friends'
+import { Friends, type DuelReport, type DuelWaiting } from './components/Friends'
 import { ReportSheet } from './components/ReportSheet'
 import { FriendsEntry } from './components/FriendsEntry'
 import { QuotesGame } from './components/QuotesGame'
@@ -69,6 +69,7 @@ import {
   blockPlayer,
   createMatch,
   pripravSpojeni,
+  zapisSouboj,
   ulozHodnost,
   dropChallenge,
   eraseMe,
@@ -180,6 +181,8 @@ export default function App() {
   const [uid, setUid] = useState('')
   const [setup, setSetup] = useState(false)
   const [reports, setReports] = useState<DuelReport[]>([])
+  /** Zápasy, které mám odehrané a čekám, až si je zahraje soupeř. */
+  const [waitingDuels, setWaitingDuels] = useState<DuelWaiting[]>([])
   /** Koho hráč právě nahlašuje. Panel drží App, ať se dá otevřít odkudkoli. */
   const [reporting, setReporting] = useState<{ uid: string; nick: string } | null>(null)
   /** Otevřené potvrzení mazání dat. */
@@ -678,14 +681,32 @@ export default function App() {
    * profilu souboje dál nesahají; mají vlastní žebříček.
    */
   const closeDuel = useCallback(
-    (id: string, verdict: Verdict, skore = 0) => {
+    (
+      id: string,
+      verdict: Verdict,
+      skore = 0,
+      souper?: { nick: string; score: number },
+      druh?: DuelKind,
+    ) => {
       const odveta = odvetaZa.current.has(id)
       odvetaZa.current.delete(id)
       setMe((previous) => {
-        const next = tallyWith(
+        let next = tallyWith(
           forgetMatch(previous, id),
           verdict === 'draw' ? null : verdict === 'win',
         )
+        // Do archivu jen dohrané souboje. Zápas, u kterého se pořád čeká na
+        // soupeře, do „odehraných" nepatří — ten má vlastní přihrádku.
+        if (souper) {
+          next = zapisSouboj(next, {
+            id,
+            kind: druh ?? match?.kind ?? 'intruder',
+            rival: souper.nick,
+            mine: skore,
+            theirs: souper.score,
+            at: Date.now(),
+          })
+        }
         saveMe(next)
         void saveTally(next)
         return next
@@ -832,6 +853,7 @@ export default function App() {
     void (async () => {
       const mine = await myUid()
       const out: DuelReport[] = []
+      const ceka: DuelWaiting[] = []
       for (const id of waiting) {
         const found = await loadMatch(id)
         if (!found) continue
@@ -840,9 +862,21 @@ export default function App() {
         const theirs = done[found.host === mine ? found.guest : found.host]
         if (own && theirs) {
           out.push({ id, kind: found.kind, rival: theirs.nick, mine: own.score, theirs: theirs.score })
+        } else if (own) {
+          // Odehráno mám, soupeř ještě ne. Dřív se o takovém zápase nikde
+          // nemluvilo a vypadalo to, že se někam ztratil.
+          ceka.push({
+            id,
+            kind: found.kind,
+            rival: found.host === mine ? found.guestNick : found.hostNick,
+            mine: own.score,
+          })
         }
       }
-      if (!dead) setReports(out)
+      if (!dead) {
+        setReports(out)
+        setWaitingDuels(ceka)
+      }
     })().catch(() => undefined)
     return () => {
       dead = true
@@ -1281,6 +1315,7 @@ export default function App() {
             challenges={challenges}
             onAccept={(item) => void acceptDuel(item)}
             reports={reports}
+            waiting={waitingDuels}
             onChallenge={() => setSetup(true)}
             onSeen={(id) => {
               const report = reports.find((one) => one.id === id)
@@ -1293,6 +1328,9 @@ export default function App() {
                     : report.mine > report.theirs
                       ? 'win'
                       : 'loss',
+                  report.mine,
+                  { nick: report.rival, score: report.theirs },
+                  report.kind,
                 )
               }
             }}
@@ -1322,7 +1360,9 @@ export default function App() {
             uid={uid}
             nick={me.nick}
             onHome={goHome}
-            onVerdict={(verdict, skore) => closeDuel(match.id, verdict, skore)}
+            onVerdict={(verdict, skore, souper) =>
+              closeDuel(match.id, verdict, skore, souper)
+            }
             onRematch={rematch}
           />
         )}
@@ -1335,7 +1375,9 @@ export default function App() {
             uid={uid}
             nick={me.nick}
             onHome={goHome}
-            onVerdict={(verdict, skore) => closeDuel(match.id, verdict, skore)}
+            onVerdict={(verdict, skore, souper) =>
+              closeDuel(match.id, verdict, skore, souper)
+            }
             onRematch={rematch}
           />
         )}

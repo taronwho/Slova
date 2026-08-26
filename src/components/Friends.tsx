@@ -40,6 +40,20 @@ import {
   type Nalez,
 } from '../lib/multi'
 
+/**
+ * Souboj, který hráč odehrál a čeká, až si ho zahraje soupeř.
+ *
+ * U Vetřelce si každý zahraje, kdy chce, takže mezi „odehráno" a „známe
+ * výsledek" může být klidně den. Bez tohohle výpisu to vypadalo, že se
+ * souboj někam ztratil — hráč odehrál tři kola a pak už o zápase neslyšel.
+ */
+export interface DuelWaiting {
+  id: string
+  kind: DuelKind
+  rival: string
+  mine: number
+}
+
 /** Dohraný zápas, o kterém hráč ještě neví. */
 export interface DuelReport {
   id: string
@@ -55,6 +69,7 @@ interface Props {
   challenges: Challenge[]
   onAccept: (challenge: Challenge) => void
   reports: DuelReport[]
+  waiting: DuelWaiting[]
   onSeen: (id: string) => void
   onChallenge: () => void
   onReport: (uid: string, nick: string) => void
@@ -69,6 +84,7 @@ export function Friends({
   challenges,
   onAccept,
   reports,
+  waiting,
   onSeen,
   onChallenge,
   onReport,
@@ -214,6 +230,36 @@ export function Friends({
             </button>
           </div>
 
+          {waiting.length > 0 && (
+            <div className="friends-list">
+              <h2>Čeká se na soupeře</h2>
+              <p className="faint">
+                Odehráno máš, teď je řada na druhém. Až si to zahraje,
+                objeví se tu výsledek — u Vetřelce to může být klidně
+                zítra, každý si ho zahraje, kdy chce.
+              </p>
+              {waiting.map((item) => (
+                /* Není to tlačítko: čekat se dá jen tak, ťuknutí by nemělo
+                   co udělat a tlačítko, které nic nedělá, je horší než text. */
+                <div className="duel-strip pending" key={item.id}>
+                  <span className="duel-mark" aria-hidden="true">
+                    {MODE_GLYPH[DUEL_MODE[item.kind]]}
+                  </span>
+                  <span className="duel-body">
+                    <span className="duel-title">Čeká se na {item.rival}</span>
+                    <span className="faint">
+                      {DUEL_TITLE[item.kind]} · tvoje skóre{' '}
+                      {item.mine.toLocaleString('cs-CZ')}
+                    </span>
+                  </span>
+                  <span className="duel-wait-mark" aria-hidden="true">
+                    ⏳
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
           {reports.length > 0 && (
             <div className="friends-list">
               <h2>Dohráno</h2>
@@ -282,6 +328,39 @@ export function Friends({
               ))
             )}
           </div>
+
+          {(me.log ?? []).length > 0 && (
+            <div className="friends-list">
+              <h2>Odehrané souboje</h2>
+              <p className="faint">
+                Posledních {Math.min((me.log ?? []).length, 50)} klání i s tím,
+                jak dopadla. Bilance nahoře říká kolik, tohle proti komu.
+              </p>
+              {(me.log ?? []).map((item) => {
+                const verdict = verdictOf(item.mine, item.theirs)
+                return (
+                  <div className={`duel-strip past ${verdict}`} key={item.id}>
+                    <span className="duel-mark" aria-hidden="true">
+                      {MODE_GLYPH[DUEL_MODE[item.kind]]}
+                    </span>
+                    <span className="duel-body">
+                      <span className="duel-title">
+                        {VERDICT_TITLE[verdict]} · {item.rival}
+                      </span>
+                      <span className="faint">
+                        {item.mine.toLocaleString('cs-CZ')} :{' '}
+                        {item.theirs.toLocaleString('cs-CZ')} · {DUEL_TITLE[item.kind]} ·{' '}
+                        {new Date(item.at).toLocaleDateString('cs-CZ', {
+                          day: 'numeric',
+                          month: 'numeric',
+                        })}
+                      </span>
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
 
           {(me.blocked ?? []).length > 0 && (
             <div className="friends-list">

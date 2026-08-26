@@ -1460,7 +1460,7 @@ describe('souboje', () => {
   // Bilance se připisuje na jedno místo — kdyby ji připsal i zápas, i proužek
   // v menu, jedna výhra by se počítala dvakrát.
   it('bilance se posune právě o jeden zápas', () => {
-    const start = { nick: 'já', wins: 2, losses: 1, draws: 0, matches: [], blocked: [] }
+    const start = { nick: 'já', wins: 2, losses: 1, draws: 0, matches: [], blocked: [], log: [] }
     expect(tallyWith(start, true).wins).toBe(3)
     expect(tallyWith(start, false).losses).toBe(2)
     expect(tallyWith(start, null).draws).toBe(1)
@@ -1468,7 +1468,7 @@ describe('souboje', () => {
   })
 
   it('vyřízený zápas ze seznamu zmizí a nový se přidá jen jednou', () => {
-    const start = { nick: 'já', wins: 0, losses: 0, draws: 0, matches: [], blocked: [] }
+    const start = { nick: 'já', wins: 0, losses: 0, draws: 0, matches: [], blocked: [], log: [] }
     const one = rememberMatch(start, 'a')
     expect(rememberMatch(one, 'a').matches).toEqual(['a'])
     expect(rememberMatch(one, 'b').matches).toEqual(['b', 'a'])
@@ -1517,7 +1517,7 @@ describe('přezdívky a hlášení', () => {
   })
 
   it('zablokovaný hráč se do seznamu dostane jen jednou', () => {
-    const start = { nick: 'já', wins: 0, losses: 0, draws: 0, matches: [], blocked: [] }
+    const start = { nick: 'já', wins: 0, losses: 0, draws: 0, matches: [], blocked: [], log: [] }
     const once = blockPlayer(start, 'uid-a')
     expect(blockPlayer(once, 'uid-a').blocked).toEqual(['uid-a'])
     expect(blockPlayer(once, 'uid-b').blocked).toEqual(['uid-a', 'uid-b'])

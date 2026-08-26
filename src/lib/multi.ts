@@ -630,6 +630,18 @@ export async function recordDuel(duel: Duel, before: Tally): Promise<Tally> {
 
 const KEY = 'slova.multi.v1'
 
+/** Jeden dohraný souboj v archivu. */
+export interface DuelLog {
+  /** Id zápasu — podle něj se pozná, že už je zapsaný. */
+  id: string
+  kind: DuelKind
+  rival: string
+  mine: number
+  theirs: number
+  /** Kdy se výsledek dozvěděl tenhle telefon (ms). */
+  at: number
+}
+
 export interface Me extends Tally {
   nick: string
   /**
@@ -648,9 +660,18 @@ export interface Me extends Tally {
    * ode mě může přijít i ke mně — náhodní soupeři i došlé výzvy.
    */
   blocked: string[]
+  /**
+   * Archiv dohraných soubojů.
+   *
+   * Bilance říká jen „sedm výher", ne proti komu a jak. Server si výsledky
+   * drží u zápasů, jenže ty se čtou jen do chvíle, než je hráč jednou vidí —
+   * pak by se zapomněly. Archiv je proto v telefonu a je v něm padesát
+   * posledních; víc by se stejně nikdo neprocházel.
+   */
+  log: DuelLog[]
 }
 
-const EMPTY: Me = { nick: '', wins: 0, losses: 0, draws: 0, matches: [], blocked: [] }
+const EMPTY: Me = { nick: '', wins: 0, losses: 0, draws: 0, matches: [], blocked: [], log: [] }
 
 /** Zablokuje hráče a rovnou uloží. */
 export function blockPlayer(me: Me, uid: string): Me {
@@ -712,6 +733,20 @@ export async function eraseMe(): Promise<void> {
       // Soukromé okno bez úložiště — není co mazat.
     }
   }
+}
+
+/**
+ * Zapíše dohraný souboj do archivu a rovnou uloží.
+ *
+ * Klíčem je id zápasu: výsledek se dozvíme dvakrát — jednou na konci hry
+ * a podruhé, když ho vyzvedne přehled dohraných —, a dvakrát v seznamu by
+ * nedával smysl.
+ */
+export function zapisSouboj(me: Me, zaznam: DuelLog): Me {
+  const bezNej = (me.log ?? []).filter((one) => one.id !== zaznam.id)
+  const next: Me = { ...me, log: [zaznam, ...bezNej].slice(0, 50) }
+  saveMe(next)
+  return next
 }
 
 /** Přidá zápas mezi rozehrané a rovnou uloží. */

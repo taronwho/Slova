@@ -6,12 +6,15 @@
  * na první pohled a ťuknutí otevře zbytek — jméno hodnosti, soubojovou
  * hodnost a bilanci vzájemných klání.
  *
- * Karta se načítá **až na ťuknutí**, ne dopředu. Uprostřed souboje se nemá
- * chodit na server pro nic, co hráč nechtěl; a kdo si soupeře prohlížet
- * nebude, nezaplatí za to ani jedním požadavkem.
+ * Karta se načte **jednou při otevření souboje**. Původně se čekalo až na
+ * ťuknutí, aby se uprostřed hry nechodilo na server zbytečně — jenže pak
+ * u přezdívky nebyl odznak vidět vůbec, dokud hráč sám neťukl, a to je
+ * přesně to, co má o soupeři říct na první pohled. Je to jedno čtení na
+ * celý souboj a bere se z něj i obsah karty, takže ťuknutí už na server
+ * nesahá.
  */
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { duelPoints, duelRankFor, duelsPlayed, duelWinRate } from '../game/duelRank'
 import { RANKS } from '../game/ranks'
@@ -33,32 +36,38 @@ export function RivalChip({ uid, nick, band = 0 }: Props) {
 
   const hodnost = karta?.band || band
 
-  async function otevri() {
-    setOtevreno(true)
-    if (karta || nacita) return
+  useEffect(() => {
+    let zahozeno = false
     setNacita(true)
     setChyba(null)
-    try {
-      const nalezeno = await nactiHrace(uid)
-      if (!nalezeno) setChyba('O tomhle hráči zatím server nic neví.')
-      else setKarta(nalezeno)
-    } catch (potiz) {
-      setChyba(
-        potiz instanceof SoubojChyba
-          ? potiz.message
-          : 'Kartu se nepodařilo načíst. Zkus to za chvíli.',
-      )
-    } finally {
-      setNacita(false)
+    nactiHrace(uid)
+      .then((nalezeno) => {
+        if (zahozeno) return
+        if (!nalezeno) setChyba('O tomhle hráči zatím server nic neví.')
+        else setKarta(nalezeno)
+      })
+      .catch((potiz: unknown) => {
+        if (zahozeno) return
+        setChyba(
+          potiz instanceof SoubojChyba
+            ? potiz.message
+            : 'Kartu se nepodařilo načíst. Zkus to za chvíli.',
+        )
+      })
+      .finally(() => {
+        if (!zahozeno) setNacita(false)
+      })
+    return () => {
+      zahozeno = true
     }
-  }
+  }, [uid])
 
   return (
     <>
       <button
         type="button"
         className="rival-chip"
-        onClick={() => void otevri()}
+        onClick={() => setOtevreno(true)}
         aria-label={`${nick}${hodnost > 0 ? `, hodnost ${hodnost}` : ''} — ukázat kartu hráče`}
       >
         {hodnost > 0 && <RankBadge rank={hodnost} size={18} compact />}
