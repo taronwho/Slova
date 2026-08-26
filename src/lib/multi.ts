@@ -105,7 +105,7 @@ const CEKANI_MS = 15_000
  * i když byl server v pořádku a stačilo mu dát chvíli. Proto se teď
  * napřed počká na spojení a **teprve pak** se posílá dotaz.
  */
-const SPOJENI_PRVNI_MS = 10_000
+const SPOJENI_PRVNI_MS = 8_000
 const SPOJENI_DRUHY_MS = 15_000
 
 /**
@@ -205,6 +205,17 @@ function pockejNaSpojeni(db: Db['db'], base: Db['base'], kolik: number): Promise
 async function pripraveno(): Promise<Db> {
   const spojeni = await open()
   const { db, base } = spojeni
+  /*
+   * Napřed se řekne „buď online", teprve pak se čeká.
+   *
+   * Klient se totiž sám od sebe nespojí — spojení navazuje, až když o data
+   * někdo stojí. Čekání na `.info/connected` o data nestojí (ta větev se
+   * obsluhuje v telefonu), takže samotné čekání ho nerozhýbe a vyprší
+   * naprázdno. Poznalo se to z měření u hráče: spojení se navázalo za
+   * 10,1 s, tedy přesně desetinu vteřiny po tom, co ho po marném čekání
+   * probudilo `goOnline`. `goOnline` je přitom laciné a dá se volat kdykoli.
+   */
+  db.goOnline(base)
   if (await pockejNaSpojeni(db, base, SPOJENI_PRVNI_MS)) return spojeni
 
   /*
@@ -223,6 +234,56 @@ async function pripraveno(): Promise<Db> {
   throw new SoubojChyba(
     'Nepodařilo se spojit s databází. Zkontroluj připojení a zkus to znovu.',
   )
+}
+
+/**
+ * Přečtení jedné větve — posluchačem, ne jednorázovým dotazem.
+ *
+ * Vypadá to jako oklika a je to jádro celé opravy. Firebase totiž obojí
+ * doručuje jinak:
+ *
+ * * **Jednorázový dotaz (`get`)** se pošle po spojení a čeká na odpověď.
+ *   Když spojení mezitím spadne — a ono padá, hned po navázání to je nejvíc
+ *   pravděpodobné —, dotaz se **znovu neposílá**. Odpověď už nikdy nepřijde
+ *   a slib visí. Přesně takhle padala výzva ve chvíli, kdy hráč u sebe viděl
+ *   všechny čtyři kroky zelené: spojení stálo, jen odpověď na dotaz se
+ *   ztratila při jednom přeťatém spojení.
+ * * **Posluchač (`onValue`)** je součástí stavu, který si klient po
+ *   obnoveném spojení sám navěsí znovu. Přežije tedy výpadek a data
+ *   doručí, jakmile je zas kudy.
+ *
+ * Čte se proto posluchačem, kterého si po první hodnotě zase odhlásíme.
+ * Chybu (třeba zamítnutá práva) hlásí druhá obsluha, takže se nezamění
+ * s tichem.
+ */
+function precti(
+  { db, base }: Pick<Db, 'db' | 'base'>,
+  path: string,
+  co: string,
+): Promise<unknown> {
+  return new Promise<unknown>((hotovo, zamitnout) => {
+    let odpojit: (() => void) | null = null
+    let sesnuto = false
+    const konec = (udelej: () => void) => {
+      if (sesnuto) return
+      sesnuto = true
+      clearTimeout(budik)
+      odpojit?.()
+      udelej()
+    }
+    const budik = setTimeout(
+      () => konec(() => zamitnout(new SoubojChyba(`Server neodpovídá (${co}). Zkus to za chvíli.`))),
+      CEKANI_MS,
+    )
+    odpojit = db.onValue(
+      db.ref(base, path),
+      (snap) => konec(() => hotovo(snap.val())),
+      (chyba: unknown) => konec(() => zamitnout(chyba)),
+    )
+    // Data z paměti dorazí ještě uvnitř řádky výš — `odpojit` je pak prázdné
+    // a posluchač by po sobě neuklidil.
+    if (sesnuto) odpojit()
+  })
 }
 
 /**
@@ -282,9 +343,9 @@ export async function claimNick(nick: string): Promise<boolean> {
    * hlásil „tuhle přezdívku už někdo má". Vlastní jméno se proto pozná
    * a dopíše se jen to, co chybí.
    */
-  const drzitel = await docekat(db.get(db.ref(base, `nicks/${key}`)), 'přezdívka')
-  if (drzitel.exists() && drzitel.val() !== uid) return false
-  if (!drzitel.exists()) {
+  const drzitel = await precti({ db, base }, `nicks/${key}`, 'přezdívka')
+  if (drzitel != null && drzitel !== uid) return false
+  if (drzitel == null) {
     try {
       await docekat(db.set(db.ref(base, `nicks/${key}`), uid), 'přezdívka')
     } catch {
@@ -306,8 +367,7 @@ export async function claimNick(nick: string): Promise<boolean> {
 /** Je tahle přezdívka volná? Pro průběžnou kontrolu při psaní. */
 export async function nickFree(nick: string): Promise<boolean> {
   const { db, base } = await pripraveno()
-  const found = await docekat(db.get(db.ref(base, `nicks/${nickKey(nick)}`)), 'přezdívka')
-  return !found.exists()
+  return (await precti({ db, base }, `nicks/${nickKey(nick)}`, 'přezdívka')) == null
 }
 
 /* ---------- karta hráče ---------- */
@@ -350,8 +410,10 @@ export async function ulozHodnost(band: number): Promise<void> {
 /** Přečte kartu soupeře. Vrací null, když o něm server nic neví. */
 export async function nactiHrace(uid: string): Promise<KartaHrace | null> {
   const { db, base } = await pripraveno()
-  const found = await docekat(db.get(db.ref(base, `players/${uid}`)), 'karta hráče')
-  const value = found.val() as Record<string, unknown> | null
+  const value = (await precti({ db, base }, `players/${uid}`, 'karta hráče')) as Record<
+    string,
+    unknown
+  > | null
   if (!value) return null
   return {
     uid,
@@ -488,22 +550,22 @@ export async function playRound(
   const { db, base, uid } = await pripraveno()
   const path = `results/${mode}/${puzzle}`
 
-  const all = await docekat(db.get(db.ref(base, path)), 'výsledky kola')
+  const all = ((await precti({ db, base }, path, 'výsledky kola')) ?? {}) as Record<
+    string,
+    { nick: string; score: number; band: number }
+  >
   const rows: { uid: string; nick: string; score: number; band: number }[] = []
-  all.forEach((row) => {
-    const value = row.val() as { nick: string; score: number; band: number }
+  for (const [klic, value] of Object.entries(all)) {
     // Zablokovaný hráč se nesmí vrátit ani jako náhodný soupeř — jinak by
     // blokování znamenalo jen „neuvidím tvoje výzvy" a to je málo.
-    if (row.key && row.key !== uid && !blocked.includes(row.key)) {
-      rows.push({ uid: row.key, ...value })
-    }
-  })
+    if (klic !== uid && !blocked.includes(klic)) rows.push({ uid: klic, ...value })
+  }
 
   // Vlastní výsledek se zapisuje až po přečtení, aby se hráč nepotkal sám
   // se sebou, a jen jednou — pravidla přepis neumožní, takže druhý pokus
   // o tutéž hádanku tiše selže a to je správně.
   db.set(db.ref(base, `${path}/${uid}`), {
-    nick: (await db.get(db.ref(base, `players/${uid}/nick`))).val() ?? '?',
+    nick: (await precti({ db, base }, `players/${uid}/nick`, 'profil')) ?? '?',
     score,
     band,
     at: db.serverTimestamp(),
@@ -607,7 +669,7 @@ export async function reportPlayer(
 export async function eraseMe(): Promise<void> {
   try {
     const { db, base, uid } = await pripraveno()
-    const key = String((await db.get(db.ref(base, `players/${uid}/key`))).val() ?? '')
+    const key = String((await precti({ db, base }, `players/${uid}/key`, 'profil')) ?? '')
     await Promise.all([
       key ? db.remove(db.ref(base, `nicks/${key}`)) : Promise.resolve(),
       db.remove(db.ref(base, `players/${uid}`)),
@@ -747,8 +809,8 @@ export function serverNow(): number {
 /** Najde hráče podle přezdívky. Vrací jeho id, nebo null. */
 export async function findPlayer(nick: string): Promise<string | null> {
   const { db, base } = await pripraveno()
-  const found = await docekat(db.get(db.ref(base, `nicks/${nickKey(nick)}`)), 'hledání hráče')
-  return found.exists() ? (found.val() as string) : null
+  const found = await precti({ db, base }, `nicks/${nickKey(nick)}`, 'hledání hráče')
+  return found == null ? null : (found as string)
 }
 
 /**
@@ -769,7 +831,7 @@ export async function createMatch(
   // hráče neznáme", když se jmenuje přesně takhle.
   if (target === uid) throw new SoubojChyba('Sám sebe vyzvat nemůžeš.')
   const mine = String(
-    (await docekat(db.get(db.ref(base, `players/${uid}/nick`)), 'profil')).val() ?? '',
+    (await precti({ db, base }, `players/${uid}/nick`, 'profil')) ?? '',
   )
   /*
    * Bez zapsané přezdívky se zápas založit nedá a nemá smysl to zkoušet:
@@ -781,7 +843,7 @@ export async function createMatch(
     throw new SoubojChyba('Nejdřív si zaber přezdívku — bez ní tě soupeř nepozná.')
   }
   const guest = String(
-    (await docekat(db.get(db.ref(base, `players/${target}/nick`)), 'profil soupeře')).val() ??
+    (await precti({ db, base }, `players/${target}/nick`, 'profil soupeře')) ??
       rivalNick,
   )
 
@@ -827,8 +889,8 @@ export async function createMatch(
 /** Přečte zápas. */
 export async function loadMatch(id: string): Promise<Match | null> {
   const { db, base } = await pripraveno()
-  const found = await docekat(db.get(db.ref(base, `duels/${id}`)), 'načtení zápasu')
-  return toMatch(id, found.val() as Record<string, unknown> | null)
+  const found = await precti({ db, base }, `duels/${id}`, 'načtení zápasu')
+  return toMatch(id, found as Record<string, unknown> | null)
 }
 
 /** Sleduje zápas. Vrací funkci, kterou se sledování ukončí. */
@@ -898,8 +960,8 @@ export async function finishMatch(id: string, nick: string, score: number): Prom
 /** Přečte výsledky zápasu — pro proužek v menu, kde se nesleduje nic trvale. */
 export async function matchDone(id: string): Promise<Record<string, MatchScore>> {
   const { db, base } = await pripraveno()
-  const found = await docekat(db.get(db.ref(base, `duels/${id}/done`)), 'výsledky zápasu')
-  return (found.val() as Record<string, MatchScore> | null) ?? {}
+  const found = await precti({ db, base }, `duels/${id}/done`, 'výsledky zápasu')
+  return (found as Record<string, MatchScore> | null) ?? {}
 }
 
 /** Uloží bilanci soubojů i na server, ať ji vidí ostatní. */

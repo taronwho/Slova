@@ -1181,3 +1181,42 @@ hráč chce hledat.
 `audit:duel` k tomu hlídá, že je rozbor u chyby po ruce, že vypíše všechny
 kroky a že se panel s ním dá dorolovat — s rozborem povyroste a ovládání se
 nesmí stát nedosažitelným.
+
+## Dodatek 5: všechno zelené, a přesto to nešlo
+
+Hráč poslal snímek, kde zkouška hlásí **čtyřikrát zeleně** — přihlášení
+prošlo, databáze odpověděla (401 „Permission denied", což je správně,
+pravidla čtení kořene nepustí), spojení hry se navázalo **za 10,1 s**
+a websocket se otevřel. A výzva přesto skončila na „Server neodpovídá
+(hledání hráče)". Dvě věci se z toho daly vyčíst.
+
+### Klient se sám od sebe nespojí
+
+Deset celých jedna vteřiny je podezřele přesně o desetinu víc, než byla
+tehdejší lhůta prvního čekání. Spojení se tedy navázalo **až v ten okamžik,
+kdy ho po marném čekání probudilo `goOffline`+`goOnline`** — ne někdy během
+něj.
+
+Důvod: Firebase navazuje spojení, teprve když o data někdo stojí. Čekání na
+`.info/connected` o data nestojí — ta větev se obsluhuje v telefonu, ne na
+serveru —, takže samotné čekání klienta nerozhýbe a vyprší naprázdno. Teď se
+proto napřed řekne `goOnline` a **pak** se čeká.
+
+### Ztracený dotaz se už nezopakuje
+
+To druhé je jádro věci. Firebase doručuje čtení dvěma způsoby a liší se
+právě v tom, co udělají, když spojení spadne:
+
+* **Jednorázový dotaz (`get`)** se pošle a čeká na odpověď. Když se spojení
+  mezitím přetrhne — a hned po navázání je to nejpravděpodobnější —, dotaz
+  se **znovu neposílá**. Odpověď nikdy nepřijde a slib visí až do lhůty.
+* **Posluchač (`onValue`)** je součástí stavu, který si klient po obnoveném
+  spojení sám navěsí znovu. Výpadek tedy přežije a data doručí, jakmile je
+  zas kudy.
+
+Všech jedenáct čtení v `multi.ts` proto jde přes posluchače, kterého si po
+první hodnotě zase odhlásíme. Zápisy se řešit nemusely — ty si Firebase
+po obnoveném spojení posílá znovu sám.
+
+To přesně sedí na hráčův snímek: spojení stálo (a zkouška ho proto našla
+v pořádku), jen odpověď na dotaz se ztratila při jednom přeťatém spojení.
