@@ -16,3 +16,6 @@ __pycache__/
 
 # Kontrolní build Otázky dne — vzniká na vyžádání, do repozitáře nepatří.
 review/
+
+# Sestavení pro emulátor Firebase (npm run audit:duel:e2e)
+dist-emu/

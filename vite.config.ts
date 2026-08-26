@@ -31,6 +31,16 @@ export default defineConfig({
     __BUILD__: JSON.stringify(QUIZ_ALL ? `${BUILD} · kontrolní` : BUILD),
     __QUIZ_ALL__: JSON.stringify(QUIZ_ALL),
     __STANDALONE__: JSON.stringify(STANDALONE),
+    /*
+     * Sestavení pro emulátor Firebase.
+     *
+     * Databáze projektu je z vývojového stroje za bránou, takže se souboje
+     * nedaly odehrát a chyby se musely hádat z hlášek. `SLOVA_EMU=1` udělá
+     * build, který mluví s emulátorem na localhostu — tatáž pravidla, tentýž
+     * klient, jen dosažitelný. V běžném buildu je to `false`, takže se ta
+     * část kódu do balíčku vůbec nedostane.
+     */
+    __EMU__: JSON.stringify(process.env.SLOVA_EMU === '1'),
   },
   plugins: [react()],
   build: {

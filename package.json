@@ -21,6 +21,7 @@
     "audit:keyboard": "node tools/audit-keyboard.mjs",
     "audit:layout": "node tools/audit-layout.mjs",
     "audit:duel": "node tools/audit-duel.mjs",
+    "audit:duel:e2e": "bash tools/duel-e2e.sh",
     "audit:awards": "node tools/audit-awards.mjs",
     "audit:pwa": "node tools/audit-pwa.mjs",
     "build:review": "QUIZ_ALL=1 vite build && QUIZ_ALL=1 node tools/build-artifact.mjs && mkdir -p review && mv dist/slova-kontrolni.html review/"
@@ -30,6 +31,7 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.2.0",
+    "firebase-tools": "^15.28.1",
     "playwright": "^1.61.1",
     "typescript": "^5.9.3",
     "vite": "^7.3.6",

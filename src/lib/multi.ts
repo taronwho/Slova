@@ -145,8 +145,32 @@ async function connect() {
   // výpadku sítě už souboje nerozchodil.
   const app = core.getApps().length > 0 ? core.getApp() : core.initializeApp(CONFIG)
   const session = auth.getAuth(app)
+  // Sestavení pro emulátor (`SLOVA_EMU=1`). V běžném buildu je `__EMU__`
+  // natvrdo `false`, takže tenhle blok z balíčku vypadne celý.
+  if (__EMU__) {
+    auth.connectAuthEmulator(session, 'http://127.0.0.1:9099', { disableWarnings: true })
+  }
   const user = session.currentUser ?? (await auth.signInAnonymously(session)).user
   const base = db.getDatabase(app)
+  if (__EMU__) db.connectDatabaseEmulator(base, '127.0.0.1', 9000)
+  /*
+   * Jen websocket, žádný záložní přenos.
+   *
+   * Firebase si přenos vybírá sám a **pamatuje si, co mu naposled nevyšlo**.
+   * Stačí jediné klopýtnutí sítě — třeba když telefon na vteřinu ztratí
+   * signál — a websocket se zapíše jako nefunkční; klient pak celé sezení
+   * jede přes pomalejší záložní přenos a k websocketu se sám nevrátí, ani
+   * když už dávno funguje. Když uvázne i ten záložní, nespojí se vůbec
+   * a jediné, co pomůže, je zavřít celou aplikaci. Přesně tak to hráč
+   * popisoval: jednou večer výzva projde, podruhé ne.
+   *
+   * `forceWebSockets` ten skrytý stav ruší — přenos je vždycky jeden a týž
+   * a po výpadku se prostě zkusí znovu. Cenou je, že v síti, která
+   * websockety vůbec nepouští, souboje nepojedou; z měření u hráče je ale
+   * vidět, že websocket se otevírá bez potíží, a mlčky se zaseknout je
+   * horší než se ozvat.
+   */
+  db.forceWebSockets()
   // O kolik jsou hodiny telefonu vedle. Voština v souboji odpočítává oběma
   // stejné tři minuty, takže se nesmí spoléhat na místní čas.
   db.onValue(db.ref(base, '.info/serverTimeOffset'), (snap) => {
@@ -348,8 +372,11 @@ export async function claimNick(nick: string): Promise<boolean> {
   if (drzitel == null) {
     try {
       await docekat(db.set(db.ref(base, `nicks/${key}`), uid), 'přezdívka')
-    } catch {
+    } catch (chyba) {
       // Někdo byl o vteřinu rychlejší — pravidla druhý zápis nepustí.
+      // Do konzole i celá chyba: bez ní se „přezdívku už někdo má" nedalo
+      // odlišit od skutečného zámku a hledalo se to hodně dlouho.
+      console.error('Zabrání přezdívky selhalo:', chyba)
       return false
     }
   }

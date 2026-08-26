@@ -1220,3 +1220,57 @@ po obnoveném spojení posílá znovu sám.
 
 To přesně sedí na hráčův snímek: spojení stálo (a zkouška ho proto našla
 v pořádku), jen odpověď na dotaz se ztratila při jednom přeťatém spojení.
+
+# Souboje: konečně proti skutečné databázi
+
+Hráč poslal snímek se čtyřmi zelenými řádky zkoušky — a výzva přesto
+neprošla. V tu chvíli došly hypotézy, které jde ověřit ze snímku, a bylo
+potřeba přestat hádat.
+
+## Emulátor: databáze, se kterou se dá mluvit
+
+Databáze projektu je z vývojového stroje za bránou (proxy vrací 403 už na
+`CONNECT`), takže se souboje nikdy nedaly odehrát a všechny dosavadní opravy
+stály na čtení kódu a na hláškách z telefonu. Nově se pouští **emulátor
+Firebase se skutečnými pravidly** z `tools/firebase/database.rules.json`:
+
+* `bash tools/emu.sh start` — databáze na 9000, přihlášení na 9099.
+  Emulátoru se musí sebrat proxy, jinak by přes ni posílal i dotazy na
+  `127.0.0.1` a brána je odmítne.
+* `SLOVA_EMU=1` postaví hru, která mluví s emulátorem. V běžném buildu je
+  `__EMU__` natvrdo `false`, takže se ta část kódu do balíčku vůbec
+  nedostane — ověřeno, v produkčním souboru není o emulátoru zmínka.
+* `npm run audit:duel:e2e` složí obojí dohromady a odehraje celou cestu ve
+  **dvou prohlížečích naráz**: oba si zaberou přezdívku, jeden vyzve
+  druhého, výzva doopravdy dorazí, soupeř ji přijme a souboj se rozehraje.
+
+Hned první běh ukázal, že hra i pravidla jsou v pořádku a spolu mluví. Chyba
+tedy nebyla v tom, co se posílá, ale kdy a kudy.
+
+## Nalezená chyba: přenos, ze kterého není cesty zpátky
+
+Test si vynutil to, co má hráč v kapse — výpadek sítě — a chyba se ukázala
+okamžitě. Firebase si přenos vybírá sám a **pamatuje si, co mu naposled
+nevyšlo**. Stačí jediné klopýtnutí (telefon na vteřinu ztratí signál),
+websocket se zapíše jako nefunkční a klient pak celé sezení jede přes
+pomalejší záložní přenos. K websocketu se **sám nevrátí**, ani když už
+dávno funguje. A když uvázne i ten záložní, nespojí se vůbec — jediné, co
+pomůže, je zavřít celou aplikaci.
+
+Přesně tak to hráč popisoval: jednou večer výzva projde, podruhé ne.
+
+Opravené `forceWebSockets()`: přenos je vždycky jeden a týž, žádný skrytý
+stav, a po výpadku se prostě zkusí znovu. Cenou je, že v síti, která
+websockety vůbec nepouští, souboje nepojedou — z měření u hráče je ale
+vidět, že websocket se otevírá bez potíží, a mlčky se zaseknout je horší
+než se ozvat.
+
+## Co audit hlídá
+
+Kromě celé cesty dvou hráčů i dvě věci, které se z jednoho prohlížeče
+ověřit nedají:
+
+* **neznámá přezdívka se pozná hned** (do vteřiny), ne až po vypršení
+  lhůty — jinak by překlep vypadal jako výpadek serveru,
+* **po výpadku sítě se spojení obnoví bez restartu aplikace** — přesně to,
+  co bylo rozbité.

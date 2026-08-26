@@ -1,0 +1,10 @@
+14:15:42.894 [NamespaceSystem-akka.actor.default-dispatcher-5] INFO akka.event.slf4j.Slf4jLogger - Slf4jLogger started
+14:15:43.058 [main] INFO com.firebase.server.forge.App$ - Listening at 127.0.0.1:9000
+14:15:43.968 [NamespaceSystem-akka.actor.default-dispatcher-5] INFO com.firebase.core.namespace.NamespaceActor - slova-b0176-default-rtdb successfully activated FBKV (SurveyIdle(0)) wait: 133ms, init: 0ms
+14:15:50.569 [NamespaceSystem-blocking-namespace-operation-dispatcher-10] INFO com.firebase.core.namespace.StateManager - Namespace slova-b0176-default-rtdb status Active to Active
+14:24:32.536 [FirebaseWorkerPool-1-4] WARN com.firebase.server.forge.App$ - Received service account token eyJh...In0., assuming ownership.
+15:05:18.992 [NamespaceSystem-blocking-namespace-operation-dispatcher-180] INFO com.firebase.core.namespace.StateManager - Namespace slova-b0176-default-rtdb status Active to Active
+15:08:26.462 [Thread-0] INFO com.firebase.server.forge.App$ - Attempting graceful shutdown.
+15:08:26.473 [NamespaceSystem-akka.actor.default-dispatcher-83] INFO com.firebase.core.namespace.Terminator$Terminator - 1 actors left to terminate: slova-b0176-default-rtdb
+15:08:26.479 [NamespaceSystem-akka.actor.default-dispatcher-52] INFO com.firebase.core.namespace.NamespaceActor - stopped namespace actor for slova-b0176-default-rtdb
+15:08:26.486 [Thread-0] INFO com.firebase.server.forge.App$ - Graceful shutdown complete.
