@@ -30,6 +30,7 @@ import {
 } from '../game/duel'
 import { decodeSteps, stepTime, type DuelStep } from '../game/duelDetail'
 import { MODE_GLYPH } from '../game/types'
+import type { KartaHrace } from '../lib/multi'
 import { DuelCrest } from './art/DuelCrest'
 import { RivalChip } from './RivalChip'
 
@@ -40,7 +41,7 @@ export interface DuelStrana {
   detail?: string | undefined
   /** Soubojová hodnost pro erb. 0 = neznámá, erb se nekreslí. */
   rank?: number
-  /** Skryté id — jen u soupeře, kvůli kartě hráče. */
+  /** Skryté id — podle něj se karta hráče načte ze serveru. */
   uid?: string | undefined
 }
 
@@ -55,6 +56,18 @@ interface Props {
   rivalNick: string
   /** Verdikt. Null znamená „ještě se čeká". */
   verdict: Verdict | null
+  /**
+   * Skryté id soupeře. Zná se ze zápasu i dřív, než dohraje — díky tomu se
+   * dá jeho karta otevřít i ze strany, kde se zatím čeká.
+   */
+  rivalUid?: string | undefined
+  /**
+   * Moje karta, hotová z telefonu.
+   *
+   * Na vlastní profil se má dát ťuknout stejně jako na soupeřův. Data jsou
+   * po ruce, takže se kvůli tomu nikam nechodí.
+   */
+  mojeKarta?: KartaHrace | undefined
 }
 
 /** Čas od začátku plástve: 1:07. */
@@ -64,11 +77,22 @@ function hiveTime(ms: number): string {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
 
-export function DuelReport({ id, kind, me, rival, rivalNick, verdict }: Props) {
+export function DuelReport({
+  id,
+  kind,
+  me,
+  rival,
+  rivalNick,
+  verdict,
+  rivalUid,
+  mojeKarta,
+}: Props) {
   const mine = useMemo(() => decodeSteps(me.detail), [me.detail])
   const theirs = useMemo(() => decodeSteps(rival?.detail), [rival?.detail])
 
   const rozdil = rival ? Math.abs(me.score - rival.score) : 0
+  /** Id soupeře — ze zápasu i z archivu; podle něj se otevírá jeho karta. */
+  const kdo = rival?.uid ?? rivalUid
 
   return (
     <div className={`rozbor ${verdict ?? 'ceka'}`}>
@@ -87,8 +111,14 @@ export function DuelReport({ id, kind, me, rival, rivalNick, verdict }: Props) {
 
       <div className="rozbor-vs">
         <div className={`rozbor-side ${verdict === 'win' ? 'top' : ''}`}>
-          {me.rank ? <DuelCrest rank={me.rank} size={46} /> : null}
-          <span className="rozbor-nick">{me.nick || 'Ty'}</span>
+          {mojeKarta ? (
+            <RivalChip nick={me.nick || 'Ty'} variant="panel" karta={mojeKarta} role="ty" />
+          ) : (
+            <>
+              {me.rank ? <DuelCrest rank={me.rank} size={46} /> : null}
+              <span className="rozbor-nick">{me.nick || 'Ty'}</span>
+            </>
+          )}
           <b className="rozbor-score num">{me.score.toLocaleString('cs-CZ')}</b>
         </div>
 
@@ -97,29 +127,28 @@ export function DuelReport({ id, kind, me, rival, rivalNick, verdict }: Props) {
         </span>
 
         <div className={`rozbor-side ${verdict === 'loss' ? 'top' : ''} ${rival ? '' : 'ceka'}`}>
-          {rival ? (
-            <>
-              {/* U soupeře je erb součástí tlačítka karty: ťuknutí na jeho
-                  sloupec otevře, co o něm hra ví. U sebe není co otevírat. */}
-              {rival.uid ? (
-                <RivalChip uid={rival.uid} nick={rival.nick} variant="panel" />
-              ) : (
-                <>
-                  {rival.rank ? <DuelCrest rank={rival.rank} size={46} /> : null}
-                  <span className="rozbor-nick">{rival.nick}</span>
-                </>
-              )}
-              <b className="rozbor-score num">{rival.score.toLocaleString('cs-CZ')}</b>
-            </>
+          {/*
+            * Erb je součástí tlačítka karty, takže se na soupeřův profil dá
+            * ťuknout i ve chvíli, kdy ještě nedohrál — o hráči se ví dost
+            * i bez výsledku a čekání není důvod ho schovávat. Bez id (starší
+            * záznam v archivu) zbude jen jméno.
+            */}
+          {kdo ? (
+            <RivalChip uid={kdo} nick={rival?.nick ?? rivalNick} variant="panel" />
           ) : (
             <>
-              {/* Zašedlý erb místo přesýpacích hodin: soupeřova hodnost se
-                  dozví, až dohraje, a prázdné místo by vedle mého erbu
-                  vypadalo jako chyba. */}
-              <DuelCrest rank={2} size={46} locked />
-              <span className="rozbor-nick">{rivalNick}</span>
-              <b className="rozbor-score faint">čeká se</b>
+              {rival?.rank ? (
+                <DuelCrest rank={rival.rank} size={46} />
+              ) : (
+                <DuelCrest rank={2} size={46} locked />
+              )}
+              <span className="rozbor-nick">{rival?.nick ?? rivalNick}</span>
             </>
+          )}
+          {rival ? (
+            <b className="rozbor-score num">{rival.score.toLocaleString('cs-CZ')}</b>
+          ) : (
+            <b className="rozbor-score faint">čeká se</b>
           )}
         </div>
       </div>

@@ -1928,15 +1928,15 @@ FAMILIES11 = [
             "dobromysl", "estragon", "šalvěj",
         ],
         "outside": [
-            "brýle", "hrábě", "hřeben", "komoda", "lavička", "metr",
-            "náramek", "nůžky", "peněženka", "pouzdro", "struhadlo", "sušák",
-            "utěrka", "vařečka", "šála",
+            "bříza", "dub", "smrk", "borovice", "javor", "lípa", "vrba",
+            "jasan", "kaštan", "akát", "kopretina", "sněženka", "tulipán",
+            "narcis", "pivoňka", "chrpa",
         ],
         "asks": [
             "jsou to zároveň kuchyňské bylinky",
             "jsou to zároveň příjmení českých prezidentů",
             "jsou to zároveň značky českého piva",
-            "nemají v sobě ani jednu samohlásku",
+            "čtou se stejně zepředu i zezadu",
         ],
     },
 ]

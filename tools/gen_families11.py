@@ -603,11 +603,16 @@ RODINY: list[dict] = [
          ask="jsou to zároveň drahé kameny",
          inside=s("granát opál safír smaragd ametyst topaz jaspis achát"),
          avoid=s("křemen")),
+    # Vetřelec musí být **taky rostlina**, jinak se pětice vyřeší tím, že
+    # čtyři věci rostou a pátá ne, a na bylinky nedojde. Stromy a květiny
+    # se do kuchyně nedostanou, takže mezi ně nic nepatří omylem.
     dict(id="v11-bylinky", level="normal",
          roof="kuchyňské bylinky",
          ask="jsou to zároveň kuchyňské bylinky",
          inside=s("bazalka tymián rozmarýn saturejka libeček dobromysl"
                   " estragon šalvěj"),
+         outside=s("bříza dub smrk borovice javor lípa vrba jasan kaštan"
+                   " akát kopretina sněženka tulipán narcis pivoňka chrpa"),
          avoid=s("mrkev brambora zahrada semínko")),
 ]
 

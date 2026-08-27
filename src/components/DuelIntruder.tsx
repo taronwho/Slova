@@ -11,7 +11,7 @@ import { useEffect, useRef, useState } from 'react'
 import { duelRoundScore, INTRUDER_DUEL_MAX, type Verdict } from '../game/duel'
 import { encodeSteps, type DuelStep } from '../game/duelDetail'
 import type { IntruderPuzzle } from '../game/intruder'
-import { finishMatch, type Match, type MatchScore } from '../lib/multi'
+import { finishMatch, type KartaHrace, type Match, type MatchScore } from '../lib/multi'
 import { DuelEnd } from './DuelEnd'
 import { RivalChip } from './RivalChip'
 
@@ -22,6 +22,8 @@ interface Props {
   nick: string
   /** Moje soubojová hodnost — erb v porovnání na konci. */
   rank?: number
+  /** Moje karta z telefonu — vlastní profil se má dát otevřít taky. */
+  mojeKarta?: KartaHrace
   onHome: () => void
   onVerdict: (
     verdict: Verdict,
@@ -39,6 +41,7 @@ export function DuelIntruder({
   uid,
   nick,
   rank = 0,
+  mojeKarta,
   onHome,
   onVerdict,
   onRematch,
@@ -156,6 +159,7 @@ export function DuelIntruder({
           mine={total}
           detail={rozpis}
           rank={rank}
+          {...(mojeKarta ? { mojeKarta } : {})}
           onHome={onHome}
           onVerdict={onVerdict}
           {...(onRematch ? { onRematch } : {})}

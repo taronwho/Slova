@@ -1879,9 +1879,9 @@ FAMILIES12 = [
             "opice",
         ],
         "outside": [
-            "bunda", "chleba", "deštník", "hoblík", "komoda", "krém",
-            "květináč", "lavička", "nůžky", "ponožka", "sklenice", "ubrus",
-            "vařečka", "šála", "žebřík",
+            "jelen", "liška", "medvěd", "veverka", "ježek", "sova", "orel",
+            "bobr", "netopýr", "čáp", "labuť", "žirafa", "velbloud", "tuleň",
+            "vydra", "krtek",
         ],
         "asks": [
             "jsou to zároveň znamení čínského zvěrokruhu",

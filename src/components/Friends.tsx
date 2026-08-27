@@ -39,6 +39,7 @@ import {
   zkouskaSpojeni,
   type Challenge,
   type DuelLog,
+  type KartaHrace,
   type Me,
   type Nalez,
 } from '../lib/multi'
@@ -76,6 +77,8 @@ interface Props {
   onSeen: (id: string) => void
   /** Moje soubojová hodnost — erb v panelu i v porovnání. */
   duelRank: number
+  /** Moje karta — v porovnání se dá otevřít i vlastní profil. */
+  mojeKarta: KartaHrace
   onChallenge: () => void
   onReport: (uid: string, nick: string) => void
   onUnblock: (uid: string) => void
@@ -92,6 +95,7 @@ export function Friends({
   waiting,
   onSeen,
   duelRank,
+  mojeKarta,
   onChallenge,
   onReport,
   onUnblock,
@@ -539,7 +543,9 @@ export function Friends({
           kind={rozbor.kind}
           verdict={verdictOf(rozbor.mine, rozbor.theirs)}
           me={{ nick: me.nick, score: rozbor.mine, detail: rozbor.mineDetail, rank: duelRank }}
+          mojeKarta={mojeKarta}
           rivalNick={rozbor.rival}
+          {...(rozbor.rivalUid ? { rivalUid: rozbor.rivalUid } : {})}
           rival={{
             nick: rozbor.rival,
             score: rozbor.theirs,

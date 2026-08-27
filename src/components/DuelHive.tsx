@@ -35,6 +35,7 @@ import {
   serverNow,
   watchMatch,
   watchWords,
+  type KartaHrace,
   type Match,
   type MatchScore,
 } from '../lib/multi'
@@ -49,6 +50,8 @@ interface Props {
   nick: string
   /** Moje soubojová hodnost — erb v porovnání na konci. */
   rank?: number
+  /** Moje karta z telefonu — vlastní profil se má dát otevřít taky. */
+  mojeKarta?: KartaHrace
   onHome: () => void
   onVerdict: (
     verdict: Verdict,
@@ -77,6 +80,7 @@ export function DuelHive({
   uid,
   nick,
   rank = 0,
+  mojeKarta,
   onHome,
   onVerdict,
   onRematch,
@@ -371,6 +375,7 @@ export function DuelHive({
           mine={points}
           detail={rozpis}
           rank={rank}
+          {...(mojeKarta ? { mojeKarta } : {})}
           fallback={{ nick: rival, score: rivalPoints }}
           verdict={verdictOf(points, rivalPoints)}
           onHome={onHome}

@@ -235,6 +235,15 @@ export default function App() {
    * soupeřovu a je to to první, co je na obrazovce vidět.
    */
   const soubojovaHodnost = duelRankFor(duelPoints(me))
+  /*
+   * Vlastní karta pro porovnání souboje.
+   *
+   * Na vlastní profil se má dát ťuknout stejně jako na soupeřův — a když
+   * jsou data v telefonu, nemá smysl si pro ně chodit na server. `uid` je
+   * moje skryté id; karta se jím nikam neposílá, jen se s ním pozná, že jde
+   * o mě.
+   */
+  const mojeKarta = { uid, nick: me.nick, band: rank.rank.index, wins: me.wins, losses: me.losses, draws: me.draws }
   const dayKey = todayKey()
   /**
    * Denní série hry, která je právě rozehraná.
@@ -1400,6 +1409,7 @@ export default function App() {
             // upozornění a otevře porovnání, o které se stará Friends.
             onSeen={(id) => setReports((list) => list.filter((one) => one.id !== id))}
             duelRank={soubojovaHodnost.rank.index}
+            mojeKarta={mojeKarta}
             onReport={(uid, nick) => setReporting({ uid, nick })}
             onUnblock={(uid) =>
               setMe((previous) => {
@@ -1426,6 +1436,7 @@ export default function App() {
             uid={uid}
             nick={me.nick}
             rank={soubojovaHodnost.rank.index}
+            mojeKarta={mojeKarta}
             onHome={goHome}
             onVerdict={(verdict, skore, souper, mujRozpis) =>
               closeDuel({
@@ -1452,6 +1463,7 @@ export default function App() {
             uid={uid}
             nick={me.nick}
             rank={soubojovaHodnost.rank.index}
+            mojeKarta={mojeKarta}
             onHome={goHome}
             onVerdict={(verdict, skore, souper, mujRozpis) =>
               closeDuel({

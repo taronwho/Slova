@@ -48,7 +48,7 @@ def frekvence() -> dict[str, int]:
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from intruder_families import FAMILIES  # noqa: E402
-from word_tags import SKATULKY, doplnit, dve_reseni  # noqa: E402
+from word_tags import SKATULKY, STRECHY, doplnit, dve_reseni, hrubsi_osa  # noqa: E402
 
 doplnit(FAMILIES)
 RAW = os.path.join(HERE, "raw")
@@ -132,7 +132,20 @@ def century(text: str) -> str | None:
 
 
 def load() -> list[dict]:
-    cache = json.load(open(os.path.join(RAW, "etymology.json"), encoding="utf-8"))
+    """Hesla Wikislovníku s etymologií, slabikami a slovním druhem.
+
+    Zásoba se stahuje krokem 5c a do repozitáře nepatří (`tools/raw/` je
+    v .gitignore). Když chybí, není to důvod build shodit: rodinné pětice,
+    kterých je přes pět tisíc, na ní nestojí. Vrátí se prázdno a `main`
+    si jazykové pětice převezme z minulého sestavení, ať se o ně sada
+    nepřipraví jen proto, že se stavělo bez staženého slovníku.
+    """
+    cesta = os.path.join(RAW, "etymology.json")
+    if not os.path.exists(cesta):
+        print(f"POZOR: {os.path.normpath(cesta)} chybí — jazykové pětice se"
+              " převezmou z minulého sestavení (obnoví je tools/5c_fetch_etymology.py)")
+        return []
+    cache = json.load(open(cesta, encoding="utf-8"))
     allowed = set(json.load(
         open(os.path.join(HERE, "..", "tests", "fixtures", "base-forms.json"), encoding="utf-8")
     ))
@@ -416,6 +429,7 @@ def from_families(rng: random.Random, per_family: dict[str, int]) -> list[dict]:
     všech pět, takže nic nevydělují.
     """
     out = []
+    osy_skatulek = {f["id"] for f in rodiny_se_skatulkou()}
     for family in FAMILIES:
         # Strop je pro všechny rodiny téže obtížnosti stejný.
         #
@@ -451,6 +465,13 @@ def from_families(rng: random.Random, per_family: dict[str, int]) -> list[dict]:
             # vetřelec zvíře a byla mezi pěticí zvířata právě čtyři, ukazuje
             # ta čtveřice na jiné slovo než osa rodiny (viz word_tags.py).
             if dve_reseni(four, odd):
+                continue
+            # A nesmí jít vyřešit **hruběji, než se ptá**. Čtyři zvířata
+            # a lavička jsou hádanka o zvířatech, ne o čínském zvěrokruhu:
+            # osa je k ničemu a hráč to pozná dřív než ji. Rodinám, které
+            # se na tu škatulku ptají samy, to nevadí — tam nic hrubšího
+            # není.
+            if family["id"] not in osy_skatulek and hrubsi_osa(four, odd):
                 continue
             # U rodin se schovaným slovem musí čtveřice schovávat čtyři
             # **různé** věci. Jinak vyjde pětice jako *malinovka,
@@ -500,6 +521,34 @@ def from_families(rng: random.Random, per_family: dict[str, int]) -> list[dict]:
     return out
 
 
+def rodiny_se_skatulkou() -> list[dict]:
+    """Rodiny, jejichž osa **je** hrubá škatulka.
+
+    U nich je „čtyři zvířata a jedna lavička" správně položená otázka, ne
+    zlevnělá: nic hrubšího než zvíře už nad ní není. Všude jinde takovou
+    pětici `hrubsi_osa` zamítne.
+    """
+    return [
+        f for f in FAMILIES
+        if not f.get("roof", "").startswith("slova")
+        and any(m in f.get("roof", "") for marks in STRECHY.values() for m in marks)
+    ]
+
+
+def drive_jazykove() -> list[dict]:
+    """Jazykové pětice z minulého sestavení.
+
+    Poznají se podle `family`, které u nich začíná na `jaz:` — rodinné
+    pětice tam mají celou otázku. Bez staženého slovníku by se jinak
+    ztratily, a to je horší než je pár sestavení nést s sebou.
+    """
+    path = os.path.join(OUT, "puzzles.json")
+    if not os.path.exists(path):
+        return []
+    stare = json.load(open(path, encoding="utf-8"))
+    return [dict(p) for p in stare if str(p.get("family", "")).startswith("jaz:")]
+
+
 def main() -> int:
     rng = random.Random(7)
     words = load()
@@ -532,10 +581,14 @@ def main() -> int:
         print(f"  {level}: {families[level]} rodin po {per_family[level]} pěticích")
 
     made = []
-    for kind in TRAITS:
-        rows = build(words, kind, rng)[: per_family[LEVEL[kind]]]
-        print(f"  {kind}: {len(rows)}")
-        made += rows
+    if words:
+        for kind in TRAITS:
+            rows = build(words, kind, rng)[: per_family[LEVEL[kind]]]
+            print(f"  {kind}: {len(rows)}")
+            made += rows
+    else:
+        made = drive_jazykove()
+        print(f"  jazykové z minulého sestavení: {len(made)}")
 
     from_fam = from_families(rng, per_family)
     for one in from_fam:
@@ -557,6 +610,10 @@ def main() -> int:
         # A co se v kterém slově schovává — podle toho test pozná, že
         # v jedné pětici nestojí dvě slova s toutéž schovanou věcí.
         "skryte": {f["asks"][0]: f["skryte"] for f in FAMILIES if f.get("skryte")},
+        # Osy, které samy jsou hrubou škatulkou. Test podle nich pozná,
+        # kde je „čtyři zvířata a jeden hrnec" v pořádku a kde je to
+        # hádanka, která se dá vyřešit, aniž by se o ose cokoli vědělo.
+        "osy_skatulek": sorted({f["asks"][0] for f in rodiny_se_skatulkou()}),
     }, open(fixture, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 
     os.makedirs(OUT, exist_ok=True)

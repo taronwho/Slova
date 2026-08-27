@@ -830,6 +830,37 @@ describe('vetřelec — vyváženost sady', () => {
     expect(problems.slice(0, 5)).toEqual([])
   })
 
+  it('pětice nejde vyřešit hruběji, než na co se ptá', () => {
+    const puzzles = JSON.parse(
+      readFileSync('public/data/intruder/puzzles.json', 'utf-8'),
+    ) as { words: string[]; odd: string; answer: string }[]
+    const { skatulky, osy_skatulek } = JSON.parse(
+      readFileSync('tests/fixtures/word-tags.json', 'utf-8'),
+    ) as { skatulky: Record<string, string[]>; osy_skatulek: string[] }
+
+    // Hlášená pětice: lavička, opice, tygr, drak, krysa — „čtyři z nich jsou
+    // znamení čínského zvěrokruhu". O zvěrokruhu se hráč nemusel dozvědět
+    // nic: stačilo vidět, že kromě lavičky jsou to zvířata. Vetřelec musí
+    // ležet ve stejném soudku jako čtveřice, jinak je osa na ozdobu.
+    //
+    // Výjimka jsou rodiny, které se na tu škatulku ptají samy („čtyři z nich
+    // jsou psi" — nad zvířetem už nic hrubšího není).
+    const osy = new Set(osy_skatulek)
+    const problems: string[] = []
+    for (const [tag, list] of Object.entries(skatulky)) {
+      const set = new Set(list)
+      const patri = (w: string) => set.has(w) || w.split(' ').some((p) => set.has(p))
+      for (const one of puzzles) {
+        if (osy.has(one.answer)) continue
+        const four = one.words.filter((w) => w !== one.odd)
+        if (four.length === 4 && four.every(patri) && !patri(one.odd)) {
+          problems.push(`${tag}: ${one.words.join(' ')} (${one.answer})`)
+        }
+      }
+    }
+    expect(problems.slice(0, 5)).toEqual([])
+  })
+
   it('v pětici se totéž neschovává dvakrát', () => {
     const puzzles = JSON.parse(
       readFileSync('public/data/intruder/puzzles.json', 'utf-8'),

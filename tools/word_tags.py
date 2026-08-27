@@ -10,11 +10,19 @@ takže vadí jediný případ: **škatulku sdílí právě čtyři slova a jedno
 je vetřelec.** Pak totiž ta čtveřice není ta, kterou má rodina na mysli —
 je to tři slova zevnitř a vetřelec, a ukazuje na jiné slovo.
 
-Když škatulku sdílí všech pět, nikoho nevyděluje. A když ji sdílí právě ta
-čtveřice zevnitř, ukazuje na téhož vetřelce jako osa rodiny — dvě čtení,
-jedna odpověď, žádná škoda. Proto se hlídá jen ten jeden případ; kdyby se
-zakazovalo víc, přišly by rodiny jako „čtyři z nich jsou psi" o všechny
-pětice, kde je vetřelec hrnec.
+Když škatulku sdílí všech pět, nikoho nevyděluje.
+
+Zbývá třetí případ a ten se dlouho pouštěl dál: **škatulku sdílí právě ta
+čtveřice zevnitř a vetřelec do ní nepatří.** Odpověď z toho vyjde stejná
+jako z osy rodiny, takže se to bralo za neškodné. Není. Hráč poslal pětici
+*lavička, opice, tygr, drak, krysa* s osou „čtyři z nich jsou znamení
+čínského zvěrokruhu" a napsal k tomu, že by stačilo říct, že kromě lavičky
+jsou to všechno zvířata. Měl pravdu: o zvěrokruhu se nemusel dozvědět nic,
+osa byla k ničemu a hádanka se vyřešila za vteřinu. Chytá to `hrubsi_osa`.
+
+Rodinu to nezabije, jen ji donutí hledat vetřelce **ve stejném soudku**:
+„čtyři z nich jsou psi" potřebuje vedle sebe jiné zvíře, ne hrnec. Bez toho
+se neptá na psy, ale na zvířata.
 
 Škatulky jsou schválně hrubé a jen dvě. Nemají popisovat význam slov, jen
 zachytit to, čeho si hráč všimne dřív než osy: že se něco hýbe a něco roste.
@@ -42,6 +50,8 @@ slon sob sova srna srnec straka stonožka sumec sýkora sépie štika štír
 volavka vosa vrabec vrápenec vydra výr vážka včela včelka vůl zajíc želva
 žirafa žralok žába žížala žabka habešská mainská_mývalí mořský_ježek
 mořský_koník larva_jepice
+buvol cikáda dalmatin chroust chrousta ještěrka kiwi krysa králík mlok
+motýl nandu ovčák slavík svišť sysel upír úhoř špic
 """.split())
 
 # Rostlina včetně hub a plodů — pro hráče je to jedna hromada „něco, co
@@ -60,6 +70,9 @@ pivoňka platan pórek rebarbora rozmarýn růže ředkev ředkvička řepa sekv
 slunečnice smrk sněženka sněženky sumak šafrán šalvěj šípek špenát švestka
 tis topinambur topol tuje tulipán tuřín tymián třešeň václavka višeň vrba
 zázvor žampion čočka jicama batáty černý_kořen bobkový_list
+avokádo bambus brambor brambora brambory dřín hořčice hřebíček jablka
+kardamom kurkuma mrkev muškát oliva pepř pískavice saturejka sezam trnka
+švestky vanilka nové_koření
 """.split())
 
 # Víceslovná hesla se v seznamech píšou s podtržítkem, aby se dala rozdělit
@@ -101,6 +114,25 @@ def _ve_skatulce(word: str, words: set[str]) -> bool:
     proto, aby ve škatulce leželo kterékoli slovo z hesla.
     """
     return word in words or any(part in words for part in word.split())
+
+
+def hrubsi_osa(four: list[str], odd: str) -> str | None:
+    """Vyděluje vetřelce něco hrubšího, než na co se rodina ptá?
+
+    Vrací jméno škatulky, kterou sdílí **všechna čtyři** slova zevnitř
+    a vetřelec do ní nepatří. Taková pětice se dá vyřešit bez osy rodiny —
+    stačí si všimnout, že čtyři věci žijí a pátá ne.
+
+    Rodinám, které se na tu škatulku ptají samy („čtyři z nich jsou zvířata
+    chovaná lidmi"), to nevadí a volající je nechává být: tam osa a škatulka
+    splývají a hrubší pohled neexistuje.
+    """
+    for tag, words in SKATULKY.items():
+        if _ve_skatulce(odd, words):
+            continue
+        if all(_ve_skatulce(w, words) for w in four):
+            return tag
+    return None
 
 
 def dve_reseni(four: list[str], odd: str) -> bool:

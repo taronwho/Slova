@@ -16,7 +16,7 @@ import { useContext, useEffect, useRef, useState } from 'react'
 
 import { ReportContext } from '../app/nextUp'
 import { verdictOf, type Verdict } from '../game/duel'
-import { watchDone, type Match, type MatchScore } from '../lib/multi'
+import { watchDone, type KartaHrace, type Match, type MatchScore } from '../lib/multi'
 import { Confetti } from './Confetti'
 import { DuelReport } from './DuelReport'
 
@@ -30,6 +30,8 @@ interface Props {
   detail?: string
   /** Moje soubojová hodnost pro erb. */
   rank?: number
+  /** Moje karta z telefonu — aby se dalo ťuknout i na vlastní profil. */
+  mojeKarta?: KartaHrace
   /** Skóre soupeře spočítané na místě — u Voštiny je známé rovnou. */
   fallback?: MatchScore
   verdict?: Verdict
@@ -58,6 +60,7 @@ export function DuelEnd({
   mine,
   detail,
   rank = 0,
+  mojeKarta,
   fallback,
   onHome,
   onVerdict,
@@ -110,6 +113,8 @@ export function DuelEnd({
             verdict={verdict}
             me={{ nick, score: mine, detail, rank }}
             rivalNick={row?.nick ?? rivalNick}
+            rivalUid={rivalUid}
+            mojeKarta={mojeKarta}
             rival={
               row
                 ? { nick: row.nick, score: row.score, detail: row.detail, uid: rivalUid }

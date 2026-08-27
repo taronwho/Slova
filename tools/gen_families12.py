@@ -592,10 +592,17 @@ RODINY: list[dict] = [
          inside=s("Václav Ludmila Vojtěch Prokop Anežka Zdislava Jan"
                   " Kliment"),
          outside=s("Bohumil Květoslav Vlastimil Zbyněk Slavoj Radovan Miloslav Jaromír")),
+    # Vetřelec musí být **taky zvíře**. S lavičkou vedle čtyř zvířat by se
+    # pětice vyřešila bez zvěrokruhu a osa by byla na ozdobu; hráč to
+    # nahlásil přesně takhle. Ve vetřelcích proto nesmí být nic, co je
+    # znamením — čínským ani tím naším (kůň, koza, pes, prase, kohout,
+    # myš, zajíc, vůl, lev, štír, ryby, beran, býk).
     dict(id="v12-cinsky-zverokruh", level="hard",
          roof="znamení čínského zvěrokruhu",
          ask="jsou to zároveň znamení čínského zvěrokruhu",
-         inside=s("krysa buvol tygr králík drak had koza opice")),
+         inside=s("krysa buvol tygr králík drak had koza opice"),
+         outside=s("jelen liška medvěd veverka ježek sova orel bobr"
+                   " netopýr čáp labuť žirafa velbloud tuleň vydra krtek")),
     dict(id="v12-malirske-barvy", level="hard",
          roof="malířské barvy",
          ask="jsou to zároveň názvy malířských barev",
