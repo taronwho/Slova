@@ -9,6 +9,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 import { duelRoundScore, INTRUDER_DUEL_MAX, type Verdict } from '../game/duel'
+import { encodeSteps, type DuelStep } from '../game/duelDetail'
 import type { IntruderPuzzle } from '../game/intruder'
 import { finishMatch, type Match, type MatchScore } from '../lib/multi'
 import { DuelEnd } from './DuelEnd'
@@ -19,13 +20,29 @@ interface Props {
   puzzles: IntruderPuzzle[]
   uid: string
   nick: string
+  /** Moje soubojová hodnost — erb v porovnání na konci. */
+  rank?: number
   onHome: () => void
-  onVerdict: (verdict: Verdict, mine: number, souper: MatchScore) => void
+  onVerdict: (
+    verdict: Verdict,
+    mine: number,
+    souper: MatchScore,
+    mujRozpis?: string,
+  ) => void
   /** Odveta se stejným soupeřem, aby se přezdívka nemusela psát znovu. */
   onRematch?: () => Promise<boolean>
 }
 
-export function DuelIntruder({ match, puzzles, uid, nick, onHome, onVerdict, onRematch }: Props) {
+export function DuelIntruder({
+  match,
+  puzzles,
+  uid,
+  nick,
+  rank = 0,
+  onHome,
+  onVerdict,
+  onRematch,
+}: Props) {
   const [round, setRound] = useState(0)
   const [picked, setPicked] = useState<string | null>(null)
   const [total, setTotal] = useState(0)
@@ -36,6 +53,15 @@ export function DuelIntruder({ match, puzzles, uid, nick, onHome, onVerdict, onR
   const puzzle = puzzles[round]!
   const right = picked === puzzle.odd
 
+  /*
+   * Rozpis kol pro porovnání se soupeřem.
+   *
+   * Drží se v ref, ne ve stavu: nic se z něj během hry nekreslí a překreslovat
+   * plochu kvůli zápisu do archivu by bylo zbytečné.
+   */
+  const kroky = useRef<DuelStep[]>([])
+  const [rozpis, setRozpis] = useState('')
+
   useEffect(() => {
     started.current = Date.now()
   }, [round])
@@ -44,12 +70,16 @@ export function DuelIntruder({ match, puzzles, uid, nick, onHome, onVerdict, onR
   useEffect(() => {
     if (!over || sent.current) return
     sent.current = true
-    void finishMatch(match.id, nick, total)
+    const text = encodeSteps(kroky.current)
+    setRozpis(text)
+    void finishMatch(match.id, nick, total, text)
   }, [match.id, nick, over, total])
 
   function pick(word: string) {
     if (picked) return
-    const points = duelRoundScore(word === puzzle.odd, Date.now() - started.current)
+    const ms = Date.now() - started.current
+    const points = duelRoundScore(word === puzzle.odd, ms)
+    kroky.current.push({ word, ms, points, odd: puzzle.odd })
     setPicked(word)
     setGain(points)
     setTotal((sum) => sum + points)
@@ -122,8 +152,10 @@ export function DuelIntruder({ match, puzzles, uid, nick, onHome, onVerdict, onR
         <DuelEnd
           match={match}
           uid={uid}
+          nick={nick}
           mine={total}
-          note={`${total} bodů ze tří kol`}
+          detail={rozpis}
+          rank={rank}
           onHome={onHome}
           onVerdict={onVerdict}
           {...(onRematch ? { onRematch } : {})}

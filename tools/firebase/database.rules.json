@@ -112,6 +112,7 @@
             ".validate": "newData.hasChildren(['nick', 'score'])",
             "nick": { ".validate": "newData.isString() && newData.val() === root.child('players').child($uid).child('nick').val()" },
             "score": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000" },
+            "detail": { ".validate": "newData.isString() && newData.val().length <= 900" },
             "at": { ".validate": "newData.val() === now" },
             "$other": { ".validate": false }
           }

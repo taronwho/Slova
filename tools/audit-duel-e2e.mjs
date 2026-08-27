@@ -143,21 +143,30 @@ if (dosla) {
   }
 }
 
-console.log('\nHODNOST SOUPEŘE JE VIDĚT UŽ PŘI HŘE')
+console.log('\nERB SOUPEŘE JE VIDĚT UŽ PŘI HŘE')
 /*
  * V souboji je jméno soupeře jediné, co o něm hráč ví, a to je málo.
- * Odznak s číslem hodnosti musí být u přezdívky vidět **sám od sebe** —
- * dřív se načítal až na ťuknutí, takže při hře tam nebyl vůbec.
+ * U přezdívky proto stojí **erb soubojové hodnosti** a musí být vidět sám
+ * od sebe — dřív se načítal až na ťuknutí, takže při hře tam nebyl vůbec.
+ *
+ * Hodnost z profilu se ukazuje jen v otevřené kartě: věhlas se sbírá
+ * v denních kolech, kde soupeř žádný není, a do souboje proto nemluví.
  */
 {
   const cip = jedna.page.locator('.duel-game .rival-chip').first()
   const jeCip = await cip.waitFor({ timeout: 20000 }).then(() => true).catch(() => false)
-  check(jeCip, 'u přezdívky soupeře je čip s hodností')
+  check(jeCip, 'u přezdívky soupeře je čip')
   if (jeCip) {
-    const odznak = await cip.locator('.rank-badge').count()
-    const cislo = (await cip.locator('.rival-band').innerText().catch(() => '')).trim()
-    check(odznak > 0, 'odznak hodnosti je vidět bez ťuknutí')
-    check(/^\d+$/.test(cislo), `a vedle něj číslo hodnosti (${cislo || 'chybí'})`)
+    const erb = await cip
+      .locator('.duel-crest')
+      .waitFor({ timeout: 20000 })
+      .then(() => true)
+      .catch(() => false)
+    check(erb, 'erb soubojové hodnosti je vidět bez ťuknutí')
+    check(
+      (await cip.locator('.rank-badge').count()) === 0,
+      'a hodnost z profilu se do souboje neplete',
+    )
 
     // Ťuknutím se otevře karta se jménem hodnosti a bilancí.
     await cip.click()
@@ -168,10 +177,15 @@ console.log('\nHODNOST SOUPEŘE JE VIDĚT UŽ PŘI HŘE')
       .catch(() => false)
     check(karta, 'ťuknutím se otevře karta hráče')
     if (karta) {
-      const text = await jedna.page.locator('.rival-sheet').innerText()
-      check(/hodnost/i.test(text), 'karta říká jméno hodnosti')
-      check(/V soubojích/i.test(text), 'a soubojovou hodnost')
-      check(/Výhry/i.test(text), 'a bilanci soubojů')
+      const list = jedna.page.locator('.rival-sheet')
+      const text = await list.innerText()
+      check((await list.locator('.duel-crest').count()) > 0, 'karta vede erbem soubojové hodnosti')
+      check(/Výhry/i.test(text), 'a bilancí soubojů')
+      check(/Mimo souboje/i.test(text), 'a teprve dole hodností z profilu')
+      check(
+        (await list.locator('.rival-offline .rank-badge').count()) > 0,
+        'i s jejím odznakem',
+      )
       await jedna.page.locator('.rival-sheet .btn', { hasText: 'Zavřít' }).click()
     }
   }
@@ -203,6 +217,29 @@ console.log('\nODEHRANÝ SOUBOJ ČEKÁ NA SOUPEŘE A JE TO VIDĚT')
     `dokud soupeř nedohrál, stojí na tlačítku „Vyzvat znovu" (${napis || 'nic'})`,
   )
 
+  /*
+   * Porovnání kol i tomu, kdo dohrál první.
+   *
+   * Vidí svoje tři kola i s časy a body; na straně soupeře je zatím
+   * čekání. Dřív mu zůstalo jen „odehráno" a jedno číslo.
+   */
+  const rozbor = page.locator('.result-card .rozbor')
+  const jeRozbor = await rozbor.waitFor({ timeout: 20000 }).then(() => true).catch(() => false)
+  check(jeRozbor, 'první hráč vidí rozpis svých kol')
+  if (jeRozbor) {
+    const mych = await rozbor.locator('.rozbor-dvojice > .rozbor-bunka:not(.prazdna)').count()
+    const cekacich = await rozbor.locator('.rozbor-bunka.prazdna').count()
+    check(mych === 3, `jsou v něm tři odehraná kola (${mych})`)
+    check(cekacich === 3, `a u soupeře se zatím čeká (${cekacich})`)
+    const text = (await rozbor.innerText()).replace(/\s+/g, ' ')
+    check(/\d+[,.]?\d*\s*s/.test(text), 'u kol je čas')
+    check(/[+]\d+|(^|\s)0(\s|$)/.test(text), 'a body za kolo')
+    check(
+      (await rozbor.locator('.rozbor-side .duel-crest').count()) === 2,
+      'a nad tím stojí dva erby proti sobě',
+    )
+  }
+
   await page.locator('.result-actions .btn', { hasText: 'Zpět do menu' }).click()
   await page.locator('.friends-entry, .btn', { hasText: /přáteli/i }).first().click()
   await page.locator('.friends').waitFor({ timeout: 15000 })
@@ -225,8 +262,29 @@ console.log('\nSOUPEŘ DOHRAJE A OBA VIDÍ VYHODNOCENÍ')
     await druha.page.waitForTimeout(400)
   }
   await druha.page.locator('.result-card').waitFor({ timeout: 20000 }).catch(() => undefined)
-  const vysledek = await druha.page.locator('.result-card').innerText().catch(() => '')
-  check(/\d+\s*:\s*\d+/.test(vysledek.replace(/\s+/g, ' ')), 'soupeř vidí výsledek proti sobě')
+
+  /*
+   * Kdo hraje druhý, má obě strany rovnou: svoje kolo proti soupeřovu,
+   * s časy a body u obou.
+   */
+  const rozbor = druha.page.locator('.result-card .rozbor')
+  const jeRozbor = await rozbor.waitFor({ timeout: 20000 }).then(() => true).catch(() => false)
+  check(jeRozbor, 'druhý hráč vidí celé porovnání')
+  if (jeRozbor) {
+    const bunek = await rozbor.locator('.rozbor-bunka:not(.prazdna)').count()
+    check(bunek === 6, `obě strany mají svoje tři kola (${bunek} z 6)`)
+    check(
+      (await rozbor.locator('.rozbor-bunka.prazdna').count()) === 0,
+      'a nikde se už nečeká',
+    )
+    const nadpis = (await rozbor.locator('h2').innerText()).trim()
+    check(
+      ['Vyhrál jsi!', 'Prohrál jsi', 'Remíza'].includes(nadpis),
+      `nahoře stojí výsledek (${nadpis})`,
+    )
+    const hlaska = (await rozbor.locator('.rozbor-line').innerText()).trim()
+    check(hlaska.length > 0, `a pod ním hláška („${hlaska}")`)
+  }
 
   const tlacitkoSoupere = (await druha.page.locator('.result-actions .btn-primary').first().innerText().catch(() => '')).trim()
   check(tlacitkoSoupere === 'Odveta', `a u dohraného souboje je „Odveta" (${tlacitkoSoupere || 'nic'})`)
@@ -240,7 +298,73 @@ console.log('\nSOUPEŘ DOHRAJE A OBA VIDÍ VYHODNOCENÍ')
   if (jeArchiv) {
     const radek = (await archiv.innerText()).replace(/\s+/g, ' ')
     check(radek.includes(VYZYVATEL), `a je v něm soupeř i skóre (${radek})`)
+
+    // Ťuknutím se otevře totéž porovnání, i po týdnech.
+    await archiv.click()
+    const okno = druha.page.locator('.rozbor-sheet')
+    const jeOkno = await okno.waitFor({ timeout: 10000 }).then(() => true).catch(() => false)
+    check(jeOkno, 'a dá se z něj otevřít porovnání')
+    if (jeOkno) {
+      const bunek = await okno.locator('.rozbor-bunka:not(.prazdna)').count()
+      check(bunek === 6, `v archivu zůstala kola obou stran (${bunek} z 6)`)
+      await okno.locator('.btn', { hasText: 'Zavřít' }).click()
+    }
   }
+}
+
+console.log('\nVÝSLEDEK SE PŘIPÍŠE SÁM, BEZ ŤUKNUTÍ NA OZNÁMENÍ')
+/*
+ * Tohle hlásil hráč: souboj byl rozhodnutý, ale do bilance se nezapsal,
+ * dokud si neťukl na oznámení o dohraném souboji. Připisovat výsledek až
+ * za odměnu za ťuknutí je nesmysl — rozhodnuto je rozhodnuto.
+ *
+ * Zkouší se to na prvním hráči: ten odešel do menu dřív, než soupeř
+ * dohrál, takže se výsledek dozví až při návratu k aplikaci.
+ */
+{
+  const page = jedna.page
+  await page.locator('.result-actions .btn', { hasText: 'Zpět do menu' }).first().click().catch(() => undefined)
+  await page.goto(APP, { waitUntil: 'networkidle' })
+  await waitReady(page)
+  await page.locator('.friends-entry, .btn', { hasText: /přáteli/i }).first().click()
+  await page.locator('.friends').waitFor({ timeout: 15000 })
+
+  // Bilance se má srovnat sama, ještě než na cokoli sáhneme.
+  const zapsano = await page
+    .waitForFunction(
+      () => {
+        const text = document.querySelector('.friends-tally')?.textContent ?? ''
+        return !/Zatím žádný souboj/.test(text) && /\d/.test(text)
+      },
+      undefined,
+      { timeout: 40000 },
+    )
+    .then(() => true)
+    .catch(() => false)
+  const bilance = (await page.locator('.friends-tally').innerText().catch(() => '')).replace(/\s+/g, ' ')
+  check(zapsano, `výsledek je v bilanci bez ťuknutí (${bilance || 'prázdná'})`)
+
+  const archiv = page.locator('.duel-strip.past').first()
+  const jeArchiv = await archiv.waitFor({ timeout: 20000 }).then(() => true).catch(() => false)
+  check(jeArchiv, 'a souboj sám od sebe spadl do odehraných')
+
+  // Ťuknutí na oznámení „Dohráno" otevře porovnání, ne teprve zápis.
+  const zprava = page.locator('.duel-strip.report').first()
+  if (await zprava.isVisible().catch(() => false)) {
+    await zprava.click()
+    const okno = await page.locator('.rozbor-sheet').waitFor({ timeout: 10000 }).then(() => true).catch(() => false)
+    check(okno, 'ťuknutím na oznámení se otevře porovnání')
+    if (okno) await page.locator('.rozbor-sheet .btn', { hasText: 'Zavřít' }).click()
+  }
+
+  // A dvakrát se tentýž souboj do bilance zapsat nesmí.
+  const pocet = await page.locator('.duel-strip.past').count()
+  check(pocet === 1, `souboj je v archivu jen jednou (${pocet})`)
+  const cisla = (bilance.match(/\d+/g) ?? []).map(Number)
+  check(
+    cisla.reduce((a, b) => a + b, 0) === 1,
+    `a v bilanci je započítaný jen jednou (${bilance})`,
+  )
 }
 
 console.log('\nNEZNÁMÁ PŘEZDÍVKA SE POZNÁ HNED, NE AŽ PO LHŮTĚ')

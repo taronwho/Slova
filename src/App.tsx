@@ -96,9 +96,11 @@ import {
   DUEL_MODE,
   DUEL_TITLE,
   INTRUDER_ROUNDS,
+  verdictOf,
   type DuelKind,
   type Verdict,
 } from './game/duel'
+import { duelPoints, duelRankFor } from './game/duelRank'
 import { upozorni } from './lib/upozorneni'
 import type { Quote, QuoteState } from './game/quotes'
 import { RANKS, rankFor } from './game/ranks'
@@ -226,6 +228,13 @@ export default function App() {
   const [roundStart, setRoundStart] = useState(() => Date.now())
 
   const rank = rankFor(profile.fame)
+  /*
+   * Soubojová hodnost — vlastní žebříček, počítaný z bilance klání.
+   *
+   * Do souboje se posílá kvůli erbu: v porovnání stojí můj erb proti
+   * soupeřovu a je to to první, co je na obrazovce vidět.
+   */
+  const soubojovaHodnost = duelRankFor(duelPoints(me))
   const dayKey = todayKey()
   /**
    * Denní série hry, která je právě rozehraná.
@@ -681,32 +690,49 @@ export default function App() {
    * profilu souboje dál nesahají; mají vlastní žebříček.
    */
   const closeDuel = useCallback(
-    (
-      id: string,
-      verdict: Verdict,
-      skore = 0,
-      souper?: { nick: string; score: number },
-      druh?: DuelKind,
-    ) => {
+    (zaznam: {
+      id: string
+      verdict: Verdict
+      kind: DuelKind
+      skore: number
+      souper: { nick: string; score: number; detail?: string | undefined; uid?: string }
+      mujRozpis?: string | undefined
+    }) => {
+      const { id, verdict, kind, skore, souper } = zaznam
       const odveta = odvetaZa.current.has(id)
+      /*
+       * Podruhé se tentýž zápas nepočítá.
+       *
+       * Výsledek se dozvíme dvakrát: jednou na obrazovce konce hry a podruhé
+       * při návratu do menu, kde se rozehrané zápasy dovyzvedávají. Že už je
+       * hotový, se pozná podle archivu — ten je pro to spolehlivější než
+       * paměť běhu, protože přežije i zavření hry.
+       */
+      if ((me.log ?? []).some((one) => one.id === id)) {
+        setMe((previous) => {
+          const next = forgetMatch(previous, id)
+          saveMe(next)
+          return next
+        })
+        return
+      }
       odvetaZa.current.delete(id)
       setMe((previous) => {
         let next = tallyWith(
           forgetMatch(previous, id),
           verdict === 'draw' ? null : verdict === 'win',
         )
-        // Do archivu jen dohrané souboje. Zápas, u kterého se pořád čeká na
-        // soupeře, do „odehraných" nepatří — ten má vlastní přihrádku.
-        if (souper) {
-          next = zapisSouboj(next, {
-            id,
-            kind: druh ?? match?.kind ?? 'intruder',
-            rival: souper.nick,
-            mine: skore,
-            theirs: souper.score,
-            at: Date.now(),
-          })
-        }
+        next = zapisSouboj(next, {
+          id,
+          kind,
+          rival: souper.nick,
+          mine: skore,
+          theirs: souper.score,
+          at: Date.now(),
+          ...(zaznam.mujRozpis ? { mineDetail: zaznam.mujRozpis } : {}),
+          ...(souper.detail ? { theirsDetail: souper.detail } : {}),
+          ...(souper.uid ? { rivalUid: souper.uid } : {}),
+        })
         saveMe(next)
         void saveTally(next)
         return next
@@ -729,7 +755,7 @@ export default function App() {
         }
       })
     },
-    [updateProfile],
+    [me.log, updateProfile],
   )
 
   /** Zápasy, které vznikly jako odveta — kvůli metě za oplacenou porážku. */
@@ -802,6 +828,28 @@ export default function App() {
    * spojení, které hra sama nepotřebuje.
    */
   const outside = view.kind === 'home' || view.kind === 'friends'
+
+  /*
+   * Kdy se rozehrané zápasy obcházejí znovu.
+   *
+   * Výsledek dorazí ve chvíli, kdy je hráč pryč — soupeř si své kolo
+   * zahraje třeba v noci. Samotné `outside` na to nestačí: mezi domovskou
+   * obrazovkou a Hrou s přáteli se nemění, takže by se k obejití nedošlo.
+   * Ťuká se proto při každém návratu k aplikaci; přepnutí obrazovky si
+   * hlídá `view.kind` v závislostech.
+   */
+  const [probuzeni, setProbuzeni] = useState(0)
+  useEffect(() => {
+    const tik = () => {
+      if (document.visibilityState === 'visible') setProbuzeni((n) => n + 1)
+    }
+    document.addEventListener('visibilitychange', tik)
+    window.addEventListener('focus', tik)
+    return () => {
+      document.removeEventListener('visibilitychange', tik)
+      window.removeEventListener('focus', tik)
+    }
+  }, [])
   useEffect(() => {
     if (!MULTI_ON || !me.nick) return
     return watchChallenges(setChallenges, me.blocked ?? [])
@@ -845,6 +893,12 @@ export default function App() {
    *
    * U Vetřelce si vyzývatel odehraje svoje tři kola hned a soupeř třeba až
    * druhý den; výsledek se proto vyzvedává tady, při návratu do menu.
+   *
+   * Výsledek se **připisuje hned, jak je známý** — ne až si na něj hráč
+   * ťukne. Dřív to tak bylo a byl to nesmysl: souboj byl rozhodnutý, ale
+   * v bilanci se neobjevil, dokud si hráč neotevřel oznámení. Ťuknutí teď
+   * jen otevře porovnání a odklidí upozornění; s tím, kdo vyhrál, nemá co
+   * dělat. `closeDuel` se sám hlídá, aby nic nezapsal dvakrát.
    */
   useEffect(() => {
     const waiting = me.matches ?? []
@@ -859,9 +913,24 @@ export default function App() {
         if (!found) continue
         const done = await matchDone(id)
         const own = done[mine]
-        const theirs = done[found.host === mine ? found.guest : found.host]
+        const rivalUid = found.host === mine ? found.guest : found.host
+        const theirs = done[rivalUid]
         if (own && theirs) {
           out.push({ id, kind: found.kind, rival: theirs.nick, mine: own.score, theirs: theirs.score })
+          if (dead) return
+          closeDuel({
+            id,
+            verdict: verdictOf(own.score, theirs.score),
+            kind: found.kind,
+            skore: own.score,
+            souper: {
+              nick: theirs.nick,
+              score: theirs.score,
+              detail: theirs.detail,
+              uid: rivalUid,
+            },
+            mujRozpis: own.detail,
+          })
         } else if (own) {
           // Odehráno mám, soupeř ještě ne. Dřív se o takovém zápase nikde
           // nemluvilo a vypadalo to, že se někam ztratil.
@@ -874,14 +943,24 @@ export default function App() {
         }
       }
       if (!dead) {
-        setReports(out)
+        /*
+         * Upozornění se přidávají, nepřepisují.
+         *
+         * Připsáním výsledku zápas ze seznamu rozehraných zmizí, takže při
+         * dalším průchodu už by v `out` nebyl — a oznámení „dohráno" by
+         * zmizelo dřív, než by ho hráč stihl přečíst. Odklidí ho až ťuknutí.
+         */
+        setReports((stara) => [
+          ...out,
+          ...stara.filter((one) => !out.some((novy) => novy.id === one.id)),
+        ])
         setWaitingDuels(ceka)
       }
     })().catch(() => undefined)
     return () => {
       dead = true
     }
-  }, [me.matches, me.nick, outside])
+  }, [closeDuel, me.matches, me.nick, outside, probuzeni, view.kind])
 
   /**
    * Hodiny kola v liště.
@@ -1317,23 +1396,10 @@ export default function App() {
             reports={reports}
             waiting={waitingDuels}
             onChallenge={() => setSetup(true)}
-            onSeen={(id) => {
-              const report = reports.find((one) => one.id === id)
-              setReports((list) => list.filter((one) => one.id !== id))
-              if (report) {
-                closeDuel(
-                  id,
-                  report.mine === report.theirs
-                    ? 'draw'
-                    : report.mine > report.theirs
-                      ? 'win'
-                      : 'loss',
-                  report.mine,
-                  { nick: report.rival, score: report.theirs },
-                  report.kind,
-                )
-              }
-            }}
+            // Bilanci má souboj připsanou už dávno; ťuknutí jen odklidí
+            // upozornění a otevře porovnání, o které se stará Friends.
+            onSeen={(id) => setReports((list) => list.filter((one) => one.id !== id))}
+            duelRank={soubojovaHodnost.rank.index}
             onReport={(uid, nick) => setReporting({ uid, nick })}
             onUnblock={(uid) =>
               setMe((previous) => {
@@ -1359,9 +1425,20 @@ export default function App() {
             puzzle={matchHive}
             uid={uid}
             nick={me.nick}
+            rank={soubojovaHodnost.rank.index}
             onHome={goHome}
-            onVerdict={(verdict, skore, souper) =>
-              closeDuel(match.id, verdict, skore, souper)
+            onVerdict={(verdict, skore, souper, mujRozpis) =>
+              closeDuel({
+                id: match.id,
+                verdict,
+                kind: match.kind,
+                skore,
+                souper: {
+                  ...souper,
+                  uid: match.host === uid ? match.guest : match.host,
+                },
+                mujRozpis,
+              })
             }
             onRematch={rematch}
           />
@@ -1374,9 +1451,20 @@ export default function App() {
             puzzles={matchIntruder}
             uid={uid}
             nick={me.nick}
+            rank={soubojovaHodnost.rank.index}
             onHome={goHome}
-            onVerdict={(verdict, skore, souper) =>
-              closeDuel(match.id, verdict, skore, souper)
+            onVerdict={(verdict, skore, souper, mujRozpis) =>
+              closeDuel({
+                id: match.id,
+                verdict,
+                kind: match.kind,
+                skore,
+                souper: {
+                  ...souper,
+                  uid: match.host === uid ? match.guest : match.host,
+                },
+                mujRozpis,
+              })
             }
             onRematch={rematch}
           />

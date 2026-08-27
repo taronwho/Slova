@@ -3,6 +3,7 @@
 import { useContext, useEffect, useState, type ReactNode } from 'react'
 
 import { DuelContext, ReportContext, RoundModeContext, useNextUp } from '../app/nextUp'
+import { VERDICT_TITLE } from '../game/duel'
 import type { ScoreBreakdown } from '../game/scoring'
 import { Confetti } from './Confetti'
 import { Explain } from './Explain'
@@ -125,7 +126,9 @@ export function ResultOverlay({
           {duel && (
             <div className={`duel-card ${duel.won === true ? 'won' : duel.won === false ? 'lost' : ''}`}>
               <span className="duel-verdict">
-                {duel.won === null ? 'Remíza' : duel.won ? 'Vyhrál jsi!' : 'Tentokrát ne'}
+                {/* Stejná slova jako na konci souboje — tady i tam je to
+                    výhra proti někomu jmenovitému, ne dvě různé věci. */}
+                {VERDICT_TITLE[duel.won === null ? 'draw' : duel.won ? 'win' : 'loss']}
               </span>
               <span className="duel-line">
                 <b className="num">{breakdown.total.toLocaleString('cs-CZ')}</b>

@@ -23,6 +23,8 @@ import {
 } from '../game/duel'
 import { duelPoints, duelRankFor, DUEL_RANKS } from '../game/duelRank'
 import { MODE_GLYPH } from '../game/types'
+import { DuelCrest } from './art/DuelCrest'
+import { DuelReportSheet } from './DuelReport'
 import {
   pozadatOPovoleni,
   stavPovoleni,
@@ -36,6 +38,7 @@ import {
   SoubojChyba,
   zkouskaSpojeni,
   type Challenge,
+  type DuelLog,
   type Me,
   type Nalez,
 } from '../lib/multi'
@@ -71,6 +74,8 @@ interface Props {
   reports: DuelReport[]
   waiting: DuelWaiting[]
   onSeen: (id: string) => void
+  /** Moje soubojová hodnost — erb v panelu i v porovnání. */
+  duelRank: number
   onChallenge: () => void
   onReport: (uid: string, nick: string) => void
   onUnblock: (uid: string) => void
@@ -86,6 +91,7 @@ export function Friends({
   reports,
   waiting,
   onSeen,
+  duelRank,
   onChallenge,
   onReport,
   onUnblock,
@@ -97,6 +103,13 @@ export function Friends({
   const [problem, setProblem] = useState<string | null>(null)
   const [zkouska, setZkouska] = useState<Nalez[] | 'bezi' | null>(null)
   const [povoleni, setPovoleni] = useState<Povoleni>(() => stavPovoleni())
+  /*
+   * Otevřené porovnání.
+   *
+   * Bere se z archivu v telefonu, ne ze serveru: k odehranému souboji se
+   * hráč vrací i po týdnech, kdy už zápas na serveru nemusí být.
+   */
+  const [rozbor, setRozbor] = useState<DuelLog | null>(null)
 
   async function zkusit() {
     setZkouska('bezi')
@@ -189,6 +202,11 @@ export function Friends({
             * pokaždé potřeba druhý člověk.
             */}
           <div className="panel friends-rank">
+            <DuelCrest
+              rank={soubojova.rank.index}
+              size={56}
+              title={`Erb hodnosti ${soubojova.rank.name}`}
+            />
             <span className="label">Hodnost v soubojích</span>
             <b className="friends-rank-name">{soubojova.rank.name}</b>
             <span className="faint">
@@ -262,7 +280,17 @@ export function Friends({
 
           {reports.length > 0 && (
             <div className="friends-list">
-              <h2>Dohráno</h2>
+              <h2>Čerstvé výsledky</h2>
+              {/*
+                * Do bilance jsou tyhle souboje připsané už od chvíle, kdy
+                * soupeř dohrál — tohle je jen upozornění, že se něco stalo,
+                * dokud si toho hráč nevšimne. Ťuknutím se otevře porovnání
+                * a proužek odsud zmizí; v odehraných zůstane napořád.
+                */}
+              <p className="faint">
+                Soupeř dohrál, zatímco jsi byl pryč. Ťukni a podívej se, jak to
+                dopadlo.
+              </p>
               {reports.map((item) => {
                 const verdict = verdictOf(item.mine, item.theirs)
                 return (
@@ -270,7 +298,11 @@ export function Friends({
                     type="button"
                     className={`duel-strip report ${verdict}`}
                     key={item.id}
-                    onClick={() => onSeen(item.id)}
+                    onClick={() => {
+                      const zapis = (me.log ?? []).find((one) => one.id === item.id)
+                      if (zapis) setRozbor(zapis)
+                      onSeen(item.id)
+                    }}
                   >
                     <span className="duel-mark" aria-hidden="true">
                       {MODE_GLYPH[DUEL_MODE[item.kind]]}
@@ -334,12 +366,18 @@ export function Friends({
               <h2>Odehrané souboje</h2>
               <p className="faint">
                 Posledních {Math.min((me.log ?? []).length, 50)} klání i s tím,
-                jak dopadla. Bilance nahoře říká kolik, tohle proti komu.
+                jak dopadla. Ťukni na souboj a rozbalí se porovnání — kdo co
+                odevzdal, za jak dlouho a kolik za to dostal.
               </p>
               {(me.log ?? []).map((item) => {
                 const verdict = verdictOf(item.mine, item.theirs)
                 return (
-                  <div className={`duel-strip past ${verdict}`} key={item.id}>
+                  <button
+                    type="button"
+                    className={`duel-strip past ${verdict}`}
+                    key={item.id}
+                    onClick={() => setRozbor(item)}
+                  >
                     <span className="duel-mark" aria-hidden="true">
                       {MODE_GLYPH[DUEL_MODE[item.kind]]}
                     </span>
@@ -356,7 +394,10 @@ export function Friends({
                         })}
                       </span>
                     </span>
-                  </div>
+                    <span className="duel-strip-more" aria-hidden="true">
+                      ›
+                    </span>
+                  </button>
                 )
               })}
             </div>
@@ -491,6 +532,23 @@ export function Friends({
           Zpět na hry
         </button>
       </div>
+
+      {rozbor && (
+        <DuelReportSheet
+          id={rozbor.id}
+          kind={rozbor.kind}
+          verdict={verdictOf(rozbor.mine, rozbor.theirs)}
+          me={{ nick: me.nick, score: rozbor.mine, detail: rozbor.mineDetail, rank: duelRank }}
+          rivalNick={rozbor.rival}
+          rival={{
+            nick: rozbor.rival,
+            score: rozbor.theirs,
+            detail: rozbor.theirsDetail,
+            ...(rozbor.rivalUid ? { uid: rozbor.rivalUid } : {}),
+          }}
+          onClose={() => setRozbor(null)}
+        />
+      )}
     </div>
   )
 }

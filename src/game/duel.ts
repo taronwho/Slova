@@ -73,8 +73,97 @@ export function verdictOf(mine: number, theirs: number): Verdict {
 
 export const VERDICT_TITLE: Record<Verdict, string> = {
   win: 'Vyhrál jsi!',
-  loss: 'Tentokrát ne',
+  loss: 'Prohrál jsi',
   draw: 'Remíza',
+}
+
+/**
+ * Hláška pod výsledkem.
+ *
+ * Jedna věta na všechny výhry omrzí po třetím souboji. Je jich proto po
+ * dvaceti od každého a vybírá se podle **id zápasu**, ne náhodou: kdyby se
+ * losovalo při každém vykreslení, měnila by se hláška pod rukama pokaždé,
+ * když se obrazovka překreslí. Takhle má každý souboj tu svou napořád —
+ * i když se na něj hráč podívá zpětně v přehledu.
+ *
+ * Psané jsou tak, aby nikoho nesrážely: prohra je prohra, ale hraje se
+ * s kamarádem, ne o čest rodu.
+ */
+export const VERDICT_LINES: Record<Verdict, string[]> = {
+  win: [
+    'Slova poslouchala tebe.',
+    'Tohle bylo čisté vítězství.',
+    'Soupeř se na tebe může jít podívat do slovníku pod heslem „rychlost".',
+    'Vedl jsi od začátku do konce.',
+    'Zasloužená výhra — a bylo to znát.',
+    'Trefa za trefou. Tohle se hned tak nevidí.',
+    'Soupeř hrál dobře. Ty líp.',
+    'Někdo si dneska musí dát odvetu.',
+    'Body mluví za tebe.',
+    'Přesně tak se to má hrát.',
+    'Vyhrál jsi to hlavou, ne štěstím.',
+    'Slovníkové vítězství.',
+    'Tohle si zaslouží zůstat v přehledu.',
+    'Soupeř tě bude chtít zpátky. Buď připravený.',
+    'Rychle, přesně a bez zaváhání.',
+    'Máš to. A bylo to o víc než o kousek.',
+    'Kdo umí, umí.',
+    'Dneska ti to myslelo.',
+    'Vítězství jako z učebnice.',
+    'Tohle byl tvůj souboj od první otázky.',
+  ],
+  loss: [
+    'Dneska to bylo o kousek.',
+    'Soupeř byl rychlejší. Příště ty.',
+    'Body nesedly, hlava ano.',
+    'Bylo to blízko — a to se počítá.',
+    'Prohra s dobrým soupeřem není ostuda.',
+    'Tentokrát vedle. Odveta je od toho, aby se tohle spravilo.',
+    'Slova si tentokrát vybrala jeho.',
+    'Chybělo málo. Vážně málo.',
+    'Soupeř měl svůj den.',
+    'Zkus to znovu, hned to bude vypadat jinak.',
+    'Prohrát se dá i dobře odehraným soubojem.',
+    'Tohle si vem jako rozcvičku.',
+    'Byl rychlejší, ne chytřejší. To se dohání.',
+    'Příští pětice bude tvoje.',
+    'Nedopadlo to. Ale hrálo se pěkně.',
+    'Soupeř má náskok. Zatím.',
+    'Skóre říká svoje, ale nic nekončí.',
+    'Někdy je rychlejší ten druhý. Dneska byl.',
+    'Za tohle se hanbit nemusíš.',
+    'Odveta čeká hned pod tímhle.',
+  ],
+  draw: [
+    'Ani o bod. To se jen tak nepovede.',
+    'Shoda až do posledního bodu.',
+    'Rovnocenní soupeři — přesně o tomhle to je.',
+    'Nikdo nevyhrál, nikdo neprohrál. A bylo to napínavé.',
+    'Stejně rychlí, stejně přesní.',
+    'Tohle volá po odvetě.',
+    'Remíza, která se počítá za dobrou hru oběma.',
+    'Bod k bodu. Zajímavé.',
+    'Dva stejně dobří hráči, jeden výsledek.',
+    'Nerozhodně — a nikdo si nemá co vyčítat.',
+    'Přesná shoda. Skoro to vypadá domluveně.',
+    'Ani jeden neustoupil.',
+    'Tenhle souboj rozhodnutí nepřinesl. Ten další možná.',
+    'Vyrovnané od začátku do konce.',
+    'Remíza je nejtěžší výsledek. Máte ji.',
+    'Stejné skóre, stejná zásluha.',
+    'Nic mezi vámi není. Zatím.',
+    'Souboj skončil tam, kde začal.',
+    'Dva vítězové, žádný poražený.',
+    'Tohle si žádá třetí kolo.',
+  ],
+}
+
+/** Hláška pro tenhle konkrétní souboj — pořád tatáž, i po návratu. */
+export function verdictLine(verdict: Verdict, id: string): string {
+  const rada = VERDICT_LINES[verdict]
+  let soucet = 0
+  for (let i = 0; i < id.length; i += 1) soucet = (soucet * 31 + id.charCodeAt(i)) % 100_000
+  return rada[soucet % rada.length]!
 }
 
 /**

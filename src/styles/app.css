@@ -6106,15 +6106,14 @@ button.stat.open {
   opacity: 0.7;
 }
 
-/* Archiv odehraných soubojů. Není to tlačítko — zpětně se s dohraným kolem
-   nedá nic dělat, jen se na něj podívat. Výsledek nese barva okraje, stejně
-   jako u čerstvě dohraných. */
+/* Archiv odehraných soubojů. Ťuknutím se otevře porovnání obou stran —
+   viz `.duel-strip.past` níž, kde se doplňuje ukazovátko a šipka. Výsledek
+   nese barva okraje, stejně jako u čerstvě dohraných. */
 .duel-strip.past {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
   width: 100%;
-  cursor: default;
 }
 
 .duel-strip.past.win {
@@ -6123,4 +6122,353 @@ button.stat.open {
 
 .duel-strip.past.loss {
   border-color: color-mix(in oklab, var(--danger, #c0392b) 35%, var(--border));
+}
+
+/* ---------- erby soubojových hodností ---------- */
+
+/* Kreslí se v soustavě 0–64 a barvy má natvrdo, takže se motivu nedrží
+   ani se nepřebarvuje. Zbývá mu dát jen to, co SVG samo neumí: nesmí se
+   smrsknout ve flexu a nesmí lákat na ťuknutí, když je jen ozdobou. */
+.duel-crest {
+  display: block;
+  flex-shrink: 0;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.22));
+}
+
+/* ---------- porovnání souboje ---------- */
+
+/*
+ * Rozbor stojí ve třech různých rámech — na kartě konce hry, v okně nad
+ * seznamem a nad ním samotným —, takže si vlastní pozadí nedělá. Jen se
+ * srovná do sloupce a nechá si zarovnání textu na střed po rodiči přebít
+ * tam, kde by na střed vypadalo hloupě (řádky kol).
+ */
+.rozbor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.rozbor-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.rozbor-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: var(--r-full);
+  background: color-mix(in oklab, var(--tint, var(--accent)) 16%, transparent);
+  color: color-mix(in oklab, var(--tint, var(--accent)) 70%, var(--text));
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.rozbor-head h2 {
+  margin: var(--sp-2) 0 0;
+  font-size: 1.8rem;
+}
+
+/* Hláška pod výsledkem. Je jich dvacet od každého druhu, takže si nesmí
+   vynucovat jednu řádku — kratší i delší musí sedět stejně. */
+.rozbor-line {
+  margin: 0;
+  max-width: 30ch;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.45;
+  text-wrap: balance;
+}
+
+/* Dvě strany proti sobě. Krajní sloupce mají stejnou šířku, aby stůl
+   nešilhal, i když má jeden delší přezdívku. */
+.rozbor-vs {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-4) var(--sp-2);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.rozbor-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.rozbor-side .rival-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 2px 6px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.rozbor-side .rival-panel:hover {
+  background: color-mix(in oklab, var(--text) 6%, transparent);
+}
+
+.rozbor-nick,
+.rival-panel .rival-nick {
+  max-width: 14ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.rival-rank-name {
+  font-size: 0.72rem;
+}
+
+.rozbor-score {
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  line-height: 1;
+}
+
+/* Vítěz se pozná i bez čtení čísel. */
+.rozbor-side.top .rozbor-score {
+  color: var(--ok);
+}
+
+.rozbor-side.ceka {
+  opacity: 0.75;
+}
+
+/* „čeká se" není číslo a na úzkém telefonu se v písmu skóre lámalo na dvě
+   řádky. Je to popisek stavu, ne výsledek — tak ať tak i vypadá. */
+.rozbor-side.ceka .rozbor-score {
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+/* Odstup mezi skóre. Malé, šedé a uprostřed — víc než „o kolik" tam nemá
+   co být, jinak by to přebilo obě strany. */
+.rozbor-mezi {
+  padding: 3px 8px;
+  border-radius: var(--r-full);
+  background: color-mix(in oklab, var(--text) 7%, transparent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* ---------- Vetřelec: kolo proti kolu ---------- */
+
+.rozbor-kola {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.rozbor-kolo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rozbor-cislo {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.rozbor-dvojice {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2);
+}
+
+/*
+ * Jedna buňka: slovo, čas a body pod sebou.
+ *
+ * Trefa a vedle se rozlišují barvou okraje, ne výplní — dvě sytě zelené
+ * a červené destičky vedle sebe by z rozboru udělaly semafor a přebily by
+ * i výsledek nahoře.
+ */
+.rozbor-bunka {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.rozbor-bunka.ok {
+  border-color: color-mix(in oklab, var(--ok) 50%, var(--border));
+  background: color-mix(in oklab, var(--ok) 8%, var(--surface));
+}
+
+.rozbor-bunka.bad {
+  border-color: color-mix(in oklab, var(--danger, #c0392b) 40%, var(--border));
+  background: color-mix(in oklab, var(--danger, #c0392b) 6%, var(--surface));
+}
+
+.rozbor-bunka.prazdna {
+  border-style: dashed;
+  background: none;
+}
+
+.rozbor-slovo {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.rozbor-cas {
+  font-size: 0.75rem;
+}
+
+.rozbor-body {
+  font-size: 0.95rem;
+}
+
+.rozbor-bunka.ok .rozbor-body {
+  color: var(--ok);
+}
+
+.rozbor-pravda {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.rozbor-strop {
+  font-size: 0.78rem;
+}
+
+/* ---------- Voština: dva úlovky vedle sebe ---------- */
+
+.rozbor-plastev {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+  text-align: left;
+}
+
+.rozbor-sloupec h3 {
+  margin: 0 0 var(--sp-2);
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rozbor-sloupec ul {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rozbor-sloupec li {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px var(--sp-2);
+  border-radius: var(--r-sm, 6px);
+  background: var(--surface-2);
+  font-size: 0.85rem;
+}
+
+.rozbor-sloupec p {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.rozbor-prazdno {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* Okno s porovnáním nad seznamem odehraných soubojů. Je vyšší než běžná
+   karta, protože v něm stojí celý rozpis — proto vlastní strop výšky. */
+.rozbor-sheet {
+  max-height: 88dvh;
+  overflow-y: auto;
+  text-align: center;
+}
+
+/* Na kartě konce hry rozbor nahrazuje celý střed, takže si bere odstup
+   sám; nadpis karty tam už žádný není. */
+.result-duel .rozbor {
+  margin: var(--sp-4) 0;
+}
+
+/* ---------- karta hráče: hodnost profilu až dole ---------- */
+
+/*
+ * Věhlas se sbírá v denních kolech, kde soupeř žádný není. V souboji proto
+ * nemá co dělat nahoře; kdo ho chce vidět, dojde až sem.
+ */
+.rival-offline {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  border: 1px dashed var(--border);
+  text-align: left;
+}
+
+.rival-offline .label {
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ---------- proužky soubojů, které se dají otevřít ---------- */
+
+/* Archiv je tlačítko: ťuknutím se otevře porovnání obou stran. Šipka
+   napravo to říká dřív, než na to někdo přijde sám. */
+.duel-strip.past {
+  cursor: pointer;
+  text-align: left;
+}
+
+.duel-strip-more {
+  margin-left: auto;
+  font-size: 1.2rem;
+  color: var(--muted);
+}
+
+/* Erb v panelu vlastní hodnosti. Panel je sloupec zarovnaný doleva,
+   takže se erb postaví nad text jako jeho značka. */
+.friends-rank .duel-crest {
+  margin-bottom: var(--sp-2);
 }

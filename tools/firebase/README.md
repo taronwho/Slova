@@ -18,7 +18,20 @@ obsah, vložit `database.rules.json` → **Publish**.
 | `challenges/{komu}/{id}` | došlé výzvy — kdo vyzval a na který zápas |
 | `duels/{zápas}` | zápas dvou jmenovitých hráčů: co se hraje a s kým |
 | `duels/{zápas}/words/{slovo}` | komu patří které slovo v soubojové Voštině |
-| `duels/{zápas}/done/{id}` | hotový výsledek jedné strany |
+| `duels/{zápas}/done/{id}` | hotový výsledek jedné strany i s rozpisem kol |
+
+### Rozpis kol (`done/{id}/detail`)
+
+Vedle skóre si každá strana posílá krátký text s tím, co odevzdala a za
+jak dlouho — z něj se pak staví porovnání obou hráčů po souboji. Je to
+jedna textová hodnota, ne strom: pravidla u výsledku zápasu pouštějí dál
+jen vyjmenované děti (`"$other": { ".validate": false }`), a jedno pole se
+dá povolit jedním řádkem.
+
+Zápis je **nepovinný a odolný**: hra ho zkusí poslat, a když ho databáze
+odmítne (třeba na tomhle řádku ještě nejsou nová pravidla), pošle výsledek
+znovu bez něj. Souboj se tedy kvůli rozpisu nikdy neztratí — porovnání
+jen ukáže míň.
 
 ## Na čem stojí bezpečnost
 

@@ -5,8 +5,12 @@ import {
   duelRoundScore,
   INTRUDER_DUEL_MAX,
   INTRUDER_ROUNDS,
+  VERDICT_LINES,
+  VERDICT_TITLE,
+  verdictLine,
   verdictOf,
 } from '../src/game/duel'
+import { DETAIL_MAX, decodeSteps, encodeSteps } from '../src/game/duelDetail'
 import {
   DUEL_RANKS,
   duelPoints,
@@ -1858,5 +1862,84 @@ describe('hodnosti v soubojích', () => {
     expect(duelWinRate({ wins: 1, losses: 1, draws: 0 })).toBe(50)
     expect(duelWinRate({ wins: 0, losses: 1, draws: 1 })).toBe(25)
     expect(duelsPlayed({ wins: 7, losses: 3, draws: 2 })).toBe(12)
+  })
+})
+
+describe('hlášky u výsledku souboje', () => {
+  it('od každého druhu je jich dvacet a žádná se neopakuje', () => {
+    for (const druh of ['win', 'loss', 'draw'] as const) {
+      const rada = VERDICT_LINES[druh]
+      expect(rada.length).toBe(20)
+      expect(new Set(rada).size).toBe(20)
+      for (const veta of rada) expect(veta.trim().length).toBeGreaterThan(0)
+    }
+  })
+
+  it('hláška patří zápasu, ne okamžiku — po návratu je pořád tatáž', () => {
+    const prvni = verdictLine('win', 'match-abc')
+    expect(verdictLine('win', 'match-abc')).toBe(prvni)
+    expect(VERDICT_LINES.win).toContain(prvni)
+  })
+
+  it('různé zápasy dostanou různé hlášky', () => {
+    const vzorek = new Set(
+      Array.from({ length: 60 }, (_, i) => verdictLine('loss', `zapas-${i}`)),
+    )
+    expect(vzorek.size).toBeGreaterThan(8)
+  })
+
+  it('prohra se jmenuje prohrou', () => {
+    expect(VERDICT_TITLE.loss).toBe('Prohrál jsi')
+  })
+})
+
+describe('rozpis souboje', () => {
+  it('kolo se složí a rozebere beze ztráty', () => {
+    const kroky = [
+      { word: 'kladivo', ms: 3210, points: 187, odd: 'kladivo' },
+      { word: 'židle', ms: 12_400, points: 0, odd: 'stůl' },
+    ]
+    expect(decodeSteps(encodeSteps(kroky))).toEqual(kroky)
+  })
+
+  it('slovo bez správné odpovědi se vejde taky', () => {
+    const kroky = [{ word: 'ocelí', ms: 0, points: 14 }]
+    expect(decodeSteps(encodeSteps(kroky))).toEqual(kroky)
+  })
+
+  it('prázdný ani rozbitý rozpis nic neshodí', () => {
+    expect(decodeSteps(undefined)).toEqual([])
+    expect(decodeSteps('')).toEqual([])
+    expect(decodeSteps('||')).toEqual([])
+    expect(decodeSteps('slovo~~~')).toEqual([{ word: 'slovo', ms: 0, points: 0 }])
+  })
+
+  it('oddělovače se ze slova vyhodí, ať se rozpis nerozjede', () => {
+    const [krok] = decodeSteps(encodeSteps([{ word: 'a|b~c', ms: 100, points: 5 }]))
+    expect(krok!.word).toBe('abc')
+    expect(krok!.points).toBe(5)
+  })
+
+  it('dlouhý úlovek se usekne, ale do pravidla se vejde', () => {
+    const hodne = Array.from({ length: 200 }, (_, i) => ({
+      word: `slovoslovo${i}`,
+      ms: i * 1000,
+      points: 12,
+    }))
+    const text = encodeSteps(hodne)
+    expect(text.length).toBeLessThanOrEqual(DETAIL_MAX)
+    expect(decodeSteps(text).length).toBeGreaterThan(10)
+    expect(decodeSteps(text)[0]!.word).toBe('slovoslovo0')
+  })
+
+  it('tři kola Vetřelce se vejdou i s dlouhými slovy', () => {
+    const kola = Array.from({ length: 3 }, () => ({
+      word: 'nejneobhospodařovatelnějšího',
+      ms: 59_999,
+      points: 40,
+      odd: 'nejneobhospodařovatelnějšímu',
+    }))
+    expect(encodeSteps(kola).length).toBeLessThanOrEqual(DETAIL_MAX)
+    expect(decodeSteps(encodeSteps(kola)).length).toBe(3)
   })
 })

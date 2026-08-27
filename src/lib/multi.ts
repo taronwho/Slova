@@ -640,6 +640,16 @@ export interface DuelLog {
   theirs: number
   /** Kdy se výsledek dozvěděl tenhle telefon (ms). */
   at: number
+  /**
+   * Rozpisy obou stran, zakódované (viz `game/duelDetail`).
+   *
+   * Bez nich by se porovnání dalo otevřít jen do chvíle, než zápas
+   * ze serveru zmizí. Archiv je v telefonu a musí si vystačit sám.
+   */
+  mineDetail?: string
+  theirsDetail?: string
+  /** Skryté id soupeře — kvůli erbu a kartě hráče v porovnání. */
+  rivalUid?: string
 }
 
 export interface Me extends Tally {
@@ -824,6 +834,13 @@ export interface Match {
 export interface MatchScore {
   nick: string
   score: number
+  /**
+   * Rozpis kol, zakódovaný (viz `game/duelDetail`).
+   *
+   * Nepovinný schválně: starší telefon ho neposílá a databázi, které
+   * majitel nepřepsal pravidla, neprojde. Porovnání pak ukáže jen skóre.
+   */
+  detail?: string
 }
 
 export interface Challenge {
@@ -1010,11 +1027,34 @@ export function watchWords(
   )
 }
 
-/** Zapíše vlastní výsledek zápasu. */
-export async function finishMatch(id: string, nick: string, score: number): Promise<void> {
+/**
+ * Zapíše vlastní výsledek zápasu.
+ *
+ * Rozpis kol se posílá **na dvakrát**: nejdřív s ním, a když ho databáze
+ * odmítne, ještě jednou bez něj. Pravidla se totiž nasazují ručně v konzoli
+ * Firebase a nikdo nemá jistotu, že už tam nová jsou; kdyby se zápis
+ * odmítl celý, přišel by hráč o výsledek souboje kvůli ozdobě.
+ */
+export async function finishMatch(
+  id: string,
+  nick: string,
+  score: number,
+  detail?: string,
+): Promise<void> {
   const { db, base, uid } = await pripraveno()
+  const kam = db.ref(base, `duels/${id}/done/${uid}`)
+  if (detail) {
+    const proslo = await docekat(
+      db.set(kam, { nick, score, detail, at: db.serverTimestamp() }),
+      'zápis výsledku',
+    ).then(
+      () => true,
+      () => false,
+    )
+    if (proslo) return
+  }
   await docekat(
-    db.set(db.ref(base, `duels/${id}/done/${uid}`), { nick, score, at: db.serverTimestamp() }),
+    db.set(kam, { nick, score, at: db.serverTimestamp() }),
     'zápis výsledku',
   ).catch(() => undefined)
 }

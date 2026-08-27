@@ -25,6 +25,7 @@ import {
   type HivePuzzle,
   type HiveState,
 } from '../game/hive'
+import { encodeSteps, type DuelStep } from '../game/duelDetail'
 import { fold } from '../lib/czech'
 import {
   cancelMatch,
@@ -46,8 +47,15 @@ interface Props {
   /** Moje skryté id — podle něj se v mapě pozná, co je čí. */
   uid: string
   nick: string
+  /** Moje soubojová hodnost — erb v porovnání na konci. */
+  rank?: number
   onHome: () => void
-  onVerdict: (verdict: Verdict, mine: number, souper: MatchScore) => void
+  onVerdict: (
+    verdict: Verdict,
+    mine: number,
+    souper: MatchScore,
+    mujRozpis?: string,
+  ) => void
   /** Odveta se stejným soupeřem, aby se přezdívka nemusela psát znovu. */
   onRematch?: () => Promise<boolean>
 }
@@ -63,7 +71,16 @@ const RING = [
 
 const CENTER = { left: '33.5%', top: '33.8%' }
 
-export function DuelHive({ match, puzzle, uid, nick, onHome, onVerdict, onRematch }: Props) {
+export function DuelHive({
+  match,
+  puzzle,
+  uid,
+  nick,
+  rank = 0,
+  onHome,
+  onVerdict,
+  onRematch,
+}: Props) {
   const [live, setLive] = useState(match.live)
   const [owners, setOwners] = useState<Record<string, string>>({})
   const [state, setState] = useState<HiveState>(() => createHiveState(puzzle))
@@ -71,6 +88,15 @@ export function DuelHive({ match, puzzle, uid, nick, onHome, onVerdict, onRematc
   const [flash, setFlash] = useState<{ text: string; tone: string; key: number } | null>(null)
   const [left, setLeft] = useState(HIVE_DUEL_MS)
   const [over, setOver] = useState(false)
+  /*
+   * Úlovek pro porovnání: co jsem ukořistil a v které minutě.
+   *
+   * Plástev nemá kola, takže se nedá říct „ve třetím jsi zaváhal". Zato se
+   * dá ukázat, kdy komu co spadlo do klína — a to je u krádeže slov přesně
+   * ta zajímavá věc.
+   */
+  const kroky = useRef<DuelStep[]>([])
+  const [rozpis, setRozpis] = useState('')
   const rival = match.host === uid ? match.guestNick : match.hostNick
   const rivalUid = match.host === uid ? match.guest : match.host
   const host = match.host === uid
@@ -140,7 +166,9 @@ export function DuelHive({ match, puzzle, uid, nick, onHome, onVerdict, onRematc
     if (left > 0 || live <= 0 || sent.current) return
     sent.current = true
     setOver(true)
-    void finishMatch(match.id, nick, points)
+    const text = encodeSteps(kroky.current)
+    setRozpis(text)
+    void finishMatch(match.id, nick, points, text)
   }, [left, live, match.id, nick, points])
 
   const showFlash = useCallback((text: string, tone: string) => {
@@ -168,13 +196,18 @@ export function DuelHive({ match, puzzle, uid, nick, onHome, onVerdict, onRematc
       return
     }
     setState(result.state)
+    kroky.current.push({
+      word: result.word,
+      ms: Math.max(0, serverNow() - live),
+      points: keyScore(key),
+    })
     if (result.pangram) {
       showFlash(`PANGRAM! ${result.word.toUpperCase()} · +${result.points}`, 'accent')
       if (navigator.vibrate) navigator.vibrate([30, 40, 60])
     } else {
       showFlash(`${result.word.toUpperCase()} · +${result.points}`, 'accent')
     }
-  }, [draft, live, match.id, over, owners, rival, showFlash, state])
+  }, [draft, keyScore, live, match.id, over, owners, rival, showFlash, state])
 
   const type = (letter: string) =>
     setDraft((previous) => (previous.length < 16 ? previous + letter : previous))
@@ -334,10 +367,12 @@ export function DuelHive({ match, puzzle, uid, nick, onHome, onVerdict, onRematc
         <DuelEnd
           match={match}
           uid={uid}
+          nick={nick}
           mine={points}
+          detail={rozpis}
+          rank={rank}
           fallback={{ nick: rival, score: rivalPoints }}
           verdict={verdictOf(points, rivalPoints)}
-          note={`${mineWords.length} slov · ${points} bodů z plástve`}
           onHome={onHome}
           onVerdict={onVerdict}
           {...(onRematch ? { onRematch } : {})}
