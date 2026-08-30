@@ -150,8 +150,11 @@ HIDDEN = [
         "roof": "slova, která jsou zároveň značkou nebo modelem auta",
         "level": "hard",
         "hidden": True,
-        "inside": ["škoda", "tatra", "jaguár", "mustang", "beruška", "fabie",
-                   "octavie", "avia", "zetor", "praga"],
+        # „beruška" žádné auto není a „zetor" je traktor — hráč se právem
+        # ptal, jaké auto je beruška. Ostatní jsou skutečné značky a modely
+        # a zároveň běžná česká slova, což je celý vtip téhle rodiny.
+        "inside": ["škoda", "tatra", "jaguár", "mustang", "fabie", "favorit",
+                   "forman", "octavie", "avia", "praga"],
         "outside": ["polička", "hrnek", "rukavice", "koláč", "kapesník", "lopata",
                     "žehlicí prkno", "papír", "obálka", "kartáč", "ponožka", "váza"],
         "asks": [

@@ -129,6 +129,21 @@ interface HiveIndexEntry {
   difficulty: Difficulty
 }
 
+export type { HiveIndexEntry }
+
+/**
+ * Otisk plástve — středové písmeno a šest okolních, seřazených.
+ *
+ * Do zápasu se posílá místo pořadového čísla (`h-0123`). Čísla se totiž
+ * rozdávají podle pořadí v sestavených datech a při každém přestavění se
+ * přeházejí; dva telefony s různou verzí hry by si pod tímtéž číslem našly
+ * **jinou plástev**. Písmena plástev určují jednoznačně a nikam se
+ * nehnou — a navrch se vejdou do sedmi znaků.
+ */
+export function otiskPlastve(entry: Pick<HiveIndexEntry, 'center' | 'outer'>): string {
+  return entry.center + [...entry.outer].sort().join('')
+}
+
 export function loadHiveIndex(): Promise<{ hives: HiveIndexEntry[] }> {
   return fetchJson('hive/index.json')
 }

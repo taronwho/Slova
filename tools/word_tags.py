@@ -73,6 +73,8 @@ zázvor žampion čočka jicama batáty černý_kořen bobkový_list
 avokádo bambus brambor brambora brambory dřín hořčice hřebíček jablka
 kardamom kurkuma mrkev muškát oliva pepř pískavice saturejka sezam trnka
 švestky vanilka nové_koření
+durman heřmánek jmelí kaktus konvalinka kopřiva ocún oleandr pampeliška
+podběl proskurník rulík řebříček sasanka tabák trnovník třezalka vlčí_mák
 """.split())
 
 # Víceslovná hesla se v seznamech píšou s podtržítkem, aby se dala rozdělit

@@ -3,6 +3,7 @@
  * Prochází se *každá* hádanka, která by se dostala ke hráči.
  */
 
+import { createHash } from 'node:crypto'
 import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
@@ -828,6 +829,30 @@ describe('vetřelec — vyváženost sady', () => {
       }
     }
     expect(problems.slice(0, 5)).toEqual([])
+  })
+
+  it('id pětice se odvozuje z jejího obsahu, ne z pořadí', () => {
+    const puzzles = JSON.parse(
+      readFileSync('public/data/intruder/puzzles.json', 'utf-8'),
+    ) as { id: string; words: string[]; odd: string; answer: string; family: string }[]
+
+    // Tohle rozbíjelo souboje: id se dřív rozdávala podle pořadí v hotové
+    // sadě (`i-0000`, `i-0001`, …) po zamíchání, takže je každé přestavění
+    // dat celá přeházelo. Zápas si přitom drží jen id — a když měl každý
+    // telefon jinou verzi dat, přeložil si tatáž id na **jiné pětice** a
+    // hráči v jednom souboji odpovídali každý na něco jiného.
+    const rozbite: string[] = []
+    for (const one of puzzles) {
+      // Jazykové pětice se staví z Wikislovníku a mají vlastní klíč.
+      if (one.family?.startsWith('jaz:')) continue
+      const zaklad = `${[...one.words].sort().join('|')}>${one.odd}>${one.answer}`
+      const cekany = `i-${createHash('sha1').update(zaklad, 'utf8').digest('hex').slice(0, 10)}`
+      if (one.id !== cekany) rozbite.push(`${one.id} != ${cekany} (${one.words.join(' ')})`)
+    }
+    expect(rozbite.slice(0, 5)).toEqual([])
+
+    // A žádná dvě id nesmí ukazovat na dvě různé pětice.
+    expect(new Set(puzzles.map((one) => one.id)).size).toBe(puzzles.length)
   })
 
   it('pětice nejde vyřešit hruběji, než na co se ptá', () => {

@@ -1555,25 +1555,6 @@ FAMILIES12 = [
         ],
     },
     {
-        "id": "v12-voni-spalene",
-        "roof": "věci, které voní, když se spálí",
-        "level": "hard",
-        "hidden": True,
-        "inside": [
-            "kadidlo", "tabák", "jehličí", "kafr", "koření", "vonná",
-        ],
-        "outside": [
-            "guma", "plast", "vlasy", "peří", "kůže", "olej", "dehet", "síra",
-            "vlna", "papír",
-        ],
-        "asks": [
-            "voní, teprve když se zapálí",
-            "jsou v názvech her Járy Cimrmana",
-            "jsou v názvech večerníčků",
-            "čtou se stejně zepředu i zezadu",
-        ],
-    },
-    {
         "id": "v12-na-prst",
         "roof": "věci, které se navlékají na prst",
         "level": "normal",

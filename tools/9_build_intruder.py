@@ -16,6 +16,7 @@ slovní druh i dělení na slabiky.
 Výstup: public/data/intruder/puzzles.json
 """
 
+import hashlib
 import json
 import os
 import random
@@ -339,7 +340,6 @@ RECAP = {
     "hraje se na ně dechem": "jsou dechové",
     "hraje se na ně smyčcem": "jsou smyčcové",
     "hraje se na to pomocí kláves": "jsou klávesové",
-    "je to celá stovka nebo víc": "znamenají sto a víc",
     "je to voda v pevném stavu": "jsou zmrzlá voda",
     "jí se z nich podzemní část": "mají jedlou podzemní část",
     "loví a pohybují se v noci": "jsou aktivní v noci",
@@ -521,6 +521,25 @@ def from_families(rng: random.Random, per_family: dict[str, int]) -> list[dict]:
     return out
 
 
+def stabilni_id(puzzle: dict) -> str:
+    """Id pětice odvozené z jejího obsahu, ne z pořadí v sadě.
+
+    Tohle je oprava chyby, která rozbíjela souboje: id se dřív rozdávala
+    podle pořadí (`i-0000`, `i-0001`, …) **po zamíchání**, takže každé nové
+    sestavení dat je celá přeházelo. Zápas si přitom drží jen id hádanek —
+    a když měl každý telefon jinou verzi `puzzles.json`, přeložil si tytéž
+    identifikátory na **jiné pětice**. Hráči pak v jednom souboji odpovídali
+    každý na něco jiného. (Po jednom sestavení nesouhlasilo ani jediné
+    z 5606 id.)
+    
+    Otisk se počítá ze slov, vetřelce a osy. Pětice si tak nese id s sebou:
+    zůstane stejné napříč sestaveními, nová data jen přidají nová id
+    a smazaná zmizí. Rozejít se dvěma telefonům pak nemá jak.
+    """
+    zaklad = "|".join(sorted(puzzle["words"])) + ">" + puzzle["odd"] + ">" + puzzle["answer"]
+    return "i-" + hashlib.sha1(zaklad.encode("utf-8")).hexdigest()[:10]
+
+
 def rodiny_se_skatulkou() -> list[dict]:
     """Rodiny, jejichž osa **je** hrubá škatulka.
 
@@ -597,9 +616,13 @@ def main() -> int:
 
     puzzles = made + from_fam
     rng.shuffle(puzzles)
-    for i, puzzle in enumerate(puzzles):
-        puzzle["id"] = f"i-{i:04d}"
+    for puzzle in puzzles:
+        puzzle["id"] = stabilni_id(puzzle)
         rng.shuffle(puzzle["words"])
+    kolize = len(puzzles) - len({p["id"] for p in puzzles})
+    if kolize:
+        print(f"CHYBA: {kolize} pětic sdílí id — zkrať/prodluž otisk")
+        return 1
 
     # Škatulky si odnese i test, aby se dvě řešení nemohla vrátit zadními
     # vrátky. Do hry se nebalí — hráč je nikdy neuvidí, slouží jen ke

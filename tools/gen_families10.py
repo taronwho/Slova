@@ -375,11 +375,16 @@ RODINY: list[dict] = [
          ask="spí opravdový zimní spánek",
          inside=s("ježek plch sysel svišť netopýr křeček"),
          outside=s("liška srna zajíc veverka kuna jelen vlk rys")),
+    # Souš na obou stranách. S rakem uvnitř a rybou vně se pětice dala
+    # přečíst jako „čtyři žijí na souši, ryba ve vodě" — jiná osa, tentýž
+    # vetřelec, a o svlékání kůže se hráč nemusel dozvědět nic. Vně stojí
+    # vedle savců i bezobratlí, kteří kůži nesvlékají (žížala, slimák),
+    # aby se pětice nedala rozseknout ani na „obratlovce a ty ostatní".
     dict(id="v10-svleka", level="hard",
          roof="živočichové, kteří svlékají kůži",
          ask="svlékají kůži",
-         inside=s("had ještěrka pavouk rak štír cikáda"),
-         outside=s("ryba vrabec myš kočka netopýr ježek krtek veverka"
+         inside=s("had ještěrka pavouk štír cikáda stonožka kobylka"),
+         outside=s("žížala slimák myš kočka netopýr ježek krtek veverka"
                    " jelen srna")),
     dict(id="v10-parazit", level="hard",
          roof="organismy, které žijí na cizí úkor",

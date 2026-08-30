@@ -489,12 +489,6 @@ RODINY: list[dict] = [
          inside=s("stromeček kraslice adventní prskavka betlém maska"),
          outside=s("hrnec lžíce ručník kartáček hřeben ponožka klíč"
                    " peněženka budík deka")),
-    dict(id="v12-voni-spalene", level="hard",
-         roof="věci, které voní, když se spálí",
-         ask="voní, teprve když se zapálí",
-         inside=s("kadidlo tabák jehličí kafr koření vonná"),
-         outside=s("guma plast vlasy peří kůže olej dehet síra vlna"
-                   " papír")),
     dict(id="v12-na-prst", level="normal",
          roof="věci, které se navlékají na prst",
          ask="se navlékají na prst",

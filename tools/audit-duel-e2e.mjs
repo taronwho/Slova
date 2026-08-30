@@ -43,6 +43,9 @@ const beh = Date.now().toString(36).slice(-5)
 const VYZYVATEL = `vyzyva${beh}`
 const SOUPER = `souper${beh}`
 
+/** Co vyzývatel viděl v jednotlivých kolech — soupeř to musí mít stejné. */
+const vyzyvatelovaKola = []
+
 const browser = await chromium.launch({ executablePath: CHROME })
 
 /** Jeden hráč = vlastní prohlížeč, vlastní úložiště, vlastní přihlášení. */
@@ -191,6 +194,26 @@ console.log('\nERB SOUPEŘE JE VIDĚT UŽ PŘI HŘE')
   }
 }
 
+console.log('\nOBA HRÁČI MAJÍ TUTÉŽ SADU OTÁZEK')
+/*
+ * Tohle je ta nejzákladnější podmínka souboje a hráč nahlásil, že neplatila:
+ * v jednom zápase odpovídal každý na něco jiného. Příčina byla v datech —
+ * pětice se do zápasu zapisovaly pořadovým číslem (`i-0000`), jenže ta se
+ * při každém přestavění sady přeházela. Dva telefony s různou verzí hry si
+ * pod týmž číslem našly jinou pětici. Id jsou teď odvozená z obsahu.
+ */
+{
+  const slova = async (page) =>
+    (await page.locator('.intruder-word').allInnerTexts()).map((t) => t.trim())
+  const moje = await slova(jedna.page)
+  const jeho = await slova(druha.page)
+  check(moje.length === 5 && jeho.length === 5, `oba mají pětici (${moje.length} : ${jeho.length})`)
+  check(
+    moje.join(' ') === jeho.join(' '),
+    `a je to tatáž pětice · vyzývatel: ${moje.join(' ')} · soupeř: ${jeho.join(' ')}`,
+  )
+}
+
 console.log('\nODEHRANÝ SOUBOJ ČEKÁ NA SOUPEŘE A JE TO VIDĚT')
 /*
  * U Vetřelce si každý zahraje, kdy chce. Mezi „odehráno" a „známe výsledek"
@@ -198,8 +221,11 @@ console.log('\nODEHRANÝ SOUBOJ ČEKÁ NA SOUPEŘE A JE TO VIDĚT')
  */
 {
   const page = jedna.page
-  // Tři kola: trefit nemusíme, jde o to dohrát je až do konce.
+  // Tři kola: trefit nemusíme, jde o to dohrát je až do konce. Po cestě se
+  // schová, co v kterém kole stálo — soupeř to pak musí mít stejné.
+  vyzyvatelovaKola.length = 0
   for (let kolo = 0; kolo < 3; kolo += 1) {
+    vyzyvatelovaKola.push((await page.locator('.intruder-word').allInnerTexts()).join(' '))
     await page.locator('.intruder-word').first().click()
     await page.locator('.duel-round-end .btn').click()
     await page.waitForTimeout(400)
@@ -255,12 +281,18 @@ console.log('\nODEHRANÝ SOUBOJ ČEKÁ NA SOUPEŘE A JE TO VIDĚT')
 
 console.log('\nSOUPEŘ DOHRAJE A OBA VIDÍ VYHODNOCENÍ')
 {
-  // Soupeř si odehraje svoje tři kola.
+  // Soupeř si odehraje svoje tři kola — a musí u toho vidět tytéž pětice.
+  const souperovaKola = []
   for (let kolo = 0; kolo < 3; kolo += 1) {
+    souperovaKola.push((await druha.page.locator('.intruder-word').allInnerTexts()).join(' '))
     await druha.page.locator('.intruder-word').first().click()
     await druha.page.locator('.duel-round-end .btn').click()
     await druha.page.waitForTimeout(400)
   }
+  check(
+    souperovaKola.join(' | ') === vyzyvatelovaKola.join(' | '),
+    `všechna tři kola sedí oběma\n      vyzývatel: ${vyzyvatelovaKola.join(' | ')}\n      soupeř:    ${souperovaKola.join(' | ')}`,
+  )
   await druha.page.locator('.result-card').waitFor({ timeout: 20000 }).catch(() => undefined)
 
   /*

@@ -14,6 +14,7 @@ import {
   loadQuiz,
   loadTower,
   loadTowerIndex,
+  otiskPlastve,
   pickUnseen,
   type ChainBundle,
 } from './app/data'
@@ -558,7 +559,9 @@ export default function App() {
         const pool = index.hives.filter((h) => h.difficulty === profile.difficulty.hive)
         const entries = pool.length > 0 ? pool : index.hives
         const entry = entries[Math.floor(Math.random() * entries.length)]!
-        return { ids: [entry.id], hive: await loadHive(entry), intruder: null }
+        // Plástev se do zápasu zapisuje **písmeny**, ne pořadovým číslem
+        // — viz `otiskPlastve`.
+        return { ids: [otiskPlastve(entry)], hive: await loadHive(entry), intruder: null }
       }
       const all = await loadIntruder()
       const pool = all.filter((p) => p.difficulty === profile.difficulty.intruder)
@@ -577,19 +580,35 @@ export default function App() {
     [profile.difficulty.hive, profile.difficulty.intruder],
   )
 
-  /** Tytéž hádanky na straně soupeře — hledají se podle id ze zápasu. */
+  /**
+   * Tytéž hádanky na straně soupeře — hledají se podle otisku ze zápasu.
+   *
+   * Co se nenajde, se **nesmí nahradit ničím jiným**: oba hráči musí dostat
+   * přesně tutéž sadu. Hráč nahlásil souboj, ve kterém odpovídal každý na
+   * jiné otázky, a příčina byla přesně tady — pětice se hledaly podle
+   * pořadových čísel, která se při každém sestavení dat přeházela, a chybějící
+   * se tiše přeskočily. Id jsou teď odvozená z obsahu (viz `stabilni_id`
+   * v kroku 9) a chybějící hádanka je důvod souboj neotevřít.
+   */
   const duelPuzzlesOf = useCallback(async (found: Match) => {
+    const jinaVerze =
+      'Soupeř má jinou verzi hry. Ať si ji nechá aktualizovat (stačí zavřít a znovu otevřít) a vyzvěte se znovu.'
     if (found.kind === 'hive') {
       const index = await loadHiveIndex()
-      const entry = index.hives.find((h) => h.id === found.puzzles[0])
-      if (!entry) throw new Error('Plástev ze souboje se nenašla')
+      const hledane = found.puzzles[0] ?? ''
+      const entry = index.hives.find(
+        (h) => otiskPlastve(h) === hledane || h.id === hledane,
+      )
+      if (!entry) throw new Error(jinaVerze)
       return { hive: await loadHive(entry), intruder: null }
     }
     const all = await loadIntruder()
     const chosen = found.puzzles
       .map((id) => all.find((one) => one.id === id))
       .filter((one): one is IntruderPuzzle => Boolean(one))
-    if (chosen.length === 0) throw new Error('Pětice ze souboje se nenašly')
+    if (chosen.length !== found.puzzles.length || chosen.length === 0) {
+      throw new Error(jinaVerze)
+    }
     return { hive: null, intruder: chosen }
   }, [])
 

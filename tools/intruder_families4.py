@@ -57,16 +57,6 @@ EXTRA4 = [
                  "informuje to veřejnost"],
     },
     {
-        "id": "cislovky-rimske",
-        "roof": "číslovky a čísla",
-        "level": "normal",
-        "inside": ["sto", "tisíc", "milion", "miliarda", "deset tisíc", "sto tisíc"],
-        "outside": ["tři", "sedm", "dvanáct", "dvacet", "padesát", "osmdesát",
-                    "devět", "patnáct"],
-        "asks": ["je to celá stovka nebo víc", "je to číslovka", "dá se tím počítat",
-                 "zapíše se to číslicemi", "má to svoje jméno", "učí se to ve škole"],
-    },
-    {
         "id": "tanec-parovy",
         "roof": "tance",
         "level": "normal",

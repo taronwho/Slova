@@ -873,10 +873,11 @@ FAMILIES10 = [
         "level": "hard",
         "hidden": True,
         "inside": [
-            "had", "ještěrka", "pavouk", "rak", "štír", "cikáda",
+            "had", "ještěrka", "pavouk", "štír", "cikáda", "stonožka",
+            "kobylka",
         ],
         "outside": [
-            "ryba", "vrabec", "myš", "kočka", "netopýr", "ježek", "krtek",
+            "žížala", "slimák", "myš", "kočka", "netopýr", "ježek", "krtek",
             "veverka", "jelen", "srna",
         ],
         "asks": [
