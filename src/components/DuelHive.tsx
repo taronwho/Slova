@@ -18,6 +18,7 @@ import {
 } from '../game/duel'
 import {
   createHiveState,
+  hiveWords,
   HIVE_ERROR_TEXT,
   letterSet,
   submitWord,
@@ -110,14 +111,14 @@ export function DuelHive({
   /** Skupiny řešení podle složeného tvaru — z nich se počítají body za klíč. */
   const groups = useMemo(() => {
     const out = new Map<string, string[]>()
-    for (const word of puzzle.solutions) {
+    for (const word of hiveWords(puzzle)) {
       const key = fold(word)
       const group = out.get(key)
       if (group) group.push(word)
       else out.set(key, [word])
     }
     return out
-  }, [puzzle.solutions])
+  }, [puzzle])
 
   const keyScore = useCallback(
     (key: string) =>

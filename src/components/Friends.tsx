@@ -34,7 +34,9 @@ import {
   claimNick,
   loadMe,
   nickError,
+  pridejSledovaneho,
   saveMe,
+  smazSledovaneho,
   SoubojChyba,
   zkouskaSpojeni,
   type Challenge,
@@ -114,6 +116,34 @@ export function Friends({
    * hráč vrací i po týdnech, kdy už zápas na serveru nemusí být.
    */
   const [rozbor, setRozbor] = useState<DuelLog | null>(null)
+  /* Přidávání hráče do žebříčku denních výzev. */
+  const [sledDraft, setSledDraft] = useState('')
+  const [sledBusy, setSledBusy] = useState(false)
+  const [sledProblem, setSledProblem] = useState<string | null>(null)
+
+  async function pridatSledovaneho() {
+    const jmeno = sledDraft.trim()
+    if (!jmeno) return
+    setSledBusy(true)
+    setSledProblem(null)
+    try {
+      const next = await pridejSledovaneho(me, jmeno)
+      if (!next) {
+        setSledProblem('Takového hráče neznám. Zkontroluj přezdívku.')
+        return
+      }
+      onMe(next)
+      setSledDraft('')
+    } catch (chyba) {
+      setSledProblem(
+        chyba instanceof SoubojChyba
+          ? chyba.message
+          : 'Nepodařilo se spojit. Zkus to znovu, až budeš online.',
+      )
+    } finally {
+      setSledBusy(false)
+    }
+  }
 
   async function zkusit() {
     setZkouska('bezi')
@@ -406,6 +436,116 @@ export function Friends({
               })}
             </div>
           )}
+
+          {/*
+            * Žebříček denních výzev.
+            *
+            * Denní hádanka je pro všechny tatáž, takže se dá porovnat, i když
+            * ji každý hraje jindy. Dřív se soupeř **losoval** z cizích lidí,
+            * kteří ji shodou okolností hráli taky — hráč vyhrál nad někým,
+            * koho nikdy neviděl, nikde se na to nedalo podívat a do bilance
+            * soubojů se to počítalo stejně jako skutečné klání. Teď si
+            * vybírá sám a vede se mu proti každému vlastní tabulka.
+            */}
+          <div className="friends-list">
+            <h2>Žebříček denních výzev</h2>
+            <p className="faint">
+              Zadej přezdívku a od té chvíle se s ním budeš každý den měřit
+              v denních výzvách. Hráčů si můžeš přidat, kolik chceš, a kdykoli
+              je zase odebrat. Do hodnosti v soubojích se tohle nepočítá —
+              ta je jen za skutečné souboje.
+            </p>
+
+            <div className="sled-add">
+              <input
+                className="guess-input"
+                value={sledDraft}
+                maxLength={16}
+                placeholder="Přezdívka hráče"
+                onChange={(event) => {
+                  setSledDraft(event.target.value)
+                  setSledProblem(null)
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') void pridatSledovaneho()
+                }}
+              />
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={sledBusy || !sledDraft.trim()}
+                onClick={() => void pridatSledovaneho()}
+              >
+                {sledBusy ? 'Hledám…' : 'Sledovat'}
+              </button>
+            </div>
+            {sledProblem && <p className="duel-problem">{sledProblem}</p>}
+
+            {(me.sledovani ?? []).length === 0 ? (
+              <p className="faint">
+                Zatím nikoho nesleduješ. Bez toho se denní výzvy s nikým
+                neporovnávají.
+              </p>
+            ) : (
+              <table className="sled-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Hráč</th>
+                    <th scope="col" title="Výhry, remízy, prohry">V·R·P</th>
+                    <th scope="col">Body</th>
+                    <th scope="col"><span className="sr-only">Přestat sledovat</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...(me.sledovani ?? [])]
+                    // Nejlepší bilance nahoru; kdo ještě nic neodehrál, dolů.
+                    .sort((a, b) => b.wins - b.losses - (a.wins - a.losses))
+                    .map((kdo) => {
+                      const dnu = kdo.wins + kdo.losses + kdo.draws
+                      return (
+                        <tr key={kdo.uid}>
+                          <th scope="row">
+                            <span className="sled-who">
+                              <span className="sled-nick">{kdo.nick}</span>
+                              <span className="faint">
+                                {dnu === 0 ? 'zatím nic společného' : `${dnu} společných dnů`}
+                              </span>
+                            </span>
+                          </th>
+                          <td className="num">
+                            {dnu === 0 ? '—' : `${kdo.wins}·${kdo.draws}·${kdo.losses}`}
+                          </td>
+                          <td className="num">
+                            {dnu === 0
+                              ? '—'
+                              : `${kdo.mine.toLocaleString('cs-CZ')} : ${kdo.theirs.toLocaleString('cs-CZ')}`}
+                          </td>
+                          <td>
+                            <button
+                              type="button"
+                              className="sled-drop"
+                              aria-label={`Přestat sledovat hráče ${kdo.nick}`}
+                              title="Přestat sledovat"
+                              onClick={() => onMe(smazSledovaneho(me, kdo.uid))}
+                            >
+                              ×
+                            </button>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                </tbody>
+              </table>
+            )}
+            {(me.cekajici ?? []).length > 0 && (
+              <p className="faint">
+                {(me.cekajici ?? []).length === 1
+                  ? 'Jedno tvoje kolo čeká, až si hádanku zahrají i ostatní.'
+                  : `${(me.cekajici ?? []).length} tvých kol čeká, až si hádanku zahrají i ostatní.`}{' '}
+                Dopočítá se samo, až se do hry vrátíš.
+              </p>
+            )}
+          </div>
 
           {(me.blocked ?? []).length > 0 && (
             <div className="friends-list">

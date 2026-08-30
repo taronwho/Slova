@@ -16,8 +16,18 @@ export interface HivePuzzle {
   center: string
   /** Šest okrajových písmen. */
   outer: string[]
-  /** Všechna uznávaná slova (s diakritikou), předpočítaná. */
+  /** Slova, na která se plástev ptá — z nich je cíl „X z Y" i strop bodů. */
   solutions: string[]
+  /**
+   * Slova, která pravidlům vyhovují taky, jen jsou vzácnější.
+   *
+   * Uznají se a body za ně padnou, ale do cíle se nepočítají. Hráč nahlásil,
+   * že Voština nezná *lysiny* — a měl pravdu: slovo pravidlům vyhovuje, jen
+   * ho skoro nikdo nepíše, a proto se do plástve nedostalo vůbec. Odmítnout
+   * hráči slovo, které existuje, je horší než ho uznat; a nacpat všechna
+   * vzácná slova do cíle by zase znamenalo, že plástev nikdo nedohraje.
+   */
+  extra?: string[]
   /** Slova používající všech sedm písmen. */
   pangrams: string[]
   difficulty: Difficulty
@@ -50,6 +60,13 @@ export const HIVE_ERROR_TEXT: Record<HiveError, string> = {
 }
 
 export const MIN_WORD_LENGTH = 4
+
+/** Vše, co plástev uzná: slova z cíle i ta vzácnější (`extra`). */
+export function hiveWords(puzzle: HivePuzzle): string[] {
+  return puzzle.extra && puzzle.extra.length > 0
+    ? [...puzzle.solutions, ...puzzle.extra]
+    : puzzle.solutions
+}
 
 /** Body za slovo: čtyřpísmenné 1 bod, delší 1 bod za písmeno, pangram +7. */
 export function wordScore(puzzle: HivePuzzle, word: string): number {
@@ -116,7 +133,7 @@ export type HiveOutcome =
  */
 function foldedGroups(puzzle: HivePuzzle): Map<string, string[]> {
   const groups = new Map<string, string[]>()
-  for (const solution of puzzle.solutions) {
+  for (const solution of hiveWords(puzzle)) {
     const key = fold(solution)
     const group = groups.get(key)
     if (group) group.push(solution)

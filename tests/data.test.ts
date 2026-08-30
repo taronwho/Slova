@@ -794,6 +794,51 @@ describe('vetřelec — vyváženost sady', () => {
     expect(puzzles.every((one) => typeof one.family === 'string' && one.family.length > 0)).toBe(true)
   })
 
+  it('detektiv nehádá přídavné jméno popisem osoby', () => {
+    const puzzles = JSON.parse(
+      readFileSync('public/data/detective/puzzles.json', 'utf-8'),
+    ) as { word: string; clue: string; grammar?: string }[]
+    // „vztahovačný — Člověk, který má sklon…" pošle hráče hledat podstatné
+    // jméno. Slovník takhle definuje nositele vlastnosti; hádanka to unést
+    // nemůže.
+    const osoba = /^(?:Člověk|Osoba|Ten,\s*kdo|Ta,\s*kdo|Kdo)\b/i
+    const problems = puzzles
+      .filter((one) => (one.grammar ?? '').includes('přídavné') && osoba.test(one.clue))
+      .map((one) => `${one.word}: ${one.clue.slice(0, 40)}`)
+    expect(problems.slice(0, 5)).toEqual([])
+  })
+
+  it('plástev uzná každé slovo ze slovníku, které do ní patří', () => {
+    const slovnik = JSON.parse(
+      readFileSync('tests/fixtures/base-forms.json', 'utf-8'),
+    ) as string[]
+    const index = JSON.parse(
+      readFileSync('public/data/hive/index.json', 'utf-8'),
+    ) as { hives: { id: string; pack: number; center: string; outer: string[] }[] }
+
+    // Hráč nahlásil, že Voština nezná *lysiny*. Slovo přitom pravidlům
+    // vyhovuje — má aspoň čtyři písmena, obsahuje prostřední a nesahá po
+    // ničem, co v plástvi není. Odmítnout takové slovo je chyba, i když je
+    // vzácné; proto se vedle cíle veze `extra`.
+    const problems: string[] = []
+    for (const entry of index.hives.slice(0, 40)) {
+      const pack = JSON.parse(
+        readFileSync(`public/data/hive/pack-${String(entry.pack).padStart(3, '0')}.json`, 'utf-8'),
+      ) as { id: string; solutions: string[]; extra?: string[] }[]
+      const hive = pack.find((one) => one.id === entry.id)!
+      const uzna = new Set([...hive.solutions, ...(hive.extra ?? [])].map(fold))
+      const pismena = new Set([entry.center, ...entry.outer])
+      for (const word of slovnik) {
+        if (word.length < 4) continue
+        const f = fold(word)
+        if (!f.includes(entry.center)) continue
+        if ([...f].some((ch) => !pismena.has(ch))) continue
+        if (!uzna.has(f)) problems.push(`${entry.id}: ${word}`)
+      }
+    }
+    expect(problems.slice(0, 5)).toEqual([])
+  })
+
   it('v pětici nestojí dvě slova z jednoho kořene', () => {
     const puzzles = JSON.parse(
       readFileSync('public/data/intruder/puzzles.json', 'utf-8'),

@@ -31,13 +31,15 @@ export const NextUpContext = createContext<NextUpItem[]>([])
  */
 export const RoundModeContext = createContext<{ glyph: string; label: string } | null>(null)
 
-/** Souboj právě dohraného kola. Karta výsledku ho ukáže pod skóre. */
-export const DuelContext = createContext<{
-  uid: string
-  nick: string
-  score: number
-  won: boolean | null
-} | null>(null)
+/**
+ * Srovnání právě dohraného denního kola se sledovanými hráči.
+ *
+ * Je jich tolik, kolik si jich hráč vybral — proto seznam, ne jedno jméno.
+ * Prázdný znamená „nikdo ze sledovaných tuhle hádanku (zatím) nehrál".
+ */
+export const DuelContext = createContext<
+  { uid: string; nick: string; score: number; won: boolean | null }[]
+>([])
 
 /**
  * Nahlášení soupeře.

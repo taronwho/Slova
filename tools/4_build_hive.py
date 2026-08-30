@@ -23,6 +23,13 @@ FOLD = str.maketrans("áčďéěíňóřšťúůýž", "acdeeinorstuuyz")
 
 MIN_LEN = 4
 MAX_LEN = 9
+
+# Delší slova se do cíle nedávají — plástev by měla mít řešení, na která se
+# dá přijít —, ale **uznat se musí**. Hráč nahlásil, že Voština nezná slova,
+# která zná: „lysiny" byly pod hranicí frekvence, „vyvýšeniny" nad devíti
+# písmeny. Odmítnout slovo, které existuje a do plástve se vejde, je horší
+# než ho uznat bez nároku na cíl.
+MAX_LEN_UZNAT = 14
 # Do řešení pustíme jen slova, která má hráč šanci znát.
 SOLUTION_MIN_FREQ = 25
 # Pangram musí být opravdu běžné slovo, jinak je hádanka frustrující.
@@ -66,6 +73,18 @@ def submasks(mask: int):
         sub = (sub - 1) & mask
 
 
+def otisk(hive) -> str:
+    """Id plástve odvozené z jejích písmen, ne z pořadí v sadě.
+
+    Pořadová čísla (`h-0000`) se při každém přestavění dat přeházejí, takže
+    tentýž identifikátor ukazoval po novém sestavení na jinou plástev.
+    U Vetřelce to rozbilo souboje — dva telefony s různou verzí hry si pod
+    týmž číslem našly jinou hádanku. Sedm písmen plástev určuje jednoznačně
+    a nikam se nehnou.
+    """
+    return "h-" + hive["center"] + "".join(sorted(hive["outer"]))
+
+
 def main():
     random.seed(20260724)
     os.makedirs(DATA, exist_ok=True)
@@ -76,16 +95,20 @@ def main():
     lexicon = json.load(open(os.path.join(OUT, LEXICON), encoding="utf-8"))
 
     by_mask: dict[int, list[tuple[str, int]]] = {}
+    # Slova, která pravidlům vyhovují, jen je skoro nikdo nepíše. Do cíle se
+    # nepočítají, ale plástev je uzná — viz `extra` v HivePuzzle.
+    extra_mask: dict[int, list[str]] = {}
     pangram_candidates: dict[int, list[tuple[str, int]]] = {}
 
-    for length in range(MIN_LEN, MAX_LEN + 1):
+    for length in range(MIN_LEN, MAX_LEN_UZNAT + 1):
         for word, freq in lexicon.get(str(length), []):
-            if freq < SOLUTION_MIN_FREQ:
-                continue
             if any(word[i] == word[i + 1] == word[i + 2] for i in range(len(word) - 2)):
                 continue  # citoslovce typu „brrr"
             mask = mask_of(fold(word))
             if mask == -1:
+                continue
+            if freq < SOLUTION_MIN_FREQ or length > MAX_LEN:
+                extra_mask.setdefault(mask, []).append(word)
                 continue
             by_mask.setdefault(mask, []).append((word, freq))
             if popcount(mask) == 7 and freq >= PANGRAM_MIN_FREQ:
@@ -119,12 +142,21 @@ def main():
                 continue
 
             words = sorted(w for w, _ in solutions)
+            # Vzácná slova, která do plástve taky patří. Hráč je smí napsat
+            # a body za ně dostane; cíl „X z Y" o nich neví.
+            extra = sorted(
+                w
+                for sub in submasks(hive_mask)
+                if (sub >> bit) & 1
+                for w in extra_mask.get(sub, [])
+            )
             outer = sorted(chr(97 + b) for b in range(26) if (hive_mask >> b) & 1 and b != bit)
             hives.append(
                 {
                     "center": center,
                     "outer": outer,
                     "solutions": words,
+                    "extra": extra,
                     "pangrams": sorted(hive_pangrams),
                     "easy": easy,
                 }
@@ -161,7 +193,7 @@ def main():
     index = []
     packs: list[list[dict]] = []
     for n, hive in enumerate(hives):
-        hive_id = f"h-{n:04d}"
+        hive_id = otisk(hive)
         pack_no = n // HIVES_PER_PACK
         while len(packs) <= pack_no:
             packs.append([])
@@ -170,6 +202,7 @@ def main():
             "center": hive["center"],
             "outer": hive["outer"],
             "solutions": hive["solutions"],
+            "extra": hive["extra"],
             "pangrams": hive["pangrams"],
             "difficulty": difficulty(hive),
         }

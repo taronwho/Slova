@@ -122,32 +122,45 @@ export function ResultOverlay({
             </Explain>
           )}
 
-          {/* Souboj: tvoje skóre proti někomu, kdo hrál tutéž hádanku. */}
-          {duel && (
-            <div className={`duel-card ${duel.won === true ? 'won' : duel.won === false ? 'lost' : ''}`}>
-              <span className="duel-verdict">
-                {/* Stejná slova jako na konci souboje — tady i tam je to
-                    výhra proti někomu jmenovitému, ne dvě různé věci. */}
-                {VERDICT_TITLE[duel.won === null ? 'draw' : duel.won ? 'win' : 'loss']}
-              </span>
-              <span className="duel-line">
-                <b className="num">{breakdown.total.toLocaleString('cs-CZ')}</b>
-                <span className="faint">:</span>
-                <b className="num">{duel.score.toLocaleString('cs-CZ')}</b>
-                <span className="faint">{duel.nick}</span>
-              </span>
-              {/* Přezdívku soupeře si psal on sám. Musí jít nahlásit odsud,
-                  tedy z místa, kde ji hráč vidí — jinam se pro to vracet
-                  nebude. */}
-              {report && (
-                <button
-                  type="button"
-                  className="report-link"
-                  onClick={() => report(duel.uid, duel.nick)}
+          {/*
+            * Srovnání se sledovanými hráči.
+            *
+            * Denní výzvu hraje každý sám a kdy chce; tohle je jediné místo,
+            * kde je vidět, jak dopadli ti, které si hráč vybral. Dřív se
+            * soupeř losoval z cizích lidí — proto tu bylo jedno jméno,
+            * teď jich je tolik, kolik si jich hráč sleduje.
+            */}
+          {duel.length > 0 && (
+            <div className="duel-day">
+              {duel.map((one) => (
+                <div
+                  className={`duel-card ${one.won === true ? 'won' : one.won === false ? 'lost' : ''}`}
+                  key={one.uid}
                 >
-                  Nahlásit přezdívku
-                </button>
-              )}
+                  <span className="duel-verdict">
+                    {/* Stejná slova jako na konci souboje — tady i tam je to
+                        výhra proti někomu jmenovitému, ne dvě různé věci. */}
+                    {VERDICT_TITLE[one.won === null ? 'draw' : one.won ? 'win' : 'loss']}
+                  </span>
+                  <span className="duel-line">
+                    <b className="num">{breakdown.total.toLocaleString('cs-CZ')}</b>
+                    <span className="faint">:</span>
+                    <b className="num">{one.score.toLocaleString('cs-CZ')}</b>
+                    <span className="faint">{one.nick}</span>
+                  </span>
+                  {/* Přezdívku si psal soupeř sám. Musí jít nahlásit odsud,
+                      tedy z místa, kde ji hráč vidí. */}
+                  {report && (
+                    <button
+                      type="button"
+                      className="report-link"
+                      onClick={() => report(one.uid, one.nick)}
+                    >
+                      Nahlásit přezdívku
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
           )}
 

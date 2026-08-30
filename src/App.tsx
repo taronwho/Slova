@@ -82,7 +82,9 @@ import {
   MULTI_ON,
   myUid,
   playRound,
-  recordDuel,
+  odlozKolo,
+  zapisSledovane,
+  dopocitejCekajici,
   rememberMatch,
   saveMe,
   saveTally,
@@ -174,7 +176,7 @@ export default function App() {
    * ani do ocenění — dvojice kamarádů by si jinak hodnosti vyfarmila.
    */
   const [me, setMe] = useState<Me>(() => loadMe())
-  const [duel, setDuel] = useState<Duel | null>(null)
+  const [duel, setDuel] = useState<Duel[]>([])
   const [challenges, setChallenges] = useState<Challenge[]>([])
   /** Rozehraný zápas a hádanky, které si nese. */
   const [match, setMatch] = useState<Match | null>(null)
@@ -530,12 +532,16 @@ export default function App() {
   const duelRound = useCallback(
     (result: RoundResult, band: number) => {
       if (!MULTI_ON || !me.nick) return
-      void playRound(result.mode, result.puzzleId, result.score, band, me.blocked ?? [])
-        .then(async (found) => {
-          if (!found) return
-          setDuel(found)
-          const next = { ...me, ...(await recordDuel(found, me)) }
-          saveMe(next)
+      void playRound(result.mode, result.puzzleId, result.score, band, me.sledovani ?? [])
+        .then((nalezene) => {
+          setDuel(nalezene)
+          let next = zapisSledovane(me, result.mode, result.puzzleId, result.score, nalezene)
+          // Kdo se ještě neozval, se dopočítá při návratu do hry — denní
+          // výzvu si každý zahraje, kdy chce, a kdo hraje ráno, nemá se
+          // v tu chvíli s kým srovnat.
+          if (nalezene.length < (me.sledovani ?? []).length) {
+            next = odlozKolo(next, result.mode, result.puzzleId, result.score)
+          }
           setMe(next)
         })
         .catch(() => undefined)
@@ -704,7 +710,7 @@ export default function App() {
     void reportPlayer(uid, nick, reason)
     setMe((previous) => blockPlayer(previous, uid))
     setChallenges((list) => list.filter((one) => one.from !== uid))
-    setDuel((current) => (current?.uid === uid ? null : current))
+    setDuel((current) => current.filter((one) => one.uid !== uid))
   }, [])
 
   /** Souboj je rozhodnutý — připíše se do bilance a zmizí z rozehraných. */
@@ -809,7 +815,7 @@ export default function App() {
         saveRounds(rest)
         return rest
       })
-      setDuel(null)
+      setDuel([])
       if (view.kind === 'game' && view.daily) {
         duelRound(result, rankFor(profile.fame).rank.index)
       }
@@ -915,6 +921,30 @@ export default function App() {
         : 'Někdo na tebe čeká v Hře s přáteli.',
     ).catch(() => undefined)
   }, [challenges])
+
+  /*
+   * Odložená denní kola se dopočítají při návratu do hry.
+   *
+   * Denní výzvu si každý zahraje, kdy chce — kdo hraje ráno, nemá se v tu
+   * chvíli s kým srovnat. Kolo počká a doplní se, jakmile se sledovaní
+   * ozvou; po týdnu se zahodí.
+   */
+  useEffect(() => {
+    if (!MULTI_ON || !me.nick) return
+    if ((me.cekajici ?? []).length === 0 || (me.sledovani ?? []).length === 0) return
+    let dead = false
+    void dopocitejCekajici(me)
+      .then((next) => {
+        if (!dead && next !== me) setMe(next)
+      })
+      .catch(() => undefined)
+    return () => {
+      dead = true
+    }
+    // Záměrně jen na probuzení a přepnutí obrazovky: `me` se mění i tím,
+    // co se tady zapíše, a hlídání celého objektu by se zacyklilo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [me.nick, probuzeni, view.kind])
 
   /*
    * Dohrané zápasy, o kterých hráč ještě neví.

@@ -567,30 +567,43 @@ export async function zkouskaSpojeni(): Promise<Nalez[]> {
  * Vybírá se z podobného pásma hodnosti, aby nováček nedostával výprask
  * od někoho s milionem věhlasu. Když v pásmu nikdo není, bere se kdokoli.
  */
+/**
+ * Zapíše výsledek denního kola a přečte, jak dopadli sledovaní hráči.
+ *
+ * Dřív se tady navíc **losoval** soupeř ze všech, kdo hádanku shodou
+ * okolností hráli — hráč pak vyhrál nad někým, koho nikdy neviděl, nikde se
+ * na to nedalo podívat a do bilance soubojů se to počítalo stejně jako
+ * skutečné klání. Porovnává se proto jen s těmi, které si sám vybral,
+ * a soubojová hodnost o denních kolech neví.
+ *
+ * Vlastní výsledek se zapisuje **až po přečtení** a jen jednou — pravidla
+ * přepis neumožní, takže druhý pokus o tutéž hádanku tiše selže a to je
+ * správně.
+ */
 export async function playRound(
   mode: ModeId,
   puzzle: string,
   score: number,
   band: number,
-  blocked: string[] = [],
-): Promise<Duel | null> {
+  sledovani: Sledovany[] = [],
+): Promise<Duel[]> {
   const { db, base, uid } = await pripraveno()
   const path = `results/${mode}/${puzzle}`
 
-  const all = ((await precti({ db, base }, path, 'výsledky kola')) ?? {}) as Record<
-    string,
-    { nick: string; score: number; band: number }
-  >
-  const rows: { uid: string; nick: string; score: number; band: number }[] = []
-  for (const [klic, value] of Object.entries(all)) {
-    // Zablokovaný hráč se nesmí vrátit ani jako náhodný soupeř — jinak by
-    // blokování znamenalo jen „neuvidím tvoje výzvy" a to je málo.
-    if (klic !== uid && !blocked.includes(klic)) rows.push({ uid: klic, ...value })
+  const nalezene: Duel[] = []
+  for (const kdo of sledovani) {
+    const row = (await precti({ db, base }, `${path}/${kdo.uid}`, 'výsledek hráče')) as
+      | { nick?: string; score?: number }
+      | null
+    if (!row || typeof row.score !== 'number') continue
+    nalezene.push({
+      uid: kdo.uid,
+      nick: String(row.nick ?? kdo.nick),
+      score: row.score,
+      won: score === row.score ? null : score > row.score,
+    })
   }
 
-  // Vlastní výsledek se zapisuje až po přečtení, aby se hráč nepotkal sám
-  // se sebou, a jen jednou — pravidla přepis neumožní, takže druhý pokus
-  // o tutéž hádanku tiše selže a to je správně.
   db.set(db.ref(base, `${path}/${uid}`), {
     nick: (await precti({ db, base }, `players/${uid}/nick`, 'profil')) ?? '?',
     score,
@@ -598,31 +611,141 @@ export async function playRound(
     at: db.serverTimestamp(),
   }).catch(() => undefined)
 
-  if (rows.length === 0) return null
-  const near = rows.filter((row) => Math.abs(row.band - band) <= 5)
-  const pool = near.length > 0 ? near : rows
-  const rival = pool[Math.floor(Math.random() * pool.length)]!
-  return {
-    uid: rival.uid,
-    nick: rival.nick,
-    score: rival.score,
-    won: score === rival.score ? null : score > rival.score,
-  }
+  return nalezene
 }
 
-/** Připíše výsledek souboje do vlastní tabulky. */
-export async function recordDuel(duel: Duel, before: Tally): Promise<Tally> {
-  const next: Tally = {
-    wins: before.wins + (duel.won === true ? 1 : 0),
-    losses: before.losses + (duel.won === false ? 1 : 0),
-    draws: before.draws + (duel.won === null ? 1 : 0),
+/* ---------- sledovaní hráči ---------- */
+
+/**
+ * Přidá hráče mezi sledované.
+ *
+ * Hledá se podle přezdívky, tedy tak, jak se vyzývá na souboj. Vrací null,
+ * když takový hráč není, a beze změny, když už sledovaný je.
+ */
+export async function pridejSledovaneho(me: Me, nick: string): Promise<Me | null> {
+  const uid = await findPlayer(nick)
+  if (!uid) return null
+  const muj = await myUid()
+  if (uid === muj) throw new SoubojChyba('Sám sebe sledovat nemusíš.')
+  const jmeno = String(
+    (await precti(await pripraveno(), `players/${uid}/nick`, 'profil hráče')) ?? nick,
+  )
+  if ((me.sledovani ?? []).some((one) => one.uid === uid)) return me
+  const next: Me = {
+    ...me,
+    sledovani: [
+      ...(me.sledovani ?? []),
+      { uid, nick: jmeno, od: Date.now(), wins: 0, losses: 0, draws: 0, mine: 0, theirs: 0, hotovo: [] },
+    ],
   }
-  try {
-    const { db, base, uid } = await pripraveno()
-    await db.update(db.ref(base, `players/${uid}`), { ...next, seenAt: db.serverTimestamp() })
-  } catch {
-    // Tabulka je jen ozdoba; když se nezapíše, hra běží dál.
+  saveMe(next)
+  return next
+}
+
+/** Přestane hráče sledovat i s celou tabulkou proti němu. */
+export function smazSledovaneho(me: Me, uid: string): Me {
+  const next: Me = { ...me, sledovani: (me.sledovani ?? []).filter((one) => one.uid !== uid) }
+  saveMe(next)
+  return next
+}
+
+/**
+ * Připíše výsledky denního kola do tabulek sledovaných hráčů.
+ *
+ * Klíčem je `hra:hádanka`: totéž kolo se dozvíme dvakrát — hned po dohrání
+ * a pak znovu, až se dopočítají odložená kola —, a dvakrát započítat se
+ * nesmí. Sleduje se až ode dne, kdy si hráče přidal; zpětně se nic nedohání.
+ */
+export function zapisSledovane(
+  me: Me,
+  mode: ModeId,
+  puzzle: string,
+  score: number,
+  nalezene: Duel[],
+): Me {
+  const klic = `${mode}:${puzzle}`
+  const sledovani = (me.sledovani ?? []).map((kdo) => {
+    const found = nalezene.find((one) => one.uid === kdo.uid)
+    if (!found || (kdo.hotovo ?? []).includes(klic)) return kdo
+    return {
+      ...kdo,
+      wins: kdo.wins + (found.won === true ? 1 : 0),
+      losses: kdo.losses + (found.won === false ? 1 : 0),
+      draws: kdo.draws + (found.won === null ? 1 : 0),
+      mine: kdo.mine + score,
+      theirs: kdo.theirs + found.score,
+      hotovo: [klic, ...(kdo.hotovo ?? [])].slice(0, 300),
+    }
+  })
+  const next: Me = { ...me, sledovani }
+  saveMe(next)
+  return next
+}
+
+/** Jak dlouho se čeká, než sledovaný hráč tutéž hádanku odehraje. */
+const CEKANI_DNU = 7
+
+/**
+ * Odloží kolo, u kterého ještě někdo ze sledovaných nehrál.
+ *
+ * Denní výzvu si každý zahraje, kdy chce; kdo hraje ráno, nemá se v tu
+ * chvíli s kým srovnat. Kolo proto počká a dopočítá se při návratu do hry.
+ */
+export function odlozKolo(me: Me, mode: ModeId, puzzle: string, score: number): Me {
+  const klic = `${mode}:${puzzle}`
+  const zive = (me.cekajici ?? []).filter(
+    (one) => Date.now() - one.at < CEKANI_DNU * 86_400_000 && `${one.mode}:${one.puzzle}` !== klic,
+  )
+  const next: Me = { ...me, cekajici: [{ mode, puzzle, score, at: Date.now() }, ...zive].slice(0, 40) }
+  saveMe(next)
+  return next
+}
+
+/**
+ * Dopočítá odložená kola — přečte, jestli už sledovaní hráči hráli.
+ *
+ * Vrací novou podobu `me`; kola, u kterých se všichni sledovaní ozvali
+ * (nebo která jsou starší než týden), z čekání zmizí.
+ */
+export async function dopocitejCekajici(me: Me): Promise<Me> {
+  const sledovani = me.sledovani ?? []
+  const cekajici = (me.cekajici ?? []).filter(
+    (one) => Date.now() - one.at < CEKANI_DNU * 86_400_000,
+  )
+  if (sledovani.length === 0 || cekajici.length === 0) {
+    if (cekajici.length !== (me.cekajici ?? []).length) {
+      const next: Me = { ...me, cekajici }
+      saveMe(next)
+      return next
+    }
+    return me
   }
+  const { db, base } = await pripraveno()
+  let stav = me
+  const zbyva: CekajiciKolo[] = []
+  for (const kolo of cekajici) {
+    const path = `results/${kolo.mode}/${kolo.puzzle}`
+    const nalezene: Duel[] = []
+    for (const kdo of sledovani) {
+      const row = (await precti({ db, base }, `${path}/${kdo.uid}`, 'výsledek hráče')) as
+        | { nick?: string; score?: number }
+        | null
+      if (!row || typeof row.score !== 'number') continue
+      nalezene.push({
+        uid: kdo.uid,
+        nick: String(row.nick ?? kdo.nick),
+        score: row.score,
+        won: kolo.score === row.score ? null : kolo.score > row.score,
+      })
+    }
+    if (nalezene.length > 0) stav = zapisSledovane(stav, kolo.mode, kolo.puzzle, kolo.score, nalezene)
+    // Dokud se neozvali všichni, kolo čeká dál — třeba dohrají večer.
+    const klic = `${kolo.mode}:${kolo.puzzle}`
+    const chybi = (stav.sledovani ?? []).some((kdo) => !(kdo.hotovo ?? []).includes(klic))
+    if (chybi) zbyva.push(kolo)
+  }
+  const next: Me = { ...stav, cekajici: zbyva }
+  saveMe(next)
   return next
 }
 
@@ -652,6 +775,46 @@ export interface DuelLog {
   rivalUid?: string
 }
 
+/**
+ * Hráč, se kterým se chci každý den porovnávat.
+ *
+ * Denní výzvu hraje každý sám a kdy chce; porovnat se ale dá, protože je
+ * pro všechny tatáž. Dřív se soupeř k porovnání **losoval** z těch, kdo
+ * hádanku shodou okolností hráli taky — hráč tak vyhrál nad někým, koho
+ * nikdy neviděl, nikde se na to nedalo podívat a do bilance soubojů se to
+ * počítalo stejně jako skutečné klání. Teď si vybírá sám, koho chce
+ * sledovat, a vede se mu proti němu dlouhodobá tabulka.
+ */
+export interface Sledovany {
+  /** Skryté id — podle něj se čtou jeho výsledky. */
+  uid: string
+  nick: string
+  /** Odkdy se sleduje (ms). Starší dny se zpětně nedopočítávají. */
+  od: number
+  wins: number
+  losses: number
+  draws: number
+  /** Součet bodů ze dnů, kdy hráli oba. */
+  mine: number
+  theirs: number
+  /** Kola, která jsou už započítaná (`hra:hádanka`), ať se nepřičtou dvakrát. */
+  hotovo: string[]
+}
+
+/**
+ * Odehrané denní kolo, u kterého se čeká, jak dopadnou sledovaní hráči.
+ *
+ * Soupeř si tutéž hádanku zahraje třeba večer. Kolo se proto odloží
+ * a dopočítá se, až se hráč do hry vrátí — a pak zmizí.
+ */
+export interface CekajiciKolo {
+  mode: ModeId
+  puzzle: string
+  score: number
+  /** Kdy jsem ho odehrál (ms). Po týdnu se zahazuje. */
+  at: number
+}
+
 export interface Me extends Tally {
   nick: string
   /**
@@ -679,9 +842,23 @@ export interface Me extends Tally {
    * posledních; víc by se stejně nikdo neprocházel.
    */
   log: DuelLog[]
+  /** Hráči, se kterými se porovnávají denní výzvy. */
+  sledovani: Sledovany[]
+  /** Odehraná denní kola, u kterých se ještě čeká na sledované hráče. */
+  cekajici: CekajiciKolo[]
 }
 
-const EMPTY: Me = { nick: '', wins: 0, losses: 0, draws: 0, matches: [], blocked: [], log: [] }
+const EMPTY: Me = {
+  nick: '',
+  wins: 0,
+  losses: 0,
+  draws: 0,
+  matches: [],
+  blocked: [],
+  log: [],
+  sledovani: [],
+  cekajici: [],
+}
 
 /** Zablokuje hráče a rovnou uloží. */
 export function blockPlayer(me: Me, uid: string): Me {

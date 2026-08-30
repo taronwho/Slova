@@ -65,6 +65,27 @@ MASK = "[?]"
 MIN_WORD, MAX_WORD = 4, 14
 KEEP_POS = {"noun", "adj", "verb", "adv"}
 
+# Hesla, jejichž definice sedí na okrajový význam a hráče jen zmate. Hráč
+# nahlásil *papírový* s popisem „Založený na předběžných informacích
+# obsažených v dokumentaci či příslušném textu" — to je opravdový, ale
+# vzácný význam (papírová forma, na papíře), kdežto každý pod tím slovem
+# vidí „z papíru". Automaticky se to poznat nedá; tenhle seznam je od toho.
+NEPOUZITELNE = {"papírový"}
+
+# Popis, který mluví o **osobě**, ale hledá se přídavné jméno („vztahovačný —
+# Člověk, který má sklon…"). Slovník takhle definuje nositele vlastnosti;
+# v hádance to ale hráče pošle hledat podstatné jméno.
+OSOBA_START = re.compile(r"^(?:Člověk|Osoba|Ten,\s*kdo|Ta,\s*kdo|Kdo)\b", re.I)
+
+
+def pouzitelne(word: str, clue: str, grammar: str) -> bool:
+    """Projde hádanka i po lidské kontrole?"""
+    if word in NEPOUZITELNE:
+        return False
+    if "přídavné" in grammar and OSOBA_START.match(clue):
+        return False
+    return True
+
 # Odkazovací ocas hesla. Wikislovník za výklad rád přidá řadu příbuzných či
 # jen podobně tvořených slov („Srovnej např. stožár, stehno, stěžeň“). Ve
 # slovníku to smysl dává, v hádance ne: hráč čte jmenný seznam, který

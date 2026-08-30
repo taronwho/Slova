@@ -9,12 +9,13 @@ Postup:
 1. Z cs_CZ.aff se načtou příponová pravidla. Příznak = deklinační vzor,
    v _plural_rules.py je u každého vzoru vypsaná buňka „1. pád mn. č.".
 2. Z cs_CZ.dic se vezmou hesla a jejich příznaky. Heslo musí být samo
-   základní tvar (lemma se rovná slovu), jinak by se stavělo na nesmyslu.
+   základní tvar — posuzuje to `_base_form`, kde slovník váží víc než
+   lemmatizér.
 3. Pravidlo se aplikuje, sedí-li jeho podmínka na konec hesla.
-4. Vygenerovaný tvar projde, jen když ho zná hunspell (je v lexicon.json)
-   a když ho lemmatizér nepošle k *jinému* heslu. To je poslední pojistka
-   proti chybě ve vzoru: lemmatizér má díry (u „sekery" vrátí „sekery"),
-   takže „nezná ho" se bere jako v pořádku, kdežto „patří jinam" ne.
+4. Vygenerovaný tvar projde, jen když ho lidé doopravdy píšou (je
+   v lexicon.json). Lemmatizér se na nic neptá: přiřazuje jinam i tvary
+   naprosto správné („holky" pošle na „holek") a přišlo se tím o tisíce
+   správných množných čísel.
 
 Výsledek se přimíchá do lexicon_base.json (s frekvencí z lexicon.json).
 
@@ -29,6 +30,7 @@ import re
 import sys
 from collections import defaultdict
 
+from _base_form import je_zaklad
 from _plural_rules import NEEDS_NOUN_FLAG, NOM_PL, NOUN_FLAGS
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -165,7 +167,14 @@ def main():
 
     # Heslo musí být samo lemma, jinak by se množné číslo stavělo na
     # ohnutém tvaru („boha" je v cs_CZ.dic taky heslo).
-    lemmas = {w for w in entries if lemmatizer.lemmatize(w) == w}
+    # Táž past jako v kroku 2b: lemmatizér u „lysiny" tvrdí, že základní
+    # tvar je „lysin", a množné číslo se pak nevygeneruje vůbec. Rozhoduje
+    # proto slovník, lemmatizér až po něm — viz `_base_form`.
+    lemmas = {
+        w
+        for w, flags in entries.items()
+        if je_zaklad(w, set(flags), lemmatizer.lemmatize(w), entries)
+    }
     print(f"hesel, která jsou lemma: {len(lemmas)}")
 
     plurals = {}
@@ -177,13 +186,18 @@ def main():
             continue
         if form in BLOCK:
             continue
-        # Lemmatizér zná jen část slovní zásoby. Když tvar nezná, vrátí ho
-        # nezměněný — to není námitka, jen mezera („sekera -> sekery" takhle
-        # o pět set správných množných čísel přišlo). Námitka je, až když ho
-        # přiřadí k jinému heslu, protože pak vzor sáhl vedle.
-        lemma = lemmatizer.lemmatize(form)
-        if lemma != word and lemma != form:
-            continue
+        # Lemmatizér se tady už neptá.
+        #
+        # Dřív se tvar zahodil, když ho lemmatizér přiřadil k jinému heslu —
+        # mělo to chytat vzor, který sáhl vedle. Jenže lemmatizér přiřazuje
+        # jinam i tvary naprosto správné: „holky" pošle na „holek", „banky"
+        # na „banka", „detaily" na neexistující „detait". Přišlo se tím
+        # o 4566 správných množných čísel a hráč to hlásil jako slova, která
+        # Voština nezná.
+        #
+        # Tvar má tři nezávislá potvrzení i bez něj: **ověřený vzor** z .aff,
+        # **jmenný příznak** u hesla a to, že ho lidé doopravdy píšou (je
+        # ve frekvenčním seznamu). To stačí.
         plurals[form] = max(plurals.get(form, 0), freq[form])
         source.setdefault(form, word)
     print(f"1. pád mn. č.: {len(plurals)}")

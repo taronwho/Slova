@@ -26,15 +26,32 @@ je automaticky nejde, takže se zahazují všechna a ručně ověřený výběr 
 zpátky ze souboru base_extra.txt.
 
 Druhá podmínka je **lemma se rovná slovu**: český hunspell má jako hesla
-i ohýbané tvary („boha", „bohu", „bohů"). Lemmatizér LemmaGen3 je odchytí.
+i ohýbané tvary („budu", „chce", „jdu"), a ty by vzor sám nezastavil.
+Lemmatizér LemmaGen3 je odchytí.
+
+Sám o sobě je ale nespolehlivý a hráč to poznal: ve Voštině neuznaná
+*lysina*. Lemmatizér u ní tvrdí, že základní tvar je „lysin" — jenže žádné
+takové slovo neexistuje, v hunspellu není a `lysina/ZQ` tam stojí jako
+řádné heslo se skloňovacím vzorem. Slovo přesto vypadlo, protože se
+lemmatizéru věřilo víc než slovníku. Takových bylo skoro dva tisíce:
+*kuře, kotě, kalhoty, nůžky, játra, krém, trefa, želva, zmrzlina…*
+
+Jeho nesouhlas se proto bere vážně jen tehdy, když **tvar, který navrhuje,
+je sám heslem v .dic** („budu" → „být", „chce" → „chtít"). Když si ho
+vymyslel, rozhoduje slovník. A protože si vymýšlí hlavně infinitivy
+(„řeknu" → „řeknout", „napíšu" → „napsát"), pouští se zpátky jen slova se
+jmenným nebo přídavným vzorem — časovaná slovesa zůstanou venku i tak.
 
 Výstup: tools/out/lexicon_base.json
 """
 
 import json
 import os
+import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+from _base_form import je_zaklad  # noqa: E402
 OUT = os.path.join(HERE, "out")
 RAW = os.path.join(HERE, "raw")
 
@@ -45,6 +62,13 @@ RAW = os.path.join(HERE, "raw")
 #   Y                      skloňování přídavných jmen
 #   A B J T                časování sloves
 BASE_FLAGS = set("PUHLSZKMDIVQCYABJT")
+
+# Vzory jmenné a přídavné zvlášť od časovacích. Slovo, kterému lemmatizér
+# vymyslel neexistující základní tvar, se vrací do hry jen v téhle skupině:
+# u sloves si vymýšlí infinitivy („řeknu" → „řeknout") a vracet takový tvar
+# by znamenalo pustit do hry časované sloveso.
+JMENNE_FLAGS = set("PUHLSZKMDIVQCY")
+SLOVESNE_FLAGS = set("ABJT")
 
 # Naopak tyhle příznaky základní tvar nedokládají:
 #   N E W F  jen předpony (ne-, nej-)
@@ -94,14 +118,21 @@ def main():
     lexicon = json.load(open(os.path.join(OUT, "lexicon.json"), encoding="utf-8"))
     lemmatizer = Lemmatizer("cs")
 
+    def zaklad(word: str) -> bool:
+        return je_zaklad(word, dic.get(word, set()), lemmatizer.lemmatize(word), dic, extra)
+
     base: dict[str, list] = {}
+    vraceno = 0
     for length, entries in sorted(lexicon.items(), key=lambda kv: int(kv[0])):
         kept = []
         for word, freq in entries:
-            proven = bool(dic.get(word, set()) & BASE_FLAGS) or word in extra
-            if proven and lemmatizer.lemmatize(word) == word:
-                kept.append([word, freq])
+            if not zaklad(word):
+                continue
+            if lemmatizer.lemmatize(word) != word:
+                vraceno += 1
+            kept.append([word, freq])
         base[length] = kept
+    print(f"  slov vrácených proti lemmatizéru (rozhodl slovník): {vraceno}")
 
     print()
     for length in sorted(base, key=int):
