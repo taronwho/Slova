@@ -18,7 +18,7 @@ import {
   duelsPlayed,
   duelWinRate,
 } from '../src/game/duelRank'
-import { foldNick } from '../src/game/nickCheck'
+import { foldNick, foulNick } from '../src/game/nickCheck'
 import { blockPlayer, forgetMatch, nickError, rememberMatch, tallyWith } from '../src/lib/multi'
 import {
   buildChainGraph,
@@ -1546,6 +1546,34 @@ describe('přezdívky a hlášení', () => {
     expect(foldNick('Anička')).toBe('anicka')
     expect(foldNick('P3P4')).toBe('pepa')
     expect(foldNick('aaabbb')).toBe('ab')
+  })
+
+  // Filtr skládá přezdívku bez diakritiky, takže krátká jádra padala doprostřed
+  // nevinných českých slov: „dick" sedělo v každé zdrobnělině na -dička.
+  it('filtr přezdívek nechá projít běžná česká slova', () => {
+    for (const nick of [
+      'Lodička',
+      'Dědička',
+      'Ladička',
+      'Hadička',
+      'Chudičký',
+      'Drápek',
+      'Raper',
+      'Špičák',
+      'Opičák',
+      'Snažit',
+      'Kokořín',
+      'Konkrétní',
+      'Koksový',
+    ]) {
+      expect(foulNick(nick), nick).toBeNull()
+    }
+  })
+
+  it('filtr přezdívek pořád chytá to, na co je', () => {
+    for (const nick of ['kurva', 'KoKoT', 'Píča', 'pica123', 'Nazi', 'zmrd', 'admin', 'FuCk', 'Slova']) {
+      expect(foulNick(nick), nick).not.toBeNull()
+    }
   })
 
   it('zablokovaný hráč se do seznamu dostane jen jednou', () => {

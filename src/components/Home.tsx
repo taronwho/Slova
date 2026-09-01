@@ -16,8 +16,10 @@ import {
   type Difficulty,
   type ModeId,
 } from '../game/types'
+import { stillDaily } from '../app/resume'
 import { RankBadge } from './art/RankBadge'
 import { useBackGuard } from '../lib/back'
+import { todayKey } from '../lib/rng'
 import { InkMark } from './art/InkMark'
 import { Explain } from './Explain'
 import {
@@ -58,6 +60,23 @@ const MODES: { id: ModeId; glyph: string; color: string }[] = MODE_ORDER.map((id
 }))
 
 const DIFFICULTIES: Difficulty[] = ['easy', 'normal', 'hard']
+
+/**
+ * Rozehraná **dnešní** denní výzva, nebo nic.
+ *
+ * Po půlnoci se včerejší kolo dohrává jako volná hra (viz `stillDaily`), takže
+ * se u dnešní dlaždice nesmí hlásit jako rozehraná výzva — hráč by čekal, že
+ * v něm ťuknutím naváže, a ono začne dnešní hádanka od začátku.
+ */
+function dnesniRozehrane(
+  saved: SavedRounds,
+  mode: ModeId,
+  dayKey: string,
+): SavedRound | undefined {
+  const round = saved[roundSlot(mode, true)]
+  if (!round) return undefined
+  return stillDaily(round, dayKey, (at) => todayKey(new Date(at))) ? round : undefined
+}
 
 const DIFFICULTY_NOTE: Record<ModeId, Record<Difficulty, string>> = {
   chain: {
@@ -311,7 +330,7 @@ export function Home({
       <div className="mode-grid">
         {MODES.map((mode) => {
           const dailyDone = profile.dailyDone[`${dayKey}:${mode.id}`] !== undefined
-          const round = saved[roundSlot(mode.id, false)] ?? saved[roundSlot(mode.id, true)]
+          const round = saved[roundSlot(mode.id, false)] ?? dnesniRozehrane(saved, mode.id, dayKey)
           return (
             <button
               type="button"
@@ -368,7 +387,7 @@ export function Home({
             // Rozehraná dnešní výzva: dlaždice v ní pokračuje, tak ať je to
             // na ní vidět. Bez toho vypadá stejně jako nezačatá a hráč neví,
             // jestli ťuknutím naváže, nebo začne od začátku.
-            const started = saved[roundSlot(mode.id, true)]
+            const started = dnesniRozehrane(saved, mode.id, dayKey)
             return (
               <button
                 type="button"

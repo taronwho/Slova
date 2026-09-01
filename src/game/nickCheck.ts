@@ -47,10 +47,8 @@ const FOUL = [
   'kurva',
   'kurwa',
   'piqa',
-  'pica',
   'picus',
   'kokot',
-  'kokso',
   'mrdat',
   'mrdka',
   'mrdac',
@@ -61,12 +59,12 @@ const FOUL = [
   'hovna',
   'debil',
   'idiot',
-  'kretn',
   'kreten',
   'zmrd',
   'curak',
   'penis',
   'vagina',
+  'znasil',
   'prdel',
   'sperm',
   'kunda',
@@ -84,17 +82,14 @@ const FOUL = [
   'shit',
   'bitch',
   'cunt',
-  'dick',
   'wank',
   'nigger',
   'nigga',
-  'rape',
   'pedofil',
   'pedophil',
   // nenávist
   'hitler',
   'nacista',
-  'nazi',
   'heilhitler',
   'siegheil',
   'genocid',
@@ -108,6 +103,20 @@ const FOUL = [
   'oficialni',
   'slovahra',
 ]
+
+/**
+ * Jádra, která se hledají **jen na začátku** přezdívky.
+ *
+ * Skládání smaže diakritiku, takže některá krátká jádra padnou doprostřed
+ * úplně nevinných českých slov: „píča" sedí v „opičák" i „špičák", „nazi"
+ * v „snažit" i „obnažit". Kdo si chce říkat Špičák, má na to právo.
+ * Na začátku přezdívky ale takové jádro nevinně nestojí, tam se hledá dál.
+ *
+ * Ze stejného důvodu tu nejsou anglická „dick" a „rape": „dick" sedí ve
+ * dvaceti třech běžných zdrobnělinách (dědička, lodička, ladička) a „rape"
+ * v „drápek" i v „raper". Význam pokrývají „curak", „penis" a „znasil".
+ */
+const FOUL_ZACATEK = ['pica', 'nazi']
 
 /**
  * Je přezdívka závadná?
@@ -124,6 +133,11 @@ export function foulNick(nick: string): string | null {
   }
   for (const word of FOUL) {
     if (folded.includes(foldNick(word))) {
+      return 'Tuhle přezdívku ostatním neukážeme. Zkus jinou.'
+    }
+  }
+  for (const word of FOUL_ZACATEK) {
+    if (folded.startsWith(foldNick(word))) {
       return 'Tuhle přezdívku ostatním neukážeme. Zkus jinou.'
     }
   }

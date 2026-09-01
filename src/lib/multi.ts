@@ -724,24 +724,40 @@ export async function dopocitejCekajici(me: Me): Promise<Me> {
   let stav = me
   const zbyva: CekajiciKolo[] = []
   for (const kolo of cekajici) {
+    // Sleduje se až ode dne, kdy si hráče přidal. Kdo přibyl až po dohrání
+    // kola, do něj nemluví — a taky ho nedrží v čekání, protože tu hádanku
+    // z minulého týdne už nikdy nezahraje.
+    const plati = sledovani.filter((kdo) => (kdo.od ?? 0) <= kolo.at)
+    if (plati.length === 0) continue
+
     const path = `results/${kolo.mode}/${kolo.puzzle}`
+    // Čtení najednou: čekajících kol může být čtyřicet a sledovaných hráčů
+    // pár, takže na sebe řádky nemají proč čekat.
+    const radky = await Promise.all(
+      plati.map((kdo) =>
+        precti({ db, base }, `${path}/${kdo.uid}`, 'výsledek hráče') as Promise<
+          { nick?: string; score?: number } | null
+        >,
+      ),
+    )
     const nalezene: Duel[] = []
-    for (const kdo of sledovani) {
-      const row = (await precti({ db, base }, `${path}/${kdo.uid}`, 'výsledek hráče')) as
-        | { nick?: string; score?: number }
-        | null
-      if (!row || typeof row.score !== 'number') continue
+    radky.forEach((row, i) => {
+      const kdo = plati[i]!
+      if (!row || typeof row.score !== 'number') return
       nalezene.push({
         uid: kdo.uid,
         nick: String(row.nick ?? kdo.nick),
         score: row.score,
         won: kolo.score === row.score ? null : kolo.score > row.score,
       })
-    }
+    })
     if (nalezene.length > 0) stav = zapisSledovane(stav, kolo.mode, kolo.puzzle, kolo.score, nalezene)
     // Dokud se neozvali všichni, kolo čeká dál — třeba dohrají večer.
     const klic = `${kolo.mode}:${kolo.puzzle}`
-    const chybi = (stav.sledovani ?? []).some((kdo) => !(kdo.hotovo ?? []).includes(klic))
+    const chybi = plati.some((kdo) => {
+      const ted = (stav.sledovani ?? []).find((one) => one.uid === kdo.uid)
+      return ted ? !(ted.hotovo ?? []).includes(klic) : false
+    })
     if (chybi) zbyva.push(kolo)
   }
   const next: Me = { ...stav, cekajici: zbyva }
