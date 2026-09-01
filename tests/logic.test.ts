@@ -35,6 +35,8 @@ import {
 } from '../src/game/chain'
 import {
   createHiveState,
+  foundSolutions,
+  isHiveComplete,
   currentScore,
   rankFor,
   submitWord,
@@ -333,6 +335,32 @@ describe('voština', () => {
     expect(submitWord(state, 'kar')).toMatchObject({ error: 'too-short' })
     expect(submitWord(state, 'kosa')).toMatchObject({ error: 'missing-center' })
     expect(submitWord(state, 'brko')).toMatchObject({ error: 'foreign-letter' })
+  })
+
+  it('vzácná slova se uznají, ale plástev nedokončí', () => {
+    // `extra` jsou slova, která pravidlům vyhovují, jen je skoro nikdo
+    // nepíše. Uznat se musí — hráč nahlásil neuznanou *lysinu* —, ale do
+    // cíle nepatří: jinak by se kolo samo uzavřelo jako kompletní ve
+    // chvíli, kdy hráč posbíral pár vzácností a půlka cíle mu zbývala.
+    const sExtra = { ...puzzle, solutions: ['kára', 'trakař'], extra: ['strava', 'krátká'] }
+    let state = createHiveState(sExtra)
+    for (const word of ['strava', 'krátká']) {
+      const result = submitWord(state, word)
+      expect(result.ok).toBe(true)
+      if (result.ok) state = result.state
+    }
+    expect(state.found.length).toBe(2)
+    expect(foundSolutions(state)).toBe(0)
+    expect(isHiveComplete(state)).toBe(false)
+    // Body za ně ale padnou.
+    expect(currentScore(state)).toBeGreaterThan(0)
+
+    const hotovo = submitWord(state, 'kára')
+    if (hotovo.ok) state = hotovo.state
+    const druhe = submitWord(state, 'trakař')
+    if (druhe.ok) state = druhe.state
+    expect(foundSolutions(state)).toBe(2)
+    expect(isHiveComplete(state)).toBe(true)
   })
 
   it('skládá diakritiku proti plástvi', () => {
@@ -1643,7 +1671,6 @@ describe('vetřelec — střídání rodin', () => {
     family,
     words: ['a', 'b', 'c', 'd', 'e'],
     odd: 'e',
-    choices: ['x', 'y', 'z'],
     answer: 'x',
     recap: '',
     difficulty: 'normal',

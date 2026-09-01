@@ -25,9 +25,13 @@ export interface IntruderPuzzle {
   words: string[]
   /** Slovo, které do pětice nepatří. */
   odd: string
-  /** Tři věty do druhého kroku, už zamíchané. */
-  choices: string[]
-  /** Ta z nich, která čtveřici od vetřelce opravdu odděluje. */
+  /**
+   * Souvislost, která čtveřici od vetřelce odděluje.
+   *
+   * Do hry se nepromítne, dokud kolo neskončí — je z ní `recap`. Vedle ní
+   * se dřív vozily tři věty na výběr do druhého kroku; ten z Vetřelce
+   * vypadl a věty se přestaly zapisovat.
+   */
   answer: string
   /** Věta do vyhodnocení — co pětici spojovalo a co s vetřelcem. */
   recap: string

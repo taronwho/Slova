@@ -87,6 +87,7 @@ export function DuelSetup({ onClose, onSend }: Props) {
           value={nick}
           maxLength={16}
           placeholder="Přezdívka soupeře"
+          aria-label="Přezdívka soupeře"
           onChange={(event) => {
             setNick(event.target.value)
             setProblem(null)

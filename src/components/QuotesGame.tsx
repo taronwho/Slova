@@ -362,6 +362,7 @@ export function QuotesGame({
               value={draft}
               autoFocus
               placeholder="Napiš celý výrok"
+              aria-label="Tip na celý výrok"
               onChange={(event) => setDraft(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key === 'Enter') submitQuote()

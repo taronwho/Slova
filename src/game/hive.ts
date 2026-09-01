@@ -68,6 +68,25 @@ export function hiveWords(puzzle: HivePuzzle): string[] {
     : puzzle.solutions
 }
 
+/**
+ * Kolik slov **z cíle** už hráč našel.
+ *
+ * Není to `found.length`: mezi nalezenými můžou být i vzácná slova, která
+ * se uznávají, ale do cíle nepatří. Bez tohohle rozlišení by plástev
+ * hlásila „50 z 48" a hlavně by se sama uzavřela jako kompletní ve chvíli,
+ * kdy hráč posbíral pár vzácností a půlka cíle mu pořád zbývala.
+ */
+export function foundSolutions(state: HiveState): number {
+  if (!state.puzzle.extra || state.puzzle.extra.length === 0) return state.found.length
+  const cil = new Set(state.puzzle.solutions)
+  return state.found.reduce((sum, word) => sum + (cil.has(word) ? 1 : 0), 0)
+}
+
+/** Má hráč celý cíl? Vzácná slova navíc na tom nic nemění. */
+export function isHiveComplete(state: HiveState): boolean {
+  return foundSolutions(state) >= state.puzzle.solutions.length
+}
+
 /** Body za slovo: čtyřpísmenné 1 bod, delší 1 bod za písmeno, pangram +7. */
 export function wordScore(puzzle: HivePuzzle, word: string): number {
   const base = word.length === MIN_WORD_LENGTH ? 1 : word.length

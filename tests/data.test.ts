@@ -295,6 +295,9 @@ describe('šibenice — data', () => {
       if (puzzle.word.length < min || puzzle.word.length > max) problems.push(puzzle.word)
       // Slovo ze dvou různých písmen se uhodne dvěma tahy — to není hádanka.
       if (new Set(fold(puzzle.word)).size < 3) problems.push(puzzle.word)
+      // A musí jít vyhádat po písmenech: mezera ani spojovník na klávesnici
+      // nejsou, takže by se takové slovo nedalo nikdy dokončit.
+      if (!/^[a-z]+$/.test(fold(puzzle.word))) problems.push(puzzle.word)
     }
     expect(problems.slice(0, 10)).toEqual([])
   })
@@ -580,6 +583,16 @@ describe('detektiv — data', () => {
 
   // Otázka dne a Detektiv nesmí hrát na totéž slovo. Hráč by v jednom režimu
   // dostal odpověď z druhého — a ještě týž den.
+  it('hádané slovo jde vyhádat po písmenech', () => {
+    // Detektiv i Šibenice porovnávají zkoušené písmeno proti složenému tvaru
+    // slova. Mezera ani spojovník na klávesnici nejsou, takže by se slovo,
+    // které je obsahuje, nedalo nikdy dokončit — kolo by uvázlo.
+    const problems = puzzles
+      .filter((one) => !/^[a-z]+$/.test(fold(one.word)))
+      .map((one) => one.word)
+    expect(problems.slice(0, 10)).toEqual([])
+  })
+
   it('nehádá se slovo, na které se ptá Otázka dne', () => {
     const deck = readJson<Record<string, { answer: string; alt?: string[] }[]>>(
       'quiz',
@@ -715,11 +728,13 @@ describe('slovník — jen základní tvary', () => {
     expect(problems.slice(0, 10)).toEqual([])
   })
 
-  it('voština nabízí jen povolené tvary', () => {
+  it('voština nabízí jen povolené tvary — i mezi vzácnými slovy', () => {
     const problems: string[] = []
     for (const file of readdirSync(join(DATA, 'hive')).filter((f) => f.startsWith('pack-'))) {
-      for (const hive of readJson<{ solutions: string[] }[]>('hive', file)) {
-        for (const word of hive.solutions) {
+      for (const hive of readJson<{ solutions: string[]; extra?: string[] }[]>('hive', file)) {
+        // `extra` se uznává stejně jako cíl, takže musí projít stejnou
+        // kontrolou — jinak by se do hry zadními vrátky dostal ohnutý tvar.
+        for (const word of [...hive.solutions, ...(hive.extra ?? [])]) {
           if (!allowed.has(word)) problems.push(word)
         }
       }

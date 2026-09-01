@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import {
   createHiveState,
+  foundSolutions,
+  isHiveComplete,
   currentScore,
   HIVE_ERROR_TEXT,
   HIVE_HINT_COST,
@@ -84,7 +86,11 @@ export function HiveGame({
   const max = useMemo(() => maxScore(puzzle), [puzzle])
   const points = currentScore(state)
   const rank = rankFor(points, max)
-  const complete = state.found.length >= puzzle.solutions.length
+  // Cíl počítá jen slova z cíle. Vzácná slova (`extra`) se uznávají a body
+  // za ně padnou, ale plástev nedokončí — jinak by se kolo samo uzavřelo
+  // ve chvíli, kdy hráč posbíral pár vzácností a půlka cíle mu zbývala.
+  const zCile = foundSolutions(state)
+  const complete = isHiveComplete(state)
   // Nejdelší nahoře — tam je nejvíc bodů a nejvíc lítosti.
   const allWords = useMemo(
     () =>
@@ -131,9 +137,11 @@ export function HiveGame({
       elapsedMs: Date.now() - state.startedAt,
       hintsUsed: state.hintsUsed,
       detail: {
-        found: state.found.length,
+        found: zCile,
         total: puzzle.solutions.length,
         rank: rank.name,
+        // Všechna uznaná slova včetně vzácných — ocenění za „kolik slov
+        // jsi kdy našel" mají počítat i je.
         extra: state.found.length,
         // Pro ocenění: kolik pangramů padlo a jestli hráč došel na nejvyšší
         // hodnost. Ze samotného skóre se to zpětně dopočítat nedá.
@@ -141,7 +149,7 @@ export function HiveGame({
         rankTop: rank.index === RANKS.length - 1 ? 1 : 0,
       },
     })
-  }, [breakdown, onFinish, puzzle, rank, state])
+  }, [breakdown, onFinish, puzzle, rank, state, zCile])
 
   useEffect(() => {
     if (complete && !reported.current) finishRound()
@@ -224,9 +232,9 @@ export function HiveGame({
       [
         `SLOVA — Voština ${dayLabel}`,
         `${puzzle.center.toUpperCase()} · ${puzzle.outer.join('').toUpperCase()}`,
-        `${state.found.length}/${puzzle.solutions.length} slov · ${rank.name} · ★ ${breakdown.total}`,
+        `${zCile}/${puzzle.solutions.length} slov · ${rank.name} · ★ ${breakdown.total}`,
       ].join('\n'),
-    [breakdown.total, dayLabel, puzzle, rank.name, state.found.length],
+    [breakdown.total, dayLabel, puzzle, rank.name, zCile],
   )
 
   return (
@@ -256,7 +264,7 @@ export function HiveGame({
         <div className="stat-row">
           <StatTile
             label="Slov"
-            value={state.found.length}
+            value={zCile}
             tone="accent"
             note="Kolik slov už z plástve máš. Kolo se dá ukončit kdykoli — plástev do posledního slova je meta sama pro sebe."
           />
@@ -286,7 +294,7 @@ export function HiveGame({
             onClick={() => setShowFound(true)}
           >
             <span>Nalezená slova</span>
-            <small>{state.found.length}</small>
+            <small>{zCile}</small>
           </button>
           {/* Na monitoru zůstává v pravém sloupci; na telefonu se schová
               do panelu s nalezenými slovy, protože jinak se pod ním plástev
@@ -434,7 +442,7 @@ export function HiveGame({
       {confirmEnd && (
         <Confirm
           title="Ukončit plástev?"
-          body={`Kolo se spočítá tak, jak je — máš ${state.found.length} z ${puzzle.solutions.length} slov. Zbytek už nedohledáš.`}
+          body={`Kolo se spočítá tak, jak je — máš ${zCile} z ${puzzle.solutions.length} slov. Zbytek už nedohledáš.`}
           confirmLabel="Ukončit"
           onConfirm={() => {
             setConfirmEnd(false)
@@ -447,7 +455,7 @@ export function HiveGame({
       {done && (
         <ResultOverlay
           title={complete ? 'Plástev kompletní!' : 'Plástev uzavřena'}
-          subtitle={`${state.found.length} z ${puzzle.solutions.length} slov · ${rank.name}`}
+          subtitle={`${zCile} z ${puzzle.solutions.length} slov · ${rank.name}`}
           breakdown={breakdown}
           shareText={shareText}
           celebrate={complete}

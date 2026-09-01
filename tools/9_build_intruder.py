@@ -264,10 +264,13 @@ def build(words: list[dict], kind: str, rng: random.Random) -> list[dict]:
         answer = LABEL[kind]
         choices = [answer] + rng.sample([LABEL[k] for k in TRAITS if k != kind], 2)
         rng.shuffle(choices)
+        # `choices` se do sady nezapisují: druhý krok („vyber správnou větu")
+        # z Vetřelce vypadl a hra je nikde nečte. V datech dělaly 620 kB,
+        # tedy skoro třetinu toho, co si každý hráč stáhne.
+        del choices
         out.append({
             "words": [i["word"] for i in five],
             "odd": odd["word"],
-            "choices": choices,
             "answer": answer,
             "recap": f"Souvislost: {LABEL[kind]} — {shared}. U vetřelce: {other}.",
             "difficulty": LEVEL[kind],
@@ -498,10 +501,13 @@ def from_families(rng: random.Random, per_family: dict[str, int]) -> list[dict]:
             ]
             choices = [family["asks"][0]] + rng.sample(pool, 2)
             rng.shuffle(choices)
+            # Zavádějící věty se dál počítají — je to kontrola, že rodina
+            # má z čeho brát —, ale do sady se nezapisují; druhý krok
+            # z Vetřelce vypadl a hra je nečte.
+            del choices
             out.append({
                 "words": rng.sample(four + [odd], 5),
                 "odd": odd,
-                "choices": choices,
                 "answer": family["asks"][0],
                 # U skryté rodiny je střecha totéž co osa, takže by se věta
                 # opakovala („slova, která jsou znamením zvěrokruhu. Čtyři
@@ -565,7 +571,13 @@ def drive_jazykove() -> list[dict]:
     if not os.path.exists(path):
         return []
     stare = json.load(open(path, encoding="utf-8"))
-    return [dict(p) for p in stare if str(p.get("family", "")).startswith("jaz:")]
+    return [
+        # `choices` se zahazují i tady — přenesené pětice pocházejí ze
+        # sestavení, které je ještě zapisovalo.
+        {k: v for k, v in p.items() if k != "choices"}
+        for p in stare
+        if str(p.get("family", "")).startswith("jaz:")
+    ]
 
 
 def main() -> int:

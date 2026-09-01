@@ -206,6 +206,7 @@ export function Friends({
             value={draft}
             maxLength={16}
             placeholder="Přezdívka"
+            aria-label="Tvoje přezdívka"
             onChange={(event) => {
               setDraft(event.target.value)
               setProblem(null)
@@ -462,6 +463,7 @@ export function Friends({
                 value={sledDraft}
                 maxLength={16}
                 placeholder="Přezdívka hráče"
+                aria-label="Přezdívka hráče do žebříčku"
                 onChange={(event) => {
                   setSledDraft(event.target.value)
                   setSledProblem(null)

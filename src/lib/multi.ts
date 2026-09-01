@@ -862,7 +862,14 @@ const EMPTY: Me = {
 
 /** Zablokuje hráče a rovnou uloží. */
 export function blockPlayer(me: Me, uid: string): Me {
-  const next: Me = { ...me, blocked: [...new Set([...(me.blocked ?? []), uid])] }
+  const next: Me = {
+    ...me,
+    blocked: [...new Set([...(me.blocked ?? []), uid])],
+    // Zablokovaný hráč zmizí i ze žebříčku denních výzev. Blokování má
+    // znamenat „už ho nechci vidět", ne „nechci od něj výzvy, ale každý
+    // den se s ním budu srovnávat".
+    sledovani: (me.sledovani ?? []).filter((one) => one.uid !== uid),
+  }
   saveMe(next)
   return next
 }

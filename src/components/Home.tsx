@@ -177,7 +177,7 @@ export function Home({
     window.addEventListener('slova:stale', notice)
     return () => window.removeEventListener('slova:stale', notice)
   }, [])
-  // Všech šest her, ne jen ty tři původní — jinak by „Odehráno" hlásilo míň,
+  // Všechny hry, ne jen ty tři původní — jinak by „Odehráno" hlásilo míň,
   // než kolik má hráč doopravdy za sebou.
   const played = MODES.reduce((sum, mode) => sum + profile.stats[mode.id].played, 0)
 

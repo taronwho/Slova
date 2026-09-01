@@ -20,7 +20,7 @@ interface Props {
   onReset: () => void
 }
 
-// Všech šest her, ne pět. Slabiky ve výpisu chyběly, takže hráč o svých
+// Všechny hry, ne jen pět. Slabiky ve výpisu chyběly, takže hráč o svých
 // číslech z jedné celé hry nevěděl.
 const MODES: ModeId[] = ['chain', 'hive', 'tower', 'gallows', 'detective', 'tetris']
 

@@ -34,7 +34,7 @@ import {
   wrongCount,
   type GallowsState,
 } from './gallows'
-import { currentScore, type HiveState } from './hive'
+import { currentScore, foundSolutions, type HiveState } from './hive'
 import type { TowerState } from './tower'
 
 export interface ScoreBreakdown {
@@ -167,12 +167,15 @@ export function scoreTower(
 /** Voština: skóre vychází z bodů za slova, bonus za dotažení plástve. */
 export function scoreHive(state: HiveState, streak: number): ScoreBreakdown {
   const points = currentScore(state)
-  const found = state.found.length
+  // Do cíle se počítají jen slova z cíle; vzácná slova body dají, ale
+  // plástev nedokončí — jinak by ji „Kompletní plástev" odměnila za to,
+  // že hráč posbíral vzácnosti a půlku cíle nechal být.
+  const found = foundSolutions(state)
   const foundPangrams = state.found.filter((w) =>
     state.puzzle.pangrams.includes(w),
   ).length
 
-  const lines = [{ label: `Body za slova (${found})`, value: points * 3 }]
+  const lines = [{ label: `Body za slova (${state.found.length})`, value: points * 3 }]
   if (foundPangrams > 0) {
     lines.push({ label: `Pangramy (${foundPangrams})`, value: 50 * foundPangrams })
   }
@@ -183,6 +186,7 @@ export function scoreHive(state: HiveState, streak: number): ScoreBreakdown {
     lines.push({ label: `Nápovědy (${paidHints})`, value: -HIVE_HINT_COST * paidHints })
   }
   const complete = found >= state.puzzle.solutions.length
+
   if (complete) lines.push({ label: 'Kompletní plástev', value: 170 })
 
   const perfect = complete && state.hintsUsed === 0

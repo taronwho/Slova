@@ -322,6 +322,7 @@ export function DetectiveGame({
               value={draft}
               autoFocus
               placeholder="Napiš celé slovo"
+              aria-label="Tip na celé slovo"
               onChange={(event) => setDraft(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key === 'Enter') submitWord()

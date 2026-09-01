@@ -1,7 +1,7 @@
 /**
  * Otázka dne — jediná hra, která se hraje jednou za den.
  *
- * Ostatních šest her je o češtině. Tahle je o všem ostatním: hráč dostane
+ * Ostatní hry jsou o češtině. Tahle je o všem ostatním: hráč dostane
  * holý nadpis („Poznej známou osobnost", „Hlavní město kterého státu") a
  * **předem se rozhodne, kolik indicií si vezme**. Za jednu indicii je odměna
  * trojnásobná oproti třem, takže sázka na vlastní hlavu se vyplácí — a hráč

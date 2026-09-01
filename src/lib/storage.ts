@@ -794,7 +794,7 @@ export function recordRound(
   return grantAwards({
     ...profile,
     // Denní várka je jediná věc, za kterou padá inkoust jen za účast — je to
-    // důvod se vrátit zítra. Padne až za všech šest her.
+    // důvod se vrátit zítra. Padne až za všechny hry, ne za každou zvlášť.
     ink: profile.ink + (allDailiesDone(profile, result, day, daily) ? DAILY_INK : 0),
     fame: profile.fame + result.score,
     streak,
