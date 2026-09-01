@@ -31,6 +31,17 @@ export function signature(word: string): string {
   return [...word].sort().join('')
 }
 
+/**
+ * Číslo se správným tvarem podstatného jména: 1 kolo, 2 kola, 5 kol.
+ *
+ * Čeština má tři tvary a hra je používá na deseti místech; bez tohohle se
+ * v každém komponentu psal vlastní opis a někde se na jeden z tvarů zapomnělo.
+ */
+export function plural(count: number, one: string, few: string, many: string): string {
+  const form = count === 1 ? one : count >= 2 && count <= 4 ? few : many
+  return `${count} ${form}`
+}
+
 /** Očistí vstup hráče: malá písmena, bez mezer a interpunkce. */
 export function normalizeInput(raw: string): string {
   return raw

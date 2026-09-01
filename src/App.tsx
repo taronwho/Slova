@@ -150,7 +150,7 @@ type View =
   // Nabídka soubojů. Stojí mimo hry — nedává věhlas, nebere inkoust
   // a nepočítá se do denní várky.
   | { kind: 'friends' }
-  // Otázka dne stojí mimo šestici — nemá obtížnost ani rozehrané kolo,
+  // Otázka dne stojí mimo slovní hry — nemá obtížnost ani rozehrané kolo,
   // takže se do `game` nevejde.
   | { kind: 'quiz' }
   // Přehled všech otázek. Jen v kontrolním buildu, viz QuizReview.

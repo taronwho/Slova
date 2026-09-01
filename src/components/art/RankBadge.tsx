@@ -20,7 +20,7 @@
  *      a obruč se zdvojí. Pátý odznak deváté pětice je tedy o dvě třídy jinde
  *      než první odznak té první — a přesně tak se to má číst.
  *   3. **Znamení uvnitř** je vždycky prstenec ze tří oblouků — totéž „O"
- *      jako ve značce a v úvodní animaci. Tři barvy, tři hry. To jediné
+ *      jako ve značce a v úvodní animaci. Tři barvy, tři oblouky. To jediné
  *      zůstává napříč celým žebříčkem stejné, aby odznaky drželi pohromadě.
  *
  * Od šestačtyřicáté hodnosti výš soustava končí a nastupují **vrcholné

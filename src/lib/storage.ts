@@ -81,14 +81,14 @@ export interface Counters {
   tetrisChain: number
   /** Kolik denních výzev dohrál. */
   dailies: number
-  /** Kolikrát dohrál denní výzvy ve všech šesti hrách v jednom dni. */
+  /** Kolikrát dohrál denní výzvy ve všech hrách v jednom dni. */
   dailySets: number
   /** Nejlepší skóre v jednom kole napříč režimy. */
   bestScore: number
 }
 
 /**
- * Otázka dne — jediná hra mimo šestici slovních, a proto i jediná, která má
+ * Otázka dne — jediná hra mimo ty slovní, a proto i jediná, která má
  * v profilu vlastní přihrádku místo `stats[mode]`.
  *
  * Nemá obtížnost, nedá se hrát vícekrát denně a nesype body, takže by se do

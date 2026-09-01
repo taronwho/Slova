@@ -19,6 +19,7 @@ import {
 import { stillDaily } from '../app/resume'
 import { RankBadge } from './art/RankBadge'
 import { useBackGuard } from '../lib/back'
+import { plural } from '../lib/czech'
 import { todayKey } from '../lib/rng'
 import { InkMark } from './art/InkMark'
 import { Explain } from './Explain'
@@ -42,7 +43,7 @@ interface Props {
   onRules: (mode: ModeId) => void
   /** Průvodce celou hrou — společná pravidla, body, inkoust, hodnosti. */
   onGuide: () => void
-  /** Otázka dne — jednou denně, mimo šestici slovních her. */
+  /** Otázka dne — jednou denně, mimo ostatní hry. */
   onQuiz: () => void
   /** Přehled všech otázek. Předává se jen v kontrolním buildu. */
   onQuizList?: () => void
@@ -60,6 +61,9 @@ const MODES: { id: ModeId; glyph: string; color: string }[] = MODE_ORDER.map((id
 }))
 
 const DIFFICULTIES: Difficulty[] = ['easy', 'normal', 'hard']
+
+/** Hry, ve kterých hráč slovo skládá nebo píše — jen tam platí základní tvar. */
+const SKLADA_SLOVA: ModeId[] = ['chain', 'hive', 'tower', 'tetris']
 
 /**
  * Rozehraná **dnešní** denní výzva, nebo nic.
@@ -121,12 +125,6 @@ const DIFFICULTY_NOTE: Record<ModeId, Record<Difficulty, string>> = {
   },
 }
 
-/** Česká čísla: 1 tah, 2–4 tahy, 5 a víc tahů. */
-function plural(count: number, one: string, few: string, many: string): string {
-  const form = count === 1 ? one : count >= 2 && count <= 4 ? few : many
-  return `${count} ${form}`
-}
-
 /** Kolik toho v přerušeném kole zbývá — ať hráč ví, do čeho se vrací. */
 function progressNote(saved: SavedRound): string {
   const state = saved.state as {
@@ -140,8 +138,13 @@ function progressNote(saved: SavedRound): string {
   switch (saved.mode) {
     case 'chain':
       return plural((state.path?.length ?? 1) - 1, 'tah', 'tahy', 'tahů')
-    case 'hive':
-      return `${state.found?.length ?? 0} z ${state.puzzle?.solutions?.length ?? 0} slov`
+    case 'hive': {
+      // Vzácná slova (`extra`) se do cíle nepočítají, tak ať je ani tenhle
+      // řádek nehlásí — jinak by dlaždice slibovala „50 z 48 slov".
+      const cil = new Set(state.puzzle?.solutions ?? [])
+      const zCile = (state.found ?? []).filter((word) => cil.has(word)).length
+      return `${zCile} z ${cil.size} slov`
+    }
     case 'gallows':
     case 'detective':
       return plural(state.tried?.length ?? 0, 'písmeno', 'písmena', 'písmen')
@@ -560,11 +563,23 @@ export function Home({
                 <li key={rule}>{rule}</li>
               ))}
             </ul>
+            {/* Pravidlo o základních tvarech platí ve všech hrách, kde hráč
+                slovo skládá nebo píše, a nikde jinde se k němu nedalo dostat
+                — heslo ve slovníčku bylo, ale nevedl na něj žádný odkaz. */}
+            {SKLADA_SLOVA.includes(pickedMode.id) && (
+              <Explain term="zaklad" className="faint mode-forms">
+                Které tvary slov hra uznává
+              </Explain>
+            )}
 
             <div>
-              <div className="label" style={{ marginBottom: 'var(--sp-2)' }}>
+              <Explain
+                term="obtiznost"
+                className="label"
+                style={{ marginBottom: 'var(--sp-2)' }}
+              >
                 Obtížnost
-              </div>
+              </Explain>
               <div className="seg">
                 {DIFFICULTIES.map((difficulty) => (
                   <button

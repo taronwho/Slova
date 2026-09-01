@@ -2,7 +2,7 @@
  * Úvodní obrazovka se značkou.
  *
  * Kroužek ze tří oblouků je totéž znamení jako ikona aplikace a jako
- * prostřední „O" ve slově SLOVA — tři barvy, tři hry. Oblouky se nakreslí,
+ * prostřední „O" ve slově SLOVA — tři barvy, tři oblouky. Kreslí se,
  * název se poskládá po písmenech, značka chvíli zůstane stát a pak se
  * rozplyne do menu.
  *

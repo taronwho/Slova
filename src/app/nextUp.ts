@@ -6,8 +6,8 @@
  * karta to teď ví sama — a nabídne zbytek rovnou.
  *
  * Nabídka se nese přes kontext, ne přes propy. Karta výsledku sedí uvnitř
- * všech šesti her a protahovat jí tudy další prop by znamenalo šest stejných
- * úprav v šesti souborech; nabídka přitom s pravidly té které hry nemá nic
+ * všech her a protahovat jí tudy další prop by znamenalo stejnou úpravu
+ * v každém z jejich souborů; nabídka přitom s pravidly té které hry nemá nic
  * společného.
  */
 

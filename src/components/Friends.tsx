@@ -23,6 +23,7 @@ import {
 } from '../game/duel'
 import { duelPoints, duelRankFor, DUEL_RANKS } from '../game/duelRank'
 import { MODE_GLYPH } from '../game/types'
+import { plural } from '../lib/czech'
 import { DuelCrest } from './art/DuelCrest'
 import { DuelReportSheet } from './DuelReport'
 import {
@@ -503,22 +504,26 @@ export function Friends({
                     // Nejlepší bilance nahoru; kdo ještě nic neodehrál, dolů.
                     .sort((a, b) => b.wins - b.losses - (a.wins - a.losses))
                     .map((kdo) => {
-                      const dnu = kdo.wins + kdo.losses + kdo.draws
+                      // Denních výzev je osm na den, takže tohle je počet
+                      // společně odehraných kol — ne dnů.
+                      const kol = kdo.wins + kdo.losses + kdo.draws
                       return (
                         <tr key={kdo.uid}>
                           <th scope="row">
                             <span className="sled-who">
                               <span className="sled-nick">{kdo.nick}</span>
                               <span className="faint">
-                                {dnu === 0 ? 'zatím nic společného' : `${dnu} společných dnů`}
+                                {kol === 0
+                                  ? 'zatím nic společného'
+                                  : `${plural(kol, 'společné kolo', 'společná kola', 'společných kol')}`}
                               </span>
                             </span>
                           </th>
                           <td className="num">
-                            {dnu === 0 ? '—' : `${kdo.wins}·${kdo.draws}·${kdo.losses}`}
+                            {kol === 0 ? '—' : `${kdo.wins}·${kdo.draws}·${kdo.losses}`}
                           </td>
                           <td className="num">
-                            {dnu === 0
+                            {kol === 0
                               ? '—'
                               : `${kdo.mine.toLocaleString('cs-CZ')} : ${kdo.theirs.toLocaleString('cs-CZ')}`}
                           </td>
@@ -543,7 +548,7 @@ export function Friends({
               <p className="faint">
                 {(me.cekajici ?? []).length === 1
                   ? 'Jedno tvoje kolo čeká, až si hádanku zahrají i ostatní.'
-                  : `${(me.cekajici ?? []).length} tvých kol čeká, až si hádanku zahrají i ostatní.`}{' '}
+                  : `${plural((me.cekajici ?? []).length, 'tvoje kolo čeká', 'tvá kola čekají', 'tvých kol čeká')}, až si hádanku zahrají i ostatní.`}{' '}
                 Dopočítá se samo, až se do hry vrátíš.
               </p>
             )}

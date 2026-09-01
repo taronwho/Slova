@@ -187,13 +187,6 @@ export const TERMS: Record<string, Term> = {
     links: [{ label: 'Podrobné statistiky', to: 'stats' }],
   },
 
-  tema: {
-    title: 'Vzhled',
-    body: [
-      'Přepíná mezi světlým a tmavým vzhledem. Třetí poloha „podle systému" se řídí nastavením telefonu, včetně nočního přepínání.',
-    ],
-  },
-
   otazka: {
     title: 'Otázka dne',
     body: [
