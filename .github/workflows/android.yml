@@ -125,9 +125,14 @@ jobs:
             console.log("verze", m.appVersionName, "kód", m.appVersionCode)
           '
 
-      # `init` se ptá na každé pole zvlášť, ale všechny odpovědi už má
-      # z manifestu předvyplněné — prázdné řádky je jen odklepnou. Klíč
-      # v tu chvíli existuje, takže se nový nezakládá.
+      # Ne `init`, ale `update`: `init` čeká adresu **webového** manifestu
+      # a z něj si twa-manifest.json teprve vyrábí — náš hotový soubor by
+      # zahodil (a na cestu k souboru odpoví „Invalid URL"). `update` je
+      # přesně naopak: přečte twa-manifest.json a vygeneruje z něj celý
+      # androidí projekt, i když v adresáři ještě žádný není.
+      #
+      # `--skipVersionUpgrade`, protože čísla verzí už jsou nastavená
+      # z parametrů běhu; jinak by se ptal, na kolik je zvednout.
       - name: Vygenerování androidího projektu
         env:
           BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ env.HESLO }}
@@ -135,7 +140,7 @@ jobs:
         run: |
           set -euo pipefail
           cd "${TWA}"
-          yes '' | bubblewrap init --manifest ./twa-manifest.json
+          yes '' | bubblewrap update --skipVersionUpgrade
 
       # `--skipPwaValidation` vynechá kontrolu kvality přes Lighthouse.
       # Kvalitu hry hlídají vlastní kontroly v repozitáři; tady by to jen
