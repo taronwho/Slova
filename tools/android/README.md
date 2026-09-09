@@ -60,6 +60,11 @@ Pak stačí *Actions → Androidí balíček → Run workflow*, zadat číslo ve
 a po pár minutách si stáhnout `app-release-bundle.aab` (do obchodu)
 a `app-release-signed.apk` (na vyzkoušení přes `adb install`).
 
+Bez těch tajemství se build nezastaví — vyrobí si klíč na jedno použití
+a výsledek pojmenuje `ZKUSEBNI-nepouzivat`. Slouží k tomu, aby šlo ověřit,
+že se všechno sestaví; do obchodu takový balíček nepatří, protože příští
+běh by ho podepsal jinak a aplikace by nešla aktualizovat.
+
 ### Ruční cesta
 
 Když je potřeba stavět lokálně, je nutné mít **JDK 17**, **Android SDK**
