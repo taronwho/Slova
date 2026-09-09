@@ -17,7 +17,14 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TREE="$(mktemp -d)"
 
 if [ ! -f "$ROOT/dist/index.html" ]; then
-  echo "dist/index.html chybí — nejdřív npm run build" >&2
+  echo "dist/index.html chybí — nejdřív npm run build:pages" >&2
+  exit 1
+fi
+
+# Kontrolní verze se dřív stavěla mimo dist a na web se nikdy nedostala —
+# odkaz na ni vracel 404. Buduje ji `npm run build:pages`.
+if [ ! -f "$ROOT/dist/kontrolni.html" ]; then
+  echo "dist/kontrolni.html chybí — nasazuj po npm run build:pages, ne po npm run build" >&2
   exit 1
 fi
 

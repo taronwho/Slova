@@ -33,8 +33,11 @@ jobs:
       - name: Testy herní logiky a validace dat
         run: npm test
 
+      # `build:pages`, ne `build`: kromě samotné hry vyrobí i `kontrolni.html`
+      # — jednosouborovou verzi, ve které jdou otázky procházet za sebou.
+      # Dřív se nenasazovala vůbec a odkaz na ni vracel 404.
       - name: Build
-        run: npm run build
+        run: npm run build:pages
 
       - name: Publikace do větve gh-pages
         env:
