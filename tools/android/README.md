@@ -14,50 +14,82 @@ repozitáře nepatří (je to pár set megabajtů závislostí).
 
 ---
 
-## Co je potřeba mít
+## Pořadí, na kterém záleží
 
-* **JDK 17** a **Android SDK** (stačí `cmdline-tools`; Bubblewrap si zbytek
-  doinstaluje sám a nabídne to při prvním spuštění)
-* **Node 18+**
-* Účet v Play Console s ověřenou totožností
+Ověření domény **nejde dokončit dřív, než je balíček nahraný v Play Console**.
+Do `assetlinks.json` totiž patří otisk klíče, kterým je aplikace **doopravdy**
+podepsaná — a při zapnutém Play App Signing (což je doporučený stav)
+podepisuje výsledek Google vlastním klíčem, jehož otisk se dozvíš až
+z konzole. Kroky proto jdou takhle:
+
+1. postavit balíček
+2. nahrát `.aab` do Play Console a přijmout Play App Signing
+3. **teprve pak** opsat otisk z konzole do `assetlinks.json` a nasadit ho
+4. v telefonu ověřit, že nahoře není adresní řádek
+
+Kdo dá `assetlinks.json` na web dřív s otiskem vlastního klíče, dostane tiše
+nefunkční ověření a bude ho hledat v úplně jiných místech.
 
 ---
 
-## 1. Bubblewrap
+## 1. Postavení balíčku
+
+### Snadná cesta: GitHub Actions
+
+V repozitáři je workflow **`.github/workflows/android.yml`**, který balíček
+postaví sám — běžci GitHubu mají JDK i Android SDK předinstalované, takže se
+na vlastní počítač nemusí instalovat vůbec nic.
+
+Jednorázově je potřeba uložit podpisový klíč do
+*Settings → Secrets and variables → Actions*:
+
+| Tajemství | Co to je |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | soubor `android.keystore` zakódovaný base64 |
+| `ANDROID_KEYSTORE_PASSWORD` | heslo k němu |
+
+Klíč se do repozitáře **nikdy nekommituje**. Kdo ho ještě nemá, vyrobí si ho:
+
+```bash
+keytool -genkeypair -v -keystore android.keystore -alias slova \
+  -keyalg RSA -keysize 4096 -validity 10000
+base64 -w0 android.keystore    # tohle jde do ANDROID_KEYSTORE_BASE64
+```
+
+Pak stačí *Actions → Androidí balíček → Run workflow*, zadat číslo verze
+a po pár minutách si stáhnout `app-release-bundle.aab` (do obchodu)
+a `app-release-signed.apk` (na vyzkoušení přes `adb install`).
+
+### Ruční cesta
+
+Když je potřeba stavět lokálně, je nutné mít **JDK 17**, **Android SDK**
+(stačí `cmdline-tools`) a **Node 18+**:
 
 ```bash
 npm install -g @bubblewrap/cli
-```
-
-## 2. Vygenerování projektu
-
-V prázdném adresáři **mimo tenhle repozitář** (třeba `~/slova-android`):
-
-```bash
+mkdir ~/slova-android && cd ~/slova-android
 cp /cesta/k/Slova/tools/android/twa-manifest.json .
 bubblewrap init --manifest ./twa-manifest.json
-```
-
-Bubblewrap se zeptá na podpisový klíč. Nech si vytvořit nový a **zálohuj ho**
-i s heslem: bez něj se aplikace už nikdy nedá aktualizovat a nezachrání to
-ani Google.
-
-```bash
 bubblewrap build
 ```
 
-Vypadne `app-release-bundle.aab` (do obchodu) a `app-release-signed.apk`
-(na vyzkoušení v telefonu přes `adb install`).
+## 2. Podpisový klíč — co s ním
+
+Klíč je pečeť aplikace. **Zálohuj ho i s heslem**: bez něj by aplikace
+nešla aktualizovat.
+
+Jediná úleva je **Play App Signing**: Google si podepsaný balíček podepíše
+ještě jednou vlastním klíčem, který drží on. Ten tvůj je pak jen *nahrávací*
+klíč, a kdyby se ztratil, Google umí vystavit nový. Proto ho přijmi hned při
+prvním nahrání.
 
 ## 3. Ověření domény — `assetlinks.json`
 
-Vypiš otisk podpisového klíče:
+Otisk vezmi z Play Console: *Nastavení → Integrita aplikace → Podpisový
+certifikát*, hodnotu **SHA-256**. (Bez Play App Signing by to byl výstup
+`bubblewrap fingerprint list`, respektive `keytool -list -v`.)
 
-```bash
-bubblewrap fingerprint list
-```
-
-Vezmi hodnotu **SHA-256** a vlož ji místo `SEM_PATŘÍ_OTISK` do souboru
+Vlož ho místo `SEM_PATŘÍ_OTISK` do souboru
 `root-site/.well-known/assetlinks.json` vedle tohohle návodu.
 
 Ten soubor pak musí být dostupný na adrese:
@@ -107,10 +139,7 @@ https://digitalassetlinks.googleapis.com/v1/statements:list?source.web.site=http
 ```
 
 Když v telefonu vidíš nahoře adresní řádek, ověření neprošlo — nejčastěji
-proto, že se plete otisk klíče, kterým je aplikace **doopravdy** podepsaná.
-Pokud používáš Play App Signing (a to bys měl), podepisuje výsledek Google
-vlastním klíčem a do `assetlinks.json` patří **jeho** otisk: najdeš ho
-v Play Console v části *Nastavení → Integrita aplikace → Podpisový certifikát*.
+proto, že se plete otisk klíče, kterým je aplikace doopravdy podepsaná.
 
 ## 4. Vydání
 
@@ -124,7 +153,9 @@ v Play Console v části *Nastavení → Integrita aplikace → Podpisový certi
 
 Obsah se aktualizuje sám nasazením na Pages — nový balík kvůli tomu není
 potřeba. Nový `.aab` dělej jen tehdy, když se mění něco v samotné slupce
-(ikona, jméno, cílová úroveň API). Nezapomeň zvednout `appVersionCode`.
+(ikona, jméno, cílová úroveň API). Nezapomeň zvednout `appVersionCode`;
+ve workflow se zadává při spuštění, takže se kvůli němu nemusí nic
+kommitovat.
 
 Cílovou úroveň API zvedá Google každý srpen; když ti Play Console začne hlásit,
 že je balík zastaralý, stačí přegenerovat s novějším Bubblewrapem.

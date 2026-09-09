@@ -1,0 +1,169 @@
+name: Androidí balíček pro Google Play
+
+# Postaví z webové hry androidí slupku (Trusted Web Activity) a vydá
+# `.aab` do obchodu i `.apk` na vyzkoušení v telefonu.
+#
+# Proč to běží tady a ne na počítači: potřebuje JDK 17 a celé Android SDK,
+# tedy pár gigabajtů nástrojů. Běžci GitHubu je mají předinstalované, takže
+# se nic z toho nemusí shánět ručně.
+#
+# Spouští se jen ručně (Actions -> Androidí balíček -> Run workflow). Balíček
+# se totiž nedělá při každé změně hry: obsah se aktualizuje sám nasazením na
+# Pages a nový balíček je potřeba, jen když se mění samotná slupka — ikona,
+# jméno, cílová úroveň API.
+#
+# Předem musí být v Settings -> Secrets and variables -> Actions:
+#   ANDROID_KEYSTORE_BASE64    podpisový klíč zakódovaný base64
+#   ANDROID_KEYSTORE_PASSWORD  heslo k němu
+on:
+  workflow_dispatch:
+    inputs:
+      versionCode:
+        description: 'Číslo verze pro Play (celé číslo, s každým nahráním musí vzrůst)'
+        required: true
+        default: '1'
+      versionName:
+        description: 'Verze, kterou uvidí hráč (třeba 1.0.0)'
+        required: true
+        default: '1.0.0'
+
+permissions:
+  contents: read
+
+env:
+  # Projekt se generuje mimo repozitář — je to pár set megabajtů závislostí
+  # a do gitu nic z toho nepatří.
+  TWA: /home/runner/twa
+
+jobs:
+  balicek:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Bubblewrap chce JDK 17. Běžec má i novější, ale s ním si Gradle
+      # v generovaném projektu nerozumí.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Kontrola, že je čím podepsat
+        env:
+          KLIC: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          HESLO: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "${KLIC}" ] || [ -z "${HESLO}" ]; then
+            echo "::error::Chybí podpisový klíč. V Settings -> Secrets and variables -> Actions"
+            echo "::error::založ ANDROID_KEYSTORE_BASE64 a ANDROID_KEYSTORE_PASSWORD."
+            exit 1
+          fi
+
+      - name: Instalace Bubblewrapu
+        run: npm install -g @bubblewrap/cli@1
+
+      # Bubblewrap se jinak při prvním spuštění ptá, jestli si má stáhnout
+      # JDK a Android SDK. Obojí na běžci už je, tak mu to rovnou ukážeme —
+      # a hlavně tím zmizí interaktivní otázka, na kterou by tu nikdo
+      # neodpověděl.
+      - name: Nastavení Bubblewrapu na nástroje běžce
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.bubblewrap
+          printf '{"jdkPath":"%s","androidSdkPath":"%s"}\n' \
+            "${JAVA_HOME}" "${ANDROID_HOME}" > ~/.bubblewrap/config.json
+          cat ~/.bubblewrap/config.json
+
+      - name: Příprava projektu
+        env:
+          KLIC: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          mkdir -p "${TWA}"
+          cp tools/android/twa-manifest.json "${TWA}/twa-manifest.json"
+          # Klíč leží v tajemství jako base64, aby prošel přes nastavení
+          # GitHubu — v repozitáři soukromý klíč nemá co dělat.
+          printf '%s' "${KLIC}" | base64 -d > "${TWA}/android.keystore"
+          chmod 600 "${TWA}/android.keystore"
+          ls -l "${TWA}/android.keystore"
+
+      # Čísla verzí se přepisují až tady, ať se kvůli každému vydání nemusí
+      # sahat do repozitáře. Play nepřijme dvakrát stejné versionCode.
+      - name: Doplnění čísla verze
+        env:
+          KOD: ${{ inputs.versionCode }}
+          JMENO: ${{ inputs.versionName }}
+        run: |
+          set -euo pipefail
+          node -e '
+            const fs = require("fs")
+            const cesta = process.env.TWA + "/twa-manifest.json"
+            const m = JSON.parse(fs.readFileSync(cesta, "utf8"))
+            m.appVersionCode = Number(process.env.KOD)
+            m.appVersionName = process.env.JMENO
+            m.appVersion = process.env.JMENO
+            if (!Number.isInteger(m.appVersionCode) || m.appVersionCode < 1) {
+              throw new Error("versionCode musí být celé kladné číslo")
+            }
+            fs.writeFileSync(cesta, JSON.stringify(m, null, 2))
+            console.log("verze", m.appVersionName, "kód", m.appVersionCode)
+          '
+
+      # `init` se ptá na každé pole zvlášť, ale všechny odpovědi už má
+      # z manifestu předvyplněné — prázdné řádky je jen odklepnou. Klíč
+      # v tu chvíli existuje, takže se nový nezakládá.
+      - name: Vygenerování androidího projektu
+        env:
+          BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          cd "${TWA}"
+          yes '' | bubblewrap init --manifest ./twa-manifest.json
+
+      # `--skipPwaValidation` vynechá kontrolu kvality přes Lighthouse.
+      # Kvalitu hry hlídají vlastní kontroly v repozitáři; tady by to jen
+      # přidalo síťový krok, který občas spadne a shodí celý build.
+      - name: Sestavení balíčku
+        env:
+          BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          cd "${TWA}"
+          yes '' | bubblewrap build --skipPwaValidation
+
+      - name: Otisk podpisového klíče
+        env:
+          HESLO: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          echo "Tenhle otisk patří do assetlinks.json jen tehdy, když NEPOUŽÍVÁŠ"
+          echo "Play App Signing. Když ho používáš (a to bys měl), vezmi otisk"
+          echo "z Play Console: Nastavení -> Integrita aplikace -> Podpisový certifikát."
+          echo
+          keytool -list -v -keystore "${TWA}/android.keystore" -alias slova \
+            -storepass "${HESLO}" 2>/dev/null | grep -E 'SHA256:' || true
+
+      - name: Posbírání výsledků
+        run: |
+          set -euo pipefail
+          mkdir -p vystup
+          cd "${TWA}"
+          ls -lh *.aab *.apk
+          cp app-release-bundle.aab app-release-signed.apk "${GITHUB_WORKSPACE}/vystup/"
+
+      - name: Balíček ke stažení
+        uses: actions/upload-artifact@v4
+        with:
+          name: slova-play-${{ inputs.versionName }}
+          # Klíč ani hesla se nikam nenahrávají — jen to, co jde do obchodu
+          # a do telefonu.
+          path: vystup/
+          if-no-files-found: error
+          retention-days: 30
