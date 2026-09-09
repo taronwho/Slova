@@ -491,6 +491,33 @@ export default function App() {
   )
 
   /**
+   * Spuštění rovnou do hry přes `?mode=`.
+   *
+   * Odsud vedou zkratky, které Android nabídne po podržení ikony aplikace
+   * (jsou vypsané v `tools/android/twa-manifest.json`). Bez tohohle by
+   * všechny tři končily v menu a slibovaly něco, co hra neumí.
+   *
+   * Když je dnešní výzva té hry hotová, spustí se volná hra — znovu ji hrát
+   * nejde a bylo by divné, kdyby zkratka mlčky nic neudělala.
+   *
+   * Parametr se hned uklidí z adresy, aby přenačtení stránky neposlalo hráče
+   * podruhé do hry, ze které se zrovna vrátil.
+   */
+  const zkratkaVyrizena = useRef(false)
+  useEffect(() => {
+    if (zkratkaVyrizena.current) return
+    const zadano = new URLSearchParams(window.location.search).get('mode')
+    if (!zadano) return
+    zkratkaVyrizena.current = true
+    const cista = new URL(window.location.href)
+    cista.searchParams.delete('mode')
+    window.history.replaceState(null, '', cista.pathname + cista.search + cista.hash)
+    if (!(MODE_ORDER as string[]).includes(zadano)) return
+    const mode = zadano as ModeId
+    play(mode, profile.dailyDone[`${dayKey}:${mode}`] === undefined)
+  }, [dayKey, play, profile.dailyDone])
+
+  /**
    * Průběžné ukládání. Volá se po každém tahu, takže se kolo dá dohrát i po
    * návratu do menu nebo po zavření prohlížeče. Dohrané kolo se maže —
    * nabízet „pokračovat" u něčeho hotového nedává smysl.

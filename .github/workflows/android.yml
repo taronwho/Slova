@@ -138,7 +138,10 @@ jobs:
           BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ env.HESLO }}
           BUBBLEWRAP_KEY_PASSWORD: ${{ env.HESLO }}
         run: |
-          set -euo pipefail
+          # Bez `pipefail`: `yes` dostane po skončení Bubblewrapu SIGPIPE
+          # a s `pipefail` by rozbitá roura shodila krok i po úspěšném
+          # sestavení. Návratový kód tak nese Bubblewrap sám.
+          set -eu
           cd "${TWA}"
           yes '' | bubblewrap update --skipVersionUpgrade
 
@@ -150,7 +153,10 @@ jobs:
           BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ env.HESLO }}
           BUBBLEWRAP_KEY_PASSWORD: ${{ env.HESLO }}
         run: |
-          set -euo pipefail
+          # Bez `pipefail`: `yes` dostane po skončení Bubblewrapu SIGPIPE
+          # a s `pipefail` by rozbitá roura shodila krok i po úspěšném
+          # sestavení. Návratový kód tak nese Bubblewrap sám.
+          set -eu
           cd "${TWA}"
           yes '' | bubblewrap build --skipPwaValidation
 
