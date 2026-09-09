@@ -52,18 +52,6 @@ jobs:
         with:
           node-version: 22
 
-      - name: Kontrola, že je čím podepsat
-        env:
-          KLIC: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          HESLO: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-        run: |
-          set -euo pipefail
-          if [ -z "${KLIC}" ] || [ -z "${HESLO}" ]; then
-            echo "::error::Chybí podpisový klíč. V Settings -> Secrets and variables -> Actions"
-            echo "::error::založ ANDROID_KEYSTORE_BASE64 a ANDROID_KEYSTORE_PASSWORD."
-            exit 1
-          fi
-
       - name: Instalace Bubblewrapu
         run: npm install -g @bubblewrap/cli@1
 
@@ -79,16 +67,39 @@ jobs:
             "${JAVA_HOME}" "${ANDROID_HOME}" > ~/.bubblewrap/config.json
           cat ~/.bubblewrap/config.json
 
-      - name: Příprava projektu
+      # Klíč leží v tajemství jako base64, aby prošel přes nastavení GitHubu —
+      # v repozitáři soukromý klíč nemá co dělat.
+      #
+      # Když tajemství ještě nejsou založená, build se nezastaví: vyrobí se
+      # klíč na jedno použití a vznikne ZKUŠEBNÍ balíček. Ten do obchodu
+      # nepatří (příště by měl jiný podpis a aplikace by nešla aktualizovat),
+      # ale ověří, že se celý řetěz sestaví.
+      - name: Příprava projektu a podpisového klíče
         env:
           KLIC: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          TAJNE_HESLO: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
           set -euo pipefail
           mkdir -p "${TWA}"
           cp tools/android/twa-manifest.json "${TWA}/twa-manifest.json"
-          # Klíč leží v tajemství jako base64, aby prošel přes nastavení
-          # GitHubu — v repozitáři soukromý klíč nemá co dělat.
-          printf '%s' "${KLIC}" | base64 -d > "${TWA}/android.keystore"
+
+          if [ -n "${KLIC}" ] && [ -n "${TAJNE_HESLO}" ]; then
+            printf '%s' "${KLIC}" | base64 -d > "${TWA}/android.keystore"
+            echo "HESLO=${TAJNE_HESLO}" >> "${GITHUB_ENV}"
+            echo "ZKUSEBNI=ne" >> "${GITHUB_ENV}"
+            echo "Podepisuje se uloženým klíčem."
+          else
+            NAHODNE="$(head -c 24 /dev/urandom | base64 | tr -d '/+=' | head -c 28)"
+            echo "::add-mask::${NAHODNE}"
+            keytool -genkeypair -v -keystore "${TWA}/android.keystore" \
+              -alias slova -keyalg RSA -keysize 4096 -validity 10000 \
+              -storepass "${NAHODNE}" -keypass "${NAHODNE}" \
+              -dname "CN=Slova, OU=Slova, O=zkouska, L=Brno, ST=CZ, C=CZ"
+            echo "HESLO=${NAHODNE}" >> "${GITHUB_ENV}"
+            echo "ZKUSEBNI=ano" >> "${GITHUB_ENV}"
+            echo "::warning::Tajemství ANDROID_KEYSTORE_BASE64 a ANDROID_KEYSTORE_PASSWORD"
+            echo "::warning::chybí, takže vznikne jen ZKUŠEBNÍ balíček. Do obchodu ho nedávej."
+          fi
           chmod 600 "${TWA}/android.keystore"
           ls -l "${TWA}/android.keystore"
 
@@ -119,8 +130,8 @@ jobs:
       # v tu chvíli existuje, takže se nový nezakládá.
       - name: Vygenerování androidího projektu
         env:
-          BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ env.HESLO }}
+          BUBBLEWRAP_KEY_PASSWORD: ${{ env.HESLO }}
         run: |
           set -euo pipefail
           cd "${TWA}"
@@ -131,16 +142,14 @@ jobs:
       # přidalo síťový krok, který občas spadne a shodí celý build.
       - name: Sestavení balíčku
         env:
-          BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ env.HESLO }}
+          BUBBLEWRAP_KEY_PASSWORD: ${{ env.HESLO }}
         run: |
           set -euo pipefail
           cd "${TWA}"
           yes '' | bubblewrap build --skipPwaValidation
 
       - name: Otisk podpisového klíče
-        env:
-          HESLO: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
           set -euo pipefail
           echo "Tenhle otisk patří do assetlinks.json jen tehdy, když NEPOUŽÍVÁŠ"
@@ -161,7 +170,7 @@ jobs:
       - name: Balíček ke stažení
         uses: actions/upload-artifact@v4
         with:
-          name: slova-play-${{ inputs.versionName }}
+          name: ${{ env.ZKUSEBNI == 'ano' && 'ZKUSEBNI-nepouzivat' || 'slova-play' }}-${{ inputs.versionName }}
           # Klíč ani hesla se nikam nenahrávají — jen to, co jde do obchodu
           # a do telefonu.
           path: vystup/
