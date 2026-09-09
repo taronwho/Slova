@@ -74,6 +74,25 @@ jobs:
       # klíč na jedno použití a vznikne ZKUŠEBNÍ balíček. Ten do obchodu
       # nepatří (příště by měl jiný podpis a aplikace by nešla aktualizovat),
       # ale ověří, že se celý řetěz sestaví.
+      # Bubblewrap hledá sdkmanager v `$ANDROID_HOME/tools/bin` nebo
+      # `$ANDROID_HOME/bin`, jenže běžec ho má v `cmdline-tools/latest/bin`.
+      # Bez odkazu se ozve jen „The provided androidSdk isn't correct."
+      # a nic víc neřekne.
+      #
+      # Build-tools si Bubblewrap umí doinstalovat sám, ale interaktivně
+      # a s potvrzováním licencí; předinstalovat je rovnou je klidnější.
+      - name: Srovnání Android SDK pro Bubblewrap
+        env:
+          BUILD_TOOLS: '36.1.0'
+        run: |
+          set -euo pipefail
+          sudo ln -sfn "${ANDROID_HOME}/cmdline-tools/latest/bin" "${ANDROID_HOME}/bin"
+          ls -l "${ANDROID_HOME}/bin/sdkmanager"
+          yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 || true
+          "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" \
+            "build-tools;${BUILD_TOOLS}" "platforms;android-36" > /dev/null
+          ls -d "${ANDROID_HOME}/build-tools/${BUILD_TOOLS}"
+
       - name: Příprava projektu a podpisového klíče
         env:
           KLIC: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
