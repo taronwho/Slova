@@ -132,9 +132,13 @@ import {
   recordRound,
   liveStreak,
   spendInk,
+  pridejInkoust,
+  zapisNakup,
+  maNakup,
   type Profile,
 } from '../src/lib/storage'
 import { MODE_ORDER, type ModeId } from '../src/game/types'
+import { INKOUST, KASICKA, NABIDKA, kapekZaKorunu, odemyka } from '../src/game/obchod'
 import {
   loadQuizRound,
   loadRounds,
@@ -1996,5 +2000,65 @@ describe('rozpis souboje', () => {
     }))
     expect(encodeSteps(kola).length).toBeLessThanOrEqual(DETAIL_MAX)
     expect(decodeSteps(encodeSteps(kola)).length).toBe(3)
+  })
+})
+
+describe('obchod', () => {
+  it('ceník má jedinečná a neměnná id', () => {
+    const ids = NABIDKA.map((p) => p.id)
+    expect(new Set(ids).size).toBe(ids.length)
+    // Id se posílají do Play Console a už se nikdy nemění. Kdyby se
+    // někomu zachtělo je „uklidit", tenhle test to zastaví.
+    expect(ids).toContain('inkoust_100')
+    expect(ids).toContain('archiv_vyzev')
+    expect(ids).toContain('archiv_otazek')
+  })
+
+  it('spotřební položky nesou inkoust, trvalé ne', () => {
+    for (const p of NABIDKA) {
+      if (p.druh === 'spotrebni') expect(p.inkoust, p.id).toBeGreaterThan(0)
+      else expect(p.inkoust, p.id).toBeUndefined()
+    }
+  })
+
+  it('větší balíček je vždycky výhodnější', () => {
+    for (let i = 1; i < INKOUST.length; i++) {
+      expect(kapekZaKorunu(INKOUST[i]!)).toBeGreaterThan(kapekZaKorunu(INKOUST[i - 1]!))
+    }
+  })
+
+  it('archiv se pozná podle nákupu, kasička nic neodemyká', () => {
+    expect(odemyka('archiv_vyzev')).toBe('vyzvy')
+    expect(odemyka('archiv_otazek')).toBe('otazky')
+    for (const p of KASICKA) expect(odemyka(p.id), p.id).toBeNull()
+    for (const p of INKOUST) expect(odemyka(p.id), p.id).toBeNull()
+  })
+
+  it('koupený inkoust přiteče, nesmysl ne', () => {
+    const zacatek = emptyProfile()
+    expect(pridejInkoust(zacatek, 100).ink).toBe(zacatek.ink + 100)
+    // Zvenčí může přijít cokoli; kalamář se tím nesmí rozbít.
+    expect(pridejInkoust(zacatek, 0).ink).toBe(zacatek.ink)
+    expect(pridejInkoust(zacatek, -50).ink).toBe(zacatek.ink)
+    expect(pridejInkoust(zacatek, Number.NaN).ink).toBe(zacatek.ink)
+    expect(pridejInkoust(zacatek, 10.7).ink).toBe(zacatek.ink + 10)
+  })
+
+  it('trvalý nákup se zapíše jen jednou', () => {
+    // Nákupy se obnovují z obchodu při každém spuštění, takže tentýž
+    // identifikátor přijde znovu a znovu.
+    let profil = emptyProfile()
+    expect(maNakup(profil, 'archiv_vyzev')).toBe(false)
+    profil = zapisNakup(profil, 'archiv_vyzev')
+    profil = zapisNakup(profil, 'archiv_vyzev')
+    expect(profil.nakupy).toEqual(['archiv_vyzev'])
+    expect(maNakup(profil, 'archiv_vyzev')).toBe(true)
+  })
+
+  it('nákupy přežijí načtení starého profilu', () => {
+    const stary = { ...emptyProfile(), nakupy: undefined } as unknown as Profile
+    expect(migrateProfile(stary).nakupy).toEqual([])
+    const s = { ...emptyProfile(), nakupy: ['archiv_otazek', 'archiv_otazek', 42] }
+    expect(migrateProfile(s as unknown as Profile).nakupy).toEqual(['archiv_otazek'])
   })
 })

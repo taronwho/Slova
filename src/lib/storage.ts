@@ -211,6 +211,15 @@ export interface Profile {
    * vlastní žebříček (`game/duelRank.ts`) a vlastní mety.
    */
   duels: DuelRecord
+  /**
+   * Co má hráč koupené — identifikátory trvalých položek z `game/obchod.ts`.
+   *
+   * Spotřební nákupy (inkoust) se sem nepíšou; ty se rovnou promítnou do
+   * `ink` a v obchodě se spotřebují. Zdrojem pravdy o trvalých nákupech je
+   * Google, ne tohle pole — po přeinstalování se doplní z `platba.obnovit()`.
+   * Drží se tu jen proto, aby hra věděla, co odemknout, i bez připojení.
+   */
+  nakupy: string[]
 }
 
 export interface DuelRecord {
@@ -341,6 +350,7 @@ export function emptyProfile(): Profile {
     guideSeen: false,
     quiz: emptyQuiz(),
     duels: emptyDuels(),
+    nakupy: [],
     dailyStreak: Object.fromEntries(
       MODES.map((mode) => [mode, emptyDailyStreak()]),
     ) as Record<ModeId, DailyStreak>,
@@ -488,6 +498,9 @@ export function migrate(raw: unknown): Profile {
       ]),
     ) as Record<ModeId, DailyStreak>,
     history: saved.history ?? [],
+    // Cizí hodnoty se odfiltrují: pole se plní i z obchodu a do profilu
+    // nemá co téct nic, co hra nezná.
+    nakupy: [...new Set((saved.nakupy ?? []).filter((id) => typeof id === 'string'))],
   }
   // Přepočty se řetězí: starý profil projde všemi, novější jen těmi, které
   // ještě neviděl.
@@ -659,6 +672,34 @@ const SEEN_LIMIT = 4000
 export function spendInk(profile: Profile, price: number): Profile {
   if (price <= 0 || profile.ink < price) return profile
   return { ...profile, ink: profile.ink - price }
+}
+
+/**
+ * Připíše koupený inkoust.
+ *
+ * Odděleně od `spendInk`, protože se sem nesmí dostat záporné číslo ani
+ * nesmysl z obchodu — kalamář je jediné místo ve hře, kam přiteče něco
+ * zvenčí.
+ */
+export function pridejInkoust(profile: Profile, kapek: number): Profile {
+  if (!Number.isFinite(kapek) || kapek <= 0) return profile
+  return { ...profile, ink: profile.ink + Math.floor(kapek) }
+}
+
+/**
+ * Zapíše trvalý nákup.
+ *
+ * Volá se i při obnově nákupů po přeinstalování, takže musí snést, že tentýž
+ * nákup přijde podruhé — jinak by se seznam donekonečna nafukoval.
+ */
+export function zapisNakup(profile: Profile, id: string): Profile {
+  if (!id || profile.nakupy.includes(id)) return profile
+  return { ...profile, nakupy: [...profile.nakupy, id] }
+}
+
+/** Má hráč tuhle trvalou položku? */
+export function maNakup(profile: Profile, id: string): boolean {
+  return profile.nakupy.includes(id)
 }
 
 /** Číslo z detailu kola; chybějící údaj se počítá jako nula. */
