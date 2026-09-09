@@ -9,6 +9,10 @@ shots/
 tools/raw/
 tools/out/
 tools/*.log
+# Emulátor Firebase si je píše do kořene projektu při každém běhu e2e.
+firebase-debug.log
+database-debug.log
+ui-debug.log
 
 .DS_Store
 *.local
