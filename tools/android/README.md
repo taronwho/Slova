@@ -137,6 +137,45 @@ takže je ve složce i drobný rozcestník `index.html` s odkazem do hry.
 > `fullScopeUrl` a všechny adresy ikon — a `assetlinks.json` dej na kořen té
 > nové domény.
 
+### Víc aplikací na jedné doméně
+
+`assetlinks.json` je **pole**, ne jeden záznam — na tutéž doménu se dá pověsit
+kolik aplikací je potřeba. Druhá hra z jiného repozitáře tedy nic nekomplikuje,
+jen se do stejného souboru přidá druhý záznam:
+
+```json
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "io.github.taronwho.slova",
+      "sha256_cert_fingerprints": ["OTISK PRVNÍ APLIKACE"]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "io.github.taronwho.druha",
+      "sha256_cert_fingerprints": ["OTISK DRUHÉ APLIKACE"]
+    }
+  }
+]
+```
+
+Otisky se budou lišit: při zapnutém Play App Signing dostane každá aplikace
+od Googlu vlastní podpisový klíč.
+
+Do cesty si nelezou, protože Bubblewrap zapíše do androidího manifestu
+`pathPrefix` podle `fullScopeUrl` — první aplikace si nárokuje jen
+`/Slova/`, druhá jen svůj podadresář. Odkaz tedy vždycky otevře ta správná.
+
+Pozor jen na dvě věci: **`packageId` musí být u každé aplikace jiný** (v Play
+se už nikdy nedá změnit) a rozsahy se nesmí překrývat. A ten jeden soubor je
+společný — chyba v něm sundá ověření všem aplikacím naráz, takže po každé
+úpravě zkontroluj obě.
+
 Ověření se dá zkontrolovat Googlím nástrojem:
 
 ```
